@@ -28,7 +28,7 @@ RUN . /opt/conda/etc/profile.d/conda.sh && \
 # -----------------
 # Primary container
 # -----------------
-FROM python:3.10
+FROM gcr.io/distroless/base-debian11@sha256:1f862eab95bebd3fb40518407419a45ca3802854b67a89413985139a31358b19
 # copy over the generated environment
 COPY --from=builder /opt/env /opt/env
 ARG YOUR_ENV
