@@ -25,7 +25,7 @@ def query(ctx, mem_budget_mb, information, uri):
     cfg = tiledbvcf.ReadConfig(memory_budget_mb=mem_budget_mb)
     ds = tiledbvcf.Dataset(uri, mode="r", cfg=cfg)
     if information == "samples":
-        print(ds.samples())
+        for s in ds.samples():
+            print(s)
     else:
         print(ds.attributes())
-        print(ds.attributes(attr_type="builtin"))
