@@ -3,7 +3,7 @@ TARGETS=build clean dependencies deploy install test uninstall
 VERSION=$(shell grep version pyproject.toml|cut -f2 -d'"')
 .ONESHELL:
 # Need to specify bash in order for conda activate to work.
-SHELL=/bin/zsh
+SHELL=/bin/bash
 # https://stackoverflow.com/questions/53382383/makefile-cant-use-conda-activate
 CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
 
