@@ -43,11 +43,6 @@ def export(ctx, attrs, mem_budget_mb, output_format, output_path, regions_file, 
         completed = ds.read_completed()
         logger.info("Reading the data set completed: {}".format(completed))
 
-        df["BETA"] = df["fmt_ES"].str[0]
-        df["SE"] = df["fmt_SE"].str[0]
-        df["LP"] = df["fmt_LP"].str[0]
-        df = df.drop(columns=["fmt_ES", "fmt_SE", "fmt_LP"])
-
         if output_format == "csv":
             logger.info(f"Saving Dataframe in {output_path}")
             df.to_csv(output_path, sep="\t", index=False)
