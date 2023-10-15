@@ -28,10 +28,9 @@ RUN . /opt/conda/etc/profile.d/conda.sh && \
 # -----------------
 # Primary container
 # -----------------
-FROM gcr.io/distroless/base-debian11@sha256:1f862eab95bebd3fb40518407419a45ca3802854b67a89413985139a31358b19
+FROM python:3.10
 # copy over the generated environment
 COPY --from=builder /opt/env /opt/env
-ENV PATH="/opt/env/bin:${PATH}"
 ARG YOUR_ENV
 
 ENV YOUR_ENV=${YOUR_ENV} \
@@ -40,7 +39,8 @@ ENV YOUR_ENV=${YOUR_ENV} \
   PYTHONHASHSEED=random \
   PIP_NO_CACHE_DIR=off \
   PIP_DISABLE_PIP_VERSION_CHECK=on \
-  PIP_DEFAULT_TIMEOUT=100
+  PIP_DEFAULT_TIMEOUT=100 \
+  PATH="/opt/env/bin:${PATH}"
 
 # Copy only requirements to cache them in docker layer
 WORKDIR /code
