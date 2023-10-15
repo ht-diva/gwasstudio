@@ -1,0 +1,60 @@
+# Dockerfile
+
+# -----------------
+# Builder container
+# -----------------
+FROM condaforge/mambaforge:4.14.0-0 as builder
+
+COPY environment_docker.yml /docker/environment.yml
+
+RUN . /opt/conda/etc/profile.d/conda.sh && \
+    mamba create --name lock && \
+    conda activate lock && \
+    mamba env list && \
+    mamba install --yes pip conda-lock>=1.2.2 setuptools wheel && \
+    conda lock \
+        --file /docker/environment.yml \
+        --kind lock \
+        --lockfile /docker/conda-lock.yml
+
+RUN . /opt/conda/etc/profile.d/conda.sh && \
+    conda activate lock && \
+    conda-lock install \
+        --mamba \
+        --copy \
+        --prefix /opt/env \
+        /docker/conda-lock.yml && conda clean -afy
+
+# -----------------
+# Primary container
+# -----------------
+FROM gcr.io/distroless/base-debian11@sha256:1f862eab95bebd3fb40518407419a45ca3802854b67a89413985139a31358b19
+# copy over the generated environment
+COPY --from=builder /opt/env /opt/env
+ENV PATH="/opt/env/bin:${PATH}"
+ARG YOUR_ENV
+
+ENV YOUR_ENV=${YOUR_ENV} \
+  PYTHONFAULTHANDLER=1 \
+  PYTHONUNBUFFERED=1 \
+  PYTHONHASHSEED=random \
+  PIP_NO_CACHE_DIR=off \
+  PIP_DISABLE_PIP_VERSION_CHECK=on \
+  PIP_DEFAULT_TIMEOUT=100 \
+  POETRY_VERSION=1.4.2
+
+# System deps:
+RUN pip install "poetry==$POETRY_VERSION"
+
+# Copy only requirements to cache them in docker layer
+WORKDIR /code
+COPY poetry.lock pyproject.toml /code/
+
+# Project initialization:
+RUN poetry config virtualenvs.create false \
+  && poetry install $(test "$YOUR_ENV" == production && echo "--no-dev") --no-interaction --no-ansi
+
+# Creating folders, and files for a project:
+COPY . /code
+
+RUN make install
