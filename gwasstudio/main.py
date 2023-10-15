@@ -3,6 +3,8 @@ import cloup
 
 from gwasstudio import __appname__, __version__, context_settings, log_file, logger
 from gwasstudio.cli.export import export
+from gwasstudio.cli.info import info
+from gwasstudio.cli.query import query
 from gwasstudio.dask_client import DaskClient as Client
 
 
@@ -30,6 +32,8 @@ def cli_init(ctx, distribute, minimum_workers, maximum_workers, quiet):
 
 
 def main():
+    cli_init.add_command(info)
+    cli_init.add_command(query)
     cli_init.add_command(export)
     cli_init(obj={})
 
