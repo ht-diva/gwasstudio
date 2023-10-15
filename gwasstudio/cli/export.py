@@ -12,6 +12,10 @@ Exports data from a TileDB-VCF dataset.
 
 @cloup.command("export", no_args_is_help=True, help=help_doc)
 @cloup.option_group(
+    "Filtering options",
+    cloup.option("--mlog10p-less-than", default=None, help="Filter by the mlog10p value less than the number given"),
+)
+@cloup.option_group(
     "TileDB options",
     cloup.option("-a", "--attrs", help="List of attributes to extract, provided as a single string comma separated"),
     cloup.option("-b", "--mem-budget-mb", default=20480, help="The memory budget in MB when query a TileDB dataset"),
@@ -24,7 +28,7 @@ Exports data from a TileDB-VCF dataset.
     cloup.option("-u", "--uri", help="TileDB-VCF dataset URI"),
 )
 @click.pass_context
-def export(ctx, attrs, mem_budget_mb, output_format, output_path, regions_file, samples_file, uri):
+def export(ctx, attrs, mem_budget_mb, mlog10p_less_than, output_format, output_path, regions_file, samples_file, uri):
     if ctx.obj["DISTRIBUTE"]:
         pass
     else:
@@ -42,6 +46,9 @@ def export(ctx, attrs, mem_budget_mb, output_format, output_path, regions_file, 
         df = pd.concat(frames, axis=1)
         completed = ds.read_completed()
         logger.info("Reading the data set completed: {}".format(completed))
+
+        if mlog10p_less_than:
+            df = df.loc[df.LP < mlog10p_less_than]
 
         if output_format == "csv":
             logger.info(f"Saving Dataframe in {output_path}")
