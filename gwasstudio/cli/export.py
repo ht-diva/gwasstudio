@@ -1,7 +1,10 @@
 import click
 import cloup
+import numpy as np
 import pandas as pd
 import tiledbvcf
+from cloup.constraints import mutually_exclusive
+from scipy import stats
 
 from gwasstudio import logger
 
@@ -14,6 +17,8 @@ Exports data from a TileDB-VCF dataset.
 @cloup.option_group(
     "Filtering options",
     cloup.option("--mlog10p-less-than", default=None, help="Filter by the mlog10p value less than the number given"),
+    cloup.option("--mlog10p-more-than", default=None, help="Filter by the mlog10p value more than the number given"),
+    constraint=mutually_exclusive,
 )
 @cloup.option_group(
     "TileDB options",
@@ -28,7 +33,18 @@ Exports data from a TileDB-VCF dataset.
     cloup.option("-u", "--uri", help="TileDB-VCF dataset URI"),
 )
 @click.pass_context
-def export(ctx, attrs, mem_budget_mb, mlog10p_less_than, output_format, output_path, regions_file, samples_file, uri):
+def export(
+    ctx,
+    attrs,
+    mem_budget_mb,
+    mlog10p_less_than,
+    mlog10p_more_than,
+    output_format,
+    output_path,
+    regions_file,
+    samples_file,
+    uri,
+):
     if ctx.obj["DISTRIBUTE"]:
         pass
     else:
@@ -43,12 +59,15 @@ def export(ctx, attrs, mem_budget_mb, mlog10p_less_than, output_format, output_p
             batch["LP"] = batch["fmt_LP"].str[0]
             batch = batch.drop(columns=["fmt_ES", "fmt_SE", "fmt_LP"])
             frames.append(batch)
-        df = pd.concat(frames, axis=1)
+        df = pd.concat(frames, axis=0)
+        df["MLOG10P"] = -np.log10(stats.norm.sf(abs(df["BETA"] / df["SE"])))
         completed = ds.read_completed()
         logger.info("Reading the data set completed: {}".format(completed))
 
         if mlog10p_less_than:
             df = df.loc[df.LP < mlog10p_less_than]
+        if mlog10p_less_than:
+            df = df.loc[df.LP > mlog10p_more_than]
 
         if output_format == "csv":
             logger.info(f"Saving Dataframe in {output_path}")
