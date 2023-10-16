@@ -60,7 +60,7 @@ def export(
             batch = batch.drop(columns=["fmt_ES", "fmt_SE", "fmt_LP"])
             frames.append(batch)
         df = pd.concat(frames, axis=0)
-        df["MLOG10P"] = -np.log10(stats.norm.sf(abs(df["BETA"] / df["SE"])))
+        df["MLOG10P"] = -np.log10(stats.norm.sf(abs(df["BETA"] / df["SE"])) * 2)
         completed = ds.read_completed()
         logger.info("Reading the data set completed: {}".format(completed))
 
