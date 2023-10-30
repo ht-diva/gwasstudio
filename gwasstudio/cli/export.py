@@ -16,8 +16,13 @@ Exports data from a TileDB-VCF dataset.
 @cloup.command("export", no_args_is_help=True, help=help_doc)
 @cloup.option_group(
     "Filtering options",
-    cloup.option("--mlog10p-less-than", default=None, help="Filter by the mlog10p value less than the number given"),
-    cloup.option("--mlog10p-more-than", default=None, help="Filter by the mlog10p value more than the number given"),
+    cloup.option(
+        "--mlog10p-le", default=None, help="Filter by the mlog10p value less than or equal to the number given"
+    ),
+    cloup.option(
+        "--mlog10p-ge", default=None, help="Filter by the mlog10p value greater than or equal to the number given"
+    ),
+    cloup.option("--mlog10p-min", is_flag=True, help="Filter by the mlog10p minimum value"),
     constraint=mutually_exclusive,
 )
 @cloup.option_group(
@@ -37,8 +42,9 @@ def export(
     ctx,
     attrs,
     mem_budget_mb,
-    mlog10p_less_than,
-    mlog10p_more_than,
+    mlog10p_le,
+    mlog10p_ge,
+    mlog10p_min,
     output_format,
     output_path,
     regions_file,
@@ -64,10 +70,12 @@ def export(
         completed = ds.read_completed()
         logger.info("Reading the data set completed: {}".format(completed))
 
-        if mlog10p_less_than:
-            df = df.loc[df.LP < mlog10p_less_than]
-        if mlog10p_less_than:
-            df = df.loc[df.LP > mlog10p_more_than]
+        if mlog10p_le:
+            df = df.loc[df.LP.le(mlog10p_le) | np.isclose(df.LP, mlog10p_le)]
+        elif mlog10p_ge:
+            df = df.loc[df.LP.ge(mlog10p_ge) | np.isclose(df.LP, mlog10p_ge)]
+        elif mlog10p_min:
+            df = df.loc[df.LP.min()]
 
         if output_format == "csv":
             logger.info(f"Saving Dataframe in {output_path}")
