@@ -29,7 +29,8 @@ Exports data from a TileDB-VCF dataset.
     "TileDB options",
     cloup.option("-a", "--attrs", help="List of attributes to extract, provided as a single string comma separated"),
     cloup.option("-b", "--mem-budget-mb", default=20480, help="The memory budget in MB when query a TileDB dataset"),
-    cloup.option("-f", "--samples-file", help="Path to file with 1 sample name per line"),
+    cloup.option("-f", "--samples-file", help="Path of file with 1 sample name per line"),
+    cloup.option("-s", "--samples", help="CSV list of sample names to be read"),
     cloup.option(
         "-O", "--output-format", type=click.Choice(["csv"]), default="csv", help="Export format. Options are: csv"
     ),
@@ -49,6 +50,7 @@ def export(
     output_path,
     regions_file,
     samples_file,
+    samples,
     uri,
 ):
     if ctx.obj["DISTRIBUTE"]:
@@ -60,7 +62,10 @@ def export(
 
         frames = []
         results = {}
-        for batch in ds.read_iter(attrs=_attrs, bed_file=regions_file, samples_file=samples_file):
+        samples_list = []
+        if samples:
+            samples_list = [s.strip() for s in samples.split(",")]
+        for batch in ds.read_iter(attrs=_attrs, bed_file=regions_file, samples_file=samples_file, samples=samples_list):
             batch["BETA"] = batch["fmt_ES"].str[0]
             batch["SE"] = batch["fmt_SE"].str[0]
             batch["LP"] = batch["fmt_LP"].str[0]
