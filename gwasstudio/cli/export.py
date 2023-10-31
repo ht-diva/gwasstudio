@@ -87,7 +87,10 @@ def export(
         if mlog10p_max:
             print(results)
             f = open(output_path, "w")
-            f.write(str(results.values()))
+            header = "software_model\tID\tmax_minusLog10P\n"
+            f.write(header)
+            lines = ["{}\t{}\t{}\n".format(v["sample_name"], v["id"], v["mlog10p"]) for v in results.values()]
+            f.writelines(lines)
             f.close()
         else:
             df = pd.concat(frames, axis=0)
