@@ -46,6 +46,15 @@ def query(
     information, 
     uri):
     cfg = tiledbvcf.ReadConfig(memory_budget_mb=mem_budget_mb)
+    cfg = tiledb.Config({
+            "vfs.s3.aws_access_key_id":aws_access_key_id,
+            "vfs.s3.aws_secret_access_key":aws_secret_access_key,
+            "vfs.s3.endpoint_override":aws_endpoint_override,
+            "vfs.s3.use_virtual_addressing":aws_use_virtual_addressing,
+            "vfs.s3.scheme":aws_scheme,
+            "vfs.s3.region":aws_region,
+            "vfs.s3.verify_ssl":aws_verify_ssl
+        })
     ds = tiledbvcf.Dataset(uri, mode="r", cfg=cfg)
     if information == "samples":
         for s in ds.samples():
