@@ -61,7 +61,6 @@ def ingest(
         pass
     else:
         _attrs = [a.strip() for a in attrs.split(",")]
-        cfg = tiledbvcf.ReadConfig(memory_budget_mb=mem_budget_mb)
         cfg = tiledb.Config(
             {
                 "vfs.s3.aws_access_key_id": aws_access_key_id,
@@ -82,4 +81,8 @@ def ingest(
         ds = tiledbvcf.Dataset(tiledb_path_out, mode="w", cfg=read_cfg)
         ds.create_dataset(extra_attrs=[attrs])
         p = pathlib.Path(gwas_vcf_path)
-        ds.ingest_samples(threads=threads, sample_uris=[str(file) for file in list(p.glob("*.gz"))])
+        ds.ingest_samples(
+            total_memory_budget_mb=mem_budget_mb,
+            threads=threads,
+            sample_uris=[str(file) for file in list(p.glob("*.gz"))],
+        )
