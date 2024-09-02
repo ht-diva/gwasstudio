@@ -2,9 +2,7 @@ import click
 import cloup
 import numpy as np
 import tiledbvcf
-from cloup.constraints import mutually_exclusive
 from scipy import stats
-import tiledb
 from gwasstudio import logger
 from  methods import genome_windows
 from methods import locus_breaker
@@ -47,6 +45,11 @@ Exports data from a TileDB-VCF dataset.
         "--pvalue_label",
         default="fmt_LP",
         help="label used for -log10 of p-value in the GWAS data"
+    ),
+    cloup.option(
+        "--hole_size",
+        default=250000,
+        help="Minimum pair-base distance between SNPs in different loci (default: 250000)"
     )
 )
 
@@ -174,6 +177,7 @@ def export(
     chr_label,
     pos_label,
     pvalue_label,
+    hole_size,
     window_size,
     output_format,
     output_path,
@@ -228,7 +232,8 @@ def export(
                 pvalue_sig = pvalue_sig,
                 chr_label = chr_label,
                 pos_label = pos_label,
-                pvalue_label = pvalue_label)
+                pvalue_label = pvalue_label,
+                hole_size = hole_size)
         logger.info(f"Saving locus breaker output in {output_path}")
         if(output_format == "csv"):
             dask_df.to_csv(output_path, header=True, index=False)

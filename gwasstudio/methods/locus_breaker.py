@@ -1,19 +1,14 @@
-import tiledb
-import tiledbvcf
 import pandas as pd
-import pybedtools as pbt
-from scipy import stats
-from dask_jobqueue import SLURMCluster as Cluster
-from dask.distributed import Client
+import numpy as np
 
 def locus_breaker(tiledb_data, pvalue_sig=5, pvalue_limit=5, hole_size=250000, pvalue_label='fmt_LP', pos_label='pos_start', chr_label = 'contig'):
     """
     Breaking genome in locus
-    Returns a series of csv file describing the locus created dynamically around significant SNPs.
+    Returns a series of parquet files describing the loci created dynamically around significant SNPs.
     :param tiledb_data: TileDBVCF data (default: None)
-    :param pvalue_sig: Initla P-value threshold in -log10 format for creating regions to fruther refine later (default: 5)
-    :param pvalue_limit: P-value threshold in -log10 format used to create the regions around significant SNPs(default: 5)
-    :param hole_size: Space between SNPs to define independent SNPs (default: 250000)
+    :param pvalue_sig: P-value threshold in -log10 format used to create the regions around significant SNPs (default: 5)
+    :param pvalue_limit: P-value threshold in -log10 format for loci borders (default: 5)
+    :param hole_size: Minimum pair-base distance between SNPs in different loci (default: 250000)
     :param pvalue_label: Name of the column where the -log10(p-value) information is stored (default: fmt_LP)
     :param pos_label: Name of the column where the SNP position is stored (default: pos_start)
     :param chr_label: Name of the column where the chromosome information is stored (default: contig)
