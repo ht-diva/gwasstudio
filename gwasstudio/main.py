@@ -17,17 +17,20 @@ from gwasstudio.dask_client import DaskClient as Client
     cloup.option("--distribute", default=False, is_flag=True, help="Distribute the load to a Dask cluster"),
     cloup.option("--minimum_workers", help="Minimum amount of running workers", default=10),
     cloup.option("--maximum_workers", help="Maximum amount of running workers", default=100),
+    cloup.option("--memory_workers", help="Memory amount per worker", default="12G"),
+    cloup.option("--cpu_workers", help="CPU numbers per worker", default=6),
 )
 @click.pass_context
-def cli_init(ctx, distribute, minimum_workers, maximum_workers, quiet):
+def cli_init(ctx, distribute, minimum_workers, maximum_workers, memory_workers, cpu_workers, quiet):
     if quiet:
         logger.add(log_file, level="INFO", retention="30 days")
     else:
         logger.add(log_file, level="DEBUG", retention="30 days")
     logger.info("{} started".format(__appname__.capitalize()))
     if distribute:
-        client = Client(minimum_workers=minimum_workers, maximum_workers=maximum_workers)
-        logger.info("Dask dashboard available at {}".format(client.get_dashboard()))
+        
+        client = Client(minimum_workers=minimum_workers, maximum_workers=maximum_workers, memory_workers = memory_workers, cpu_workers = cpu_workers)
+        #logger.info("Dask dashboard available at {}".format(client.get_dashboard()))
     ctx.ensure_object(dict)
     ctx.obj["DISTRIBUTE"] = distribute
 

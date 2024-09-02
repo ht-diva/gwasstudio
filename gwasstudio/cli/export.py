@@ -7,6 +7,8 @@ from cloup.constraints import mutually_exclusive
 from scipy import stats
 import tiledb
 from gwasstudio import logger
+import methods/genome_windows
+import methods/locus_breaker
 
 help_doc = """
 Exports data from a TileDB-VCF dataset.
@@ -16,14 +18,9 @@ Exports data from a TileDB-VCF dataset.
 @cloup.command("export", no_args_is_help=True, help=help_doc)
 @cloup.option_group(
     "Filtering options",
-    cloup.option(
-        "--mlog10p-le", default=None, help="Filter by the mlog10p value less than or equal to the number given"
-    ),
-    cloup.option(
-        "--mlog10p-ge", default=None, help="Filter by the mlog10p value greater than or equal to the number given"
-    ),
-    cloup.option("--mlog10p-max", is_flag=True, help="Get the mlog10p maximum value for each sample"),
-    constraint=mutually_exclusive,
+    cloup.option("--pvalue-filter", default=False, help="pvalue threshold to use for filtering the data")
+    cloup.option("--window-size", default=False, help="Widnow size used by tiledbvcf for later queries")
+
 )
 @cloup.option_group(
     "TileDB options",
@@ -35,7 +32,10 @@ Exports data from a TileDB-VCF dataset.
         "-O", "--output-format", type=click.Choice(["csv"]), default="csv", help="Export format. Options are: csv"
     ),
     cloup.option("-o", "--output-path", help="The name of the output file"),
-    cloup.option("-R", "--regions-file", help="File containing regions (BED format)"),
+    cloup.option("-g", "--genome-version", help="Genome version to be used (either hg19 or hg38)", default="hg19"),
+    cloup.option("-c", "--chromosome", help="Chromosomes to use during processing. This can be a list of chromosomes separated by comma (Example: 1,2,3,4)", default = 1),
+    cloup.option("-s", "--sample-partitions", help="how many partition to divide the sample list with for computation (default is 1)", default=1),
+    cloup.option("-r", "--region-partitions", help="how many partition to divide the region list with for computation (default is 20)", default=20),
     cloup.option("-u", "--uri", help="TileDB-VCF dataset URI"),
 )
 @cloup.option_group(
@@ -54,12 +54,14 @@ def export(
     ctx,
     attrs,
     mem_budget_mb,
-    mlog10p_le,
-    mlog10p_ge,
-    mlog10p_max,
+    pvalue_filter,
+    window_size,
     output_format,
     output_path,
-    regions_file,
+    genome_version,
+    chromosome,
+    sample_partitions,
+    region_partitions,
     samples_file,
     samples,
     uri,
@@ -72,69 +74,50 @@ def export(
     aws_verify_ssl
 
 ):
-    if ctx.obj["DISTRIBUTE"]:
-        pass
+    #cfg = tiledbvcf.ReadConfig(
+    #    memory_budget_mb=mem_budget_mb)
+    _attrs = [a.strip() for a in attrs.split(",")]
+    cfg = {} 
+    cfg["vfs.s3.aws_access_key_id"] = aws_access_key_id
+    cfg["vfs.s3.aws_secret_access_key"] = aws_secret_access_key
+    cfg["vfs.s3.endpoint_override"] = aws_endpoint_override
+    cfg["vfs.s3.use_virtual_addressing"] = aws_use_virtual_addressing
+    cfg["vfs.s3.scheme"] = aws_scheme
+    cfg["vfs.s3.region"] = aws_region
+    cfg["vfs.s3.verify_ssl"] = aws_verify_ssl
+    ds = tiledbvcf.Dataset(uri, mode="r", tiledb_config=cfg)
+
+    samples_list = []
+    if samples:
+        samples_list = [s.strip() for s in samples.split(",")]
+
+
+        
+        
+    print("functions and library loaded")
+
+    #window size here I used 50000000
+    bed_regions_all = genome_windows(style="NCBI", window = window_size 50000000)
+    # Filter bed_regions_all to include chromosomes 1 through 22
+    bed_regions = [r for r in bed_regions_all if any(r.startswith(f"{chr_num}:") for chr_num in chr_list.split(","))]
+
+    print("bed regions created")
+    if locus_breaker:
+
+        dask_df = ds.map_dask(process_partition,
+                attrs=_attrs,
+                regions=bed_regions,
+                samples = ,
+                sample_partitions = sample_partitions,
+                region_partitions=region_partitions)
+        logger.info(f"Saving locus breaker output in {output_path}")
+        dask_df.to_csv(output_path, header=True, index=False)
+            
     else:
-        _attrs = [a.strip() for a in attrs.split(",")]
-        cfg = tiledbvcf.ReadConfig(
-            memory_budget_mb=mem_budget_mb)
-        cfg = tiledb.Config({
-            "vfs.s3.aws_access_key_id":aws_access_key_id,
-            "vfs.s3.aws_secret_access_key":aws_secret_access_key,
-            "vfs.s3.endpoint_override":aws_endpoint_override,
-            "vfs.s3.use_virtual_addressing":aws_use_virtual_addressing,
-            "vfs.s3.scheme":aws_scheme,
-            "vfs.s3.region":aws_region,
-            "vfs.s3.verify_ssl":aws_verify_ssl
-        })
-
-        cfg = tiledb.Config()
-        read_cfg = tiledbvcf.ReadConfig(tiledb_config=cfg)
-
-        ds = tiledbvcf.Dataset(uri, mode="r", cfg=read_cfg)
-
-        frames = []
-        results = {}
-        samples_list = []
-        if samples:
-            samples_list = [s.strip() for s in samples.split(",")]
-        for batch in ds.read_iter(attrs=_attrs, bed_file=regions_file, samples_file=samples_file, samples=samples_list):
-            batch["BETA"] = batch["fmt_ES"].str[0]
-            batch["SE"] = batch["fmt_SE"].str[0]
-            batch["LP"] = batch["fmt_LP"].str[0]
-            batch = batch.drop(columns=["fmt_ES", "fmt_SE", "fmt_LP"])
-            batch["MLOG10P"] = -np.log10(stats.norm.sf(abs(batch["BETA"] / batch["SE"])) * 2)
-
-            if mlog10p_max:
-                by_sample_name = batch.groupby(["sample_name"]).MLOG10P.idxmax()
-                for i in by_sample_name:
-                    values = {
-                        "id": batch.iloc[i].id,
-                        "sample_name": batch.iloc[i].sample_name,
-                        "mlog10p": batch.iloc[i].MLOG10P,
-                    }
-                    results[batch.iloc[i].sample_name] = values
-            else:
-                frames.append(batch)
-
-        if mlog10p_max:
-            print(results)
-            f = open(output_path, "w")
-            header = "software_model\tID\tmax_minusLog10P\n"
-            f.write(header)
-            lines = ["{}\t{}\t{}\n".format(v["sample_name"], v["id"], v["mlog10p"]) for v in results.values()]
-            f.writelines(lines)
-            f.close()
-        else:
-            df = pd.concat(frames, axis=0)
-            completed = ds.read_completed()
-            logger.info("Reading the data set completed: {}".format(completed))
-
-            if mlog10p_le:
-                df = df.loc[df.LP.le(mlog10p_le) | np.isclose(df.LP, mlog10p_le)]
-            elif mlog10p_ge:
-                df = df.loc[df.LP.ge(mlog10p_ge) | np.isclose(df.LP, mlog10p_ge)]
-
-            if output_format == "csv":
-                logger.info(f"Saving Dataframe in {output_path}")
-                df.to_csv(output_path, sep="\t", index=False)
+        filtered_ddf = ds.read_dask(attrs=_attrs,
+                regions=bed_regions,
+                region_partitions=region_partitions,
+                samples = samples_list,
+                sample_partitions=sample_partitions)
+        logger.info(f"Saving filtered GWAS by regions and samples in {output_path}")
+        filtered_ddf.to_csv(output_path, header=True, index=False)
