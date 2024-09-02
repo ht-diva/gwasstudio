@@ -1,4 +1,4 @@
-def genome_windows(genome, window=10000, style="UCSC"):
+def genome_windows(genome, window=50000000, style="UCSC"):
     """
     Windowed Genome Regions
     Returns a list of bedfile-formatted regions for the given genome.
