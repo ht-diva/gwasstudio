@@ -15,75 +15,51 @@ Exports data from a TileDB-VCF dataset.
 @cloup.command("export", no_args_is_help=True, help=help_doc)
 @cloup.option_group(
     "Options for Locusbreaker",
-    cloup.option("--locus-breaker", is_flag=True, default=False, help="Flag to use locus breaker"),
-    cloup.option("--pvalue_sig", default=5, help="pvalue threshold to use for filtering the data"),
-    cloup.option("--pvalue_limit", default=5, help="pvalue threshold to use for filtering the data"),
     cloup.option(
         "--hole_size",
         default=250000,
         help="Minimum pair-base distance between SNPs in different loci (default: 250000)",
     ),
+    cloup.option("--locus-breaker", is_flag=True, default=False, help="Flag to use locus breaker"),
+    cloup.option("--pvalue_sig", default=5, help="pvalue threshold to use for filtering the data"),
+    cloup.option("--pvalue_limit", default=5, help="pvalue threshold to use for filtering the data"),
 )
 @cloup.option_group(
     "Options for filtering using a list od SNPs ids",
-    cloup.option(
-        "-s", "--snp_list", is_flag=True, default=False, help="A txt file with a column containing the SNP ids"
-    ),
+    cloup.option("--snp_list", is_flag=True, default=False, help="A txt file with a column containing the SNP ids"),
 )
 @cloup.option_group(
     "TileDBVCF options",
     cloup.option(
         "-c", "--columns", default=False, help="List of columns to keep, provided as a single string comma separated"
     ),
-    cloup.option("-s", "--samples", default=False, help="A path of a txt file containing 1 sample name per line"),
-    cloup.option("-g", "--genome-version", help="Genome version to be used (either hg19 or hg38)", default="hg19"),
     # Not yet implemented
     cloup.option(
-        "-c",
         "--chromosome",
         help="Chromosomes list to use during processing. This can be a list of chromosomes separated by comma (Example: 1,2,3,4)",
         default="1",
     ),
-    cloup.option("--window-size", default=50000000, help="Widnow size used by tiledbvcf for later queries"),
-    cloup.option(
-        "-s",
-        "--sample-partitions",
-        help="how many partition to divide the sample list with for computation (default is 1)",
-        default=1,
-    ),
+    cloup.option("-g", "--genome-version", help="Genome version to be used (either hg19 or hg38)", default="hg19"),
+    cloup.option("-o", "--output-path", default="output", help="The name of the output file"),
     cloup.option(
         "-r",
         "--region-partitions",
         help="how many partition to divide the region list with for computation (default is 20)",
         default=20,
     ),
+    cloup.option("-s", "--samples", default=False, help="A path of a txt file containing 1 sample name per line"),
+    cloup.option(
+        "--sample-partitions",
+        help="how many partition to divide the sample list with for computation (default is 1)",
+        default=1,
+    ),
     cloup.option("-u", "--uri", default=False, help="TileDB-VCF dataset URI"),
-    cloup.option("-o", "--output-path", default="output", help="The name of the output file"),
-)
-@cloup.option_group(
-    "TileDB configurations",
-    cloup.option(
-        "-b",
-        "--mem-budget-mb",
-        default=20480,
-        help="The memory budget in MB when ingesting the data",
-    ),
-    cloup.option("--aws-access-key-id", default=None, help="aws access key id"),
-    cloup.option("--aws-secret-access-key", default=None, help="aws access key"),
-    cloup.option(
-        "--aws-endpoint-override",
-        default="https://storage.fht.org:9021",
-        help="endpoint where to connect",
-    ),
-    cloup.option("--aws-use-virtual-addressing", default="false", help="virtual address option"),
-    cloup.option("--aws-scheme", default="https", help="type of scheme used at the endpoint"),
-    cloup.option("--aws-region", default="", help="region where the s3 bucket is located"),
-    cloup.option("--aws-verify-ssl", default="false", help="if ssl verfication is needed"),
+    cloup.option("--window-size", default=50000000, help="Window size used by tiledbvcf for later queries"),
 )
 @click.pass_context
 def export(
+    ctx,
     columns,
-    mem_budget_mb,
     pvalue_limit,
     pvalue_sig,
     hole_size,
@@ -96,23 +72,9 @@ def export(
     region_partitions,
     samples,
     uri,
-    aws_access_key_id,
-    aws_secret_access_key,
-    aws_endpoint_override,
-    aws_use_virtual_addressing,
-    aws_scheme,
-    aws_region,
-    aws_verify_ssl,
 ):
-    cfg = {}
-    cfg["vfs.s3.aws_access_key_id"] = aws_access_key_id
-    cfg["vfs.s3.aws_secret_access_key"] = aws_secret_access_key
-    cfg["vfs.s3.endpoint_override"] = aws_endpoint_override
-    cfg["vfs.s3.use_virtual_addressing"] = aws_use_virtual_addressing
-    cfg["vfs.s3.scheme"] = aws_scheme
-    cfg["vfs.s3.region"] = aws_region
-    cfg["vfs.s3.verify_ssl"] = aws_verify_ssl
-    cfg["memory_budget_mb"] = mem_budget_mb
+    cfg = ctx.obj["cfg"]
+
     ds = tiledbvcf.Dataset(uri, mode="r", tiledb_config=cfg)
     logger.info("TileDBVCF dataset loaded")
 
