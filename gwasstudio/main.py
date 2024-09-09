@@ -6,7 +6,6 @@ from gwasstudio.cli.export import export
 from gwasstudio.cli.info import info
 from gwasstudio.cli.query import query
 from gwasstudio.cli.ingest import ingest
-from gwasstudio.dask_client import DaskClient as Client
 
 
 @cloup.group(name="main", help="GWASStudio", no_args_is_help=True, context_settings=context_settings)
@@ -27,10 +26,14 @@ def cli_init(ctx, distribute, minimum_workers, maximum_workers, memory_workers, 
     else:
         logger.add(log_file, level="DEBUG", retention="30 days")
     logger.info("{} started".format(__appname__.capitalize()))
-    if distribute:
-        
-        client = Client(minimum_workers=minimum_workers, maximum_workers=maximum_workers, memory_workers = memory_workers, cpu_workers = cpu_workers)
-        #logger.info("Dask dashboard available at {}".format(client.get_dashboard()))
+    # if distribute:
+    # client = Client(
+    #     minimum_workers=minimum_workers,
+    #     maximum_workers=maximum_workers,
+    #     memory_workers=memory_workers,
+    #     cpu_workers=cpu_workers,
+    # )
+    # logger.info("Dask dashboard available at {}".format(client.get_dashboard()))
     ctx.ensure_object(dict)
     ctx.obj["DISTRIBUTE"] = distribute
 
