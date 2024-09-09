@@ -5,7 +5,7 @@ snps_table = read.table("/Users/bruno.ariano/work/HT/tiledb/data/hapmap3_SNPs/eu
 snp_ids = snps_table$SNP
 snp_attributes = c('refsnp_id', 'chr_name', 'chrom_start', 'chrom_end', 'allele')
 
-snp_locations = getBM(attributes=snp_attributes, filters="snp_filter", 
+snp_locations = getBM(attributes=snp_attributes, filters="snp_filter",
                       values=snp_ids, mart=snp_mart)
 write.table(snp_locations,"/Users/bruno.ariano/work/HT/tiledb/data/hapmap3_SNPs/rsid_mapped.txt",
             col.names = T, row.names = F, quote = F)

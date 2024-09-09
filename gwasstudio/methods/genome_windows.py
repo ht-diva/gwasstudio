@@ -1,7 +1,8 @@
 from typing import List
 import pybedtools as pbt
-import pandas as pd
-def create_genome_windows(genome: str = 'hg19', window: int = 50000000, style: str = "UCSC") -> List[str]:
+
+
+def create_genome_windows(genome: str = "hg19", window: int = 50000000, style: str = "UCSC") -> List[str]:
     """
     Windowed Genome Regions
     Returns a list of bedfile-formatted regions for the given genome.
