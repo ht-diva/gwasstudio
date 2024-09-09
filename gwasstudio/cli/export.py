@@ -13,30 +13,39 @@ Exports data from a TileDB-VCF dataset.
 
 
 @cloup.command("export", no_args_is_help=True, help=help_doc)
-@cloup.option_group(
-    "Options for Locusbreaker",
-    cloup.option("--locus-breaker", is_flag=True, default=False, help="Flag to use locus breaker"),
-    cloup.option("--pvalue_sig", default=5, help="pvalue threshold to use for filtering the data"),
-    cloup.option("--pvalue_limit", default=5, help="pvalue threshold to use for filtering the data"),
-    cloup.option(
-        "--hole_size",
-        default=250000,
-        help="Minimum pair-base distance between SNPs in different loci (default: 250000)",
-    ),
-)
-@cloup.option_group(
-    "Options for filtering using a list od SNPs ids",
-    cloup.option(
-        "-s", "--snp_list", is_flag=True, default=False, help="A txt file with a column containing the SNP ids"
-    ),
-)
+
 @cloup.option_group(
     "TileDBVCF options",
     cloup.option(
-        "-c", "--columns", default=False, help="List of columns to keep, provided as a single string comma separated"
+        "-u", 
+        "--uri", 
+        default=False, 
+        help="TileDB-VCF dataset URI"
     ),
-    cloup.option("-s", "--samples", default=False, help="A path of a txt file containing 1 sample name per line"),
-    cloup.option("-g", "--genome-version", help="Genome version to be used (either hg19 or hg38)", default="hg19"),
+    cloup.option(
+        "-o", 
+        "--output-path", 
+        default="output", 
+        help="The name of the output file"
+    ),
+    cloup.option(
+        "-s", 
+        "--samples", 
+        default=False, 
+        help="A path of a txt file containing 1 sample name per line"
+    ),
+    cloup.option(
+        "-g", 
+        "--genome-version", 
+        help="Genome version to be used (either hg19 or hg38)", 
+        default="hg19"
+    ),
+    cloup.option(
+        "-c", 
+        "--columns", 
+        default=False, 
+        help="List of columns to keep, provided as a single string comma separated"
+    ),
     # Not yet implemented
     cloup.option(
         "-c",
@@ -44,7 +53,12 @@ Exports data from a TileDB-VCF dataset.
         help="Chromosomes list to use during processing. This can be a list of chromosomes separated by comma (Example: 1,2,3,4)",
         default="1",
     ),
-    cloup.option("--window-size", default=50000000, help="Widnow size used by tiledbvcf for later queries"),
+    cloup.option(
+        "-w",
+        "--window-size",
+        default=50000000,
+        help="Widnow size used by tiledbvcf for later queries"
+    ),
     cloup.option(
         "-s",
         "--sample-partitions",
@@ -56,10 +70,44 @@ Exports data from a TileDB-VCF dataset.
         "--region-partitions",
         help="how many partition to divide the region list with for computation (default is 20)",
         default=20,
-    ),
-    cloup.option("-u", "--uri", default=False, help="TileDB-VCF dataset URI"),
-    cloup.option("-o", "--output-path", default="output", help="The name of the output file"),
+    )
 )
+
+@cloup.option_group(
+    "Options for Locusbreaker",
+    cloup.option(
+        "--locus-breaker", 
+        is_flag=True,
+        default=False,
+        help="Flag to use locus breaker"
+    ),
+    cloup.option(
+        "--pvalue_sig",
+        default=5,
+        help="P-value threshold to use for filtering the data"
+    ),
+    cloup.option(
+        "--pvalue_limit",
+        default=5, 
+        help="P-value threshold for loci borders"
+    ),
+    cloup.option(
+        "--hole_size",
+        default=250000,
+        help="Minimum pair-base distance between SNPs in different loci (default: 250000)",
+    ),
+)
+@cloup.option_group(
+    "Options for filtering using a list of SNPs ids",
+    cloup.option(
+        "-s",
+        "--snp_list",
+        is_flag=True,
+        default=False,
+        help="A txt file with a column containing the SNP ids"
+    ),
+)
+
 @cloup.option_group(
     "TileDB configurations",
     cloup.option(
@@ -68,18 +116,43 @@ Exports data from a TileDB-VCF dataset.
         default=20480,
         help="The memory budget in MB when ingesting the data",
     ),
-    cloup.option("--aws-access-key-id", default=None, help="aws access key id"),
-    cloup.option("--aws-secret-access-key", default=None, help="aws access key"),
+    cloup.option(
+        "--aws-access-key-id",
+        default=None,
+        help="aws access key id"
+    ),
+    cloup.option(
+        "--aws-secret-access-key",
+        default=None, 
+        help="aws access key"
+    ),
     cloup.option(
         "--aws-endpoint-override",
         default="https://storage.fht.org:9021",
         help="endpoint where to connect",
     ),
-    cloup.option("--aws-use-virtual-addressing", default="false", help="virtual address option"),
-    cloup.option("--aws-scheme", default="https", help="type of scheme used at the endpoint"),
-    cloup.option("--aws-region", default="", help="region where the s3 bucket is located"),
-    cloup.option("--aws-verify-ssl", default="false", help="if ssl verfication is needed"),
+    cloup.option(
+        "--aws-use-virtual-addressing",
+        default="false",
+        help="virtual address option"
+    ),
+    cloup.option(
+        "--aws-scheme",
+        default="https", 
+        help="type of scheme used at the endpoint"
+    ),
+    cloup.option(
+        "--aws-region",
+        default="",
+        help="region where the s3 bucket is located"
+    ),
+    cloup.option(
+        "--aws-verify-ssl",
+        default="false",
+        help="if ssl verfication is needed"
+    ),
 )
+
 @click.pass_context
 def export(
     columns,
@@ -118,8 +191,8 @@ def export(
 
     samples_list = []
     if samples:
-        samples_file = open(samples, "r").read()
-        samples_list = [s.strip() for s in samples_file.split("\n")]
+        samples_file = open(samples, "r").readlines()
+        samples_list =  [s.split("\n")[0] for s in samples_file]
 
     # Create a mapping of the user selected columns into TileDB
     columns_attribute_mapping = {
