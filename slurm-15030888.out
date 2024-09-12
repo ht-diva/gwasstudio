@@ -1,0 +1,91 @@
+INFO: localdir at /localscratch/15030888.bruno.ariano
+INFO: your job will run on local system.
+2024-09-12 22:38:19,460 - distributed.nanny - INFO -         Start Nanny at: 'tcp://192.168.104.107:41597'
+2024-09-12 22:38:19,511 - distributed.nanny - INFO -         Start Nanny at: 'tcp://192.168.104.107:42289'
+2024-09-12 22:38:19,511 - distributed.nanny - INFO -         Start Nanny at: 'tcp://192.168.104.107:41507'
+2024-09-12 22:38:19,512 - distributed.nanny - INFO -         Start Nanny at: 'tcp://192.168.104.107:38085'
+2024-09-12 22:38:28,466 - distributed.worker - INFO -       Start worker at: tcp://192.168.104.107:39391
+2024-09-12 22:38:28,466 - distributed.worker - INFO -       Start worker at: tcp://192.168.104.107:42425
+2024-09-12 22:38:28,466 - distributed.worker - INFO -       Start worker at: tcp://192.168.104.107:39635
+2024-09-12 22:38:28,467 - distributed.worker - INFO -          Listening to: tcp://192.168.104.107:42425
+2024-09-12 22:38:28,467 - distributed.worker - INFO -          Listening to: tcp://192.168.104.107:39391
+2024-09-12 22:38:28,467 - distributed.worker - INFO -          Listening to: tcp://192.168.104.107:39635
+2024-09-12 22:38:28,467 - distributed.worker - INFO -           Worker name:           SLURMCluster-0-1
+2024-09-12 22:38:28,467 - distributed.worker - INFO -           Worker name:           SLURMCluster-0-3
+2024-09-12 22:38:28,467 - distributed.worker - INFO -           Worker name:           SLURMCluster-0-2
+2024-09-12 22:38:28,467 - distributed.worker - INFO -          dashboard at:      192.168.104.107:42219
+2024-09-12 22:38:28,467 - distributed.worker - INFO -          dashboard at:      192.168.104.107:34563
+2024-09-12 22:38:28,467 - distributed.worker - INFO -          dashboard at:      192.168.104.107:44431
+2024-09-12 22:38:28,467 - distributed.worker - INFO - Waiting to connect to: tcp://192.168.104.132:40845
+2024-09-12 22:38:28,467 - distributed.worker - INFO - Waiting to connect to: tcp://192.168.104.132:40845
+2024-09-12 22:38:28,467 - distributed.worker - INFO - Waiting to connect to: tcp://192.168.104.132:40845
+2024-09-12 22:38:28,467 - distributed.worker - INFO - -------------------------------------------------
+2024-09-12 22:38:28,467 - distributed.worker - INFO - -------------------------------------------------
+2024-09-12 22:38:28,467 - distributed.worker - INFO - -------------------------------------------------
+2024-09-12 22:38:28,467 - distributed.worker - INFO -               Threads:                          2
+2024-09-12 22:38:28,467 - distributed.worker - INFO -               Threads:                          2
+2024-09-12 22:38:28,467 - distributed.worker - INFO -               Threads:                          2
+2024-09-12 22:38:28,467 - distributed.worker - INFO -                Memory:                   9.31 GiB
+2024-09-12 22:38:28,467 - distributed.worker - INFO -                Memory:                   9.31 GiB
+2024-09-12 22:38:28,467 - distributed.worker - INFO -                Memory:                   9.31 GiB
+2024-09-12 22:38:28,467 - distributed.worker - INFO -       Local Directory: /localscratch/15030888.bruno.ariano/dask-scratch-space/worker-biuer0h3
+2024-09-12 22:38:28,467 - distributed.worker - INFO -       Local Directory: /localscratch/15030888.bruno.ariano/dask-scratch-space/worker-gooeiscp
+2024-09-12 22:38:28,467 - distributed.worker - INFO -       Local Directory: /localscratch/15030888.bruno.ariano/dask-scratch-space/worker-q52mmqfh
+2024-09-12 22:38:28,467 - distributed.worker - INFO - -------------------------------------------------
+2024-09-12 22:38:28,467 - distributed.worker - INFO - -------------------------------------------------
+2024-09-12 22:38:28,467 - distributed.worker - INFO - -------------------------------------------------
+2024-09-12 22:38:28,467 - distributed.worker - INFO -       Start worker at: tcp://192.168.104.107:45845
+2024-09-12 22:38:28,467 - distributed.worker - INFO -          Listening to: tcp://192.168.104.107:45845
+2024-09-12 22:38:28,467 - distributed.worker - INFO -           Worker name:           SLURMCluster-0-0
+2024-09-12 22:38:28,467 - distributed.worker - INFO -          dashboard at:      192.168.104.107:39213
+2024-09-12 22:38:28,467 - distributed.worker - INFO - Waiting to connect to: tcp://192.168.104.132:40845
+2024-09-12 22:38:28,467 - distributed.worker - INFO - -------------------------------------------------
+2024-09-12 22:38:28,467 - distributed.worker - INFO -               Threads:                          2
+2024-09-12 22:38:28,467 - distributed.worker - INFO -                Memory:                   9.31 GiB
+2024-09-12 22:38:28,467 - distributed.worker - INFO -       Local Directory: /localscratch/15030888.bruno.ariano/dask-scratch-space/worker-bqqk7e75
+2024-09-12 22:38:28,467 - distributed.worker - INFO - -------------------------------------------------
+2024-09-12 22:38:41,133 - distributed.worker - INFO - Starting Worker plugin shuffle
+2024-09-12 22:38:41,134 - distributed.worker - INFO - Starting Worker plugin shuffle
+2024-09-12 22:38:41,134 - distributed.worker - INFO -         Registered to: tcp://192.168.104.132:40845
+2024-09-12 22:38:41,134 - distributed.worker - INFO - -------------------------------------------------
+2024-09-12 22:38:41,134 - distributed.worker - INFO -         Registered to: tcp://192.168.104.132:40845
+2024-09-12 22:38:41,134 - distributed.worker - INFO - -------------------------------------------------
+2024-09-12 22:38:41,134 - distributed.worker - INFO - Starting Worker plugin shuffle
+2024-09-12 22:38:41,134 - distributed.core - INFO - Starting established connection to tcp://192.168.104.132:40845
+2024-09-12 22:38:41,135 - distributed.core - INFO - Starting established connection to tcp://192.168.104.132:40845
+2024-09-12 22:38:41,135 - distributed.worker - INFO -         Registered to: tcp://192.168.104.132:40845
+2024-09-12 22:38:41,135 - distributed.worker - INFO - -------------------------------------------------
+2024-09-12 22:38:41,135 - distributed.worker - INFO - Starting Worker plugin shuffle
+2024-09-12 22:38:41,135 - distributed.core - INFO - Starting established connection to tcp://192.168.104.132:40845
+2024-09-12 22:38:41,135 - distributed.worker - INFO -         Registered to: tcp://192.168.104.132:40845
+2024-09-12 22:38:41,136 - distributed.worker - INFO - -------------------------------------------------
+2024-09-12 22:38:41,136 - distributed.core - INFO - Starting established connection to tcp://192.168.104.132:40845
+/ssu/gassu/conda_envs/tiledb/lib/python3.10/site-packages/dask/dataframe/_pyarrow_compat.py:15: FutureWarning: Minimal version of pyarrow will soon be increased to 14.0.1. You are using 9.0.0. Please consider upgrading.
+  warnings.warn(
+2024-09-12 22:38:56,984 - distributed.core - INFO - Event loop was unresponsive in Worker for 15.85s.  This is often caused by long-running GIL-holding functions or moving large chunks of data. This can cause timeouts and instability.
+/ssu/gassu/conda_envs/tiledb/lib/python3.10/site-packages/dask/dataframe/_pyarrow_compat.py:15: FutureWarning: Minimal version of pyarrow will soon be increased to 14.0.1. You are using 9.0.0. Please consider upgrading.
+  warnings.warn(
+/ssu/gassu/conda_envs/tiledb/lib/python3.10/site-packages/dask/dataframe/_pyarrow_compat.py:15: FutureWarning: Minimal version of pyarrow will soon be increased to 14.0.1. You are using 9.0.0. Please consider upgrading.
+  warnings.warn(
+/ssu/gassu/conda_envs/tiledb/lib/python3.10/site-packages/dask/dataframe/_pyarrow_compat.py:15: FutureWarning: Minimal version of pyarrow will soon be increased to 14.0.1. You are using 9.0.0. Please consider upgrading.
+  warnings.warn(
+2024-09-12 22:39:16,346 - distributed.core - INFO - Event loop was unresponsive in Worker for 18.41s.  This is often caused by long-running GIL-holding functions or moving large chunks of data. This can cause timeouts and instability.
+2024-09-12 22:39:16,471 - distributed.core - INFO - Event loop was unresponsive in Worker for 18.52s.  This is often caused by long-running GIL-holding functions or moving large chunks of data. This can cause timeouts and instability.
+2024-09-12 22:39:16,497 - distributed.core - INFO - Event loop was unresponsive in Worker for 16.12s.  This is often caused by long-running GIL-holding functions or moving large chunks of data. This can cause timeouts and instability.
+2024-09-12 22:39:16,529 - distributed.core - INFO - Event loop was unresponsive in Worker for 16.15s.  This is often caused by long-running GIL-holding functions or moving large chunks of data. This can cause timeouts and instability.
+2024-09-12 22:39:25,046 - distributed.core - INFO - Event loop was unresponsive in Worker for 7.30s.  This is often caused by long-running GIL-holding functions or moving large chunks of data. This can cause timeouts and instability.
+2024-09-12 22:39:25,072 - distributed.core - INFO - Event loop was unresponsive in Worker for 7.55s.  This is often caused by long-running GIL-holding functions or moving large chunks of data. This can cause timeouts and instability.
+2024-09-12 22:39:25,075 - distributed.core - INFO - Event loop was unresponsive in Worker for 7.44s.  This is often caused by long-running GIL-holding functions or moving large chunks of data. This can cause timeouts and instability.
+2024-09-12 22:39:25,160 - distributed.core - INFO - Event loop was unresponsive in Worker for 7.55s.  This is often caused by long-running GIL-holding functions or moving large chunks of data. This can cause timeouts and instability.
+2024-09-12 22:39:40,674 - distributed.core - INFO - Event loop was unresponsive in Worker for 14.85s.  This is often caused by long-running GIL-holding functions or moving large chunks of data. This can cause timeouts and instability.
+2024-09-12 22:39:40,693 - distributed.core - INFO - Event loop was unresponsive in Worker for 14.92s.  This is often caused by long-running GIL-holding functions or moving large chunks of data. This can cause timeouts and instability.
+2024-09-12 22:39:40,708 - distributed.core - INFO - Event loop was unresponsive in Worker for 14.87s.  This is often caused by long-running GIL-holding functions or moving large chunks of data. This can cause timeouts and instability.
+2024-09-12 22:39:51,539 - distributed.core - INFO - Event loop was unresponsive in Worker for 10.75s.  This is often caused by long-running GIL-holding functions or moving large chunks of data. This can cause timeouts and instability.
+2024-09-12 22:39:51,668 - distributed.core - INFO - Event loop was unresponsive in Worker for 25.91s.  This is often caused by long-running GIL-holding functions or moving large chunks of data. This can cause timeouts and instability.
+2024-09-12 22:39:51,706 - distributed.core - INFO - Event loop was unresponsive in Worker for 10.92s.  This is often caused by long-running GIL-holding functions or moving large chunks of data. This can cause timeouts and instability.
+2024-09-12 22:39:51,721 - distributed.core - INFO - Event loop was unresponsive in Worker for 10.93s.  This is often caused by long-running GIL-holding functions or moving large chunks of data. This can cause timeouts and instability.
+slurmstepd: error: *** JOB 15030888 ON cnode07 CANCELLED AT 2024-09-12T22:39:52 ***
+2024-09-12 22:39:52,780 - distributed.worker - INFO - Stopping worker at tcp://192.168.104.107:39635. Reason: scheduler-close
+2024-09-12 22:39:52,781 - distributed.worker - INFO - Stopping worker at tcp://192.168.104.107:42425. Reason: scheduler-close
+2024-09-12 22:39:52,781 - distributed.worker - INFO - Stopping worker at tcp://192.168.104.107:45845. Reason: scheduler-close
+2024-09-12 22:39:52,781 - distributed.worker - INFO - Stopping worker at tcp://192.168.104.107:39391. Reason: scheduler-close

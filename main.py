@@ -22,8 +22,8 @@ from gwasstudio.dask_client import DaskClient as Client
 )
 @cloup.option_group(
     "TileDB configurations",
-    cloup.option("--aws-access-key-id", default=None, help="aws access key id"),
-    cloup.option("--aws-secret-access-key", default=None, help="aws access key"),
+    cloup.option("--aws-access-key-id", default="None", help="aws access key id"),
+    cloup.option("--aws-secret-access-key", default="None", help="aws access key"),
     cloup.option(
         "--aws-endpoint-override",
         default="https://storage.fht.org:9021",
@@ -79,7 +79,7 @@ def cli_init(
             cpu_workers=cpu_workers,
         ).get_client()
         ctx.obj["client"] = client
-        logger.info("Dask dashboard available at {}".format(client.get_dashboard()))
+        #logger.info("Dask dashboard available at {}".format(client.get_dashboard()))
 
 
 def main():

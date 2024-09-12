@@ -1,0 +1,7 @@
+INFO: localdir at /localscratch/15030890.bruno.ariano
+INFO: your job will run on local system.
+2024-09-12 22:39:49,505 - distributed.nanny - INFO -         Start Nanny at: 'tcp://192.168.104.108:45095'
+2024-09-12 22:39:49,520 - distributed.nanny - INFO -         Start Nanny at: 'tcp://192.168.104.108:39029'
+2024-09-12 22:39:49,520 - distributed.nanny - INFO -         Start Nanny at: 'tcp://192.168.104.108:38333'
+2024-09-12 22:39:49,522 - distributed.nanny - INFO -         Start Nanny at: 'tcp://192.168.104.108:46713'
+slurmstepd: error: *** JOB 15030890 ON cnode08 CANCELLED AT 2024-09-12T22:39:52 ***

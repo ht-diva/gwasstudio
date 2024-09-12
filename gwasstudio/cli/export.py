@@ -13,125 +13,51 @@ Exports data from a TileDB-VCF dataset.
 
 
 @cloup.command("export", no_args_is_help=True, help=help_doc)
-
 @cloup.option_group(
     "TileDBVCF options",
-    cloup.option(
-        "--uri", 
-        default="None", 
-        help="TileDB-VCF dataset URI"
-    ),
-    cloup.option(
-        "--output-path", 
-        default="output", 
-        help="The name of the output file"
-    ),
-    "Options for Locusbreaker",
-    cloup.option(
-        "--samples", 
-        default="None", 
-        help="A path of a txt file containing 1 sample name per line"
-    ),
-    cloup.option("--locus-breaker", is_flag=True, default=False, help="Flag to use locus breaker"),
-    cloup.option("--pvalue_sig", default=5, help="pvalue threshold to use for filtering the data"),
-    cloup.option("--pvalue_limit", default=5, help="pvalue threshold to use for filtering the data"),
-)
-@cloup.option_group(
-    "Options for filtering using a list od SNPs ids",
-    cloup.option("--snp_list", is_flag=True, default=False, help="A txt file with a column containing the SNP ids"),
-)
-@cloup.option_group(
-    "TileDBVCF options",
-    cloup.option(
-        "--genome-version", 
-        help="Genome version to be used (either hg19 or hg38)", 
-        default="hg19"
-    ),
-    cloup.option(
-        "--columns", 
-        default="CHROMOSOME,POSITION,ALLELES,BETA,SE,SAMPLES,LP", 
-        help="List of columns to keep, provided as a single string comma separated"
-    ),
-    # Not yet implemented
-    cloup.option(
-        "--chromosome",
-        help="Chromosomes list to use during processing. This can be a list of chromosomes separated by comma (Example: 1,2,3,4)",
-        default="1",
-    ),
-    cloup.option("-g", "--genome-version", help="Genome version to be used (either hg19 or hg38)", default="hg19"),
-    cloup.option("-o", "--output-path", default="output", help="The name of the output file"),
-    cloup.option(
-        "--window-size",
-        default=50000000,
-        help="Widnow size used by tiledbvcf for later queries"
-    ),
-    cloup.option(
-        "--sample-partitions",
-        help="how many partition to divide the sample list with for computation (default is 1)",
-        default=1,
-    ),
-    cloup.option(
-        "--region-partitions",
-        help="how many partition to divide the region list with for computation (default is 20)",
-        default=20,
-    )
-)
-
-@cloup.option_group(
-    "Options for Locusbreaker",
-    cloup.option(
-        "--locusbreaker",
-        is_flag=True,
-        default=False,
-        help="Flag to use locus breaker"
-    ),
-    cloup.option(
-        "--pvalue-sig",
-        default=5.0,
-        help="P-value threshold to use for filtering the data"
-    ),
-    cloup.option(
-        "--pvalue-limit",
-        default=5.0, 
-        help="P-value threshold for loci borders"
-    ),
-    cloup.option(
-        "--hole-size",
-        default=250000,
-        help="Minimum pair-base distance between SNPs in different loci (default: 250000)",
-    ),
-    cloup.option("-s", "--samples", default=False, help="A path of a txt file containing 1 sample name per line"),
-    cloup.option(
-        "--sample-partitions",
-        help="how many partition to divide the sample list with for computation (default is 1)",
-        default=1,
-    ),
-    cloup.option("-u", "--uri", default=False, help="TileDB-VCF dataset URI"),
+    cloup.option("--uri", default="None", help="TileDB-VCF dataset URI"),
+    cloup.option("--output-path", default="output", help="The name of the output file"),
+    cloup.option("--genome-version", help="Genome version to be used (either hg19 or hg38)", default="hg19"),
+    cloup.option("--columns", default="CHROMOSOME,POSITION,ALLELES,BETA,SE,SAMPLES,LP", help="List of columns to keep, provided as a single string comma separated"),
+    cloup.option("--chromosome", help="Chromosomes list to use during processing. This can be a list of chromosomes separated by comma (Example: 1,2,3,4)", default="1"),
     cloup.option("--window-size", default=50000000, help="Window size used by tiledbvcf for later queries"),
+    cloup.option("--sample-partitions", help="how many partitions to divide the sample list with for computation (default is 1)", default=1),
+    cloup.option("--region-partitions", help="how many partitions to divide the region list with for computation (default is 20)", default=20)
 )
-
+@cloup.option_group(
+    "Options for Locusbreaker",
+    cloup.option("--locusbreaker", default=False, is_flag=True, help="Option to run locusbreaker"),
+    cloup.option("--samples", default="None", help="A path of a txt file containing 1 sample name per line"),
+    cloup.option("--pvalue-sig", default=5.0, help="P-value threshold to use for filtering the data"),
+    cloup.option("--pvalue-limit", default=5.0, help="P-value threshold for loci borders"),
+    cloup.option("--hole-size", default=250000, help="Minimum pair-base distance between SNPs in different loci (default: 250000)")
+)
+@cloup.option_group(
+    "Options for filtering using a list of SNPs ids",
+    cloup.option("--snp-list", default="None", help="A txt file with a column containing the SNP ids")
+)
+@click.pass_context
 def export(
     ctx,
     columns,
+    locusbreaker,
     pvalue_limit,
+    pvalue_sig,
     hole_size,
     snp_list,
     window_size,
     output_path,
     genome_version,
-    columns,
     chromosome,
     sample_partitions,
     region_partitions,
-    locusbreaker,
     samples,
-    uri,
+    uri
 ):
     cfg = ctx.obj["cfg"]
-
+    print(cfg)
     ds = tiledbvcf.Dataset(uri, mode="r", tiledb_config=cfg)
     logger.info("TileDBVCF dataset loaded")
-
     samples_list = []
     if samples != "None":
         samples_file = open(samples, "r").readlines()
@@ -181,7 +107,7 @@ def export(
         )
         logger.info(f"Saving locus-breaker output in {output_path}")
         dask_df.to_csv(output_path)
-        exit()
+        return
 
     # If snp_list is selected, run extract_snp
     if snp_list != "None":
