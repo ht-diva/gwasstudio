@@ -17,56 +17,47 @@ Exports data from a TileDB-VCF dataset.
 @cloup.option_group(
     "TileDBVCF options",
     cloup.option(
-        "-u", 
         "--uri", 
-        default=False, 
+        default="None", 
         help="TileDB-VCF dataset URI"
     ),
     cloup.option(
-        "-o", 
         "--output-path", 
         default="output", 
         help="The name of the output file"
     ),
     cloup.option(
-        "-s", 
         "--samples", 
-        default=False, 
+        default="None", 
         help="A path of a txt file containing 1 sample name per line"
     ),
     cloup.option(
-        "-g", 
         "--genome-version", 
         help="Genome version to be used (either hg19 or hg38)", 
         default="hg19"
     ),
     cloup.option(
-        "-c", 
         "--columns", 
-        default=False, 
+        default="CHROMOSOME,POSITION,ALLELES,BETA,SE,SAMPLES,LP", 
         help="List of columns to keep, provided as a single string comma separated"
     ),
     # Not yet implemented
     cloup.option(
-        "-c",
         "--chromosome",
         help="Chromosomes list to use during processing. This can be a list of chromosomes separated by comma (Example: 1,2,3,4)",
         default="1",
     ),
     cloup.option(
-        "-w",
         "--window-size",
         default=50000000,
         help="Widnow size used by tiledbvcf for later queries"
     ),
     cloup.option(
-        "-s",
         "--sample-partitions",
         help="how many partition to divide the sample list with for computation (default is 1)",
         default=1,
     ),
     cloup.option(
-        "-r",
         "--region-partitions",
         help="how many partition to divide the region list with for computation (default is 20)",
         default=20,
@@ -76,23 +67,23 @@ Exports data from a TileDB-VCF dataset.
 @cloup.option_group(
     "Options for Locusbreaker",
     cloup.option(
-        "--locus-breaker", 
+        "--locusbreaker",
         is_flag=True,
         default=False,
         help="Flag to use locus breaker"
     ),
     cloup.option(
-        "--pvalue_sig",
-        default=5,
+        "--pvalue-sig",
+        default=5.0,
         help="P-value threshold to use for filtering the data"
     ),
     cloup.option(
-        "--pvalue_limit",
-        default=5, 
+        "--pvalue-limit",
+        default=5.0, 
         help="P-value threshold for loci borders"
     ),
     cloup.option(
-        "--hole_size",
+        "--hole-size",
         default=250000,
         help="Minimum pair-base distance between SNPs in different loci (default: 250000)",
     ),
@@ -100,22 +91,14 @@ Exports data from a TileDB-VCF dataset.
 @cloup.option_group(
     "Options for filtering using a list of SNPs ids",
     cloup.option(
-        "-s",
-        "--snp_list",
-        is_flag=True,
-        default=False,
-        help="A txt file with a column containing the SNP ids"
+        "--snp-list",
+        default="None",
+        help="A csv file with a column containing the SNP ids"
     ),
 )
 
 @cloup.option_group(
     "TileDB configurations",
-    cloup.option(
-        "-b",
-        "--mem-budget-mb",
-        default=20480,
-        help="The memory budget in MB when ingesting the data",
-    ),
     cloup.option(
         "--aws-access-key-id",
         default=None,
@@ -153,30 +136,27 @@ Exports data from a TileDB-VCF dataset.
     ),
 )
 
-@click.pass_context
 def export(
-    columns,
-    mem_budget_mb,
-    pvalue_limit,
     pvalue_sig,
+    pvalue_limit,
     hole_size,
     snp_list,
     window_size,
     output_path,
     genome_version,
+    columns,
     chromosome,
     sample_partitions,
     region_partitions,
+    locusbreaker,
     samples,
     uri,
     aws_access_key_id,
     aws_secret_access_key,
     aws_endpoint_override,
     aws_use_virtual_addressing,
-    aws_scheme,
-    aws_region,
-    aws_verify_ssl,
-):
+    aws_scheme,aws_region,
+    aws_verify_ssl):
     cfg = {}
     cfg["vfs.s3.aws_access_key_id"] = aws_access_key_id
     cfg["vfs.s3.aws_secret_access_key"] = aws_secret_access_key
@@ -185,7 +165,6 @@ def export(
     cfg["vfs.s3.scheme"] = aws_scheme
     cfg["vfs.s3.region"] = aws_region
     cfg["vfs.s3.verify_ssl"] = aws_verify_ssl
-    cfg["memory_budget_mb"] = mem_budget_mb
     ds = tiledbvcf.Dataset(uri, mode="r", tiledb_config=cfg)
     logger.info("TileDBVCF dataset loaded")
 
@@ -200,10 +179,10 @@ def export(
         "POSITION": "pos_start",
         "SNP": "id",
         "ALLELES": "alleles",
-        "BETA": "fmt_BETA",
+        "BETA": "fmt_ES",
         "SE": "fmt_SE",
         "LP": "fmt_LP",
-        "SAMPLES": "sample",
+        "SAMPLES": "sample_name",
     }
     column_list_select = [columns_attribute_mapping[a] for a in columns.split(",")]
     column_list_select.append("pos_end")
@@ -213,42 +192,48 @@ def export(
 
     # Filter bed regions by chromosome if selected
     if chromosome:
-        bed_regions = [
-            r for r in bed_regions_all if any(r.startswith(f"{chr_num}:") for chr_num in chromosome.split(","))
-        ]
+        bed_regions = [r for r in bed_regions_all if any(r.startswith(f"{chr_num}:") for chr_num in chromosome.split(","))]
+
     else:
         bed_regions = bed_regions_all
     logger.info("bed regions created")
 
     # If locus_breaker is selected, run locus_breaker
-    if locus_breaker:
+    if locusbreaker:
+        print("running locus breaker")
         dask_df = ds.map_dask(
-            locus_breaker,
-            attrs=column_list_select,
-            regions=bed_regions,
-            samples=samples_list,
-            sample_partitions=sample_partitions,
-            region_partitions=region_partitions,
+            lambda tiledb_data: locus_breaker(
+            tiledb_data,
             pvalue_limit=pvalue_limit,
             pvalue_sig=pvalue_sig,
             hole_size=hole_size,
-            map_attributes=columns_attribute_mapping,
+            map_attributes=columns_attribute_mapping
+            ),
+            attrs=column_list_select,
+            regions=bed_regions,
+            samples=samples_list,
+            #sample_partitions=sample_partitions,
+            #region_partitions=region_partitions
         )
-        logger.info(f"Saving locus breaker output in {output_path}")
-        dask_df.to_parquet(output_path, engine="pyarrow", compression="snappy")
+        logger.info(f"Saving locus-breaker output in {output_path}")
+        dask_df.to_csv(output_path)
+        exit()
 
     # If snp_list is selected, run extract_snp
     if snp_list:
-        tiledb_data_snp = extract_snp(
+        extract_snp(
             tiledb_data=ds,
-            pvalue_file_list=snp_list,
+            snp_file_list=snp_list,
             column_list_select=column_list_select,
             samples_list=samples_list,
             sample_partitions=sample_partitions,
             output_path=output_path,
+            map_attributes=columns_attribute_mapping,
         )
-        logger.info(f"Saving filtered summary statistics by SNPs in {output_path}")
-        tiledb_data_snp.to_parquet(output_path, engine="pyarrow", compression="snappy")
+        logger.info(f"Saved filtered summary statistics by SNPs in {output_path}")
+        exit()
+
+        #tiledb_data_snp.to_parquet(output_path, engine="pyarrow", compression="snappy", schema = None)
 
     # If neither locus_breaker nor snp_list is selected, filter the data by regions and samples
     else:
@@ -257,7 +242,8 @@ def export(
             regions=bed_regions,
             region_partitions=region_partitions,
             samples=samples_list,
-            sample_partitions=sample_partitions,
+            sample_partitions=sample_partitions
         )
         logger.info(f"Saving filtered GWAS by regions and samples in {output_path}")
-        filtered_ddf.to_parquet(output_path, engine="pyarrow", compression="snappy")
+        filtered_ddf.to_parquet(output_path, engine="pyarrow", compression="snappy",schema=None)
+        
