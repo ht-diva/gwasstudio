@@ -169,7 +169,7 @@ def export(
     logger.info("TileDBVCF dataset loaded")
 
     samples_list = []
-    if samples:
+    if samples != "None":
         samples_file = open(samples, "r").readlines()
         samples_list =  [s.split("\n")[0] for s in samples_file]
 
@@ -220,7 +220,7 @@ def export(
         exit()
 
     # If snp_list is selected, run extract_snp
-    if snp_list:
+    if snp_list != "None":
         extract_snp(
             tiledb_data=ds,
             snp_file_list=snp_list,
