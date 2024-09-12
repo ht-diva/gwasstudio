@@ -26,11 +26,22 @@ Exports data from a TileDB-VCF dataset.
         default="output", 
         help="The name of the output file"
     ),
+    "Options for Locusbreaker",
     cloup.option(
         "--samples", 
         default="None", 
         help="A path of a txt file containing 1 sample name per line"
     ),
+    cloup.option("--locus-breaker", is_flag=True, default=False, help="Flag to use locus breaker"),
+    cloup.option("--pvalue_sig", default=5, help="pvalue threshold to use for filtering the data"),
+    cloup.option("--pvalue_limit", default=5, help="pvalue threshold to use for filtering the data"),
+)
+@cloup.option_group(
+    "Options for filtering using a list od SNPs ids",
+    cloup.option("--snp_list", is_flag=True, default=False, help="A txt file with a column containing the SNP ids"),
+)
+@cloup.option_group(
+    "TileDBVCF options",
     cloup.option(
         "--genome-version", 
         help="Genome version to be used (either hg19 or hg38)", 
@@ -47,6 +58,8 @@ Exports data from a TileDB-VCF dataset.
         help="Chromosomes list to use during processing. This can be a list of chromosomes separated by comma (Example: 1,2,3,4)",
         default="1",
     ),
+    cloup.option("-g", "--genome-version", help="Genome version to be used (either hg19 or hg38)", default="hg19"),
+    cloup.option("-o", "--output-path", default="output", help="The name of the output file"),
     cloup.option(
         "--window-size",
         default=50000000,
@@ -87,57 +100,19 @@ Exports data from a TileDB-VCF dataset.
         default=250000,
         help="Minimum pair-base distance between SNPs in different loci (default: 250000)",
     ),
-)
-@cloup.option_group(
-    "Options for filtering using a list of SNPs ids",
+    cloup.option("-s", "--samples", default=False, help="A path of a txt file containing 1 sample name per line"),
     cloup.option(
-        "--snp-list",
-        default="None",
-        help="A csv file with a column containing the SNP ids"
+        "--sample-partitions",
+        help="how many partition to divide the sample list with for computation (default is 1)",
+        default=1,
     ),
-)
-
-@cloup.option_group(
-    "TileDB configurations",
-    cloup.option(
-        "--aws-access-key-id",
-        default=None,
-        help="aws access key id"
-    ),
-    cloup.option(
-        "--aws-secret-access-key",
-        default=None, 
-        help="aws access key"
-    ),
-    cloup.option(
-        "--aws-endpoint-override",
-        default="https://storage.fht.org:9021",
-        help="endpoint where to connect",
-    ),
-    cloup.option(
-        "--aws-use-virtual-addressing",
-        default="false",
-        help="virtual address option"
-    ),
-    cloup.option(
-        "--aws-scheme",
-        default="https", 
-        help="type of scheme used at the endpoint"
-    ),
-    cloup.option(
-        "--aws-region",
-        default="",
-        help="region where the s3 bucket is located"
-    ),
-    cloup.option(
-        "--aws-verify-ssl",
-        default="false",
-        help="if ssl verfication is needed"
-    ),
+    cloup.option("-u", "--uri", default=False, help="TileDB-VCF dataset URI"),
+    cloup.option("--window-size", default=50000000, help="Window size used by tiledbvcf for later queries"),
 )
 
 def export(
-    pvalue_sig,
+    ctx,
+    columns,
     pvalue_limit,
     hole_size,
     snp_list,
@@ -151,20 +126,9 @@ def export(
     locusbreaker,
     samples,
     uri,
-    aws_access_key_id,
-    aws_secret_access_key,
-    aws_endpoint_override,
-    aws_use_virtual_addressing,
-    aws_scheme,aws_region,
-    aws_verify_ssl):
-    cfg = {}
-    cfg["vfs.s3.aws_access_key_id"] = aws_access_key_id
-    cfg["vfs.s3.aws_secret_access_key"] = aws_secret_access_key
-    cfg["vfs.s3.endpoint_override"] = aws_endpoint_override
-    cfg["vfs.s3.use_virtual_addressing"] = aws_use_virtual_addressing
-    cfg["vfs.s3.scheme"] = aws_scheme
-    cfg["vfs.s3.region"] = aws_region
-    cfg["vfs.s3.verify_ssl"] = aws_verify_ssl
+):
+    cfg = ctx.obj["cfg"]
+
     ds = tiledbvcf.Dataset(uri, mode="r", tiledb_config=cfg)
     logger.info("TileDBVCF dataset loaded")
 

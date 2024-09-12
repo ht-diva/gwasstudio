@@ -11,8 +11,8 @@ Show GWASStudio details
 def info():
     print("{}, version {}\n".format(__appname__.capitalize(), __version__))
 
-    omnia_paths = {"log file": log_file}
+    paths = {"log file": log_file}
     print("Paths: ")
-    for k, v in omnia_paths.items():
+    for k, v in paths.items():
         print("  {}: {}".format(k, v))
     print("\n")
