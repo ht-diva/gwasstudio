@@ -13,5 +13,7 @@ def create_genome_windows(genome: str = "hg19", window: int = 50000000, style: s
     """
     genome_bins = pbt.BedTool().window_maker(genome=genome, w=window)
     regions_df = genome_bins.to_dataframe()
-    # modify contig naming scheme to match the dataset
+    if style != "UCSC":
+        regions_df.chrom = regions_df.chrom.apply(lambda x: x.lstrip("chr"))
+        # convert to 1-based index
     return regions_df.apply(lambda x: f"{x['chrom']}:{x['start'] + 1}-{x['end']}", axis=1).tolist()

@@ -3,12 +3,12 @@ from typing import List
 
 
 def locus_breaker(
-    tiledb_data: pd.DataFrame,
+    tiledb_data,
     pvalue_sig: float = 5,
     pvalue_limit: float = 5,
     hole_size: int = 250000,
     column_list_select: List[str] = [
-        "sample",
+        "sample_name",
         "contig",
         "pos_start",
         "pos_end",
@@ -18,7 +18,7 @@ def locus_breaker(
         "fmt_SE",
         "fmt_LP",
     ],
-    map_attributes: dict = None,
+    map_attributes: dict = None
 ) -> pd.DataFrame:
     """
     Breaking genome in locus
@@ -29,8 +29,22 @@ def locus_breaker(
     :param hole_size: Minimum pair-base distance between SNPs in different loci (default: 250000)
     :return: DataFrame with the loci information
     """
+    expected_schema = {
+    'contig': pd.Series(dtype='object'),
+    'snp_pos': pd.Series(dtype='int64'),
+    'snp_fmt_LP': pd.Series(dtype='float64'),
+    'alleles': pd.Series(dtype='object'),
+    'fmt_ES': pd.Series(dtype='object'),
+    'fmt_SE': pd.Series(dtype='object'),
+    'sample_name': pd.Series(dtype='object'),
+    'pos_end': pd.Series(dtype='int64')
+}
 
     # Convert fmt_LP from list to float
+    if tiledb_data.empty:
+        print("this region is empty")
+        return pd.DataFrame(expected_schema)
+    
     tiledb_data["fmt_LP"] = tiledb_data["fmt_LP"].apply(lambda x: float(x[0]))
 
     # Filter rows based on the p_limit threshold
@@ -38,7 +52,7 @@ def locus_breaker(
 
     # If no rows remain after filtering, return an empty DataFrame
     if tiledb_data.empty:
-        return pd.DataFrame(columns=["contig", "start", "end", "snp_pos", "snp_fmt_LP"] + tiledb_data.columns.tolist())
+        return pd.DataFrame(expected_schema)
 
     # Group by 'contig' (chromosome) first, then calculate regions within each chromosome
     trait_res = []
@@ -74,9 +88,9 @@ def locus_breaker(
     # Remove one of the duplicate 'contig' columns if present
     trait_res_df = trait_res_df.loc[:, ~trait_res_df.columns.duplicated()]
 
-    columns_attribute_mapping = {v: k for k, v in map_attributes.items() if v in trait_res_df.columns}
+    #columns_attribute_mapping = {v: k for k, v in map_attributes.items() if v in trait_res_df.columns}
 
-    trait_res_df.rename(columns=columns_attribute_mapping.values, inplace=True)
+    #trait_res_df.rename(columns=columns_attribute_mapping)
 
     # Rename the columns using the map
 
