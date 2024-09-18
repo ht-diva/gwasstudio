@@ -23,7 +23,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install the project
+        shell: bash -el {0}
         run: make install
 
       - name: Test version
+        shell: bash -el {0}
         run: gwasstudio --version
