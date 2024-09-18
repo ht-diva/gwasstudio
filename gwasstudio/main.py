@@ -79,7 +79,7 @@ def cli_init(
             cpu_workers=cpu_workers,
         ).get_client()
         ctx.obj["client"] = client
-        #logger.info("Dask dashboard available at {}".format(client.get_dashboard()))
+        # logger.info("Dask dashboard available at {}".format(client.get_dashboard()))
 
 
 def main():
