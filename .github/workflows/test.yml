@@ -17,7 +17,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: gwasstudio
-          environment-file: eenvironment.yml
+          environment-file: environment.yml
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
 
