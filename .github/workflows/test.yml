@@ -24,8 +24,11 @@ jobs:
 
       - name: Install the project
         shell: bash -el {0}
-        run: make install
+        run: |
+          make dependencies_dev
+          make install
 
       - name: Test version
         shell: bash -el {0}
-        run: make test
+        run: |
+          make test
