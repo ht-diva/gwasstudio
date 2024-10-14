@@ -28,4 +28,4 @@ jobs:
 
       - name: Test version
         shell: bash -el {0}
-        run: gwasstudio --version
+        run: make test
