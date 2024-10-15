@@ -65,6 +65,7 @@ def cli_init(
         "vfs.s3.scheme": aws_scheme,
         "vfs.s3.region": aws_region,
         "vfs.s3.verify_ssl": aws_verify_ssl,
+        'sm.dedup_coords': 'true'
     }
 
     ctx.ensure_object(dict)
