@@ -43,7 +43,7 @@ comoda = "^0.4.2"
 ruff = "^0.6.3"
 pre-commit = "^3.8.0"
 mongomock = "^4.2.0.post1"
-setuptools = "69.5.1"
+setuptools = "^69.5.1"
 
 [build-system]
 requires = ["poetry-core"]
