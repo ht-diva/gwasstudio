@@ -1,0 +1,47 @@
+# MongoDB connection
+mdbc:
+  db: "omnia"
+  uri: "mongodb://"
+
+
+# Ancestry list
+# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5815218/table/Tab1/?report=objectonly
+ancestry:
+  - "Aboriginal Australian"
+  - "African American or Afro-Caribbean"
+  - "African unspecified"
+  - "Asian unspecified"
+  - "Central Asian"
+  - "East Asian"
+  - "European"
+  - "Greater Middle Eastern (Middle Eastern, North African, or Persian)"
+  - "Hispanic or Latin American"
+  - "NR"
+  - "Native American"
+  - "Oceanian"
+  - "Other"
+  - "Other admixed ancestry"
+  - "South Asian"
+  - "South East Asian"
+  - "Sub-Saharan African"
+
+# Genome build list
+build:
+  - "GRCh37"
+  - "GRCh38"
+
+# Data category list
+data_category:
+  - "GWAS"
+  - "pQTL"
+  - "eQTL"
+  - "Single-cell"
+  - "scientific_article"
+
+# Project list
+project:
+  - "BELIEVE"
+  - "CHRIS"
+  - "CHRIS_INTERVAL"
+  - "INTERVAL"
+  - "DECODE_largescaleplasma2023"
