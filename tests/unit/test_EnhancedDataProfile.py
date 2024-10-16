@@ -50,3 +50,17 @@ class TestEnhancedDataProfile(unittest.TestCase):
         data_id = "1ce4b858d04eeef0090de34c29d6042c7d1fc0e65a889dd9c44e11a5459eb3df"
         obj = EnhancedDataProfile(project=project, data_id=data_id, mec=self.mec)
         self.assertEqual(obj.unique_key, f"{obj.mdb_obj.project}:{obj.mdb_obj.data_id}")
+
+    def test_is_connected(self):
+        """
+        return False if mec is None else True
+        """
+        project = self.cm.get_project_list[0]
+        data_id = "1ce4b858d04eeef0090de34c29d6042c7d1fc0e65a889dd9c44e11a5459eb3df"
+
+        obj = EnhancedDataProfile(project=project, data_id=data_id, mec=None)
+        self.assertFalse(obj.is_connected)
+        obj = EnhancedDataProfile(project=project, data_id=data_id)
+        self.assertTrue(obj.is_connected)
+        obj = EnhancedDataProfile(project=project, data_id=data_id, mec=self.mec)
+        self.assertTrue(obj.is_connected)
