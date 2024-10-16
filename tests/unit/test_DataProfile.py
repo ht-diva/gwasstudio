@@ -1,7 +1,9 @@
+import mongomock
 import unittest
 
-import mongomock
+
 from mongoengine import connect, disconnect, get_connection
+from gwasstudio.utils import compute_sha256, generate_random_word
 from gwasstudio.config_manager import ConfigurationManager
 from gwasstudio.mongo.models import EnhancedDataProfile, DataProfile
 
@@ -10,6 +12,8 @@ class TestDataProfile(unittest.TestCase):
     def setUp(self) -> None:
         self.mec = get_connection()
         self.cm = ConfigurationManager()
+
+        self.data_id = compute_sha256(st=generate_random_word(64))
 
     def tearDown(self) -> None:
         if DataProfile.objects().first():
@@ -31,7 +35,7 @@ class TestDataProfile(unittest.TestCase):
     def test_DataProfile_fields(self):
         kwargs = {
             "project": "BELIEVE",
-            "data_id": "1ce4b858d04eeef0090de34c29d6042c7d1fc0e65a889dd9c44e11a5459eb3df",
+            "data_id": self.data_id,
             "trait_desc": '{"code": "example1", "feature": "example2, "tissue": "example3"}',
             "category": "pQTL",
             "tags": ["tag1", "tag2"],
