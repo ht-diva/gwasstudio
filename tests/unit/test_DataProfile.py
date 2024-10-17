@@ -34,7 +34,7 @@ class TestDataProfile(unittest.TestCase):
 
     def test_DataProfile_fields(self):
         kwargs = {
-            "project": "BELIEVE",
+            "project": self.cm.get_project_list[0],
             "data_id": self.data_id,
             "trait_desc": '{"code": "example1", "feature": "example2, "tissue": "example3"}',
             "category": "pQTL",
