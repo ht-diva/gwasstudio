@@ -1,7 +1,9 @@
+import mongomock
 import unittest
 
-import mongomock
+
 from mongoengine import connect, disconnect, get_connection
+from gwasstudio.utils import generate_random_word, compute_sha256
 from gwasstudio.config_manager import ConfigurationManager
 from gwasstudio.mongo.models import EnhancedDataProfile, DataProfile
 
@@ -10,6 +12,8 @@ class TestEnhancedDataProfile(unittest.TestCase):
     def setUp(self) -> None:
         self.mec = get_connection()
         self.cm = ConfigurationManager()
+
+        self.data_id = compute_sha256(st=generate_random_word(64))
 
     def tearDown(self) -> None:
         if DataProfile.objects().first():
@@ -40,14 +44,14 @@ class TestEnhancedDataProfile(unittest.TestCase):
         If obj is mapped, then obj.pk is not None
         """
         project = self.cm.get_project_list[0]
-        data_id = "1ce4b858d04eeef0090de34c29d6042c7d1fc0e65a889dd9c44e11a5459eb3df"
+        data_id = self.data_id
         obj = EnhancedDataProfile(project=project, data_id=data_id, mec=self.mec)
         obj.save()
         assert obj.pk is not None
 
     def test_unique_key(self):
         project = self.cm.get_project_list[0]
-        data_id = "1ce4b858d04eeef0090de34c29d6042c7d1fc0e65a889dd9c44e11a5459eb3df"
+        data_id = self.data_id
         obj = EnhancedDataProfile(project=project, data_id=data_id, mec=self.mec)
         self.assertEqual(obj.unique_key, f"{obj.mdb_obj.project}:{obj.mdb_obj.data_id}")
 
@@ -56,7 +60,7 @@ class TestEnhancedDataProfile(unittest.TestCase):
         return False if mec is None else True
         """
         project = self.cm.get_project_list[0]
-        data_id = "1ce4b858d04eeef0090de34c29d6042c7d1fc0e65a889dd9c44e11a5459eb3df"
+        data_id = self.data_id
 
         obj = EnhancedDataProfile(project=project, data_id=data_id, mec=None)
         self.assertFalse(obj.is_connected)
