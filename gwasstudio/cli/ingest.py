@@ -1,9 +1,9 @@
 import click
 import cloup
 import pathlib
-import tiledbvcf
 import functions.process_and_ingest
 import functions.create_tiledb_schema
+from utils import compute_sha256
 
 help_doc = """
 Ingest data data in a TileDB-unified dataset.
@@ -17,11 +17,6 @@ Ingest data data in a TileDB-unified dataset.
         "--input-path",
         default=None,
         help="Path to a folder where all the vcf.gz files to ingest are stored",
-    ),
-    cloup.option(
-        "--checksum_path",
-        default=None,
-        help="Path where is stored a checksum file that map the files to unique id",
     ),
     cloup.option(
         "-u",
