@@ -17,7 +17,7 @@ bootstrap:
 	$(CONDA_ACTIVATE) /tmp/bootstrap
 	/tmp/bootstrap/bin/conda-lock -k explicit --conda mamba
 	poetry init --python=~3.10  # version spec should match the one from environment.yml
-	poetry add --lock tiledbvcf-py=0.26.*
+	poetry add --lock tiledb-py=0.32.2
 	poetry add --lock conda-lock
 	conda deactivate
 	rm -rf /tmp/bootstrap
