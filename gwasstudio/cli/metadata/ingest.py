@@ -1,7 +1,7 @@
+import json
 from pathlib import Path
 
 import cloup
-import json
 
 from gwasstudio.utils import compute_sha256
 
