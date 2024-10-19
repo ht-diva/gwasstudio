@@ -13,8 +13,3 @@ dependencies:
   - poetry=1.*  # or 1.1.*, or no version at all -- as you want
   - tiledb-py=0.32.2
   - pybedtools=0.*
-# Non-standard section listing target platforms for conda-lock:
-platforms:
-  - linux-64
-  - osx-64
-  - osx-arm64
