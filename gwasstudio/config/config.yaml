@@ -1,8 +1,7 @@
 # MongoDB connection
 mdbc:
-  db: "omnia"
-  uri: "mongodb://"
-
+  db: "dbname"
+  uri: "mongodb://username:password@hostname:27017/?authSource=dbname"
 
 # Ancestry list
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5815218/table/Tab1/?report=objectonly

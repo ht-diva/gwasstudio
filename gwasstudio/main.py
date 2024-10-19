@@ -35,7 +35,7 @@ from gwasstudio.dask_client import DaskClient as Client
     cloup.option("--aws-use-virtual-addressing", default="false", help="virtual address option"),
     cloup.option("--aws-scheme", default="https", help="type of scheme used at the endpoint"),
     cloup.option("--aws-region", default="", help="region where the s3 bucket is located"),
-    cloup.option("--aws-verify-ssl", default="false", help="if ssl verfication is needed"),
+    cloup.option("--aws-verify-ssl", default="false", help="if ssl verification is needed"),
 )
 @click.pass_context
 def cli_init(

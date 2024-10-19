@@ -4,8 +4,8 @@ from pathlib import Path
 import cloup
 
 from gwasstudio import logger
-from gwasstudio.utils import compute_sha256
 from gwasstudio.mongo.models import EnhancedDataProfile
+from gwasstudio.utils import compute_sha256
 
 help_doc = """
 Ingest metadata into a MongoDB collection.

@@ -10,7 +10,8 @@ from gwasstudio import __appname__, config_dir, config_filename, logger
 class ConfigurationManager:
     def __init__(self, **kwargs):
         def copy_config_file_from_package(dst):
-            _from_package = files("config").joinpath(config_filename)
+            package_name = ".".join([__appname__, "config"])
+            _from_package = files(package_name).joinpath(config_filename)
             copyfile(_from_package, dst)
 
         # Check if a custom config file is provided

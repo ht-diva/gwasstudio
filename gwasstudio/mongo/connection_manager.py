@@ -21,8 +21,15 @@ def get_mec_from_config():
 class MongoEngineConnectionManager:
     def __init__(self, **kwargs):
         cm = ConfigurationManager()
-        self.db = kwargs.get("db", cm.get_mdbc_db)
-        self.uri = kwargs.get("uri", cm.get_mdbc_uri)
+        if "db" in kwargs and kwargs["db"] is None:
+            self.db = cm.get_mdbc_db
+        else:
+            self.db = kwargs.get("db")
+
+        if "uri" in kwargs and kwargs["uri"] is None:
+            self.uri = cm.get_mdbc_uri
+        else:
+            self.uri = kwargs.get("uri")
 
     def __enter__(self):
         connect(self.db, host=self.uri)
