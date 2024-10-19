@@ -3,7 +3,9 @@ from pathlib import Path
 
 import cloup
 
+from gwasstudio import logger
 from gwasstudio.utils import compute_sha256
+from gwasstudio.mongo.models import EnhancedDataProfile
 
 help_doc = """
 Ingest metadata into a MongoDB collection.
@@ -53,4 +55,6 @@ def meta_ingest(data_path):
             "build": build,
             "trait_desc": json.dumps(trait_desc),
         }
-        print(**kwargs)
+        logger.debug(kwargs)
+        obj = EnhancedDataProfile(**kwargs)
+        obj.save()
