@@ -48,7 +48,7 @@ class TestDataProfile(unittest.TestCase):
         obj = EnhancedDataProfile(mec=self.mec, **kwargs)
         obj.save()
 
-        from_mongo = DataProfile.objects(project=kwargs.get("project")).first()
+        from_mongo = DataProfile.objects(project=kwargs.get("project"), data_id=kwargs.get("data_id")).first()
         self.assertEqual(from_mongo.project.value, kwargs.get("project"))
         self.assertEqual(from_mongo.data_id, kwargs.get("data_id"))
         self.assertEqual(from_mongo.trait_desc, kwargs.get("trait_desc"))

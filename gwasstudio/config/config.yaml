@@ -1,8 +1,6 @@
 # MongoDB connection
 mdbc:
-  db: "omnia"
-  uri: "mongodb://"
-
+  uri: "mongodb://username:password@hostname:27017/dbname?authSource=dbname"
 
 # Ancestry list
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5815218/table/Tab1/?report=objectonly
@@ -16,6 +14,7 @@ ancestry:
   - "European"
   - "Greater Middle Eastern (Middle Eastern, North African, or Persian)"
   - "Hispanic or Latin American"
+  - "Icelandic"
   - "NR"
   - "Native American"
   - "Oceanian"
