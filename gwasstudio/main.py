@@ -24,7 +24,7 @@ from gwasstudio.dask_client import DaskClient as Client
     cloup.option("--cpu_workers", help="CPU numbers per worker", default=6),
 )
 @cloup.option_group(
-    "TileDB configurations",
+    "TileDB configuration",
     cloup.option("--aws-access-key-id", default="None", help="aws access key id"),
     cloup.option("--aws-secret-access-key", default="None", help="aws access key"),
     cloup.option(
@@ -58,7 +58,6 @@ def cli_init(
         logger.add(log_file, level="INFO", retention="30 days")
     else:
         logger.add(log_file, level="DEBUG", retention="30 days")
-    logger.info("{} started".format(__appname__.capitalize()))
 
     cfg = {
         "vfs.s3.aws_access_key_id": aws_access_key_id,
@@ -91,6 +90,7 @@ def main():
     # cli_init.add_command(export)
     # cli_init.add_command(ingest)
     cli_init.add_command(meta_ingest)
+    logger.info("{} started".format(__appname__.capitalize()))
     cli_init(obj={})
 
 

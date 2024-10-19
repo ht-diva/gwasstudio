@@ -34,6 +34,7 @@ def meta_ingest(data_path):
         "version": "v4",
         "normalization": "raw",
     }
+    logger.info("{} documents to ingest".format(len(file_list)))
     for path in file_list:
         file_hash = compute_sha256(fpath=path)
         basename = Path(path).name.split("_")[:-1]
