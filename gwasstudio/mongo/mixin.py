@@ -35,7 +35,7 @@ class MongoMixin:
 
     def ensure_is_mapped(self, op=None):
         if not self.map():
-            logger.warning("Document {} does not exist on remote, " "skipping {} operation".format(self.uk, op))
+            logger.warning("Document {} does not exist on remote, " "skipping {} operation".format(self.unique_key, op))
             return False
         return True
 
@@ -62,7 +62,7 @@ class MongoMixin:
         detail = {}
         if self.ensure_is_mapped("view"):
             with self.mec:
-                detail = self.klass.objects(unique_key=self.uk).as_pymongo()[0]
+                detail = self.klass.objects(unique_key=self.unique_key).as_pymongo()[0]
                 logger.debug(detail)
         return detail
 

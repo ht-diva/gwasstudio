@@ -85,4 +85,10 @@ class EnhancedDataProfile(MongoMixin):
     def unique_key(self):
         return f"{self.mdb_obj.project}:{self.mdb_obj.data_id}"
 
+    @unique_key.setter
+    def unique_key(self, uk):
+        separator = ":"
+        self._obj.project = uk.split(separator)[0]
+        self._obj.data_id = uk.split(separator)[1]
+
     # end of required
