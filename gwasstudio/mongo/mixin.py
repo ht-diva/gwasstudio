@@ -62,7 +62,7 @@ class MongoMixin:
         detail = {}
         if self.ensure_is_mapped("view"):
             with self.mec:
-                detail = self.klass.objects(unique_key=self.unique_key).as_pymongo()[0]
+                detail = self.klass.objects(id=self.pk).as_pymongo()[0]
                 logger.debug(detail)
         return detail
 

@@ -10,7 +10,6 @@ from gwasstudio.mongo.mixin import MongoMixin
 # TODO: This configuration manager doesn't use a custom configuration file passed by cli
 cm = ConfigurationManager()
 DataCategory = Enum("DataCategory", {item.replace(" ", "_").upper(): item for item in cm.get_data_category_list})
-Project = Enum("Project", {item.replace(" ", "_").upper(): item for item in cm.get_project_list})
 Ancestry = Enum("Ancestry", {item.replace(" ", "_").upper(): item for item in cm.get_ancestry_list})
 Build = Enum("Build", {item.replace(" ", "_").upper(): item for item in cm.get_build_list})
 
@@ -34,7 +33,7 @@ class DataProfile(Metadata):
     uniqueness of the trait is ensured by project+data_id
     """
 
-    project = EnumField(Project, required=True)
+    project = StringField(max_length=500, required=True)
     data_id = StringField(max_length=200, unique_with="project", required=True)
     trait_desc = StringField(max_length=500)
     total_samples = IntField()
