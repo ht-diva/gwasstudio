@@ -1,9 +1,8 @@
 import click
 import cloup
 import pathlib
-import functions.process_and_ingest
-import functions.create_tiledb_schema
-from utils import compute_sha256
+from utils import process_and_ingest
+from utils import create_tiledb_schema
 
 help_doc = """
 Ingest data data in a TileDB-unified dataset.
