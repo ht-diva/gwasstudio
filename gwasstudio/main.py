@@ -6,6 +6,7 @@ from gwasstudio import __appname__, __version__, context_settings, log_file, log
 # from gwasstudio.cli.export import export
 from gwasstudio.cli.info import info
 from gwasstudio.cli.metadata.ingest import meta_ingest
+from gwasstudio.cli.metadata.view import meta_view
 
 # from gwasstudio.cli.ingest import ingest
 # from gwasstudio.cli.query import query
@@ -90,6 +91,7 @@ def main():
     # cli_init.add_command(export)
     # cli_init.add_command(ingest)
     cli_init.add_command(meta_ingest)
+    cli_init.add_command(meta_view)
     logger.info("{} started".format(__appname__.capitalize()))
     cli_init(obj={})
 
