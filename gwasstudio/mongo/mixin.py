@@ -66,6 +66,22 @@ class MongoMixin:
                 logger.debug(detail)
         return detail
 
+    def query(self, **kwargs):
+        """
+
+        :param kwargs:
+        :return:
+        """
+        docs = []
+        if len(kwargs) > 0:
+            with self.mec:
+                if "trait_desc" in kwargs.keys():
+                    docs = self.klass.objects(trait_desc__contains=kwargs.get("trait_desc")).as_pymongo()
+                else:
+                    docs = self.klass.objects(**kwargs).as_pymongo()
+                logger.debug("found {} documents".format(len(docs)))
+        return docs
+
     def modify(self, **kwargs):
         """
         Perform an atomic update of the document in the database and
