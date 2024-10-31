@@ -3,11 +3,11 @@ import cloup
 
 from gwasstudio import __appname__, __version__, context_settings, log_file, logger
 
-from gwasstudio.cli.export import export
-from gwasstudio.cli.info import info
-from gwasstudio.cli.ingest import ingest
-from gwasstudio.cli.query import query
-from gwasstudio.dask_client import DaskClient as Client
+from cli.export import export
+#from info import info
+from cli.ingest import ingest
+from cli.query import query
+from dask_client import DaskClient as Client
 
 
 @cloup.group(name="main", help="GWASStudio", no_args_is_help=True, context_settings=context_settings)
@@ -85,7 +85,7 @@ def cli_init(
 
 
 def main():
-    cli_init.add_command(info)
+    #cli_init.add_command(info)
     cli_init.add_command(query)
     cli_init.add_command(export)
     cli_init.add_command(ingest)

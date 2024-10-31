@@ -1,9 +1,9 @@
 import click
 import cloup
 from gwasstudio import logger
-from gwasstudio.methods.locus_breaker import locus_breaker
+#from methods.locus_breaker import locus_breaker
+import tiledb
 from scipy import stats
-print("starting export")
 help_doc = """
 Exports data from a TileDB dataset.
 """
@@ -13,6 +13,7 @@ Exports data from a TileDB dataset.
 @cloup.option_group(
     "TileDB mandatory options",
     cloup.option("--uri", default="None", help="TileDB dataset URI"),
+    cloup.option("--output_path", default="None", help="The chromosome used for the analysis"),
     cloup.option("--chromosome", default="None", help="The chromosome used for the analysis"),
     cloup.option("--trait_id_file", default="None", help="The chromosome used for the analysis"),
 )
@@ -35,11 +36,11 @@ def export(
     chromosome,
     output_path,
     pvalue_sig,
-    hole_size,
     pvalue_limit,
     hole_size,
     snp_list,
-    region
+    locusbreaker
+    
 ):
     cfg = ctx.obj["cfg"]
     tiledb_unified = tiledb.open(uri, mode="r")
@@ -49,17 +50,17 @@ def export(
     # If locus_breaker is selected, run locus_breaker
     if locusbreaker:
         print("running locus breaker")
-        dask_df = ds.map_dask(
-            lambda tiledb_data: locus_breaker(
-            tiledb_data,
-            pvalue_limit=pvalue_limit,
-            pvalue_sig=pvalue_sig,
-            hole_size=hole_size,
-            chromosome,
-            trait_id_list
-            ),
-            attrs=columns_attribute_mapping.keys()
-        )
+        #dask_df = ds.map_dask(
+        #    lambda tiledb_data: locus_breaker(
+        #    tiledb_data,
+        #    pvalue_limit=pvalue_limit,
+        #    pvalue_sig=pvalue_sig,
+        #    hole_size=hole_size,
+        #    chromosome,
+        #    trait_id_list
+        #    ),
+        #    attrs=columns_attribute_mapping.keys()
+        #
         logger.info(f"Saving locus-breaker output in {output_path}")
         dask_df.to_csv(output_path)
         return
