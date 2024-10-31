@@ -5,7 +5,6 @@ from gwasstudio import __appname__, __version__, context_settings, log_file, log
 
 from gwasstudio.cli.export import export
 from gwasstudio.cli.info import info
-
 from gwasstudio.cli.ingest import ingest
 from gwasstudio.cli.query import query
 from gwasstudio.dask_client import DaskClient as Client

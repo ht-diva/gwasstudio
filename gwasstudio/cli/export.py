@@ -2,9 +2,8 @@ import click
 import cloup
 from gwasstudio import logger
 from gwasstudio.methods.locus_breaker import locus_breaker
-from gwasstudio.methods.extract_snp import extract_snp
 from scipy import stats
-
+print("starting export")
 help_doc = """
 Exports data from a TileDB dataset.
 """
@@ -13,7 +12,7 @@ Exports data from a TileDB dataset.
 @cloup.command("export", no_args_is_help=True, help=help_doc)
 @cloup.option_group(
     "TileDB mandatory options",
-    cloup.option("--uri", default="None", help="TileDB-VCF dataset URI"),
+    cloup.option("--uri", default="None", help="TileDB dataset URI"),
     cloup.option("--chromosome", default="None", help="The chromosome used for the analysis"),
     cloup.option("--trait_id_file", default="None", help="The chromosome used for the analysis"),
 )
