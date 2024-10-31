@@ -4,21 +4,11 @@ from typing import List
 
 def locus_breaker(
     tiledb_data,
-    pvalue_sig: float = 5,
     pvalue_limit: float = 5,
+    pvalue_sig: float = 5,
     hole_size: int = 250000,
-    column_list_select: List[str] = [
-        "sample_name",
-        "contig",
-        "pos_start",
-        "pos_end",
-        "id",
-        "alleles",
-        "fmt_BETA",
-        "fmt_SE",
-        "fmt_LP",
-    ],
-    map_attributes: dict = None
+    chromosome,
+    trait_id_list
 ) -> pd.DataFrame:
     """
     Breaking genome in locus
