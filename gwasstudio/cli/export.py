@@ -6,7 +6,7 @@ from gwasstudio.methods.extract_snp import extract_snp
 from scipy import stats
 
 help_doc = """
-Exports data from a TileDB-VCF dataset.
+Exports data from a TileDB dataset.
 """
 
 
