@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import cloup
+import pandas as pd
 
 from gwasstudio import logger
 from gwasstudio.mongo.models import EnhancedDataProfile
@@ -36,6 +37,8 @@ def meta_ingest(data_path):
     }
     logger.info("{} documents to ingest".format(len(file_list)))
     for path in file_list:
+        df = pd.read_csv(Path(path), compression="gzip", nrows=1, usecols=["N"], sep="\t")
+        total_samples = int(df.loc[0, "N"])
         file_hash = compute_sha256(fpath=path)
         basename = Path(path).name.split("_")[:-1]
         seqid = "_".join([basename[2], basename[3]])
@@ -52,6 +55,7 @@ def meta_ingest(data_path):
             "project": project,
             "data_id": file_hash,
             "category": category,
+            "total_samples": total_samples,
             "population": population,
             "build": build,
             "trait_desc": json.dumps(trait_desc),
