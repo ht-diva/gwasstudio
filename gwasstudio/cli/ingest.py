@@ -45,7 +45,7 @@ def ingest(ctx, input_path,checksum_path, attrs, uri, mem_budget_mb, threads, ba
         cfg = ctx.obj["cfg"]
         if restart:
             test_tiledb = tiledb.open(uri, "r")
-            arrow_table = test_tiledb.query(return_arrow=True, dims=['trait_id'], attrs=[]).df[1, 1:10000000, :]
+            arrow_table = test_tiledb.query(return_arrow=True, dims=['TRAITID'], attrs=[]).df[1, 1:10000000, :]
             unique_arrow = (np.unique(arrow_table))
             checksum_dict = pd.Series(checksum.filename.values,index=checksum.hash).to_dict()
             file_list = []
