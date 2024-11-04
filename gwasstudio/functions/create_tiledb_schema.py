@@ -1,3 +1,5 @@
+import tiledb
+import numpy as np
 def create_tiledb_schema(uri,cfg):
     pos_domain = (1, 3000000000)
     dom = tiledb.Domain(
