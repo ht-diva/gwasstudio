@@ -96,7 +96,7 @@ class MongoMixin:
                 with self.mec:
                     self.mdb_obj.modification_date = datetime.datetime.now()
                     result = self.mdb_obj.modify(**kwargs)
-                    logger.info("{} modified".format(self.uk))
+                    logger.info("{} modified".format(self.unique_key))
             else:
                 logger.warning("No attributes to update, skipping the operation")
         return result
@@ -109,5 +109,5 @@ class MongoMixin:
         if self.ensure_is_mapped("delete"):
             with self.mec:
                 self.mdb_obj.delete(**kwargs)
-                logger.info("{} deleted".format(self.uk))
+                logger.info("{} deleted".format(self.unique_key))
             self.mdb_obj.id = None
