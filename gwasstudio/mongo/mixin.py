@@ -35,7 +35,7 @@ class MongoMixin:
 
     def ensure_is_mapped(self, op=None):
         if not self.map():
-            logger.warning("Document {} does not exist on remote, " "skipping {} operation".format(self.uk, op))
+            logger.warning("Document {} does not exist on remote, " "skipping {} operation".format(self.unique_key, op))
             return False
         return True
 
@@ -62,9 +62,25 @@ class MongoMixin:
         detail = {}
         if self.ensure_is_mapped("view"):
             with self.mec:
-                detail = self.klass.objects(unique_key=self.uk).as_pymongo()[0]
+                detail = self.klass.objects(id=self.pk).as_pymongo()[0]
                 logger.debug(detail)
         return detail
+
+    def query(self, **kwargs):
+        """
+
+        :param kwargs:
+        :return:
+        """
+        docs = []
+        if len(kwargs) > 0:
+            with self.mec:
+                if "trait_desc" in kwargs.keys():
+                    docs = self.klass.objects(trait_desc__contains=kwargs.get("trait_desc")).as_pymongo()
+                else:
+                    docs = self.klass.objects(**kwargs).as_pymongo()
+                logger.debug("found {} documents".format(len(docs)))
+        return docs
 
     def modify(self, **kwargs):
         """
@@ -80,7 +96,7 @@ class MongoMixin:
                 with self.mec:
                     self.mdb_obj.modification_date = datetime.datetime.now()
                     result = self.mdb_obj.modify(**kwargs)
-                    logger.info("{} modified".format(self.uk))
+                    logger.info("{} modified".format(self.unique_key))
             else:
                 logger.warning("No attributes to update, skipping the operation")
         return result
@@ -93,5 +109,5 @@ class MongoMixin:
         if self.ensure_is_mapped("delete"):
             with self.mec:
                 self.mdb_obj.delete(**kwargs)
-                logger.info("{} deleted".format(self.uk))
+                logger.info("{} deleted".format(self.unique_key))
             self.mdb_obj.id = None
