@@ -1,5 +1,4 @@
 import cloup
-
 from gwasstudio import __appname__, __version__, config_dir, log_file
 
 help_doc = """
