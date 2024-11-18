@@ -8,7 +8,10 @@ import hashlib
 import pathlib
 import string
 import random
-
+import tiledb
+import numpy as np
+import pandas as pd
+import polars as pl
 DEFAULT_BUFSIZE = 4096
 
 
@@ -93,3 +96,93 @@ def generate_random_word(length: int) -> str:
         str: A random word of the specified length.
     """
     return "".join(random.choice(string.ascii_lowercase) for _ in range(length))
+
+
+# Define the TileDB array schema with SNP, gene, and population dimensions
+def create_tiledb_schema(uri: str,cfg: dict):
+    """
+    Create an empty schema for TileDB.
+
+    Args:
+        uri (str): The path where the TileDB will be stored.
+        cfg (dict): A configuration dictionary to use for connecting to S3.
+    """
+
+    chrom_domain = (1, 24)
+    pos_domain = (1, 3000000000)
+    dom = tiledb.Domain(
+        tiledb.Dim(name="chrom", domain = chrom_domain,  dtype=np.uint8, var=False),
+        tiledb.Dim(name="pos", domain = pos_domain, dtype=np.uint32, var=False),
+        tiledb.Dim(name="trait_id", dtype=np.dtype('S64'), var=True)
+    )
+    schema = tiledb.ArraySchema(
+        domain=dom,
+        sparse=True,
+        allows_duplicates=True,
+        attrs=[
+            tiledb.Attr(name="beta", dtype=np.float32, var=False,filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]) ),
+            tiledb.Attr(name="se", dtype=np.float32, var=False,filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
+            tiledb.Attr(name="freq", dtype=np.float32, var=False,filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
+            tiledb.Attr(name="alt", dtype=np.dtype('S5'), var=True,filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
+            tiledb.Attr(name="SNP", dtype=np.dtype('S20'), var=True,filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]))
+        ]
+    )
+    tiledb.Array.create(uri, schema, ctx=cfg)
+
+def process_and_ingest(file_path: str, uri, dict_type: dict, renaming_columns: dict, attributes_columns: list, cfg: dict):
+    """
+    Process a single file and ingest it in a TileDB
+
+    Args:
+        file_path (str): The path where the file to ingest is stored
+        uri (str): The path where the TileDB is stored.
+        dict_type(str)
+        cfg (dict): A configuration dictionary to use for connecting to S3.
+    """
+
+    # Read file with Dask
+    df = pd.read_csv(
+        file_path,
+        compression="gzip",
+        sep="\t",
+        usecols = attributes_columns
+        #usecols=["Chrom", "Pos", "Name", "effectAllele", "Beta", "SE", "ImpMAF"]
+    )
+    sha256 = compute_sha256(file_path)
+    # Rename columns and modify 'chrom' field
+    df = df.rename(columns = renaming_columns)
+    df["chrom"] = df["chrom"].str.replace('chr', '')
+    df["chrom"] = df["chrom"].str.replace('X', '23')
+    df["chrom"] = df["chrom"].str.replace('Y', '24')
+    # Add trait_id based on the checksum_dict
+    file_name = file_path.split('/')[-1]
+    df["trait_id"] = sha256
+
+    # Store the processed data in TileDB
+    tiledb.from_pandas(
+        uri=uri,
+        dataframe=df,
+        index_dims=["chrom", "pos", "trait_id"],
+        mode="append",
+        column_types=dict_type,
+        ctx = ctx
+    )
+
+def process_write_chunk(chunk, SNP_list, file_stream):
+    SNP_list_polars = pl.DataFrame(SNP_list)
+    chunk_polars = pl.DataFrame(chunk)
+    SNP_list_polars = SNP_list_polars.with_columns([
+    pl.col("POS").cast(pl.UInt32)])
+    chunk_polars = chunk_polars.with_columns([
+    pl.col("ALLELE0").cast(pl.Utf8),
+    pl.col("ALLELE1").cast(pl.Utf8),
+    pl.col("SNPID").cast(pl.Utf8)
+    ])
+    # Perform the join operation with Polars
+    subset_SNPs_merge = chunk_polars.join(
+    SNP_list_polars,
+    on=['CHR', 'POS', 'ALLELE0', 'ALLELE1'],
+    how="inner"
+    )
+    #Append the merged chunk to CSV
+    subset_SNPs_merge.write_csv(file_stream)
