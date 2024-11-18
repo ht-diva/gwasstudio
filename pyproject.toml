@@ -39,6 +39,7 @@ mongoengine = "^0.29.1"
 comoda = "^0.4.2"
 tiledb = "0.32.2"
 polars = "^1.14.0"
+pandas = "^2.2.3"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.6.3"
