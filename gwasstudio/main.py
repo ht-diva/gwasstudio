@@ -2,12 +2,12 @@ import click
 import cloup
 
 from gwasstudio import __appname__, __version__, context_settings, log_file, logger
-
-from cli.export import export
-#from info import info
-from cli.ingest import ingest
-from cli.query import query
-from dask_client import DaskClient as Client
+from gwasstudio.cli.export import export
+from gwasstudio.cli.info import info
+from gwasstudio.cli.ingest import ingest
+from gwasstudio.cli.metadata.ingest import meta_ingest
+from gwasstudio.cli.query import query
+from gwasstudio.dask_client import DaskClient as Client
 
 
 @cloup.group(name="main", help="GWASStudio", no_args_is_help=True, context_settings=context_settings)
@@ -22,7 +22,7 @@ from dask_client import DaskClient as Client
     cloup.option("--cpu_workers", help="CPU numbers per worker", default=6),
 )
 @cloup.option_group(
-    "TileDB configurations",
+    "TileDB configuration",
     cloup.option("--aws-access-key-id", default="None", help="aws access key id"),
     cloup.option("--aws-secret-access-key", default="None", help="aws access key"),
     cloup.option(
@@ -33,7 +33,7 @@ from dask_client import DaskClient as Client
     cloup.option("--aws-use-virtual-addressing", default="false", help="virtual address option"),
     cloup.option("--aws-scheme", default="https", help="type of scheme used at the endpoint"),
     cloup.option("--aws-region", default="", help="region where the s3 bucket is located"),
-    cloup.option("--aws-verify-ssl", default="false", help="if ssl verfication is needed"),
+    cloup.option("--aws-verify-ssl", default="false", help="if ssl verification is needed"),
 )
 @click.pass_context
 def cli_init(
@@ -56,7 +56,6 @@ def cli_init(
         logger.add(log_file, level="INFO", retention="30 days")
     else:
         logger.add(log_file, level="DEBUG", retention="30 days")
-    logger.info("{} started".format(__appname__.capitalize()))
 
     cfg = {
         "vfs.s3.aws_access_key_id": aws_access_key_id,
@@ -66,7 +65,7 @@ def cli_init(
         "vfs.s3.scheme": aws_scheme,
         "vfs.s3.region": aws_region,
         "vfs.s3.verify_ssl": aws_verify_ssl,
-        'sm.dedup_coords': 'true'
+        "sm.dedup_coords": "true",
     }
 
     ctx.ensure_object(dict)
@@ -85,10 +84,13 @@ def cli_init(
 
 
 def main():
-    #cli_init.add_command(info)
+    cli_init.add_command(info)
     cli_init.add_command(query)
     cli_init.add_command(export)
     cli_init.add_command(ingest)
+    cli_init.add_command(meta_ingest)
+    logger.info("{} started".format(__appname__.capitalize()))
+
     cli_init(obj={})
 
 

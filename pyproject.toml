@@ -3,7 +3,7 @@ line-length = 120
 
 [tool.poetry]
 name = "gwasstudio"
-version = "0.3.0"
+version = "0.3.1"
 description = ""
 authors = ["Gianmauro Cuccuru <gianmauro.cuccuru@fht.org>"]
 readme = "README.md"

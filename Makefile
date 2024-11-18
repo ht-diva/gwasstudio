@@ -22,6 +22,8 @@ bootstrap:
 	conda deactivate
 	rm -rf /tmp/bootstrap
 
+build_conda_lock_files:
+	conda-lock -k explicit --conda mamba -p 'linux-64' -p 'osx-64' -p 'osx-arm64'
 
 build: clean dependencies
 	poetry build
@@ -42,6 +44,13 @@ deploy:
 
 install: build
 	pip install dist/*.whl
+
+m1_env:
+	conda create -n ${APPNAME} --file conda-osx-arm64.lock
+	$(CONDA_ACTIVATE) ${APPNAME}
+	find $(CONDA_PREFIX)/lib/python*/site-packages/ \
+     	-maxdepth 2 -name direct_url.json \
+     	-exec rm -f {} +
 
 pre-commit: dependencies_dev
 	if [ ! -f .git/hooks/pre-commit ]; then pre-commit install; fi

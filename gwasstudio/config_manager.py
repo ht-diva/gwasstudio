@@ -10,15 +10,19 @@ from gwasstudio import __appname__, config_dir, config_filename, logger
 class ConfigurationManager:
     def __init__(self, **kwargs):
         def copy_config_file_from_package(dst):
-            _from_package = files("config").joinpath(config_filename)
+            package_name = ".".join([__appname__, "config"])
+            _from_package = files(package_name).joinpath(config_filename)
             copyfile(_from_package, dst)
 
-        if kwargs.get("cf"):
-            configuration_file = Path(kwargs.get("cf"))
+        # Check if a custom config file is provided
+        custom_config_file = kwargs.get("cf")
+        if custom_config_file:
+            configuration_file = Path(custom_config_file)
             if not configuration_file.exists():
-                msg = "{} file not found. Please check the path".format(configuration_file)
+                msg = f"{configuration_file} file not found. Please check the path"
                 logger.error(msg)
                 exit(msg)
+        # If no custom config is provided, use the default one
         else:
             # Create configuration file from default if needed
             configuration_file = Path(config_dir, config_filename)
@@ -30,14 +34,15 @@ class ConfigurationManager:
                     )
                 )
                 copy_config_file_from_package(configuration_file)
-                logger.warning("Configuration file has default values! Update them in {}".format(configuration_file))
+                logger.warning(f"Configuration file has default values! Update them in {configuration_file}")
 
-        logger.debug("Reading configuration from {}".format(configuration_file))
+        logger.debug(f"Reading configuration from {configuration_file}")
         c = load(configuration_file)
 
-        mdb_connection = c["mdbc"]
-        self.mdbc_db = kwargs.get("db") if kwargs.get("db") else mdb_connection["db"]
-        self.mdbc_uri = kwargs.get("uri") if kwargs.get("uri") else mdb_connection["uri"]
+        # Get database connection settings from kwargs, if not present, use config
+        mdb_connection = c.get("mdbc", {})
+        self.mdbc_db = kwargs.get("db", mdb_connection.get("db"))
+        self.mdbc_uri = kwargs.get("uri", mdb_connection.get("uri"))
 
         self.data_category_list = c.get("data_category", [])
         self.project_list = c.get("project", [])
