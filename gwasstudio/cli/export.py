@@ -36,7 +36,7 @@ Exports data from a TileDB dataset.
 )
 @click.pass_context
 def export(ctx, uri, trait_id_file, output_path, pvalue_sig, pvalue_limit, hole_size, snp_list, locusbreaker):
-    cfg = ctx.obj["cfg"]
+    # cfg = ctx.obj["cfg"]
     tiledb_unified = tiledb.open(uri, mode="r")
     logger.info("TileDB dataset loaded")
     trait_id_list = open(trait_id_file, "r").read().rstrip().split("\n")
@@ -49,7 +49,7 @@ def export(ctx, uri, trait_id_file, output_path, pvalue_sig, pvalue_limit, hole_
             ).df[:, :, trait_id_list]
             results_lb = locus_breaker(subset_SNPs_pd)
             logger.info(f"Saving locus-breaker output in {output_path}")
-            results_lb.to_csv(f, "{output_path}_{trait}.csv", index=False)
+            results_lb.to_csv(f"{output_path}_{trait}.csv", index=False)
         return
 
     # If snp_list is selected, run extract_snp

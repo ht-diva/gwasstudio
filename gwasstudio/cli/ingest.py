@@ -2,11 +2,11 @@ import os
 
 import click
 import cloup
+import numpy as np
 import pandas as pd
 import tiledb
 
 from gwasstudio.utils import create_tiledb_schema
-from gwasstudio.utils import process_and_ingest
 
 help_doc = """
 Ingest data data in a TileDB-unified dataset.
@@ -41,7 +41,7 @@ Ingest data data in a TileDB-unified dataset.
 @click.pass_context
 def ingest(ctx, input_path, checksum_path, attrs, uri, mem_budget_mb, threads, batch_size, restart):
     # Parse checksum for mapping ids to files
-    checksum = pd.read_csv(file_path + "checksum.txt", sep="\t", header=None)
+    checksum = pd.read_csv(input_path + "checksum.txt", sep="\t", header=None)
     checksum.columns = ["hash", "filename"]
     checksum_dict = pd.Series(checksum.hash.values, index=checksum.filename).to_dict()
 
@@ -61,14 +61,18 @@ def ingest(ctx, input_path, checksum_path, attrs, uri, mem_budget_mb, threads, b
     # Process files in batches
     else:
         create_tiledb_schema(uri, cfg)
-        file_list = os.listdir(file_path)
+        file_list = os.listdir(input_path)
 
-    for i in range(0, len(file_list), batch_size):
-        batch_files = file_list[i : i + batch_size]
-        tasks = [
-            dask.delayed(process_and_ingest)(file_path + file, uri, checksum_dict, dict_type, cfg)
-            for file in batch_files
-        ]
-        # Submit tasks and wait for completion
-        dask.compute(*tasks)
-        logging.info(f"Batch {i // batch_size + 1} completed.", flush=True)
+
+# what is dict_type?
+#    for i in range(0, len(file_list), batch_size):
+#        batch_files = file_list[i : i + batch_size]
+#
+#        tasks = [
+#            dask.delayed(process_and_ingest)(input_path + file, uri, checksum_dict, dict_type, cfg)
+#            for file in batch_files
+#        ]
+#        # Submit tasks and wait for completion
+#        dask.compute(*tasks)
+#        logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)
+#

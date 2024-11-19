@@ -8,7 +8,8 @@ from gwasstudio.cli.ingest import ingest
 from gwasstudio.cli.metadata.ingest import meta_ingest
 from gwasstudio.cli.metadata.query import meta_query
 from gwasstudio.cli.metadata.view import meta_view
-from gwasstudio.cli.query import query
+
+# from gwasstudio.cli.query import query
 from gwasstudio.dask_client import DaskClient as Client
 
 
@@ -87,7 +88,7 @@ def cli_init(
 
 def main():
     cli_init.add_command(info)
-    cli_init.add_command(query)
+    # cli_init.add_command(query)
     cli_init.add_command(export)
     cli_init.add_command(ingest)
     cli_init.add_command(meta_ingest)
