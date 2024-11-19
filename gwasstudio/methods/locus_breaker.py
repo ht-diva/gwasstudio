@@ -1,12 +1,8 @@
 import pandas as pd
-from typing import List
 
 
 def locus_breaker(
-    tiledb_results_pd,
-    pvalue_limit: float = 5,
-    pvalue_sig: float = 5,
-    hole_size: int = 250000
+    tiledb_results_pd, pvalue_limit: float = 5, pvalue_sig: float = 5, hole_size: int = 250000
 ) -> pd.DataFrame:
     """
     Breaking genome in locus
@@ -34,7 +30,7 @@ def locus_breaker(
     if tiledb_results_pd.empty:
         print("this region is empty")
         return pd.DataFrame(expected_schema)
-    
+
     # Filter rows based on the p_limit threshold
     tiledb_results_pd = tiledb_results_pd[tiledb_results_pd["MLOG10P"] > pvalue_limit]
 

@@ -6,12 +6,14 @@ Generic utilities used by other modules.
 
 import hashlib
 import pathlib
-import string
 import random
-import tiledb
+import string
+
 import numpy as np
 import pandas as pd
 import polars as pl
+import tiledb
+
 DEFAULT_BUFSIZE = 4096
 
 
@@ -110,15 +112,22 @@ def create_tiledb_schema(uri: str, cfg: dict):
     chrom_domain = (1, 24)
     pos_domain = (1, 3000000000)
     dom = tiledb.Domain(
+<<<<<<< HEAD
         tiledb.Dim(name="CHR", domain = chrom_domain,  dtype=np.uint8, var=False),
         tiledb.Dim(name="POS", domain = pos_domain, dtype=np.uint32, var=False),
         tiledb.Dim(name="TRAITID", dtype="ascii", var=False)
+=======
+        tiledb.Dim(name="chrom", domain=chrom_domain, dtype=np.uint8, var=False),
+        tiledb.Dim(name="pos", domain=pos_domain, dtype=np.uint32, var=False),
+        tiledb.Dim(name="trait_id", dtype=np.dtype("S64"), var=True),
+>>>>>>> d5ad3c4e025da3aea0667cc8d1ca1296197136ee
     )
     schema = tiledb.ArraySchema(
         domain=dom,
         sparse=True,
         allows_duplicates=True,
         attrs=[
+<<<<<<< HEAD
             tiledb.Attr(name="BETA", dtype=np.float32, var=False,filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]) ),
             tiledb.Attr(name="SE", dtype=np.float32, var=False,filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
             tiledb.Attr(name="MLOG10P", dtype=np.float32, var=False,filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
@@ -127,11 +136,36 @@ def create_tiledb_schema(uri: str, cfg: dict):
             tiledb.Attr(name="NEA", dtype="ascii", var=True,filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
             tiledb.Attr(name="SNPID", dtype="ascii", var=True,filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]))
         ]
+=======
+            tiledb.Attr(
+                name="beta", dtype=np.float32, var=False, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
+            ),
+            tiledb.Attr(
+                name="se", dtype=np.float32, var=False, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
+            ),
+            tiledb.Attr(
+                name="freq", dtype=np.float32, var=False, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
+            ),
+            tiledb.Attr(
+                name="alt", dtype=np.dtype("S5"), var=True, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
+            ),
+            tiledb.Attr(
+                name="SNP", dtype=np.dtype("S20"), var=True, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
+            ),
+        ],
+>>>>>>> d5ad3c4e025da3aea0667cc8d1ca1296197136ee
     )
     ctx = tiledb.Ctx(cfg)
     tiledb.Array.create(uri, schema, ctx=ctx)
 
+<<<<<<< HEAD
 def process_and_ingest(file_path: str, uri, checksum_dict: dict, ctx):
+=======
+
+def process_and_ingest(
+    file_path: str, uri, dict_type: dict, renaming_columns: dict, attributes_columns: list, cfg: dict
+):
+>>>>>>> d5ad3c4e025da3aea0667cc8d1ca1296197136ee
     """
     Process a single file and ingest it in a TileDB
 
@@ -147,6 +181,7 @@ def process_and_ingest(file_path: str, uri, checksum_dict: dict, ctx):
         file_path,
         compression="gzip",
         sep="\t",
+<<<<<<< HEAD
         usecols=["CHR", "POS", "SNPID", "EA", "NEA", "EAF", "SE", "BETA","MLOG10P"],
         dtype = {"CHR":np.uint8, "POS":np.uint32, "SNPID":str, "EA":str, "NEA":str, "EAF":np.float32, "SE":np.float32, "BETA":np.float32, "MLOG10P":np.float32}
         )
@@ -154,20 +189,41 @@ def process_and_ingest(file_path: str, uri, checksum_dict: dict, ctx):
     #file_name = file_path.split('/')[-1]
     df["TRAITID"] = checksum_dict[file_path]
     dtype_tbd = {"CHR":np.uint8, "POS":np.uint32, "SNPID":str, "EA":str, "NEA":str, "EAF":np.float32, "SE":np.float32, "BETA":np.float32, "MLOG10P":np.float32, "TRAITID":str}
+=======
+        usecols=attributes_columns,
+        # usecols=["Chrom", "Pos", "Name", "effectAllele", "Beta", "SE", "ImpMAF"]
+    )
+    sha256 = compute_sha256(file_path)
+    # Rename columns and modify 'chrom' field
+    df = df.rename(columns=renaming_columns)
+    df["chrom"] = df["chrom"].str.replace("chr", "")
+    df["chrom"] = df["chrom"].str.replace("X", "23")
+    df["chrom"] = df["chrom"].str.replace("Y", "24")
+    # Add trait_id based on the checksum_dict
+    # file_name = file_path.split("/")[-1]
+    df["trait_id"] = sha256
+
+>>>>>>> d5ad3c4e025da3aea0667cc8d1ca1296197136ee
     # Store the processed data in TileDB
     ctx = tiledb.Ctx(ctx.obj["cfg"])
     tiledb.from_pandas(
+<<<<<<< HEAD
         uri=uri,
         dataframe=df,
         index_dims=["CHR", "POS", "TRAITID  "],
         mode="append",
         column_types=dtype_tbd,
         ctx = ctx
+=======
+        uri=uri, dataframe=df, index_dims=["chrom", "pos", "trait_id"], mode="append", column_types=dict_type, ctx=cfg
+>>>>>>> d5ad3c4e025da3aea0667cc8d1ca1296197136ee
     )
+
 
 def process_write_chunk(chunk, SNP_list, file_stream):
     SNP_list_polars = pl.DataFrame(SNP_list)
     chunk_polars = pl.DataFrame(chunk)
+<<<<<<< HEAD
     SNP_list_polars = SNP_list_polars.with_columns([
     pl.col("POS").cast(pl.UInt32)])
     chunk_polars = chunk_polars.with_columns([
@@ -180,6 +236,13 @@ def process_write_chunk(chunk, SNP_list, file_stream):
     SNP_list_polars,
     on=['CHR', 'POS', 'NEA', 'EA'],
     how="inner"
+=======
+    SNP_list_polars = SNP_list_polars.with_columns([pl.col("POS").cast(pl.UInt32)])
+    chunk_polars = chunk_polars.with_columns(
+        [pl.col("ALLELE0").cast(pl.Utf8), pl.col("ALLELE1").cast(pl.Utf8), pl.col("SNPID").cast(pl.Utf8)]
+>>>>>>> d5ad3c4e025da3aea0667cc8d1ca1296197136ee
     )
-    #Append the merged chunk to CSV
+    # Perform the join operation with Polars
+    subset_SNPs_merge = chunk_polars.join(SNP_list_polars, on=["CHR", "POS", "ALLELE0", "ALLELE1"], how="inner")
+    # Append the merged chunk to CSV
     subset_SNPs_merge.write_csv(file_stream)

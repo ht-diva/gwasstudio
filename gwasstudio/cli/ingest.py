@@ -1,12 +1,14 @@
-import click
-import cloup
-import pathlib
-from utils import process_and_ingest
-from utils import create_tiledb_schema
-import pandas as pd
-import dask
 import os
 
+import click
+import cloup
+
+import numpy as np
+import pandas as pd
+import tiledb
+from gwasstudio.utils import process_and_ingest
+from gwasstudio.utils import create_tiledb_schema
+import os
 help_doc = """
 Ingest data data in a TileDB-unified dataset.
 """
@@ -29,7 +31,7 @@ Ingest data data in a TileDB-unified dataset.
         "--restart",
         default=False,
         help="Restart the ingestion from a previous run.",
-    )
+    ),
 )
 @cloup.option_group(
     "TileDB configurations",
@@ -60,3 +62,15 @@ def ingest(ctx, checksum, uri, batch_size, restart):
             dask.compute(*tasks)
             #logging.info(f"Batch {i // batch_size + 1} completed.", flush=True)
 
+# what is dict_type?
+#    for i in range(0, len(file_list), batch_size):
+#        batch_files = file_list[i : i + batch_size]
+#
+#        tasks = [
+#            dask.delayed(process_and_ingest)(input_path + file, uri, checksum_dict, dict_type, cfg)
+#            for file in batch_files
+#        ]
+#        # Submit tasks and wait for completion
+#        dask.compute(*tasks)
+#        logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)
+#
