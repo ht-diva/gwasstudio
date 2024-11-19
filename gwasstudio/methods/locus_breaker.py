@@ -18,13 +18,15 @@ def locus_breaker(
     :return: DataFrame with the loci information
     """
     expected_schema = {
-    'CHR': pd.Series(dtype='object'),
-    'POS': pd.Series(dtype='int64'),
-    'ALLELE0': pd.Series(dtype='object'),
-    'ALLELE1': pd.Series(dtype='object'),
-    'MLOG10P': pd.Series(dtype='float64'),
-    'BETA': pd.Series(dtype='object'),
-    'SE': pd.Series(dtype='object'),
+    'CHR': pd.Series(dtype=np.uint8),
+    'POS': pd.Series(dtype=np.uint32),
+    'SNPID': pd.Series(dtype='object'),
+    'EA': pd.Series(dtype='object'),
+    'NEA': pd.Series(dtype='object'),
+    'EAF': pd.Series(dtype=np.float32),
+    'MLOG10P': pd.Series(dtype=np.float64),
+    'BETA': pd.Series(dtype=np.float32),
+    'SE': pd.Series(dtype=np.float32),
     'TRAITID': pd.Series(dtype='object')
 }
 
@@ -56,8 +58,8 @@ def locus_breaker(
                 best_snp = group_df.loc[group_df["MLOG10P"].idxmax()]
 
                 # Store the interval with the best SNP
-                line_res = [contig, start_pos, end_pos, best_snp["POS"], best_snp["MLOG10P"]] + best_snp.tolist()
-                trait_res.append(line_res)
+                #line_res = [contig, start_pos, end_pos, best_snp["POS"], best_snp["MLOG10P"]] + best_snp.tolist()
+                #trait_res.append(line_res)
 
                 # Collect all SNPs within the region
                 for _, snp_row in group_df.iterrows():
@@ -69,9 +71,6 @@ def locus_breaker(
     trait_res_df = pd.DataFrame(trait_res, columns=columns)
 
     # Drop specific columns including 'start' and 'end'
-    trait_res_df = trait_res_df.drop(columns=["POS", "MLOG10P", "start", "end"])
-
-    # Remove one of the duplicate 'contig' columns if present
-    trait_res_df = trait_res_df.loc[:, ~trait_res_df.columns.duplicated()]
+    trait_res_df = trait_res_df.drop(columns=["snp_pos", "contig", "start", "end"])
 
     return trait_res_df

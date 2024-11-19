@@ -1,19 +1,19 @@
 import click
 import cloup
 
-from gwasstudio import __appname__, __version__, context_settings, log_file, logger
-from gwasstudio.cli.export import export
-from gwasstudio.cli.info import info
-from gwasstudio.cli.ingest import ingest
-from gwasstudio.cli.metadata.ingest import meta_ingest
-from gwasstudio.cli.metadata.query import meta_query
-from gwasstudio.cli.metadata.view import meta_view
-from gwasstudio.cli.query import query
-from gwasstudio.dask_client import DaskClient as Client
+#from gwasstudio import __appname__, __version__, context_settings, log_file, logger
+from cli.export import export
+#from cli.info import info
+from cli.ingest import ingest
+#from gwasstudio.cli.metadata.ingest import meta_ingest
+#from gwasstudio.cli.metadata.query import meta_query
+#from gwasstudio.cli.metadata.view import meta_view
+from cli.query import query
+from dask_client import DaskClient as Client
 
 
-@cloup.group(name="main", help="GWASStudio", no_args_is_help=True, context_settings=context_settings)
-@click.version_option(version=__version__)
+@cloup.group(name="main", help="GWASStudio", no_args_is_help=True)#, #context_settings=context_settings)
+#@click.version_option(version=__version__)
 @cloup.option("-q", "--quiet", default=False, is_flag=True, help="Set log verbosity")
 @cloup.option_group(
     "Dask options",
@@ -54,10 +54,10 @@ def cli_init(
     cpu_workers,
     quiet,
 ):
-    if quiet:
-        logger.add(log_file, level="INFO", retention="30 days")
-    else:
-        logger.add(log_file, level="DEBUG", retention="30 days")
+    #if quiet:
+        #logger.add(log_file, level="INFO", retention="30 days")
+    #else:
+        #logger.add(log_file, level="DEBUG", retention="30 days")
 
     cfg = {
         "vfs.s3.aws_access_key_id": aws_access_key_id,
@@ -86,14 +86,14 @@ def cli_init(
 
 
 def main():
-    cli_init.add_command(info)
+    #cli_init.add_command(info)
     cli_init.add_command(query)
     cli_init.add_command(export)
     cli_init.add_command(ingest)
-    cli_init.add_command(meta_ingest)
-    cli_init.add_command(meta_view)
-    cli_init.add_command(meta_query)
-    logger.info("{} started".format(__appname__.capitalize()))
+#    cli_init.add_command(meta_ingest)
+#    cli_init.add_command(meta_view)
+#    cli_init.add_command(meta_query)
+    #logger.info("{} started".format(__appname__.capitalize()))
 
     cli_init(obj={})
 

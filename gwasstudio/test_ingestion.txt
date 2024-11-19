@@ -1,0 +1,1 @@
+/scratch/bruno.ariano/Proteomics_PC0_10035_6_DUSP4_DUS4_07082019.gwaslab.tsv.gz	875617088a4f08e5d836b8629f6bf16d9bc5bf4b1c43b8520af0bcb3d4814a62

@@ -1,5 +1,5 @@
-import importlib.metadata
-
+#import importlib.metadata
+"""
 from appdirs import user_config_dir, user_log_dir
 from cloup import Context, HelpFormatter, HelpTheme, Style
 from loguru import logger as a_logger
@@ -27,3 +27,4 @@ context_settings = Context.settings(formatter_settings=formatter_settings)
 
 logger = a_logger
 logger.remove()
+"""
