@@ -27,14 +27,14 @@ def create_tiledb_schema(uri, cfg):
                 name="MLOG10P", dtype=np.float64, var=False, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
             ),
             tiledb.Attr(
-                name="ALLELE0", dtype=np.bytes_, var=True, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
+                name="EA", dtype=np.bytes_, var=True, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
             ),
             tiledb.Attr(
-                name="ALLELE1", dtype=np.bytes_, var=True, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
+                name="NEA", dtype=np.bytes_, var=True, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
             ),
             tiledb.Attr(
                 name="SNPID", dtype=np.bytes_, var=True, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
             ),
         ],
     )
-    tiledb.Array.create(uri, schema, ctx=cfg)
+    tiledb.Array.create(uri, schema, ctx=tiledb.Ctx(cfg))

@@ -13,14 +13,29 @@ from gwasstudio.cli.metadata.view import meta_view
 # from gwasstudio.cli.query import query
 from gwasstudio.dask_client import DaskClient as Client
 
-@cloup.group(name="main", help="GWASStudio", no_args_is_help=True)#, #context_settings=context_settings)
-#@click.version_option(version=__version__)
+
+@cloup.group(
+    name="main",
+    help="GWASStudio",
+    no_args_is_help=True,
+    context_settings=context_settings,
+)
+@click.version_option(version=__version__)
 @cloup.option("-q", "--quiet", default=False, is_flag=True, help="Set log verbosity")
 @cloup.option_group(
     "Dask options",
-    cloup.option("--distribute", default=False, is_flag=True, help="Distribute the load to a Dask cluster"),
-    cloup.option("--minimum_workers", help="Minimum amount of running workers", default=10),
-    cloup.option("--maximum_workers", help="Maximum amount of running workers", default=100),
+    cloup.option(
+        "--distribute",
+        default=False,
+        is_flag=True,
+        help="Distribute the load to a Dask cluster",
+    ),
+    cloup.option(
+        "--minimum_workers", help="Minimum amount of running workers", default=10
+    ),
+    cloup.option(
+        "--maximum_workers", help="Maximum amount of running workers", default=100
+    ),
     cloup.option("--memory_workers", help="Memory amount per worker", default="12G"),
     cloup.option("--cpu_workers", help="CPU numbers per worker", default=6),
 )
@@ -33,10 +48,18 @@ from gwasstudio.dask_client import DaskClient as Client
         default="https://storage.fht.org:9021",
         help="endpoint where to connect",
     ),
-    cloup.option("--aws-use-virtual-addressing", default="false", help="virtual address option"),
-    cloup.option("--aws-scheme", default="https", help="type of scheme used at the endpoint"),
-    cloup.option("--aws-region", default="", help="region where the s3 bucket is located"),
-    cloup.option("--aws-verify-ssl", default="false", help="if ssl verification is needed"),
+    cloup.option(
+        "--aws-use-virtual-addressing", default="false", help="virtual address option"
+    ),
+    cloup.option(
+        "--aws-scheme", default="https", help="type of scheme used at the endpoint"
+    ),
+    cloup.option(
+        "--aws-region", default="", help="region where the s3 bucket is located"
+    ),
+    cloup.option(
+        "--aws-verify-ssl", default="false", help="if ssl verification is needed"
+    ),
 )
 @click.pass_context
 def cli_init(
@@ -83,13 +106,15 @@ def cli_init(
             cpu_workers=cpu_workers,
         ).get_client()
         ctx.obj["client"] = client
+        ctx.obj["batch_size"] = minimum_workers
         logger.info("Dask dashboard available at {}".format(client.get_dashboard()))
+    else:
+        ctx.obj["batch_size"] = 1
 
 
 def main():
-
     cli_init.add_command(info)
-    cli_init.add_command(query)
+    # cli_init.add_command(query)
     cli_init.add_command(export)
     cli_init.add_command(ingest)
     cli_init.add_command(meta_ingest)

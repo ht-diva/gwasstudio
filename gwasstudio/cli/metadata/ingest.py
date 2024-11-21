@@ -37,7 +37,9 @@ def meta_ingest(data_path):
     }
     logger.info("{} documents to ingest".format(len(file_list)))
     for path in file_list:
-        df = pd.read_csv(Path(path), compression="gzip", nrows=1, usecols=["N"], sep="\t")
+        df = pd.read_csv(
+            Path(path), compression="gzip", nrows=1, usecols=["N"], sep="\t"
+        )
         total_samples = int(df.loc[0, "N"])
         file_hash = compute_sha256(fpath=path)
         basename = Path(path).name.split("_")[:-1]

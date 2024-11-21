@@ -19,13 +19,17 @@ class MongoMixin:
     @property
     def is_mapped(self):
         with self.mec:
-            obj = self.klass.objects(project=self.mdb_obj.project, data_id=self.mdb_obj.data_id).first()
+            obj = self.klass.objects(
+                project=self.mdb_obj.project, data_id=self.mdb_obj.data_id
+            ).first()
             return bool(obj)
             # return False
 
     def map(self):
         with self.mec:
-            objs = self.klass.objects(project=self.mdb_obj.project, data_id=self.mdb_obj.data_id)
+            objs = self.klass.objects(
+                project=self.mdb_obj.project, data_id=self.mdb_obj.data_id
+            )
             if (objs.count()) == 1:
                 msg = "mapping, {} DataIdentifier found".format(len(objs))
                 logger.debug(msg)
@@ -35,7 +39,10 @@ class MongoMixin:
 
     def ensure_is_mapped(self, op=None):
         if not self.map():
-            logger.warning("Document {} does not exist on remote, " "skipping {} operation".format(self.unique_key, op))
+            logger.warning(
+                "Document {} does not exist on remote, "
+                "skipping {} operation".format(self.unique_key, op)
+            )
             return False
         return True
 
@@ -76,7 +83,9 @@ class MongoMixin:
         if len(kwargs) > 0:
             with self.mec:
                 if "trait_desc" in kwargs.keys():
-                    docs = self.klass.objects(trait_desc__contains=kwargs.get("trait_desc")).as_pymongo()
+                    docs = self.klass.objects(
+                        trait_desc__contains=kwargs.get("trait_desc")
+                    ).as_pymongo()
                 else:
                     docs = self.klass.objects(**kwargs).as_pymongo()
                 logger.debug("found {} documents".format(len(docs)))

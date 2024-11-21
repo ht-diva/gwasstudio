@@ -1,7 +1,15 @@
 import datetime
 from enum import Enum
 
-from mongoengine import DateTimeField, Document, EnumField, IntField, ListField, ReferenceField, StringField
+from mongoengine import (
+    DateTimeField,
+    Document,
+    EnumField,
+    IntField,
+    ListField,
+    ReferenceField,
+    StringField,
+)
 
 from gwasstudio.config_manager import ConfigurationManager
 from gwasstudio.mongo.connection_manager import get_mec
@@ -9,9 +17,16 @@ from gwasstudio.mongo.mixin import MongoMixin
 
 # TODO: This configuration manager doesn't use a custom configuration file passed by cli
 cm = ConfigurationManager()
-DataCategory = Enum("DataCategory", {item.replace(" ", "_").upper(): item for item in cm.get_data_category_list})
-Ancestry = Enum("Ancestry", {item.replace(" ", "_").upper(): item for item in cm.get_ancestry_list})
-Build = Enum("Build", {item.replace(" ", "_").upper(): item for item in cm.get_build_list})
+DataCategory = Enum(
+    "DataCategory",
+    {item.replace(" ", "_").upper(): item for item in cm.get_data_category_list},
+)
+Ancestry = Enum(
+    "Ancestry", {item.replace(" ", "_").upper(): item for item in cm.get_ancestry_list}
+)
+Build = Enum(
+    "Build", {item.replace(" ", "_").upper(): item for item in cm.get_build_list}
+)
 
 
 class Metadata(Document):

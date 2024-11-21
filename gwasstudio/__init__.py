@@ -1,10 +1,17 @@
-#import importlib.metadata
-"""
+import importlib.metadata
 from appdirs import user_config_dir, user_log_dir
 from cloup import Context, HelpFormatter, HelpTheme, Style
 from loguru import logger as a_logger
 
-__all__ = ["__appname__", "__version__", "context_settings", "config_dir", "config_filename", "log_file", "logger"]
+__all__ = [
+    "__appname__",
+    "__version__",
+    "context_settings",
+    "config_dir",
+    "config_filename",
+    "log_file",
+    "logger",
+]
 
 __appname__ = __name__
 __version__ = importlib.metadata.version(__appname__)
@@ -27,4 +34,3 @@ context_settings = Context.settings(formatter_settings=formatter_settings)
 
 logger = a_logger
 logger.remove()
-"""

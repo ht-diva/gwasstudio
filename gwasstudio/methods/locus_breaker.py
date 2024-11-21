@@ -1,8 +1,11 @@
 import pandas as pd
-
+import numpy as np
 
 def locus_breaker(
-    tiledb_results_pd, pvalue_limit: float = 5, pvalue_sig: float = 5, hole_size: int = 250000
+    tiledb_results_pd,
+    pvalue_limit: float = 5,
+    pvalue_sig: float = 5,
+    hole_size: int = 250000,
 ) -> pd.DataFrame:
     """
     Breaking genome in locus
@@ -14,17 +17,17 @@ def locus_breaker(
     :return: DataFrame with the loci information
     """
     expected_schema = {
-    'CHR': pd.Series(dtype=np.uint8),
-    'POS': pd.Series(dtype=np.uint32),
-    'SNPID': pd.Series(dtype='object'),
-    'EA': pd.Series(dtype='object'),
-    'NEA': pd.Series(dtype='object'),
-    'EAF': pd.Series(dtype=np.float32),
-    'MLOG10P': pd.Series(dtype=np.float64),
-    'BETA': pd.Series(dtype=np.float32),
-    'SE': pd.Series(dtype=np.float32),
-    'TRAITID': pd.Series(dtype='object')
-}
+        "CHR": pd.Series(dtype=np.uint8),
+        "POS": pd.Series(dtype=np.uint32),
+        "SNPID": pd.Series(dtype="object"),
+        "EA": pd.Series(dtype="object"),
+        "NEA": pd.Series(dtype="object"),
+        "EAF": pd.Series(dtype=np.float32),
+        "MLOG10P": pd.Series(dtype=np.float32),
+        "BETA": pd.Series(dtype=np.float32),
+        "SE": pd.Series(dtype=np.float32),
+        "TRAITID": pd.Series(dtype="object"),
+    }
 
     # Convert fmt_LP from list to float
     if tiledb_results_pd.empty:
@@ -51,19 +54,27 @@ def locus_breaker(
             if group_df["MLOG10P"].max() > pvalue_sig:
                 start_pos = group_df["POS"].min()
                 end_pos = group_df["POS"].max()
-                best_snp = group_df.loc[group_df["MLOG10P"].idxmax()]
 
                 # Store the interval with the best SNP
-                #line_res = [contig, start_pos, end_pos, best_snp["POS"], best_snp["MLOG10P"]] + best_snp.tolist()
-                #trait_res.append(line_res)
-
                 # Collect all SNPs within the region
                 for _, snp_row in group_df.iterrows():
-                    snp_res = [contig, start_pos, end_pos, snp_row["POS"], snp_row["MLOG10P"]] + snp_row.tolist()
+                    snp_res = [
+                        contig,
+                        start_pos,
+                        end_pos,
+                        snp_row["POS"],
+                        snp_row["MLOG10P"],
+                    ] + snp_row.tolist()
                     trait_res.append(snp_res)
 
     # Convert results to a DataFrame
-    columns = ["contig", "start", "end", "snp_pos", "snp_MLOG10P"] + tiledb_results_pd.columns.tolist()
+    columns = [
+        "contig",
+        "start",
+        "end",
+        "snp_pos",
+        "snp_MLOG10P",
+    ] + tiledb_results_pd.columns.tolist()
     trait_res_df = pd.DataFrame(trait_res, columns=columns)
 
     # Drop specific columns including 'start' and 'end'
