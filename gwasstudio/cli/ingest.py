@@ -26,7 +26,7 @@ Ingest data data in a TileDB-unified dataset.
         "--uri",
         default=None,
         help="S3 path where to store the tiledb dataset.",
-    )
+    ),
 )
 @click.pass_context
 def ingest(ctx, checksum, uri):
@@ -46,10 +46,7 @@ def ingest(ctx, checksum, uri):
     batch_size = ctx.obj["batch_size"]
     for i in range(0, len(file_list), batch_size):
         batch_files = file_list[i : i + batch_size]
-        tasks = [
-            dask.delayed(process_and_ingest)(file, uri, checksum_dict, cfg)
-            for file in batch_files
-        ]
+        tasks = [dask.delayed(process_and_ingest)(file, uri, checksum_dict, cfg) for file in batch_files]
         # Submit tasks and wait for completion
         dask.compute(*tasks)
         logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)

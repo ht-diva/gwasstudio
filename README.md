@@ -25,6 +25,3 @@ make install
 ---
 
 #### To understand more how this software works have a look at this README guidelines [HERE](https://github.com/ht-diva/gwasstudio/blob/main/docs/README.md)
-
-
-

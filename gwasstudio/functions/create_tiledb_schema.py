@@ -26,12 +26,8 @@ def create_tiledb_schema(uri, cfg):
             tiledb.Attr(
                 name="MLOG10P", dtype=np.float64, var=False, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
             ),
-            tiledb.Attr(
-                name="EA", dtype=np.bytes_, var=True, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
-            ),
-            tiledb.Attr(
-                name="NEA", dtype=np.bytes_, var=True, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
-            ),
+            tiledb.Attr(name="EA", dtype=np.bytes_, var=True, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
+            tiledb.Attr(name="NEA", dtype=np.bytes_, var=True, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
             tiledb.Attr(
                 name="SNPID", dtype=np.bytes_, var=True, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
             ),

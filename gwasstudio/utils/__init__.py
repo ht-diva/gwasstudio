@@ -48,9 +48,7 @@ def compute_sha256(fpath=None, st=None):
         return None
 
 
-def compute_file_hashing(
-    algorithm: str, path: pathlib.Path, bufsize: int = DEFAULT_BUFSIZE
-) -> str:
+def compute_file_hashing(algorithm: str, path: pathlib.Path, bufsize: int = DEFAULT_BUFSIZE) -> str:
     """
     Computes the SHA-256 hash of a file.
 
@@ -239,12 +237,8 @@ def process_write_chunk(chunk, SNP_list, file_stream):
         ]
     )
     # Perform the join operation with Polars
-    subset_SNPs_merge = chunk_polars.join(
-        SNP_list_polars, on=["CHR", "POS", "NEA", "EA"], how="inner"
-    )
+    subset_SNPs_merge = chunk_polars.join(SNP_list_polars, on=["CHR", "POS", "NEA", "EA"], how="inner")
     # Perform the join operation with Polars
-    subset_SNPs_merge = chunk_polars.join(
-        SNP_list_polars, on=["CHR", "POS", "ALLELE0", "ALLELE1"], how="inner"
-    )
+    subset_SNPs_merge = chunk_polars.join(SNP_list_polars, on=["CHR", "POS", "ALLELE0", "ALLELE1"], how="inner")
     # Append the merged chunk to CSV
     subset_SNPs_merge.write_csv(file_stream)

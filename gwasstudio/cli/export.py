@@ -5,19 +5,18 @@ import tiledb
 from gwasstudio import logger
 from gwasstudio.methods.locus_breaker import locus_breaker
 from gwasstudio.utils import process_write_chunk
-import numpy as np
+
 help_doc = """
 Exports data from a TileDB dataset.
 """
+
 
 @cloup.command("export", no_args_is_help=True, help=help_doc)
 @cloup.option_group(
     "TileDB mandatory options",
     cloup.option("--uri", default="None", help="TileDB dataset URI"),
     cloup.option("--output_path", default="None", help="The path of the output"),
-    cloup.option(
-        "--trait_id_file", default="None", help="The trait id used for the analysis"
-    ),
+    cloup.option("--trait_id_file", default="None", help="The trait id used for the analysis"),
     cloup.option(
         "--chr_list",
         default=False,
@@ -27,18 +26,14 @@ Exports data from a TileDB dataset.
 )
 @cloup.option_group(
     "Options for Locusbreaker",
-    cloup.option(
-        "--locusbreaker", default=False, is_flag=True, help="Option to run locusbreaker"
-    ),
+    cloup.option("--locusbreaker", default=False, is_flag=True, help="Option to run locusbreaker"),
     cloup.option(
         "--pvalue-sig",
         default=False,
         is_flag=True,
         help="P-value threshold to use for filtering the data",
     ),
-    cloup.option(
-        "--pvalue-limit", default=5.0, help="P-value threshold for loci borders"
-    ),
+    cloup.option("--pvalue-limit", default=5.0, help="P-value threshold for loci borders"),
     cloup.option(
         "--hole-size",
         default=250000,
@@ -54,18 +49,7 @@ Exports data from a TileDB dataset.
     ),
 )
 @click.pass_context
-def export(
-    ctx,
-    uri,
-    trait_id_file,
-    output_path,
-    pvalue_sig,
-    pvalue_limit,
-    hole_size,
-    snp_list,
-    locusbreaker,
-    chr_list
-):
+def export(ctx, uri, trait_id_file, output_path, pvalue_sig, pvalue_limit, hole_size, snp_list, locusbreaker, chr_list):
     # cfg = ctx.obj["cfg"]
     tiledb_unified = tiledb.open(uri, mode="r")
     logger.info("TileDB dataset loaded")
@@ -91,13 +75,9 @@ def export(
 
     # If snp_list is selected, run extract_snp
     if snp_list != "None":
-        SNP_list = pd.read_csv(
-            snp_list, dtype={"CHR": str, "POS": int, "EA": str, "NEA": str}
-        )
+        SNP_list = pd.read_csv(snp_list, dtype={"CHR": str, "POS": int, "EA": str, "NEA": str})
         chromosome_dict = SNP_list.groupby("CHR")["POS"].apply(list).to_dict()
-        unique_positions = list(
-            set(pos for positions in chromosome_dict.values() for pos in positions)
-        )
+        unique_positions = list(set(pos for positions in chromosome_dict.values() for pos in positions))
         with tiledb_unified as tiledb_iterator:
             tiledb_iterator_query = tiledb_iterator.query(return_incomplete=True).df[
                 chr_list_int, unique_positions, trait_id_list

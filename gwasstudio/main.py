@@ -30,12 +30,8 @@ from gwasstudio.dask_client import DaskClient as Client
         is_flag=True,
         help="Distribute the load to a Dask cluster",
     ),
-    cloup.option(
-        "--minimum_workers", help="Minimum amount of running workers", default=10
-    ),
-    cloup.option(
-        "--maximum_workers", help="Maximum amount of running workers", default=100
-    ),
+    cloup.option("--minimum_workers", help="Minimum amount of running workers", default=10),
+    cloup.option("--maximum_workers", help="Maximum amount of running workers", default=100),
     cloup.option("--memory_workers", help="Memory amount per worker", default="12G"),
     cloup.option("--cpu_workers", help="CPU numbers per worker", default=6),
 )
@@ -48,18 +44,10 @@ from gwasstudio.dask_client import DaskClient as Client
         default="https://storage.fht.org:9021",
         help="endpoint where to connect",
     ),
-    cloup.option(
-        "--aws-use-virtual-addressing", default="false", help="virtual address option"
-    ),
-    cloup.option(
-        "--aws-scheme", default="https", help="type of scheme used at the endpoint"
-    ),
-    cloup.option(
-        "--aws-region", default="", help="region where the s3 bucket is located"
-    ),
-    cloup.option(
-        "--aws-verify-ssl", default="false", help="if ssl verification is needed"
-    ),
+    cloup.option("--aws-use-virtual-addressing", default="false", help="virtual address option"),
+    cloup.option("--aws-scheme", default="https", help="type of scheme used at the endpoint"),
+    cloup.option("--aws-region", default="", help="region where the s3 bucket is located"),
+    cloup.option("--aws-verify-ssl", default="false", help="if ssl verification is needed"),
 )
 @click.pass_context
 def cli_init(
