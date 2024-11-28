@@ -32,7 +32,7 @@ from gwasstudio.dask_client import DaskClient as Client
     ),
     cloup.option("--minimum_workers", help="Minimum amount of running workers", default=10),
     cloup.option("--maximum_workers", help="Maximum amount of running workers", default=100),
-    cloup.option("--memory_workers", help="Memory amount per worker", default="12G"),
+    cloup.option("--memory_workers", help="Memory amount per worker", default="12GB"),
     cloup.option("--cpu_workers", help="CPU numbers per worker", default=6),
 )
 @cloup.option_group(
@@ -95,7 +95,7 @@ def cli_init(
         ).get_client()
         ctx.obj["client"] = client
         ctx.obj["batch_size"] = minimum_workers
-        logger.info("Dask dashboard available at {}".format(client.get_dashboard()))
+        # logger.info("Dask dashboard available at {}".format(client.get_dashboard()))
     else:
         ctx.obj["batch_size"] = 1
 

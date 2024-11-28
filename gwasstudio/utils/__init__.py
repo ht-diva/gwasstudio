@@ -8,7 +8,6 @@ import hashlib
 import pathlib
 import random
 import string
-
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -169,7 +168,7 @@ def create_tiledb_schema(uri: str, cfg: dict):
     tiledb.Array.create(uri, schema, ctx=ctx)
 
 
-def process_and_ingest(file_path: str, uri, checksum_dict: dict, ctx):
+def process_and_ingest(file_path: str, uri, checksum_dict: dict, cfg):
     """
     Process a single file and ingest it in a TileDB
 
@@ -214,11 +213,11 @@ def process_and_ingest(file_path: str, uri, checksum_dict: dict, ctx):
         "TRAITID": str,
     }
     # Store the processed data in TileDB
-    ctx = tiledb.Ctx(ctx.obj["cfg"])
+    ctx = tiledb.Ctx(cfg)
     tiledb.from_pandas(
         uri=uri,
         dataframe=df,
-        index_dims=["CHR", "POS", "TRAITID  "],
+        index_dims=["CHR", "POS", "TRAITID"],
         mode="append",
         column_types=dtype_tbd,
         ctx=ctx,

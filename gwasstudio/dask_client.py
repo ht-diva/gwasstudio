@@ -13,9 +13,9 @@ class DaskClient:
         logger.info(
             f"Dask cluster: starting from {_min} to {_max} workers, {_mem} of memory and {_cpu} cpus per worker"
         )
-        cluster = Cluster(memory=_mem, cores=_cpu)
+        cluster = Cluster(memory=_mem, cores=_cpu, processes=1, walltime="72:00:00")
 
-        cluster.adapt(minimum=_min, maximum=_max)
+        cluster.scale(_min)
         self.client = Client(cluster)  # Connect to that cluster
 
         self.dashboard = ""  # client.dashboard_link

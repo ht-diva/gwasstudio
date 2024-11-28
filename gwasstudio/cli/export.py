@@ -19,9 +19,8 @@ Exports data from a TileDB dataset.
     cloup.option("--trait_id_file", default="None", help="The trait id used for the analysis"),
     cloup.option(
         "--chr_list",
-        default=False,
-        is_flag=True,
-        help="The chromosome used for the analysis",
+        default=None,
+        help="A list of chromosomes to be used for the analysis",
     ),
 )
 @cloup.option_group(
@@ -31,9 +30,9 @@ Exports data from a TileDB dataset.
         "--pvalue-sig",
         default=False,
         is_flag=True,
-        help="P-value threshold to use for filtering the data",
+        help="Maximum log p-value threshold within the window",
     ),
-    cloup.option("--pvalue-limit", default=5.0, help="P-value threshold for loci borders"),
+    cloup.option("--pvalue-limit", default=5.0, help="Log p-value threshold for loci borders"),
     cloup.option(
         "--hole-size",
         default=250000,
