@@ -8,6 +8,7 @@ import hashlib
 import pathlib
 import random
 import string
+
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -49,7 +50,7 @@ def compute_sha256(fpath=None, st=None):
 
 def compute_file_hashing(algorithm: str, path: pathlib.Path, bufsize: int = DEFAULT_BUFSIZE) -> str:
     """
-    Computes the SHA-256 hash of a file.
+    Computes the hash of a file using the algorithm function
 
     Args:
         algorithm (str): The name of the hashing algorithm.
@@ -72,7 +73,7 @@ def compute_file_hashing(algorithm: str, path: pathlib.Path, bufsize: int = DEFA
 
 def compute_string_hash(algorithm: str, st: str) -> str:
     """
-    Computes the SHA-256 hash of a string.
+    Computes the hash of a string using the algorithm function.
 
     Args:
         algorithm (str): The name of the hashing algorithm.
@@ -168,14 +169,13 @@ def create_tiledb_schema(uri: str, cfg: dict):
     tiledb.Array.create(uri, schema, ctx=ctx)
 
 
-def process_and_ingest(file_path: str, uri, checksum_dict: dict, cfg):
+def process_and_ingest(file_path: str, uri: str, cfg: dict) -> None:
     """
     Process a single file and ingest it in a TileDB
 
     Args:
         file_path (str): The path where the file to ingest is stored
         uri (str): The path where the TileDB is stored.
-        dict_type(str)
         cfg (dict): A configuration dictionary to use for connecting to S3.
     """
 
@@ -184,13 +184,11 @@ def process_and_ingest(file_path: str, uri, checksum_dict: dict, cfg):
         file_path,
         compression="gzip",
         sep="\t",
-        usecols=["CHR", "POS", "SNPID", "EA", "NEA", "EAF", "SE", "BETA", "MLOG10P"],
+        usecols=["CHR", "POS", "SNPID", "EAF", "SE", "BETA", "MLOG10P"],
         dtype={
             "CHR": np.uint8,
             "POS": np.uint32,
             "SNPID": str,
-            "EA": str,
-            "NEA": str,
             "EAF": np.float32,
             "SE": np.float32,
             "BETA": np.float32,
@@ -199,13 +197,11 @@ def process_and_ingest(file_path: str, uri, checksum_dict: dict, cfg):
     )
     # Add trait_id based on the checksum_dict
     # file_name = file_path.split('/')[-1]
-    df["TRAITID"] = checksum_dict[file_path]
+    df["TRAITID"] = compute_sha256(fpath=file_path)
     dtype_tbd = {
         "CHR": np.uint8,
         "POS": np.uint32,
         "SNPID": str,
-        "EA": str,
-        "NEA": str,
         "EAF": np.float32,
         "SE": np.float32,
         "BETA": np.float32,
