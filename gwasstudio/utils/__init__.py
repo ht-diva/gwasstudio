@@ -146,18 +146,6 @@ def create_tiledb_schema(uri: str, cfg: dict):
                 filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
             ),
             tiledb.Attr(
-                name="EA",
-                dtype="ascii",
-                var=True,
-                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-            ),
-            tiledb.Attr(
-                name="NEA",
-                dtype="ascii",
-                var=True,
-                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-            ),
-            tiledb.Attr(
                 name="SNPID",
                 dtype="ascii",
                 var=True,
