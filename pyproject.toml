@@ -40,6 +40,7 @@ tiledb = "0.32.2"
 polars = "^1.14.0"
 pandas = "^2.2.3"
 boto3 = "^1.35.71"
+pyarrow = "^18.1.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.6.3"
