@@ -50,7 +50,7 @@ def compute_sha256(fpath=None, st=None):
 
 def compute_file_hashing(algorithm: str, path: pathlib.Path, bufsize: int = DEFAULT_BUFSIZE) -> str:
     """
-    Computes the SHA-256 hash of a file.
+    Computes the hash of a file using the algorithm function
 
     Args:
         algorithm (str): The name of the hashing algorithm.
@@ -73,7 +73,7 @@ def compute_file_hashing(algorithm: str, path: pathlib.Path, bufsize: int = DEFA
 
 def compute_string_hash(algorithm: str, st: str) -> str:
     """
-    Computes the SHA-256 hash of a string.
+    Computes the hash of a string using the algorithm function.
 
     Args:
         algorithm (str): The name of the hashing algorithm.
@@ -109,13 +109,12 @@ def create_tiledb_schema(uri: str, cfg: dict):
         uri (str): The path where the TileDB will be stored.
         cfg (dict): A configuration dictionary to use for connecting to S3.
     """
-
     chrom_domain = (1, 24)
     pos_domain = (1, 3000000000)
     dom = tiledb.Domain(
-        tiledb.Dim(name="chrom", domain=chrom_domain, dtype=np.uint8, var=False),
-        tiledb.Dim(name="pos", domain=pos_domain, dtype=np.uint32, var=False),
-        tiledb.Dim(name="trait_id", dtype=np.dtype("S64"), var=True),
+        tiledb.Dim(name="CHR", domain=chrom_domain, dtype=np.uint8, var=False),
+        tiledb.Dim(name="POS", domain=pos_domain, dtype=np.uint32, var=False),
+        tiledb.Dim(name="TRAITID", dtype="ascii", var=False),
     )
     schema = tiledb.ArraySchema(
         domain=dom,
@@ -123,35 +122,48 @@ def create_tiledb_schema(uri: str, cfg: dict):
         allows_duplicates=True,
         attrs=[
             tiledb.Attr(
-                name="beta", dtype=np.float32, var=False, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
+                name="BETA",
+                dtype=np.float32,
+                var=False,
+                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
             ),
             tiledb.Attr(
-                name="se", dtype=np.float32, var=False, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
+                name="SE",
+                dtype=np.float32,
+                var=False,
+                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
             ),
             tiledb.Attr(
-                name="freq", dtype=np.float32, var=False, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
+                name="MLOG10P",
+                dtype=np.float32,
+                var=False,
+                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
             ),
             tiledb.Attr(
-                name="alt", dtype=np.dtype("S5"), var=True, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
+                name="EAF",
+                dtype=np.float32,
+                var=False,
+                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
             ),
             tiledb.Attr(
-                name="SNP", dtype=np.dtype("S20"), var=True, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])
+                name="SNPID",
+                dtype="ascii",
+                var=True,
+                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
             ),
         ],
     )
-    tiledb.Array.create(uri, schema, ctx=cfg)
+    ctx = tiledb.Ctx(cfg)
+    tiledb.Array.create(uri, schema, ctx=ctx)
 
 
-def process_and_ingest(
-    file_path: str, uri, dict_type: dict, renaming_columns: dict, attributes_columns: list, cfg: dict
-):
+def process_and_ingest(file_path: str, uri: str, cfg: dict) -> None:
     """
     Process a single file and ingest it in a TileDB
 
     Args:
         file_path (str): The path where the file to ingest is stored
         uri (str): The path where the TileDB is stored.
-        dict_type(str)
         cfg (dict): A configuration dictionary to use for connecting to S3.
     """
 
@@ -160,22 +172,39 @@ def process_and_ingest(
         file_path,
         compression="gzip",
         sep="\t",
-        usecols=attributes_columns,
-        # usecols=["Chrom", "Pos", "Name", "effectAllele", "Beta", "SE", "ImpMAF"]
+        usecols=["CHR", "POS", "SNPID", "EAF", "SE", "BETA", "MLOG10P"],
+        dtype={
+            "CHR": np.uint8,
+            "POS": np.uint32,
+            "SNPID": str,
+            "EAF": np.float32,
+            "SE": np.float32,
+            "BETA": np.float32,
+            "MLOG10P": np.float32,
+        },
     )
-    sha256 = compute_sha256(file_path)
-    # Rename columns and modify 'chrom' field
-    df = df.rename(columns=renaming_columns)
-    df["chrom"] = df["chrom"].str.replace("chr", "")
-    df["chrom"] = df["chrom"].str.replace("X", "23")
-    df["chrom"] = df["chrom"].str.replace("Y", "24")
     # Add trait_id based on the checksum_dict
-    # file_name = file_path.split("/")[-1]
-    df["trait_id"] = sha256
-
+    # file_name = file_path.split('/')[-1]
+    df["TRAITID"] = compute_sha256(fpath=file_path)
+    dtype_tbd = {
+        "CHR": np.uint8,
+        "POS": np.uint32,
+        "SNPID": str,
+        "EAF": np.float32,
+        "SE": np.float32,
+        "BETA": np.float32,
+        "MLOG10P": np.float32,
+        "TRAITID": str,
+    }
     # Store the processed data in TileDB
+    ctx = tiledb.Ctx(cfg)
     tiledb.from_pandas(
-        uri=uri, dataframe=df, index_dims=["chrom", "pos", "trait_id"], mode="append", column_types=dict_type, ctx=cfg
+        uri=uri,
+        dataframe=df,
+        index_dims=["CHR", "POS", "TRAITID"],
+        mode="append",
+        column_types=dtype_tbd,
+        ctx=ctx,
     )
 
 
@@ -184,8 +213,14 @@ def process_write_chunk(chunk, SNP_list, file_stream):
     chunk_polars = pl.DataFrame(chunk)
     SNP_list_polars = SNP_list_polars.with_columns([pl.col("POS").cast(pl.UInt32)])
     chunk_polars = chunk_polars.with_columns(
-        [pl.col("ALLELE0").cast(pl.Utf8), pl.col("ALLELE1").cast(pl.Utf8), pl.col("SNPID").cast(pl.Utf8)]
+        [
+            pl.col("NEA").cast(pl.Utf8),
+            pl.col("EA").cast(pl.Utf8),
+            pl.col("SNPID").cast(pl.Utf8),
+        ]
     )
+    # Perform the join operation with Polars
+    subset_SNPs_merge = chunk_polars.join(SNP_list_polars, on=["CHR", "POS", "NEA", "EA"], how="inner")
     # Perform the join operation with Polars
     subset_SNPs_merge = chunk_polars.join(SNP_list_polars, on=["CHR", "POS", "ALLELE0", "ALLELE1"], how="inner")
     # Append the merged chunk to CSV
