@@ -26,16 +26,24 @@ Ingest metadata into a MongoDB collection.
         default=None,
         help="Path to the file containing a list of files to ingest. One path per line",
     ),
+    cloup.option(
+        "--checksumlist", default=None, help="Path to the file containing checksums of files to ingest. One per line"
+    ),
     cloup.option("--annotation-file", default=None, help="File path with the annotation for the trait's feature"),
 )
-def meta_ingest(filepath, pathlist, annotation_file):
-    input_file_list = []
+def meta_ingest(filepath, pathlist, checksumlist, annotation_file):
+    input_dictionary = {}
     if filepath:
-        input_file_list.append(filepath)
+        input_dictionary[filepath] = None
     elif pathlist:
         with open(pathlist, "r") as fp:
             for line in fp:
-                input_file_list.append(line.strip())
+                input_dictionary[line.strip()] = None
+    elif checksumlist:
+        with open(checksumlist, "r") as fp:
+            for line in fp:
+                _hash, _, _path = line.strip().split(" ")
+                input_dictionary[_path] = _hash
     else:
         logger.error("No input provided")
         exit()
@@ -59,11 +67,15 @@ def meta_ingest(filepath, pathlist, annotation_file):
     renamed_columns = {k: k.replace(" ", "_").lower() for k in annotation_columns}
     df_annotation = df_annotation.rename(columns=renamed_columns)
 
-    logger.info("{} documents to ingest".format(len(input_file_list)))
-    for path in input_file_list:
+    logger.info("{} documents to ingest".format(len(input_dictionary)))
+    for path in input_dictionary.keys():
         df = pd.read_csv(Path(path), compression="gzip", nrows=1, usecols=["N"], sep="\t")
         total_samples = int(df.loc[0, "N"])
-        file_hash = compute_sha256(fpath=path)
+
+        file_hash = input_dictionary[path]
+        if file_hash is None:
+            file_hash = compute_sha256(fpath=path)
+
         basename = Path(path).name.split("_")[:-1]
         seqid = "-".join([basename[2], basename[3]])
         gene_ids = df_annotation[df_annotation["seqid"] == seqid]["ensembl_gene_id"].item()
