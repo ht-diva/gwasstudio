@@ -1,5 +1,7 @@
 import datetime
 
+from mongoengine.errors import NotUniqueError
+
 from gwasstudio import logger
 
 
@@ -49,11 +51,16 @@ class MongoMixin:
         """
         if not self.is_mapped:
             self.map()
-        with self.mec:
-            if hasattr(self.mdb_obj, "modification_date"):
-                self.mdb_obj.modification_date = datetime.datetime.now()
-            self.mdb_obj.save(**kwargs)
-        logger.info("{} saved".format(self.unique_key))
+        try:
+            with self.mec:
+                if hasattr(self.mdb_obj, "modification_date"):
+                    self.mdb_obj.modification_date = datetime.datetime.now()
+                self.mdb_obj.save(**kwargs)
+            logger.info("{} saved".format(self.unique_key))
+        except NotUniqueError:
+            logger.error("{} skipped as not unique ID".format(self.unique_key))
+            # logger.error(e)
+            # exit("Not unique ID provided")
 
     def view(self):
         """
