@@ -57,9 +57,10 @@ class MongoMixin:
                     self.mdb_obj.modification_date = datetime.datetime.now()
                 self.mdb_obj.save(**kwargs)
             logger.info("{} saved".format(self.unique_key))
-        except NotUniqueError as e:
-            logger.error(e)
-            exit("Not unique ID provided")
+        except NotUniqueError:
+            logger.error("{} skipped as not unique ID".format(self.unique_key))
+            # logger.error(e)
+            # exit("Not unique ID provided")
 
     def view(self):
         """
