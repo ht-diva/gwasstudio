@@ -46,7 +46,7 @@ class DataProfile(Metadata):
 
     project = StringField(max_length=500, required=True)
     data_id = StringField(max_length=200, unique_with="project", required=True)
-    trait_desc = StringField(max_length=500)
+    trait_desc = StringField()
     total_samples = IntField()
     total_cases = IntField()
     population = EnumField(Ancestry)
