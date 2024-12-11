@@ -7,7 +7,18 @@ from comoda.yaml import load
 from gwasstudio import __appname__, config_dir, config_filename, logger
 
 
-class ConfigurationManager:
+class SingletonConfigurationManager(type):
+    """Metaclass."""
+
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(SingletonConfigurationManager, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class ConfigurationManager(metaclass=SingletonConfigurationManager):
     def __init__(self, **kwargs):
         def copy_config_file_from_package(dst):
             package_name = ".".join([__appname__, "config"])
