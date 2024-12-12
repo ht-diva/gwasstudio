@@ -1,0 +1,15 @@
+project: DECODE
+study: largescaleplasma2023
+build: GRCh38
+trait_desc:
+      - ENSG00000126456
+      - ENSG00000276885
+
+platform:
+  maker: "Somalogic"
+  version: "v4"
+
+output:
+  - trait_desc.feature.protein_ids
+  - trait_desc.feature.gene_ids
+  - data_id
