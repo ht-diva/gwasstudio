@@ -2,9 +2,9 @@ import click
 import cloup
 import pandas as pd
 import tiledb
-from src.gwasstudio import logger
-from src.gwasstudio.methods.locus_breaker import locus_breaker
-from src.gwasstudio.utils import process_write_chunk
+from gwasstudio import logger
+from gwasstudio.methods.locus_breaker import locus_breaker
+from gwasstudio.utils import process_write_chunk
 
 help_doc = """
 Exports data from a TileDB dataset.

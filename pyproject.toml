@@ -26,6 +26,8 @@ dependencies = [
     "boto3 (>=1.35.97,<2.0.0)"
 ]
 
+[project.scripts]
+gwasstudio = 'gwasstudio.main:main'
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
