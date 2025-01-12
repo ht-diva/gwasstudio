@@ -2,7 +2,7 @@ import pprint
 
 import cloup
 
-from gwasstudio.mongo.models import EnhancedDataProfile
+from src.gwasstudio.mongo.models import EnhancedDataProfile
 
 help_doc = """
 Retrieve a dataset's metadata from MongoDB using its unique key

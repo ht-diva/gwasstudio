@@ -1,8 +1,8 @@
-import mongomock
 import unittest
 
-from mongoengine import connect, disconnect
+import mongomock
 from gwasstudio.utils import compute_sha256
+from mongoengine import connect, disconnect
 
 
 class TestComputesha256(unittest.TestCase):

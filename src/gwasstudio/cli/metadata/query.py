@@ -6,8 +6,8 @@ import click
 import cloup
 from comoda.yaml import load
 
-from gwasstudio import logger
-from gwasstudio.mongo.models import EnhancedDataProfile
+from src.gwasstudio import logger
+from src.gwasstudio.mongo.models import EnhancedDataProfile
 
 help_doc = """
 query metadata records from MongoDB

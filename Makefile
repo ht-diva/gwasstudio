@@ -1,5 +1,5 @@
-APPNAME=$(shell grep name pyproject.toml|cut -f2 -d'"')
-TARGETS=build clean dependencies deploy install test uninstall
+APPNAME=$(shell grep -m 1 name pyproject.toml|cut -f2 -d'"')
+TARGETS=build clean dependencies deploy editable_install install test uninstall
 VERSION=$(shell grep version pyproject.toml|cut -f2 -d'"')
 .ONESHELL:
 # Need to specify bash in order for conda activate to work.
@@ -42,6 +42,9 @@ dependencies_dev:
 deploy:
 	poetry install
 
+editable_install:
+	pip install --editable .
+
 install: build
 	pip install dist/*.whl
 
@@ -61,7 +64,7 @@ tag:
 
 test:
 	@echo "Testing"
-	python3 -m unittest discover -s tests
+	pytest --cov=src/gwasstudio/ tests
 
 uninstall:
 	pip uninstall -y ${APPNAME}

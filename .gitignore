@@ -1,3 +1,6 @@
+# macOS
+.DS_Store
+
 # PyCharm
 .idea/
 
@@ -20,8 +23,28 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+
+# poetry
 poetry.lock
 
 # Cache
 *.pyc
 __pycache__
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# ruff
+.ruff_cache/

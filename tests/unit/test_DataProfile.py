@@ -1,11 +1,10 @@
 import unittest
 
 import mongomock
-from mongoengine import connect, disconnect, get_connection
-
 from gwasstudio.config_manager import ConfigurationManager
 from gwasstudio.mongo.models import EnhancedDataProfile, DataProfile
 from gwasstudio.utils import compute_sha256, generate_random_word
+from mongoengine import connect, disconnect, get_connection
 
 
 class TestDataProfile(unittest.TestCase):
