@@ -4,7 +4,7 @@ from typing import List, Dict, Any
 
 import click
 import cloup
-from comoda.yaml import load
+from ruamel.yaml import YAML
 
 from gwasstudio import logger
 from gwasstudio.mongo.models import EnhancedDataProfile
@@ -51,10 +51,12 @@ def meta_query(key, values, output, search_file):
 
     def _load_search_topics(search_file: str) -> Any | None:
         """Loads search topics from a YAML file."""
+        search_topics = None
         if search_file and Path(search_file).exists():
-            return load(search_file)
-        else:
-            return None
+            yaml = YAML(typ="safe")
+            with open(search_file, "r") as file:
+                search_topics = yaml.load(file)
+        return search_topics
 
     def _create_query_dicts(values: str, key: str) -> List[Dict]:
         """Creates query dictionaries from values and key."""

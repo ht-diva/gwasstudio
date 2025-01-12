@@ -2,7 +2,7 @@ from importlib.resources import files
 from pathlib import Path
 from shutil import copyfile
 
-from comoda.yaml import load
+from ruamel.yaml import YAML
 
 from gwasstudio import __appname__, config_dir, config_filename, logger
 
@@ -48,7 +48,9 @@ class ConfigurationManager(metaclass=SingletonConfigurationManager):
                 logger.warning(f"Configuration file has default values! Update them in {configuration_file}")
 
         logger.debug(f"Reading configuration from {configuration_file}")
-        c = load(configuration_file)
+        yaml = YAML(typ="safe")
+        with open(configuration_file, "r") as file:
+            c = yaml.load(file)
 
         # Get database connection settings from kwargs, if not present, use config
         mdb_connection = c.get("mdbc", {})

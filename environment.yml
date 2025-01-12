@@ -7,4 +7,3 @@ dependencies:
   - mamba
   - pip  # pip must be mentioned explicitly, or conda-lock will fail
   - poetry=2.*
-  - tiledb-py=0.33.*
