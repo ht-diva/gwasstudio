@@ -1,6 +1,9 @@
 import datetime
 from enum import Enum
 
+from gwasstudio.config_manager import ConfigurationManager
+from gwasstudio.mongo.connection_manager import get_mec
+from gwasstudio.mongo.mixin import MongoMixin
 from mongoengine import (
     DateTimeField,
     Document,
@@ -10,10 +13,6 @@ from mongoengine import (
     ReferenceField,
     StringField,
 )
-
-from gwasstudio.config_manager import ConfigurationManager
-from gwasstudio.mongo.connection_manager import get_mec
-from gwasstudio.mongo.mixin import MongoMixin
 
 # TODO: This configuration manager doesn't use a custom configuration file passed by cli
 cm = ConfigurationManager()

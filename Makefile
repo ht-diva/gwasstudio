@@ -1,29 +1,13 @@
-APPNAME=$(shell grep name pyproject.toml|cut -f2 -d'"')
-TARGETS=build clean dependencies deploy install test uninstall
+APPNAME=$(shell grep -m 1 name pyproject.toml|cut -f2 -d'"')
+TARGETS=build clean dependencies deploy editable_install install test uninstall
 VERSION=$(shell grep version pyproject.toml|cut -f2 -d'"')
-.ONESHELL:
-# Need to specify bash in order for conda activate to work.
-SHELL=/bin/bash
-# https://stackoverflow.com/questions/53382383/makefile-cant-use-conda-activate
-CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
 
 
 all:
 	@echo "Try one of: ${TARGETS}"
 
-# https://stackoverflow.com/questions/70851048/does-it-make-sense-to-use-conda-poetry
-bootstrap:
-	conda create -p /tmp/bootstrap -c conda-forge mamba conda-lock poetry='1.*'
-	$(CONDA_ACTIVATE) /tmp/bootstrap
-	/tmp/bootstrap/bin/conda-lock -k explicit --conda mamba
-	poetry init --python=~3.10  # version spec should match the one from environment.yml
-	poetry add --lock tiledb-py=0.32.2
-	poetry add --lock conda-lock
-	conda deactivate
-	rm -rf /tmp/bootstrap
-
 build_conda_lock_files:
-	conda-lock -k explicit --conda mamba -p 'linux-64' -p 'osx-64' -p 'osx-arm64'
+	conda-lock -k explicit -f environment.yml --conda mamba -p 'linux-64' -p 'osx-arm64'
 
 build: clean dependencies
 	poetry build
@@ -41,6 +25,9 @@ dependencies_dev:
 
 deploy:
 	poetry install
+
+editable_install:
+	pip install --editable .
 
 install: build
 	pip install dist/*.whl
@@ -61,7 +48,7 @@ tag:
 
 test:
 	@echo "Testing"
-	python3 -m unittest discover -s tests
+	pytest --cov=src/gwasstudio/ tests
 
 uninstall:
 	pip uninstall -y ${APPNAME}

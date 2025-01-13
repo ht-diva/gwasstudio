@@ -1,7 +1,6 @@
 import click
 import cloup
 
-
 from gwasstudio import __appname__, __version__, context_settings, log_file, logger
 from gwasstudio.cli.export import export
 from gwasstudio.cli.info import info
