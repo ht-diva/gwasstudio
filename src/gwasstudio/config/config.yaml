@@ -1,6 +1,6 @@
 # MongoDB connection
 mdbc:
-  uri: "mongodb://username:password@hostname:27017/dbname?authSource=dbname"
+  uri: "mongodb://tiled_admin:cvdcff224n00@it1-ht-mongo01.htechnopole.local:27017/tiled?authSource=tiled"
 
 # Ancestry list
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5815218/table/Tab1/?report=objectonly
