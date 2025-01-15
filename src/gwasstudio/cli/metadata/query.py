@@ -1,8 +1,7 @@
 import json
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
-import click
 import cloup
 from ruamel.yaml import YAML
 
@@ -15,39 +14,17 @@ query metadata records from MongoDB
 
 
 @cloup.command("meta_query", no_args_is_help=True, help=help_doc)
-@cloup.option(
-    "--key",
-    default=None,
-    help="query key",
-)
-@cloup.option(
-    "--values",
-    default=None,
-    help="query values, separate multiple values with ;",
-)
-@cloup.option(
-    "--output",
-    type=click.Choice(["all", "data_id"]),
-    default="data_id",
-    help="The detail that you would like to retrieve from the metadata records",
-)
-@cloup.option("--search-file", default=None, help="Path to search template")
-def meta_query(key, values, output, search_file):
+@cloup.option("--search-file", required=True, default=None, help="Path to search template")
+def meta_query(search_file):
     """
     Queries metadata based on given parameters.
 
     Args:
-        key (str): Query key
-        values (str): Query values separated by semicolons
-        output (str): Output detail (all or data_id)
         search_file (str): Path to search template
 
     Returns:
         None
     """
-
-    def flatten_list(nested_list):
-        return [item for sublist in nested_list for item in sublist]
 
     def _load_search_topics(search_file: str) -> Any | None:
         """Loads search topics from a YAML file."""
@@ -58,48 +35,36 @@ def meta_query(key, values, output, search_file):
                 search_topics = yaml.load(file)
         return search_topics
 
-    def _create_query_dicts(values: str, key: str) -> List[Dict]:
-        """Creates query dictionaries from values and key."""
-        query_dicts = []
-        for value in values.split(";"):
-            query_dict = {key: value}
-            query_dicts.append(query_dict)
-        return query_dicts
+    def _finditem(obj, key):
+        if key in obj:
+            return obj[key]
+        for k, v in obj.items():
+            if isinstance(v, dict):
+                return _finditem(v, key)
 
     search_topics = _load_search_topics(search_file)
-
-    # If no search file is provided, create default query dictionary
-    if not search_topics:
-        query_dicts = _create_query_dicts(values, key)
-    else:
-        logger.debug(search_topics)
-        query_dicts = []
-        for trait in search_topics["trait_desc"]:
-            # Get all keys and values from the original dictionary
-            keys = list(search_topics.keys())
-            values = list(search_topics.values())
-
-            # Create a new dictionary with all the keys and values, including the current trait
-            query_dict = {key: value for key, value in zip(keys, values)}
-            query_dict["trait_desc"] = trait  # replace the existing trait_desc value
-
-            # Append the new dictionary to the list
-            query_dicts.append(query_dict)
+    logger.debug(search_topics)
 
     obj = EnhancedDataProfile()
     objs = []
 
-    for query_dict in query_dicts:
-        objs.append(obj.query(**query_dict))
+    for trait_desc_search_dict in search_topics["trait_desc"]:
+        k, v = next(iter(trait_desc_search_dict.items()))
+        # Create a new dictionary with all keys and values, including the current trait
+        # Merging dictionaries using the unpacking operator (**)
+        query_dict = {**search_topics, **{"trait_desc": v}}
+        query_result = obj.query(**query_dict)
 
-    flat_list = flatten_list(objs)
+        for qr in query_result:
+            if qr not in objs:
+                leaf = k.split(".").pop()
+                json_dict = json.loads(qr["trait_desc"])
+                if v in _finditem(json_dict, leaf):
+                    objs.append(qr)
 
-    # Print results
-    if search_topics:
-        output_fields = search_topics.get("output", [])
-    else:
-        output_fields = [output]
-    for meta_dict in flat_list:
+    output_fields = search_topics.get("output", ["data_id"])
+
+    for meta_dict in objs:
         to_print = []
         for field in output_fields:
             if field.startswith("trait_desc"):

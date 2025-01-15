@@ -1,6 +1,7 @@
 APPNAME=$(shell grep -m 1 name pyproject.toml|cut -f2 -d'"')
 TARGETS=build clean dependencies deploy editable_install install test uninstall
 VERSION=$(shell grep version pyproject.toml|cut -f2 -d'"')
+MONGODB_VERSION="7.0.6-ubi8"
 
 
 all:
@@ -31,6 +32,12 @@ editable_install:
 
 install: build
 	pip install dist/*.whl
+
+mongo_docker_run:
+	docker run --name mongodb -d -p 27017:27017 -v ~/gwasstudio/db:/data/db mongodb/mongodb-community-server:${MONGODB_VERSION}
+
+mongo_docker_stop:
+	docker stop mongodb && docker rm mongodb
 
 m1_env:
 	conda create -n ${APPNAME} --file conda-osx-arm64.lock
