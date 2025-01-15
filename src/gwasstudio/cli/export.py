@@ -5,6 +5,8 @@ import tiledb
 from gwasstudio import logger
 from gwasstudio.methods.locus_breaker import locus_breaker
 from gwasstudio.utils import process_write_chunk
+import pyarrow.parquet as pq
+
 
 help_doc = """
 Exports data from a TileDB dataset.
@@ -94,6 +96,7 @@ def export(ctx, uri, trait_id_file, output_path, pvalue_sig, pvalue_limit, hole_
             tiledb_query = tiledb_unified.query(
                 dims=["CHR", "POS", "TRAITID"],
                 attrs=["SNPID", "BETA", "SE", "EAF", "MLOG10P"],
-            ).df[:, :, trait
-            ]
-            tiledb_query.to_csv(f"{output_path}_{trait}.csv.gz", index=False, sep="\t", compression="gzip")
+                return_arrow=True,
+            ).df[:, :, trait]
+            logger.info(f"Saving all summary statistics in {output_path}")
+            pq.write_table(tiledb_query, f"{output_path}_{trait}.parquet", compression="snappy")
