@@ -1,12 +1,9 @@
 import json
-from pathlib import Path
 
 import cloup
-import pandas as pd
 
 from gwasstudio import logger
 from gwasstudio.mongo.models import EnhancedDataProfile
-from gwasstudio.utils import compute_sha256
 
 help_doc = """
 Ingest metadata into a MongoDB collection.
@@ -19,82 +16,17 @@ Ingest metadata into a MongoDB collection.
     cloup.option(
         "--filepath",
         default=None,
-        help="Path to the file to ingest",
+        help="Path to the file of JSON dictionaries to ingest",
     ),
-    cloup.option(
-        "--pathlist",
-        default=None,
-        help="Path to the file containing a list of files to ingest. One path per line",
-    ),
-    cloup.option(
-        "--checksumlist", default=None, help="Path to the file containing checksums of files to ingest. One per line"
-    ),
-    cloup.option("--annotation-file", default=None, help="File path with the annotation for the trait's feature"),
 )
-def meta_ingest(filepath, pathlist, checksumlist, annotation_file):
-    input_dictionary = {}
-    if filepath:
-        input_dictionary[filepath] = None
-    elif pathlist:
-        with open(pathlist, "r") as fp:
-            for line in fp:
-                input_dictionary[line.strip()] = None
-    elif checksumlist:
-        with open(checksumlist, "r") as fp:
-            for line in fp:
-                _hash, _, _path = line.strip().split(" ")
-                input_dictionary[_path] = _hash
-    else:
-        logger.error("No input provided")
-        exit()
+def meta_ingest(filepath):
+    with open(filepath, "r") as fp:
+        jd_list = json.load(fp)
 
-    # file_list = sorted(Path(data_path).rglob("*.txt.gz"))
-    project = "DECODE"
-    # study = "largescaleplasma2023"
-    population = "Icelandic"
-    category = "pQTL"
-    build = "GRCh38"
-    platform = {
-        "technology": "proteomics",
-        "maker": "Somalogic",
-        "model": "SomaScan",
-        "version": "v4",
-        "normalization": "raw",
-    }
-    tissue = "Plasma"
-    annotation_columns = ["SeqId", "UniProt ID", "Ensembl Gene ID"]
-    df_annotation = pd.read_csv(Path(annotation_file), usecols=annotation_columns, sep=";")
-    renamed_columns = {k: k.replace(" ", "_").lower() for k in annotation_columns}
-    df_annotation = df_annotation.rename(columns=renamed_columns)
+    logger.info("{} documents to ingest".format(len(jd_list)))
+    print("{} documents to ingest".format(len(jd_list)))
 
-    logger.info("{} documents to ingest".format(len(input_dictionary)))
-    for path in input_dictionary.keys():
-        df = pd.read_csv(Path(path), compression="gzip", nrows=1, usecols=["N"], sep="\t")
-        total_samples = int(df.loc[0, "N"])
-
-        file_hash = input_dictionary[path]
-        if file_hash is None:
-            file_hash = compute_sha256(fpath=path)
-
-        basename = Path(path).name.split("_")[:-1]
-        seqid = "-".join([basename[2], basename[3]])
-        gene_ids = df_annotation[df_annotation["seqid"] == seqid]["ensembl_gene_id"].item()
-        protein_ids = df_annotation[df_annotation["seqid"] == seqid]["uniprot_id"].item()
-        trait_desc = {
-            "feature": {"seqid": seqid, "gene_ids": gene_ids, "protein_ids": protein_ids},
-            "tissue": tissue,
-            "platform": platform,
-        }
-
-        kwargs = {
-            "project": project,
-            "data_id": file_hash,
-            "category": category,
-            "total_samples": total_samples,
-            "population": population,
-            "build": build,
-            "trait_desc": json.dumps(trait_desc),
-        }
-        logger.debug(kwargs)
-        obj = EnhancedDataProfile(**kwargs)
+    for jd in jd_list:
+        logger.debug(jd)
+        obj = EnhancedDataProfile(**jd)
         obj.save()
