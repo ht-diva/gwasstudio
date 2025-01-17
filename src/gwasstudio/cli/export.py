@@ -56,7 +56,7 @@ Exports data from a TileDB dataset.
 @click.pass_context
 def export(ctx, uri, trait_id_file, output_path, pvalue_sig, pvalue_limit, hole_size, snp_list, locusbreaker, get_all):
     cfg = ctx.obj["cfg"]
-    tiledb_unified = tiledb.open(uri, mode="r", config = cfg)
+    tiledb_unified = tiledb.open(uri, mode="r", config=cfg)
     logger.info("TileDB dataset loaded")
     trait_id_file = open(trait_id_file, "r").read().rstrip().split("\n")
     trait_id_list = [trait_id.split("\t")[-1] for trait_id in trait_id_file]
@@ -80,7 +80,7 @@ def export(ctx, uri, trait_id_file, output_path, pvalue_sig, pvalue_limit, hole_
         chromosome_dict = SNP_list.groupby("CHR")["POS"].apply(list).to_dict()
         unique_positions = list(set(pos for positions in chromosome_dict.values() for pos in positions))
         with tiledb_unified as tiledb_iterator:
-            #Filter by chromosome, position and trait_id
+            # Filter by chromosome, position and trait_id
             tiledb_iterator_query = tiledb_iterator.query(return_incomplete=True).df[
                 chromosome_dict.keys(), unique_positions, trait_id_list
             ]  # Replace with appropriate filters if necessary
