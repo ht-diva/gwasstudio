@@ -5,6 +5,8 @@ import tiledb
 from gwasstudio import logger
 from gwasstudio.methods.locus_breaker import locus_breaker
 from gwasstudio.utils import process_write_chunk
+import pyarrow.parquet as pq
+
 
 help_doc = """
 Exports data from a TileDB dataset.
@@ -17,11 +19,6 @@ Exports data from a TileDB dataset.
     cloup.option("--uri", default="None", help="TileDB dataset URI"),
     cloup.option("--output_path", default="None", help="The path of the output"),
     cloup.option("--trait_id_file", default="None", help="The trait id used for the analysis"),
-    cloup.option(
-        "--chr_list",
-        default=None,
-        help="A list of chromosomes to be used for the analysis",
-    ),
 )
 @cloup.option_group(
     "Options for Locusbreaker",
@@ -40,32 +37,37 @@ Exports data from a TileDB dataset.
     ),
 )
 @cloup.option_group(
-    "Options for filtering using a genomic regions or a list of SNPs ids",
+    "Options for filtering using a list of SNPs ids",
     cloup.option(
         "--snp-list",
         default="None",
         help="A txt file with a column containing the SNP ids",
     ),
 )
+@cloup.option_group(
+    "Options for getting the entire sumstats",
+    cloup.option(
+        "--get-all",
+        default=False,
+        is_flag=True,
+        help="Boolean to get all the sumstats",
+    ),
+)
 @click.pass_context
-def export(ctx, uri, trait_id_file, output_path, pvalue_sig, pvalue_limit, hole_size, snp_list, locusbreaker, chr_list):
-    # cfg = ctx.obj["cfg"]
-    tiledb_unified = tiledb.open(uri, mode="r")
+def export(ctx, uri, trait_id_file, output_path, pvalue_sig, pvalue_limit, hole_size, snp_list, locusbreaker, get_all):
+    cfg = ctx.obj["cfg"]
+    tiledb_unified = tiledb.open(uri, mode="r", config=cfg)
     logger.info("TileDB dataset loaded")
-    trait_id_list = open(trait_id_file, "r").read().rstrip().split("\n")
-    if chr_list:
-        chr_list_str = chr_list.split(",")
-        chr_list_int = [int(x) for x in chr_list_str]
-    else:
-        chr_list_int = slice(None)
-
+    trait_id_file = open(trait_id_file, "r").read().rstrip().split("\n")
+    trait_id_list = [trait_id.split("\t")[-1] for trait_id in trait_id_file]
+    print(trait_id_list)
     # If locus_breaker is selected, run locus_breaker
     if locusbreaker:
         print("running locus breaker")
         for trait in trait_id_list:
             subset_SNPs_pd = tiledb_unified.query(
                 dims=["CHR", "POS", "TRAITID"],
-                attrs=["SNPID", "ALLELE0", "ALLELE1", "BETA", "SE", "EAF", "MLOG10P"],
+                attrs=["SNPID", "BETA", "SE", "EAF", "MLOG10P"],
             ).df[:, :, trait_id_list]
             results_lb = locus_breaker(subset_SNPs_pd)
             logger.info(f"Saving locus-breaker output in {output_path}")
@@ -78,8 +80,9 @@ def export(ctx, uri, trait_id_file, output_path, pvalue_sig, pvalue_limit, hole_
         chromosome_dict = SNP_list.groupby("CHR")["POS"].apply(list).to_dict()
         unique_positions = list(set(pos for positions in chromosome_dict.values() for pos in positions))
         with tiledb_unified as tiledb_iterator:
+            # Filter by chromosome, position and trait_id
             tiledb_iterator_query = tiledb_iterator.query(return_incomplete=True).df[
-                chr_list_int, unique_positions, trait_id_list
+                chromosome_dict.keys(), unique_positions, trait_id_list
             ]  # Replace with appropriate filters if necessary
             with open(output_path, mode="a") as f:
                 for chunk in tiledb_iterator_query:
@@ -88,15 +91,12 @@ def export(ctx, uri, trait_id_file, output_path, pvalue_sig, pvalue_limit, hole_
 
         logger.info(f"Saved filtered summary statistics by SNPs in {output_path}")
         exit()
-
-    if pvalue_sig:
-        with tiledb_unified as tiledb_iterator:
-            tiledb_iterator_query = tiledb_unified.query(
-                cond=f"MLOGP10 > {pvalue_sig}",
+    if get_all:
+        for trait in trait_id_list:
+            tiledb_query = tiledb_unified.query(
                 dims=["CHR", "POS", "TRAITID"],
-                attrs=["SNPID", "EA", "NEA", "BETA", "SE", "EAF", "MLOG10P"],
-            ).df[chr_list_int, :, trait_id_list]
-            with open(output_path, mode="a") as f:
-                for chunk in tiledb_iterator_query:
-                    chunk.to_csv(output_path, index=False)
-            logger.info(f"Saving filtered GWAS by regions and samples in {output_path}")
+                attrs=["SNPID", "BETA", "SE", "EAF", "MLOG10P"],
+                return_arrow=True,
+            ).df[:, :, trait]
+            logger.info(f"Saving all summary statistics in {output_path}")
+            pq.write_table(tiledb_query, f"{output_path}_{trait}.parquet", compression="snappy")

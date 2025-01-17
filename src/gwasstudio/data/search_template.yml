@@ -14,4 +14,6 @@ platform:
 output:
   - trait_desc.feature.protein_ids
   - trait_desc.feature.gene_ids
+  - trait_desc.feature.seqid
+  - trait_desc.tissue
   - data_id
