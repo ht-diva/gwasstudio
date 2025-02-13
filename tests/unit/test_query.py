@@ -12,6 +12,7 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
         self.profile1 = EnhancedDataProfile(
             mec=self.mec,
             project="project1",
+            study="study1",
             data_id="data_id1",
             trait_desc="trait_desc1",
             total_samples=10,
@@ -23,7 +24,8 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
         self.profile1.save()
         self.profile2 = EnhancedDataProfile(
             mec=self.mec,
-            project="project1",
+            project="project2",
+            study="study2",
             data_id="data_id2",
             trait_desc="trait_desc2",
             total_samples=20,
@@ -36,7 +38,8 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
         self.profile3 = EnhancedDataProfile(
             mec=self.mec,
             project="project2",
-            data_id="data_id1",
+            study="study3",
+            data_id="data_id3",
             trait_desc="trait_desc1",
             total_samples=30,
             total_cases=15,

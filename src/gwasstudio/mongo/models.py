@@ -1,9 +1,6 @@
 import datetime
 from enum import Enum
 
-from gwasstudio.config_manager import ConfigurationManager
-from gwasstudio.mongo.connection_manager import get_mec
-from gwasstudio.mongo.mixin import MongoMixin
 from mongoengine import (
     DateTimeField,
     Document,
@@ -13,6 +10,10 @@ from mongoengine import (
     ReferenceField,
     StringField,
 )
+
+from gwasstudio.config_manager import ConfigurationManager
+from gwasstudio.mongo.connection_manager import get_mec
+from gwasstudio.mongo.mixin import MongoMixin
 
 # TODO: This configuration manager doesn't use a custom configuration file passed by cli
 cm = ConfigurationManager()
@@ -43,8 +44,9 @@ class DataProfile(Metadata):
     uniqueness of the trait is ensured by project+data_id
     """
 
-    project = StringField(max_length=500, required=True)
-    data_id = StringField(max_length=200, unique_with="project", required=True)
+    project = StringField(max_length=250, required=True)
+    study = StringField(max_length=250, unique_with="project", required=True)
+    data_id = StringField(max_length=250, unique_with="project", required=True)
     trait_desc = StringField()
     total_samples = IntField()
     total_cases = IntField()
@@ -59,6 +61,7 @@ class EnhancedDataProfile(MongoMixin):
         self._mec = kwargs.get("mec", get_mec())
         self._obj = self._klass(
             project=kwargs.get("project"),
+            study=kwargs.get("study"),
             data_id=kwargs.get("data_id"),
             trait_desc=kwargs.get("trait_desc", None),
             category=kwargs.get("category"),
@@ -92,12 +95,13 @@ class EnhancedDataProfile(MongoMixin):
 
     @property
     def unique_key(self):
-        return f"{self.mdb_obj.project}:{self.mdb_obj.data_id}"
+        return f"{self.mdb_obj.project}:{self.mdb_obj.study}:{self.mdb_obj.data_id}"
 
     @unique_key.setter
     def unique_key(self, uk):
         separator = ":"
         self._obj.project = uk.split(separator)[0]
-        self._obj.data_id = uk.split(separator)[1]
+        self._obj.study = uk.split(separator)[1]
+        self._obj.data_id = uk.split(separator)[2]
 
     # end of required
