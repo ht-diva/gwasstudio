@@ -5,7 +5,6 @@ from mongoengine import (
     DateTimeField,
     Document,
     EnumField,
-    IntField,
     ListField,
     ReferenceField,
     StringField,
@@ -45,14 +44,18 @@ class DataProfile(Metadata):
     """
 
     project = StringField(max_length=250, required=True)
-    study = StringField(max_length=250, unique_with="project", required=True)
-    data_id = StringField(max_length=250, unique_with="project", required=True)
-    trait_desc = StringField()
-    total_samples = IntField()
-    total_cases = IntField()
+    study = StringField(max_length=250, required=True)
+    data_id = StringField(max_length=250, unique_with=["project", "study"], required=True)
+    trait = StringField()
+    total = StringField()
     population = EnumField(Ancestry)
     references = ListField(ReferenceField(Publication))
     build = EnumField(Build)
+    platform = StringField()
+
+    @staticmethod
+    def json_dictionary_keys() -> tuple:
+        return ("platform", "total", "trait")
 
 
 class EnhancedDataProfile(MongoMixin):
@@ -63,14 +66,14 @@ class EnhancedDataProfile(MongoMixin):
             project=kwargs.get("project"),
             study=kwargs.get("study"),
             data_id=kwargs.get("data_id"),
-            trait_desc=kwargs.get("trait_desc", None),
+            trait=kwargs.get("trait", None),
             category=kwargs.get("category"),
             tags=kwargs.get("tags", []),
-            total_samples=kwargs.get("total_samples"),
-            total_cases=kwargs.get("total_cases"),
+            total=kwargs.get("total", None),
             population=kwargs.get("population", "NR"),
             references=kwargs.get("references", []),
             build=kwargs.get("build", None),
+            platform=kwargs.get("platform", None),
         )
 
     # required attributes

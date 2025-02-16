@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from gwasstudio.cli.metadata.query import load_search_topics, finditem, YAML
+from gwasstudio.cli.metadata.query import load_search_topics, find_item, YAML
 
 
 class TestLoadSearchTopics(unittest.TestCase):
@@ -33,9 +33,9 @@ class TestLoadSearchTopics(unittest.TestCase):
 
 
 class TestFindItem(unittest.TestCase):
-    def test_finditem(self):
+    def test_find_item(self):
         data = {"a": {"b": 1, "c": {"d": 2}}}
-        assert finditem(data, "a") == data["a"]
-        assert finditem(data["a"], "c") == data["a"]["c"]
-        assert finditem(data["a"]["c"], "d") == 2
-        assert finditem(data, "e") is None
+        assert find_item(data, "a") == data["a"]
+        assert find_item(data["a"], "c") == data["a"]["c"]
+        assert find_item(data["a"]["c"], "d") == 2
+        assert find_item(data, "e") is None

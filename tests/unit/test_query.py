@@ -14,9 +14,8 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
             project="project1",
             study="study1",
             data_id="data_id1",
-            trait_desc="trait_desc1",
-            total_samples=10,
-            total_cases=5,
+            trait="trait_desc1",
+            total='{"samples": "10"}',
             population=Ancestry.EUROPEAN,
             references=[],
             build=Build.GRCH37,
@@ -27,9 +26,8 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
             project="project2",
             study="study2",
             data_id="data_id2",
-            trait_desc="trait_desc2",
-            total_samples=20,
-            total_cases=10,
+            trait="trait_desc2",
+            total='{"samples": "20"}',
             population=Ancestry.ICELANDIC,
             references=[],
             build=Build.GRCH38,
@@ -40,9 +38,8 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
             project="project2",
             study="study3",
             data_id="data_id3",
-            trait_desc="trait_desc1",
-            total_samples=30,
-            total_cases=15,
+            trait="trait_desc1",
+            total='{"samples": "30"}',
             population=Ancestry.EUROPEAN,
             references=[],
             build=Build.GRCH37,
@@ -68,7 +65,7 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
         disconnect()
 
     def test_query_by_trait_desc(self):
-        profiles = EnhancedDataProfile(mec=self.mec).query(trait_desc="trait_desc1")
+        profiles = EnhancedDataProfile(mec=self.mec).query(trait="trait_desc1")
         assert len(profiles) == 2
         self.assertIn(self.profile1.view(), profiles)
         self.assertIn(self.profile3.view(), profiles)

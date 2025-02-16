@@ -1,6 +1,7 @@
 import datetime
 
 from mongoengine.errors import NotUniqueError
+from mongoengine.queryset.visitor import Q
 
 from gwasstudio import logger
 
@@ -82,8 +83,9 @@ class MongoMixin:
         docs = []
         if len(kwargs) > 0:
             with self.mec:
-                if "trait_desc" in kwargs.keys():
-                    docs = self.klass.objects(trait_desc__contains=kwargs.get("trait_desc")).as_pymongo()
+                if all(item in kwargs.keys() for item in ["trait"]):
+                    trait = kwargs.pop("trait")
+                    docs = self.klass.objects(Q(**kwargs) & Q(trait__contains=trait)).as_pymongo()
                 else:
                     docs = self.klass.objects(**kwargs).as_pymongo()
                 logger.debug("found {} documents".format(len(docs)))
