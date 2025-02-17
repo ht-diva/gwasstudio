@@ -1,19 +1,19 @@
-project: DECODE
-study: largescaleplasma2023
-build: GRCh38
-trait_desc:
-      - feature.gene_ids: ENSG00000126456
-      - feature.gene_ids: ENSG00000276885
-      - feature.gene_ids: ENSG00000274406
-      - feature.gene_ids: ENSG00000048545
+project: Decode
+study: large scale plasma 2023
+category: pQTL
+trait:
+  - seq_ids: 10008-43
+  - gene_ids: ENSG00000204256
+    seq_ids: 10008-43
+  - gene_ids: ENSG00000147124
+  - seq_ids: 10000-25
 
-platform:
-  maker: "Somalogic"
-  version: "v4"
+
+
 
 output:
-  - trait_desc.feature.protein_ids
-  - trait_desc.feature.gene_ids
-  - trait_desc.feature.seqid
-  - trait_desc.tissue
-  - data_id
+  - trait.protein_ids
+  - trait.gene_ids
+  - trait.seq_ids
+  - trait.tissue
+  - total.samples

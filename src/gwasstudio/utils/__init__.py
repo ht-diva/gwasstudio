@@ -17,7 +17,7 @@ import tiledb
 DEFAULT_BUFSIZE = 4096
 
 
-def compute_sha256(fpath=None, st=None):
+def compute_sha256(fpath: object = None, st: object = None) -> str:
     """
     Computes file or string hash using sha256 algorithm.
 
@@ -98,6 +98,19 @@ def generate_random_word(length: int) -> str:
         str: A random word of the specified length.
     """
     return "".join(random.choice(string.ascii_lowercase) for _ in range(length))
+
+
+def lower_and_replace(text: str) -> str:
+    """
+    Replaces spaces in the input string with underscores and converts it to lowercase.
+
+    Args:
+        text (str): The input string to be modified.
+
+    Returns:
+        str: The modified string with spaces replaced by underscores and converted to lowercase.
+    """
+    return f"{text.lower().replace(' ', '_')}"
 
 
 # Define the TileDB array schema with SNP, gene, and population dimensions
