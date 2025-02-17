@@ -44,6 +44,46 @@ def process_search_topics(search_topics: Dict[str, str]) -> Dict[str, str]:
     return search_topics
 
 
+def query_mongo_obj(search_topics, mob):
+    """
+    Process search topics and query the object to find matching results.
+
+    Args:
+        search_topics (dict): Search topics dictionary.
+        mob: Mongo Object to be queried.
+
+    Returns:
+        list: List of matched objects.
+    """
+    objs = []
+    if "trait" in search_topics:
+        for trait_search_dict in search_topics["trait"]:
+            _objs = []
+            for key, value in trait_search_dict.items():
+                query_dict = {**search_topics, **{"trait": value}}
+                logger.debug(query_dict)
+
+                # Query the object and add matching results to the local _objs list
+                query_results = mob.query(**query_dict)
+                _objs.extend(
+                    qr for qr in query_results if value in find_item(json.loads(qr["trait"]), key.split(".").pop())
+                )
+
+            _objs_set = set()
+            _objs_set.add(o for o in _objs)
+            # Check if we have a unique result and the numbers of fetched results are greater equal to the dictionary's items
+            if len(_objs_set) == 1 and len(_objs) >= len(trait_search_dict):
+                objs.extend(obj for obj in _objs if obj not in objs)
+
+    else:
+        logger.debug(search_topics)
+        query_results = mob.query(**search_topics)
+
+        # Add matching results to objs list
+        objs.extend(obj for obj in query_results if obj not in objs)
+    return objs
+
+
 @cloup.command("meta_query", no_args_is_help=True, help=help_doc)
 @cloup.option("--search-file", required=True, default=None, help="Path to search template file")
 @cloup.option("--output-file", required=True, default=None, help="Path to output file")
@@ -67,26 +107,10 @@ def meta_query(search_file, output_file, stdout):
     search_topics = process_search_topics(load_search_topics(search_file))
     logger.debug(search_topics)
 
+    output_fields = ["project", "study", "category", "data_id"] + search_topics.pop("output", [])
+
     obj = EnhancedDataProfile()
-    objs = []
-
-    for trait_search_dict in search_topics["trait"]:
-        k, v = next(iter(trait_search_dict.items()))
-        # Create a new dictionary with all keys and values, including the current trait
-        # Merge dictionaries using the | operator
-        query_dict = search_topics | {"trait": v}
-        query_dict.pop("output")
-        logger.debug(query_dict)
-        query_result = obj.query(**query_dict)
-
-        for qr in query_result:
-            if qr not in objs:
-                leaf = k.split(".").pop()
-                json_dict = json.loads(qr["trait"])
-                if v in find_item(json_dict, leaf):
-                    objs.append(qr)
-
-    output_fields = ["project", "study", "category", "data_id"] + search_topics.get("output", [])
+    objs = query_mongo_obj(search_topics, obj)
 
     with open(output_file, "w") as f:
         msg = f"{len(objs)} results found. Writing to {output_file}"

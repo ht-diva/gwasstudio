@@ -2,11 +2,12 @@ project: Decode
 study: large scale plasma 2023
 category: pQTL
 trait:
-  - gene_ids: ENSG00000126456
-  - gene_ids: ENSG00000276885
-  - gene_ids: ENSG00000147124
-  - gene_ids: ENSG00000235307
   - seq_ids: 10008-43
+  - gene_ids: ENSG00000204256
+    seq_ids: 10008-43
+  - gene_ids: ENSG00000147124
+  - seq_ids: 10000-25
+
 
 
 
@@ -15,6 +16,4 @@ output:
   - trait.gene_ids
   - trait.seq_ids
   - trait.tissue
-  - platform.maker
-  - platform.version
   - total.samples
