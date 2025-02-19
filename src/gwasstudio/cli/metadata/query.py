@@ -16,14 +16,6 @@ query metadata records from MongoDB
 """
 
 
-def find_item(obj: dict, key: str) -> Any:
-    """Recursively search for a specific key in an object."""
-    if key in obj:
-        return obj[key]
-    else:
-        return next((v for k, v in obj.items() if isinstance(v, dict) and find_item(v, key) is not None), None)
-
-
 def load_search_topics(search_file: str) -> Any | None:
     """Loads search topics from a YAML file."""
     search_topics = None
@@ -44,7 +36,7 @@ def process_search_topics(search_topics: Dict[str, str]) -> Dict[str, str]:
     return search_topics
 
 
-def query_mongo_obj(search_topics, mob):
+def query_mongo_obj(search_topics: Dict[str, Any], case_sensitive: bool, mob: EnhancedDataProfile) -> list:
     """
     Process search topics and query the object to find matching results.
 
@@ -58,22 +50,11 @@ def query_mongo_obj(search_topics, mob):
     objs = []
     if "trait" in search_topics:
         for trait_search_dict in search_topics["trait"]:
-            _objs = []
-            for key, value in trait_search_dict.items():
-                query_dict = {**search_topics, **{"trait": value}}
-                logger.debug(query_dict)
-
-                # Query the object and add matching results to the local _objs list
-                query_results = mob.query(**query_dict)
-                _objs.extend(
-                    qr for qr in query_results if value in find_item(json.loads(qr["trait"]), key.split(".").pop())
-                )
-
-            _objs_set = set()
-            _objs_set.add(o for o in _objs)
-            # Check if we have a unique result and the numbers of fetched results are greater equal to the dictionary's items
-            if len(_objs_set) == 1 and len(_objs) >= len(trait_search_dict):
-                objs.extend(obj for obj in _objs if obj not in objs)
+            query_dict = {**search_topics, **{"trait": trait_search_dict}}
+            logger.debug(query_dict)
+            query_results = mob.query(case_sensitive, **query_dict)
+            # Add matching results to objs list
+            objs.extend(obj for obj in query_results if obj not in objs)
 
     else:
         logger.debug(search_topics)
@@ -88,7 +69,8 @@ def query_mongo_obj(search_topics, mob):
 @cloup.option("--search-file", required=True, default=None, help="Path to search template file")
 @cloup.option("--output-file", required=True, default=None, help="Path to output file")
 @cloup.option("--stdout", default=False, is_flag=True, help="Do not write to stdout")
-def meta_query(search_file, output_file, stdout):
+@cloup.option("--case-sensitive", default=False, is_flag=True, help="Enable case sensitive search")
+def meta_query(search_file, output_file, stdout, case_sensitive):
     """
     Queries metadata records from MongoDB based on the search topics specified in the provided template file.
 
@@ -110,7 +92,7 @@ def meta_query(search_file, output_file, stdout):
     output_fields = ["project", "study", "category", "data_id"] + search_topics.pop("output", [])
 
     obj = EnhancedDataProfile()
-    objs = query_mongo_obj(search_topics, obj)
+    objs = query_mongo_obj(search_topics, case_sensitive, obj)
 
     with open(output_file, "w") as f:
         msg = f"{len(objs)} results found. Writing to {output_file}"

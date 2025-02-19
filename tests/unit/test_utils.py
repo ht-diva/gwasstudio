@@ -1,0 +1,41 @@
+import unittest
+
+from gwasstudio.utils import find_item
+
+
+class TestFindItemFunction(unittest.TestCase):
+    def test_key_found_in_root(self):
+        obj = {"a": 1, "b": 2}
+        self.assertEqual(find_item(obj, "a"), 1)
+
+    def test_key_not_found_in_root(self):
+        obj = {"a": 1, "b": 2}
+        self.assertIsNone(find_item(obj, "c"))
+
+    def test_key_found_in_nested_dict(self):
+        obj = {"a": 1, "b": {"c": 3, "d": 4}}
+        self.assertEqual(find_item(obj, "c"), 3)
+
+    def test_key_not_found_in_nested_dict(self):
+        obj = {"a": 1, "b": {"c": 3, "d": 4}}
+        self.assertIsNone(find_item(obj, "e"))
+
+    def test_key_found_in_deeply_nested_dict(self):
+        obj = {"a": 1, "b": {"c": 3, "d": {"e": 5, "f": 6}}}
+        self.assertEqual(find_item(obj, "e"), 5)
+
+    def test_key_not_found_in_deeply_nested_dict(self):
+        obj = {"a": 1, "b": {"c": 3, "d": {"e": 5, "f": 6}}}
+        self.assertIsNone(find_item(obj, "g"))
+
+    def test_empty_dict(self):
+        obj = {}
+        self.assertIsNone(find_item(obj, "a"))
+
+    def test_none_input(self):
+        with self.assertRaises(TypeError):
+            find_item(None, "a")
+
+    def test_non_dict_input(self):
+        with self.assertRaises(AttributeError):
+            find_item("a", "b")

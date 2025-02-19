@@ -14,7 +14,7 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
             project="project1",
             study="study1",
             data_id="data_id1",
-            trait="trait_desc1",
+            trait='{"desc": "descriptionA"}',
             total='{"samples": "10"}',
             population=Ancestry.EUROPEAN,
             references=[],
@@ -26,7 +26,7 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
             project="project2",
             study="study2",
             data_id="data_id2",
-            trait="trait_desc2",
+            trait='{"desc": "descriptionB", "tissue": "blood"}',
             total='{"samples": "20"}',
             population=Ancestry.ICELANDIC,
             references=[],
@@ -38,7 +38,7 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
             project="project2",
             study="study3",
             data_id="data_id3",
-            trait="trait_desc1",
+            trait='{"desc": "descriptionA"}',
             total='{"samples": "30"}',
             population=Ancestry.EUROPEAN,
             references=[],
@@ -65,10 +65,17 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
         disconnect()
 
     def test_query_by_trait_desc(self):
-        profiles = EnhancedDataProfile(mec=self.mec).query(trait="trait_desc1")
+        profiles = EnhancedDataProfile(mec=self.mec).query(trait={"desc": "descriptionA"})
         assert len(profiles) == 2
         self.assertIn(self.profile1.view(), profiles)
+        self.assertNotIn(self.profile2.view(), profiles)
         self.assertIn(self.profile3.view(), profiles)
+
+        profiles = EnhancedDataProfile(mec=self.mec).query(trait={"desc": "descriptionB", "tissue": "blood"})
+        assert len(profiles) == 1
+        self.assertNotIn(self.profile1.view(), profiles)
+        self.assertIn(self.profile2.view(), profiles)
+        self.assertNotIn(self.profile3.view(), profiles)
 
     def test_query_by_project_and_data_id(self):
         profile = EnhancedDataProfile(mec=self.mec).query(project="project1", data_id="data_id1")

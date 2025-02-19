@@ -8,6 +8,7 @@ import hashlib
 import pathlib
 import random
 import string
+from typing import Any, Dict
 
 import numpy as np
 import pandas as pd
@@ -85,6 +86,34 @@ def compute_string_hash(algorithm: str, st: str) -> str:
     h = hashlib.new(algorithm)
     h.update(st.encode("ascii"))
     return h.hexdigest()
+
+
+def find_item(obj: Dict, key: str) -> Any:
+    """
+    Recursively search for a specific key in a dictionary.
+
+    Args:
+        obj (Dict): The dictionary to search in.
+        key (str): The key to search for.
+
+    Returns:
+        Any: The value associated with the key if found, otherwise None.
+
+    Notes:
+        This function searches for the key in the dictionary and its nested dictionaries.
+        If the key is found, the function returns the associated value.
+        If the key is not found, the function returns None.
+
+    """
+    if key in obj:
+        return obj[key]
+    else:
+        for k, v in obj.items():
+            if isinstance(v, dict):
+                result = find_item(v, key)
+                if result is not None:
+                    return result
+        return None
 
 
 def generate_random_word(length: int) -> str:
