@@ -1,9 +1,11 @@
 import datetime
+import json
 
 from mongoengine.errors import NotUniqueError
 from mongoengine.queryset.visitor import Q
 
 from gwasstudio import logger
+from gwasstudio.utils import find_item
 
 
 class MongoMixin:
@@ -74,21 +76,54 @@ class MongoMixin:
                 logger.debug(detail)
         return detail
 
-    def query(self, **kwargs):
+    def query(self, case_sensitive=False, **kwargs):
         """
+        Queries the database based on the provided keyword arguments.
 
-        :param kwargs:
-        :return:
+        Args:
+            case_sensitive (bool, optional): Whether the query should be case-sensitive. Defaults to True.
+            **kwargs: Additional keyword arguments to filter the query results.
+
+        Returns:
+            list: A list of query results.
         """
+        operators = {"case_insensitive": ["iexact", "icontains"], "case_sensitive": ["exact", "contains"]}
+        exact_op, contains_op = operators["case_sensitive" if case_sensitive else "case_insensitive"]
+
         docs = []
         if len(kwargs) > 0:
+            jds = {
+                field: kwargs.pop(field, {}) for field in self.klass.json_dictionary_keys() if field in kwargs.keys()
+            }
+
+            query_fields_exact = {f"{key}__{exact_op}": value for key, value in kwargs.items()}
+            queries = [Q(**query_fields_exact)]
+
             with self.mec:
-                if all(item in kwargs.keys() for item in ["trait"]):
-                    trait = kwargs.pop("trait")
-                    docs = self.klass.objects(Q(**kwargs) & Q(trait__contains=trait)).as_pymongo()
+                if jds:
+                    for jdk, jdv in jds.items():
+                        query_fields_contains = {f"{jdk}__{contains_op}.{key}": value for key, value in jdv.items()}
+
+                        for key, value in query_fields_contains.items():
+                            query_field_contains = key.split(".")[0]
+                            queries.append(Q(**{query_field_contains: value}))
+
+                        # Use & operator to combine all the queries with AND logic
+                        # query_args = reduce(lambda x, y: x & y, queries)
+                        query_args = Q()
+                        for q in queries:
+                            query_args = query_args & q
+                        logger.debug(query_args)
+                        docs.extend(
+                            qr
+                            for qr in self.klass.objects(query_args).as_pymongo()
+                            if value.casefold() in find_item(json.loads(qr[jdk]), key.split(".").pop()).casefold()
+                        )
                 else:
-                    docs = self.klass.objects(**kwargs).as_pymongo()
+                    query_args = queries[0]
+                    docs = self.klass.objects(query_args).as_pymongo()
                 logger.debug("found {} documents".format(len(docs)))
+
         return docs
 
     def modify(self, **kwargs):
