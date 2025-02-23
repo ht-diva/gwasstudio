@@ -61,7 +61,9 @@ class DataProfile(Metadata):
 class EnhancedDataProfile(MongoMixin):
     def __init__(self, **kwargs):
         self._klass = kwargs.get("klass", DataProfile)
-        self._mec = kwargs.get("mec", get_mec())
+        uri = kwargs.get("uri", None)
+        self._mec = get_mec(uri=uri) if uri else kwargs.get("mec", get_mec())
+
         self._obj = self._klass(
             project=kwargs.get("project"),
             study=kwargs.get("study"),
@@ -103,8 +105,9 @@ class EnhancedDataProfile(MongoMixin):
     @unique_key.setter
     def unique_key(self, uk):
         separator = ":"
-        self._obj.project = uk.split(separator)[0]
-        self._obj.study = uk.split(separator)[1]
-        self._obj.data_id = uk.split(separator)[2]
+        project, study, data_id = uk.split(separator)
+        self._obj.project = project
+        self._obj.study = study
+        self._obj.data_id = data_id
 
     # end of required

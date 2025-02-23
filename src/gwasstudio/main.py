@@ -35,6 +35,10 @@ from gwasstudio.dask_client import DaskClient as Client
     cloup.option("--cpu_workers", help="CPU numbers per worker", default=6),
 )
 @cloup.option_group(
+    "MongoDB configuration",
+    cloup.option("--mongo-uri", default=None, help="Specify a MongoDB uri if it is different from localhost"),
+)
+@cloup.option_group(
     "TileDB configuration",
     cloup.option("--aws-access-key-id", default="None", help="aws access key id"),
     cloup.option("--aws-secret-access-key", default="None", help="aws access key"),
@@ -63,6 +67,7 @@ def cli_init(
     maximum_workers,
     memory_workers,
     cpu_workers,
+    mongo_uri,
     quiet,
 ):
     if quiet:
@@ -97,6 +102,8 @@ def cli_init(
         # logger.info("Dask dashboard available at {}".format(client.get_dashboard()))
     else:
         ctx.obj["batch_size"] = 1
+
+    ctx.obj["mongo_uri"] = mongo_uri
 
 
 def main():

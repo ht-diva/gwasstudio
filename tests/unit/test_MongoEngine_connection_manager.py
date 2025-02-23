@@ -1,6 +1,5 @@
 import unittest
 
-
 from gwasstudio.config_manager import ConfigurationManager
 from gwasstudio.mongo.connection_manager import MongoEngineConnectionManager, get_mec, get_mec_from_config
 
@@ -22,6 +21,11 @@ class TestMongoEngineConnectionManager(unittest.TestCase):
     def test_init(self):
         mec = MongoEngineConnectionManager(uri="test_uri")
         self.assertEqual(mec.uri, "test_uri")
+
+    def test_init_without_uri(self):
+        cm = ConfigurationManager()
+        mec = MongoEngineConnectionManager()
+        self.assertEqual(mec.uri, cm.get_mdbc_uri)
 
     # def test_enter(self):
     #
