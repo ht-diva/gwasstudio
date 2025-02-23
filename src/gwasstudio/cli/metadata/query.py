@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict
 
+import click
 import cloup
 from ruamel.yaml import YAML
 
@@ -70,7 +71,8 @@ def query_mongo_obj(search_topics: Dict[str, Any], case_sensitive: bool, mob: En
 @cloup.option("--output-file", required=True, default=None, help="Path to output file")
 @cloup.option("--stdout", default=False, is_flag=True, help="Do not write to stdout")
 @cloup.option("--case-sensitive", default=False, is_flag=True, help="Enable case sensitive search")
-def meta_query(search_file, output_file, stdout, case_sensitive):
+@click.pass_context
+def meta_query(ctx, search_file, output_file, stdout, case_sensitive):
     """
     Queries metadata records from MongoDB based on the search topics specified in the provided template file.
 
@@ -78,9 +80,11 @@ def meta_query(search_file, output_file, stdout, case_sensitive):
     The resulting metadata records are then written to the output file or printed to the console if the `--stdout` option is set.
 
     Args:
+        ctx (click.Context): Click context object
         search_file (str): Path to the search template YAML file
         output_file (str): Path to write the query results to
         stdout (bool): Whether to print the query results to the console instead of writing them to a file
+        case_sensitive (bool): Enable case-sensitive search
 
     Returns:
         None
@@ -91,7 +95,8 @@ def meta_query(search_file, output_file, stdout, case_sensitive):
 
     output_fields = ["project", "study", "category", "data_id"] + search_topics.pop("output", [])
 
-    obj = EnhancedDataProfile()
+    mongo_uri = ctx.obj["mongo_uri"]
+    obj = EnhancedDataProfile(uri=mongo_uri)
     objs = query_mongo_obj(search_topics, case_sensitive, obj)
 
     with open(output_file, "w") as f:

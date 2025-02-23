@@ -16,7 +16,7 @@ Ingest metadata into a MongoDB collection.
 """
 
 
-def load_data(file_path: str | Path, delimiter: str = "\t") -> pd.DataFrame:
+def load_data(file_path: Path, delimiter: str = "\t") -> pd.DataFrame:
     """Load data from a file in tabular format."""
     try:
         return pd.read_csv(
@@ -93,17 +93,19 @@ def meta_ingest(ctx, file_path: str, delimiter: str) -> None:
     as documents in the MongoDB collection.
 
     Args:
+        ctx (click.Context): Click context object
         file_path (str): Path to the file in tabular format to ingest
         delimiter (str): Character or regex pattern to treat as the delimiter
 
     Returns:
         None
     """
-    df = load_data(file_path, delimiter)
+    df = load_data(Path(file_path), delimiter)
     required_columns = ["project", "study", "file_path", "category"]
-    if not all(col in df.columns for col in required_columns):
-        raise ValueError(
-            f"Missing column(s) in the input file: {', '.join([col for col in required_columns if col not in df.columns])}"
-        )
+    # We can simplify this by using a set intersection operation
+    missing_cols = set(required_columns) - set(df.columns)
+    if missing_cols:
+        raise ValueError(f"Missing column(s) in the input file: {', '.join(missing_cols)}")
+
     mongo_uri = ctx.obj["mongo_uri"]
     ingest_data(df, mongo_uri)
