@@ -71,7 +71,8 @@ def ingest_to_fs(ctx, input_file_list, uri):
     if ctx.obj["DISTRIBUTE"]:
         pass
     else:
-        pass
+        for file_path in input_file_list:
+            process_and_ingest(file_path, uri, {})
 
     # Commenting temporarly
     # # Parse checksum for mapping ids to files
