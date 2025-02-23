@@ -8,8 +8,6 @@ from gwasstudio.cli.ingest import ingest
 from gwasstudio.cli.metadata.ingest import meta_ingest
 from gwasstudio.cli.metadata.query import meta_query
 from gwasstudio.cli.metadata.view import meta_view
-
-# from gwasstudio.cli.query import query
 from gwasstudio.dask_client import DaskClient as Client
 
 
@@ -33,6 +31,10 @@ from gwasstudio.dask_client import DaskClient as Client
     cloup.option("--maximum_workers", help="Maximum amount of running workers", default=100),
     cloup.option("--memory_workers", help="Memory amount per worker", default="12GB"),
     cloup.option("--cpu_workers", help="CPU numbers per worker", default=6),
+)
+@cloup.option_group(
+    "MongoDB configuration",
+    cloup.option("--mongo-uri", default=None, help="Specify a MongoDB uri if it is different from localhost"),
 )
 @cloup.option_group(
     "TileDB configuration",
@@ -63,6 +65,7 @@ def cli_init(
     maximum_workers,
     memory_workers,
     cpu_workers,
+    mongo_uri,
     quiet,
 ):
     if quiet:
@@ -97,6 +100,8 @@ def cli_init(
         # logger.info("Dask dashboard available at {}".format(client.get_dashboard()))
     else:
         ctx.obj["batch_size"] = 1
+
+    ctx.obj["mongo_uri"] = mongo_uri
 
 
 def main():

@@ -1,7 +1,9 @@
 import json
 from collections import defaultdict
+from pathlib import Path
 from typing import Dict, Any, Hashable
 
+import click
 import cloup
 import pandas as pd
 
@@ -14,7 +16,7 @@ Ingest metadata into a MongoDB collection.
 """
 
 
-def load_data(file_path: str, delimiter: str = "\t") -> pd.DataFrame:
+def load_data(file_path: Path, delimiter: str = "\t") -> pd.DataFrame:
     """Load data from a file in tabular format."""
     try:
         return pd.read_csv(
@@ -24,6 +26,12 @@ def load_data(file_path: str, delimiter: str = "\t") -> pd.DataFrame:
         )
     except FileNotFoundError:
         logger.error("File not found. Please check the file path.")
+        exit(1)
+    except pd.errors.EmptyDataError:
+        logger.error("No data found in the file. Please check the file content.")
+        exit(1)
+    except pd.errors.ParserError:
+        logger.error("Error parsing the file. Please check the file format.")
         exit(1)
 
 
@@ -38,9 +46,9 @@ def process_row(row: pd.Series) -> Dict[Hashable, Any]:
     metadata["data_id"] = compute_sha256(fpath=row["file_path"])
 
     for key, value in row.items():
-        if "_" in key and key.startswith(("platform", "trait", "total")):
-            k, v = key.split("_", 1)
-            metadata[k][v] = value
+        if "_" in key and key.startswith(DataProfile.json_dictionary_keys()):
+            k, subk = key.split("_", 1)
+            metadata[k][subk] = value
         else:
             if key not in metadata:
                 metadata[key] = value
@@ -51,13 +59,13 @@ def process_row(row: pd.Series) -> Dict[Hashable, Any]:
     }
 
 
-def ingest_data(df: pd.DataFrame) -> None:
+def ingest_data(df: pd.DataFrame, mongo_uri: str = None) -> None:
     """Ingest data into the MongoDB collection."""
     documents = [process_row(row) for _, row in df.iterrows()]
     logger.info(f"{len(documents)} documents to ingest")
     print(f"{len(documents)} documents to ingest")
     for document in documents:
-        obj = EnhancedDataProfile(**document)
+        obj = EnhancedDataProfile(uri=mongo_uri, **document)
         obj.save()
 
 
@@ -75,7 +83,8 @@ def ingest_data(df: pd.DataFrame) -> None:
         help="Character or regex pattern to treat as the delimiter.",
     ),
 )
-def meta_ingest(file_path: str, delimiter: str) -> None:
+@click.pass_context
+def meta_ingest(ctx, file_path: str, delimiter: str) -> None:
     """
     Ingest metadata from a tabular file into a MongoDB collection.
 
@@ -84,16 +93,19 @@ def meta_ingest(file_path: str, delimiter: str) -> None:
     as documents in the MongoDB collection.
 
     Args:
+        ctx (click.Context): Click context object
         file_path (str): Path to the file in tabular format to ingest
         delimiter (str): Character or regex pattern to treat as the delimiter
 
     Returns:
         None
     """
-    df = load_data(file_path, delimiter)
+    df = load_data(Path(file_path), delimiter)
     required_columns = ["project", "study", "file_path", "category"]
-    if not all(col in df.columns for col in required_columns):
-        raise ValueError(
-            f"Missing column(s) in the input file: {', '.join([col for col in required_columns if col not in df.columns])}"
-        )
-    ingest_data(df)
+    # We can simplify this by using a set intersection operation
+    missing_cols = set(required_columns) - set(df.columns)
+    if missing_cols:
+        raise ValueError(f"Missing column(s) in the input file: {', '.join(missing_cols)}")
+
+    mongo_uri = ctx.obj["mongo_uri"]
+    ingest_data(df, mongo_uri)

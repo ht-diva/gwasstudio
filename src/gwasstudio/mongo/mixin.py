@@ -62,8 +62,6 @@ class MongoMixin:
             logger.info("{} saved".format(self.unique_key))
         except NotUniqueError:
             logger.error("{} skipped as not unique ID".format(self.unique_key))
-            # logger.error(e)
-            # exit("Not unique ID provided")
 
     def view(self):
         """
