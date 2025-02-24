@@ -4,9 +4,8 @@ import click
 import cloup
 
 from gwasstudio import logger
-from gwasstudio.utils import create_tiledb_schema
-from gwasstudio.utils import process_and_ingest
-from gwasstudio.utils.s3 import parse_uri, does_uri_path_exist
+from gwasstudio.utils import create_tiledb_schema, parse_uri, process_and_ingest
+from gwasstudio.utils.s3 import does_uri_path_exist
 
 help_doc = """
 Ingest data in a TileDB-unified dataset.
