@@ -143,7 +143,7 @@ def lower_and_replace(text: str) -> str:
     return f"{text.lower().replace(' ', '_')}"
 
 
-def parse_uri(uri):
+def parse_uri(uri: str) -> tuple[str, str, str]:
     try:
         parsed = urllib.parse.urlparse(uri)
         scheme, netloc, path = parsed.scheme, parsed.netloc, parsed.path
