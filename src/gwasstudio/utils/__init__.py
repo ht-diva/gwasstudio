@@ -8,8 +8,9 @@ import hashlib
 import pathlib
 import random
 import string
-from typing import Any, Dict
 import urllib.parse
+from typing import Any, Dict
+
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -148,7 +149,7 @@ def parse_uri(uri):
         scheme, netloc, path = parsed.scheme, parsed.netloc, parsed.path
         if scheme == "s3":
             path = path.strip("/")
-            return scheme, netloc, path
+        return scheme, netloc, path
     except ValueError as e:
         raise ValueError(f"Invalid URI: {uri}") from e
 
