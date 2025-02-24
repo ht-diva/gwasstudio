@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import click
 import cloup
 
@@ -68,6 +70,10 @@ def ingest_to_s3(ctx, input_file_list, uri):
 
 
 def ingest_to_fs(ctx, input_file_list, uri):
+    _, __, path = parse_uri(uri)
+    if not Path(path).exists():
+        create_tiledb_schema(uri, {})
+
     if ctx.obj["DISTRIBUTE"]:
         pass
     else:
