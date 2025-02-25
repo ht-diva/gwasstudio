@@ -147,7 +147,7 @@ def parse_uri(uri: str) -> tuple[str, str, str]:
     try:
         parsed = urllib.parse.urlparse(uri)
         scheme, netloc, path = parsed.scheme, parsed.netloc, parsed.path
-        if scheme == "s3":
+        if scheme in ["s3", "https"]:
             path = path.strip("/")
         return scheme, netloc, path
     except ValueError as e:

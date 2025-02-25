@@ -57,7 +57,7 @@ def ingest(ctx, single_input, multiple_input, uri):
 def ingest_to_s3(ctx, input_file_list, uri):
     cfg = ctx.obj["cfg"]
 
-    if not does_uri_path_exist(uri):
+    if not does_uri_path_exist(uri, cfg):
         logger.info("Creating TileDB schema")
         create_tiledb_schema(uri, cfg)
 

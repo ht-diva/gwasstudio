@@ -1,6 +1,6 @@
 import unittest
 
-from gwasstudio.utils import find_item
+from gwasstudio.utils import find_item, parse_uri
 
 
 class TestFindItemFunction(unittest.TestCase):
@@ -39,3 +39,26 @@ class TestFindItemFunction(unittest.TestCase):
     def test_non_dict_input(self):
         with self.assertRaises(AttributeError):
             find_item("a", "b")
+
+
+class TestParseUri(unittest.TestCase):
+    def test_valid_s3_uri(self):
+        uri = "s3://bucket/key"
+        scheme, netloc, path = parse_uri(uri)
+        self.assertEqual(scheme, "s3")
+        self.assertEqual(netloc, "bucket")
+        self.assertEqual(path, "key")
+
+    def test_valid_https_uri(self):
+        uri = "https://example.com/path"
+        scheme, netloc, path = parse_uri(uri)
+        self.assertEqual(scheme, "https")
+        self.assertEqual(netloc, "example.com")
+        self.assertEqual(path, "path")
+
+    def test_valid_file_uri(self):
+        uri = "file:///root/path"
+        scheme, netloc, path = parse_uri(uri)
+        self.assertEqual(scheme, "file")
+        self.assertEqual(netloc, "")
+        self.assertEqual(path, "/root/path")

@@ -1,26 +1,22 @@
 import unittest
 
-from gwasstudio.utils.s3 import parse_uri
+import botocore.client
+
+from gwasstudio.utils.s3 import get_s3_client
 
 
-class TestParseUri(unittest.TestCase):
-    def test_valid_s3_uri(self):
-        uri = "s3://bucket/key"
-        scheme, netloc, path = parse_uri(uri)
-        self.assertEqual(scheme, "s3")
-        self.assertEqual(netloc, "bucket")
-        self.assertEqual(path, "key")
+class TestGetS3Client(unittest.TestCase):
+    def test_get_s3_client(self):
+        cfg = {
+            "vfs.s3.endpoint_override": "s3://endpoint",
+            "vfs.s3.aws_access_key_id": "key",
+            "vfs.s3.aws_secret_access_key": "secret",
+            "aws_verify_ssl": True,
+        }
+        s3_client = get_s3_client(cfg)
+        self.assertIsInstance(s3_client, botocore.client.BaseClient)
 
-    def test_valid_https_uri(self):
-        uri = "https://example.com/path"
-        scheme, netloc, path = parse_uri(uri)
-        self.assertEqual(scheme, "https")
-        self.assertEqual(netloc, "example.com")
-        self.assertEqual(path, "path")
-
-    def test_valid_file_uri(self):
-        uri = "file://root/path"
-        scheme, netloc, path = parse_uri(uri)
-        self.assertEqual(scheme, "file")
-        self.assertEqual(netloc, "root")
-        self.assertEqual(path, "path")
+    # def test_get_s3_client_no_credentials(self):
+    #     cfg = {}
+    #     with self.assertRaises(NoCredentialsError):
+    #         get_s3_client(cfg)
