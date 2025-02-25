@@ -76,9 +76,10 @@ def export(ctx, uri, trait_id_file, output_path, pvalue_sig, pvalue_limit, hole_
                 dims=["CHR", "POS", "TRAITID"],
                 attrs=["SNPID", "BETA", "SE", "EAF", "MLOG10P"],
             ).df[:, :, trait_id_list]
-            results_lb = locus_breaker(subset_SNPs_pd)
-            logger.info(f"Saving locus-breaker output in {output_path}")
-            results_lb.to_csv(f"{output_path}_{trait}.csv", index=False)
+            results_lb_segments, results_lb_intervals = locus_breaker(subset_SNPs_pd)
+            logger.info(f"Saving locus-breaker output in {output_path} segments and intervals")
+            results_lb_segments.to_csv(f"{output_path}_{trait}_segements.csv", index=False)
+            results_lb_intervals.to_csv(f"{output_path}_{trait}_intervals.csv", index=False)
         return
 
     # If snp_list is selected, run extract_snp
