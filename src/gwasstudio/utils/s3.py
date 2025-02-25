@@ -6,12 +6,13 @@ from gwasstudio.utils import parse_uri
 
 def get_s3_client(cfg):
     """Create an S3 client with the given configuration"""
+    verify = cfg.get("aws_verify_ssl").lower() == "true"
     kwargs = {
         "service_name": "s3",
         "endpoint_url": cfg.get("vfs.s3.endpoint_override"),
         "aws_access_key_id": cfg.get("vfs.s3.aws_access_key_id"),
         "aws_secret_access_key": cfg.get("vfs.s3.aws_secret_access_key"),
-        "verify": cfg.get("aws_verify_ssl"),
+        "verify": verify,
     }
     return boto3.client(**kwargs)
 

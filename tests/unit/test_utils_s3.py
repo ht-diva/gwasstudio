@@ -11,7 +11,7 @@ class TestGetS3Client(unittest.TestCase):
             "vfs.s3.endpoint_override": "s3://endpoint",
             "vfs.s3.aws_access_key_id": "key",
             "vfs.s3.aws_secret_access_key": "secret",
-            "aws_verify_ssl": True,
+            "aws_verify_ssl": "true",
         }
         s3_client = get_s3_client(cfg)
         self.assertIsInstance(s3_client, botocore.client.BaseClient)
