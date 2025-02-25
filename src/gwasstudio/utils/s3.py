@@ -6,7 +6,7 @@ from gwasstudio.utils import parse_uri
 
 def get_s3_client(cfg):
     """Create an S3 client with the given configuration"""
-    verify = cfg.get("aws_verify_ssl").lower() == "true"
+    verify = cfg.get("vfs.s3.verify_ssl").lower() == "true"
     kwargs = {
         "service_name": "s3",
         "endpoint_url": cfg.get("vfs.s3.endpoint_override"),
