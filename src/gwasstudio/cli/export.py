@@ -34,7 +34,13 @@ Exports data from a TileDB dataset.
         "--hole-size",
         default=250000,
         help="Minimum pair-base distance between SNPs in different loci (default: 250000)",
-    ),
+    )
+    cloup.option(
+        "--maf",
+        default=0.01,
+        help="Allele frequency to use prior locusbreaker",
+    )
+
 )
 @cloup.option_group(
     "Options for filtering using a list of SNPs ids",
@@ -54,7 +60,7 @@ Exports data from a TileDB dataset.
     ),
 )
 @click.pass_context
-def export(ctx, uri, trait_id_file, output_path, pvalue_sig, pvalue_limit, hole_size, snp_list, locusbreaker, get_all):
+def export(ctx, uri, trait_id_file, output_path, pvalue_sig, pvalue_limit, hole_size, maf, snp_list, locusbreaker, get_all):
     cfg = ctx.obj["cfg"]
     tiledb_unified = tiledb.open(uri, mode="r", config=cfg)
     logger.info("TileDB dataset loaded")
@@ -66,6 +72,7 @@ def export(ctx, uri, trait_id_file, output_path, pvalue_sig, pvalue_limit, hole_
         print("running locus breaker")
         for trait in trait_id_list:
             subset_SNPs_pd = tiledb_unified.query(
+                cond=f"EAF > {maf} and EAF < {1-maf}",
                 dims=["CHR", "POS", "TRAITID"],
                 attrs=["SNPID", "BETA", "SE", "EAF", "MLOG10P"],
             ).df[:, :, trait_id_list]
