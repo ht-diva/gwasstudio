@@ -27,20 +27,19 @@ Exports data from a TileDB dataset.
         "--pvalue-sig",
         default=False,
         is_flag=True,
-        help="Maximum log p-value threshold within the window",
+        help="Maximum log p-value threshold within the window"
     ),
     cloup.option("--pvalue-limit", default=5.0, help="Log p-value threshold for loci borders"),
     cloup.option(
         "--hole-size",
         default=250000,
-        help="Minimum pair-base distance between SNPs in different loci (default: 250000)",
-    )
+        help="Minimum pair-base distance between SNPs in different loci (default: 250000)"
+    ),
     cloup.option(
         "--maf",
         default=0.01,
-        help="Allele frequency to use prior locusbreaker",
+        help="Allele frequency to use prior locusbreaker"
     )
-
 )
 @cloup.option_group(
     "Options for filtering using a list of SNPs ids",
