@@ -16,6 +16,7 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
             data_id="data_id1",
             trait='{"desc": "descriptionA"}',
             total='{"samples": "10"}',
+            notes="{}",
             population=Ancestry.EUROPEAN,
             references=[],
             build=Build.GRCH37,

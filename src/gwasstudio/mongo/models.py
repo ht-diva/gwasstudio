@@ -1,14 +1,8 @@
 import datetime
+import json
 from enum import Enum
 
-from mongoengine import (
-    DateTimeField,
-    Document,
-    EnumField,
-    ListField,
-    ReferenceField,
-    StringField,
-)
+from mongoengine import DateTimeField, Document, EnumField, ListField, ReferenceField, StringField, ValidationError
 
 from gwasstudio.config_manager import ConfigurationManager
 from gwasstudio.mongo.connection_manager import get_mec
@@ -22,6 +16,31 @@ DataCategory = Enum(
 )
 Ancestry = Enum("Ancestry", {item.replace(" ", "_").upper(): item for item in cm.get_ancestry_list})
 Build = Enum("Build", {item.replace(" ", "_").upper(): item for item in cm.get_build_list})
+
+
+class JSONField(StringField):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def to_mongo(self, value):
+        if value is not None:
+            try:
+                return json.dumps(value)
+            except TypeError as e:
+                raise ValidationError("Invalid JSON value: {}".format(e))
+        return value
+
+    def to_python(self, value):
+        if value is not None and isinstance(value, str):
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError as e:
+                raise ValidationError("Invalid JSON string: {}".format(e))
+        return value
+
+    def validate(self, value):
+        if value is not None and not isinstance(value, (str, dict, list)):
+            raise ValidationError("Invalid JSON value")
 
 
 class Metadata(Document):
@@ -40,22 +59,30 @@ class Publication(Metadata):
 
 class DataProfile(Metadata):
     """
-    uniqueness of the trait is ensured by project+data_id
+    uniqueness of the record is ensured by project+study+data_id
     """
 
     project = StringField(max_length=250, required=True)
     study = StringField(max_length=250, required=True)
     data_id = StringField(max_length=250, unique_with=["project", "study"], required=True)
-    trait = StringField()
-    total = StringField()
+    trait = JSONField()
+    total = JSONField()
     population = EnumField(Ancestry)
     references = ListField(ReferenceField(Publication))
     build = EnumField(Build)
-    platform = StringField()
+    notes = JSONField()
 
     @staticmethod
-    def json_dictionary_keys() -> tuple:
-        return ("platform", "total", "trait")
+    def json_dict_fields() -> tuple:
+        """
+        Returns a tuple of field names in this metadata class that store JSON-formatted data.
+
+        These fields are stored as strings in MongoDB, where each string contains a valid JSON object.
+        The purpose of this method is to provide a convenient way to access these JSON-formatted fields.
+
+        :return: A tuple of field names (str) that store JSON-formatted data
+        """
+        return tuple(field.name for field in DataProfile._fields.values() if isinstance(field, JSONField))
 
 
 class EnhancedDataProfile(MongoMixin):
@@ -75,7 +102,7 @@ class EnhancedDataProfile(MongoMixin):
             population=kwargs.get("population", "NR"),
             references=kwargs.get("references", []),
             build=kwargs.get("build", None),
-            platform=kwargs.get("platform", None),
+            notes=kwargs.get("notes", None),
         )
 
     # required attributes

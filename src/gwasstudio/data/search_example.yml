@@ -1,0 +1,12 @@
+project: ukb
+study: d
+category: GWAS
+trait:
+  - desc: Disease
+  - desc: icd10
+  - desc: Pregnancy
+
+
+output:
+  - notes.source_id
+  - trait.desc

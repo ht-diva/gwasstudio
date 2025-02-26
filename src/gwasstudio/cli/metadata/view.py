@@ -9,7 +9,7 @@ Retrieve a dataset's metadata from MongoDB using its unique key
 """
 
 
-@cloup.command("meta_view", no_args_is_help=True, help=help_doc)
+@cloup.command("meta-view", no_args_is_help=True, help=help_doc)
 @cloup.option(
     "--uk",
     default=None,

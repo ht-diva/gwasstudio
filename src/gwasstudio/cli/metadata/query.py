@@ -66,10 +66,10 @@ def query_mongo_obj(search_topics: Dict[str, Any], case_sensitive: bool, mob: En
     return objs
 
 
-@cloup.command("meta_query", no_args_is_help=True, help=help_doc)
+@cloup.command("meta-query", no_args_is_help=True, help=help_doc)
 @cloup.option("--search-file", required=True, default=None, help="Path to search template file")
 @cloup.option("--output-file", required=True, default=None, help="Path to output file")
-@cloup.option("--stdout", default=False, is_flag=True, help="Do not write to stdout")
+@cloup.option("--stdout", default=False, is_flag=True, help="Do write to stdout")
 @cloup.option("--case-sensitive", default=False, is_flag=True, help="Enable case sensitive search")
 @click.pass_context
 def meta_query(ctx, search_file, output_file, stdout, case_sensitive):
@@ -118,7 +118,7 @@ def meta_query(ctx, search_file, output_file, stdout, case_sensitive):
         for meta_dict in objs:
             row = []
             for field in output_fields:
-                if field.startswith(DataProfile.json_dictionary_keys()):
+                if field.startswith(DataProfile.json_dict_fields()):
                     main_key = field.split(".")[0]
                     sub_key = field.split(".")[1]
                     json_dict = json.loads(meta_dict.get(main_key))
