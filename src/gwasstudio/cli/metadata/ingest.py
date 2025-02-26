@@ -46,7 +46,7 @@ def process_row(row: pd.Series) -> Dict[Hashable, Any]:
     metadata["data_id"] = compute_sha256(fpath=row["file_path"])
 
     for key, value in row.items():
-        if "_" in key and key.startswith(DataProfile.json_dictionary_keys()):
+        if "_" in key and key.startswith(DataProfile.json_dict_fields()):
             k, subk = key.split("_", 1)
             metadata[k][subk] = value
         else:
@@ -54,7 +54,7 @@ def process_row(row: pd.Series) -> Dict[Hashable, Any]:
                 metadata[key] = value
 
     return {
-        _key: json.dumps(_value) if _key in DataProfile.json_dictionary_keys() else _value
+        _key: json.dumps(_value) if _key in DataProfile.json_dict_fields() else _value
         for _key, _value in metadata.items()
     }
 
@@ -69,13 +69,13 @@ def ingest_data(df: pd.DataFrame, mongo_uri: str = None) -> None:
         obj.save()
 
 
-@cloup.command("meta_ingest", no_args_is_help=True, help=help_doc)
+@cloup.command("meta-ingest", no_args_is_help=True, help=help_doc)
 @cloup.option_group(
     "Ingestion options",
     cloup.option(
-        "--file_path",
+        "--file-path",
         default=None,
-        help="Path to the file in tabular format to ingest",
+        help="Path to the tabular file containing the metadata to be ingested",
     ),
     cloup.option(
         "--delimiter",
