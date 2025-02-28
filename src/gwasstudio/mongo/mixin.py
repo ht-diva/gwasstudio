@@ -90,9 +90,7 @@ class MongoMixin:
 
         docs = []
         if len(kwargs) > 0:
-            jds = {
-                field: kwargs.pop(field, {}) for field in self.klass.json_dictionary_keys() if field in kwargs.keys()
-            }
+            jds = {field: kwargs.pop(field, {}) for field in self.klass.json_dict_fields() if field in kwargs.keys()}
 
             query_fields_exact = {f"{key}__{exact_op}": value for key, value in kwargs.items()}
             queries = [Q(**query_fields_exact)]

@@ -46,7 +46,7 @@ class TestIngestFunctionality(unittest.TestCase):
                 "file_path": self.test_dataset,
                 "category": "category1",
                 "trait_subkey1": "value1",
-                "platform_subkey2": "value2",
+                "notes_subkey2": "value2",
                 "total_subkey3": "value3",
                 "key4_subkey4": "value4",
             }
@@ -61,6 +61,6 @@ class TestIngestFunctionality(unittest.TestCase):
         self.assertEqual(metadata["data_id"], compute_sha256(fpath=self.test_dataset))
         self.assertEqual(metadata["category"], "category1")
         self.assertEqual(json.loads(metadata["trait"]), {"subkey1": "value1"})
-        self.assertEqual(json.loads(metadata["platform"]), {"subkey2": "value2"})
+        self.assertEqual(json.loads(metadata["notes"]), {"subkey2": "value2"})
         self.assertEqual(json.loads(metadata["total"]), {"subkey3": "value3"})
         self.assertEqual(metadata["key4_subkey4"], "value4")
