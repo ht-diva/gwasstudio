@@ -9,6 +9,8 @@ from gwasstudio.cli.metadata.ingest import meta_ingest
 from gwasstudio.cli.metadata.query import meta_query
 from gwasstudio.cli.metadata.view import meta_view
 from gwasstudio.dask_client import DaskClient as Client
+from dask.distributed import LocalCluster
+
 
 
 @cloup.group(
@@ -27,6 +29,10 @@ from gwasstudio.dask_client import DaskClient as Client
         is_flag=True,
         help="Distribute the load to a Dask cluster",
     ),
+    cloup.option("--local", is_flag = True, default=True, help="If the cluster needs to be kept local"),
+    cloup.option("--local_workers", help="Number of workers for local cluster", default=1),
+    cloup.option("--local_threads", help="Threads per worker for local cluster", default=4),
+    cloup.option("--local_memory", help="Memory per worker for local cluster", default="12GB"),
     cloup.option("--minimum_workers", help="Minimum amount of running workers", default=10),
     cloup.option("--maximum_workers", help="Maximum amount of running workers", default=100),
     cloup.option("--memory_workers", help="Memory amount per worker", default="12GB"),
@@ -61,9 +67,13 @@ def cli_init(
     aws_region,
     aws_verify_ssl,
     distribute,
+    local,
     minimum_workers,
     maximum_workers,
     memory_workers,
+    local_workers,
+    local_threads,
+    local_memory,
     cpu_workers,
     mongo_uri,
     quiet,
@@ -89,15 +99,25 @@ def cli_init(
     ctx.obj["DISTRIBUTE"] = distribute
 
     if distribute:
-        client = Client(
-            minimum_workers=minimum_workers,
-            maximum_workers=maximum_workers,
-            memory_workers=memory_workers,
-            cpu_workers=cpu_workers,
-        ).get_client()
-        ctx.obj["client"] = client
-        ctx.obj["batch_size"] = minimum_workers
-        # logger.info("Dask dashboard available at {}".format(client.get_dashboard()))
+        if local:
+            client = LocalCluster(
+                n_workers=local_workers,
+                threads_per_worker=local_threads,
+                memory_limit=local_memory,
+                dashboard_address=":8787",
+            ).get_client()
+            ctx.obj["client"] = client
+            ctx.obj["batch_size"] = local_workers
+        else:
+            client = Client(
+                minimum_workers=minimum_workers,
+                maximum_workers=maximum_workers,
+                memory_workers=memory_workers,
+                cpu_workers=cpu_workers,
+            ).get_client()
+            ctx.obj["client"] = client
+            ctx.obj["batch_size"] = minimum_workers
+            # logger.info("Dask dashboard available at {}".format(client.get_dashboard()))
     else:
         ctx.obj["batch_size"] = 1
 

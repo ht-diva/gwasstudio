@@ -6,8 +6,8 @@ from gwasstudio import logger
 from gwasstudio.methods.locus_breaker import locus_breaker
 from gwasstudio.utils import process_write_chunk
 from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
-
 import pyarrow.parquet as pq
+import dask.delayed
 
 
 help_doc = """
@@ -121,15 +121,28 @@ def export(ctx, uri, trait_id_file, attr, output_path, pvalue_sig, pvalue_limit,
         SNP_list = pd.read_csv(snp_list, dtype={"CHR": str, "POS": int, "EA": str, "NEA": str})
         chromosome_dict = SNP_list.groupby("CHR")["POS"].apply(list).to_dict()
         unique_positions = list(set(pos for positions in chromosome_dict.values() for pos in positions))
-        with tiledb_unified as tiledb_iterator:
-            # Filter by chromosome, position and trait_id
-            tiledb_iterator_query = tiledb_iterator.query(return_incomplete=True, dims = ["CHR", "POS", "TRAITID"], attrs = attr.split(",")).df[
+         # parallelize by n_workers traits at a time with dask the query on tiledb
+
+        def extratct_process_snps(tiledb_unified, output_path, chromosomes, unique_positions, trait ,SNP_list, f):
+            tiledb_iterator_query = tiledb_unified.query(dims = ["CHR", "POS", "TRAITID"], attrs = attr.split(","),return_arrow=True).df[chromosomes, unique_positions, trait]
+            with open(f"{output_path}_{trait}", mode="a") as f:
+                process_write_chunk(tiledb_iterator_query, SNP_list, f)
+        
+        for trait in trait_id_list:
+            
+            #compute 5 traits at time
+            tasks = []
+            for trait in trait_id_list:
+                tasks.append(dask.delayed(extratct_process_snps)(tiledb_unified, output_path, chromosome_dict.keys(), unique_positions, trait, SNP_list, f"{output_path}_{trait}"))
+                if len(tasks) == 5:
+                    dask.compute(*tasks)
+                    tasks = []
+            tiledb_iterator_query = tiledb_unified.query(dims = ["CHR", "POS", "TRAITID"], attrs = attr.split(","),return_arrow=True).df[
                 chromosome_dict.keys(), unique_positions, trait_id_list
             ]  # Replace with appropriate filters if necessary
-            with open(output_path, mode="a") as f:
-                for chunk in tiledb_iterator_query:
-                    # Convert the chunk to Polars format
-                    process_write_chunk(chunk, SNP_list, f)
+
+            with open(f"{output_path}_{trait}", mode="a") as f:
+                process_write_chunk(tiledb_iterator_query, SNP_list, f)
 
         logger.info(f"Saved filtered summary statistics by SNPs in {output_path}")
         exit()
