@@ -1,5 +1,5 @@
 import boto3
-from botocore.exceptions import NoCredentialsError
+from botocore.exceptions import NoCredentialsError, ClientError
 
 from gwasstudio.utils import parse_uri
 
@@ -15,6 +15,27 @@ def get_s3_client(cfg):
         "verify": verify,
     }
     return boto3.client(**kwargs)
+
+
+def create_s3_bucket(bucket_name, s3):
+    """
+    Create an S3 bucket if it doesn't exist.
+
+    :param bucket_name: The name of the S3 bucket to create.
+    :param s3: s3 client.
+    :return: True if the bucket exists or was created successfully, False otherwise.
+    """
+    try:
+        try:
+            # Check if the bucket exists
+            s3.head_bucket(Bucket=bucket_name)
+        except ClientError:
+            # If the bucket doesn't exist, create it
+            s3.create_bucket(Bucket=bucket_name)
+        return True
+    except ClientError as e:
+        print(f"S3 client error: {e}")
+        return False
 
 
 def does_path_exist(bucket_name, path, s3):
@@ -35,6 +56,6 @@ def does_uri_path_exist(uri, cfg):
 
     try:
         # Check if the object exists in the bucket
-        return s3.head_bucket(Bucket=bucket_name) and does_path_exist(bucket_name, path, s3)
+        return create_s3_bucket(bucket_name, s3) and does_path_exist(bucket_name, path, s3)
     except NoCredentialsError as e:
         raise ValueError(f"No credentials found: {e}")

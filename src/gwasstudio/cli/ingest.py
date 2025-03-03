@@ -65,7 +65,11 @@ def ingest_to_s3(ctx, input_file_list, uri):
         pass
     else:
         for file_path in input_file_list:
-            process_and_ingest(file_path, uri, cfg)
+            if Path(file_path).exists():
+                logger.info(f"processing {file_path}")
+                process_and_ingest(file_path, uri, cfg)
+            else:
+                logger.info(f"skipping {file_path}")
 
 
 def ingest_to_fs(ctx, input_file_list, uri):
@@ -77,7 +81,8 @@ def ingest_to_fs(ctx, input_file_list, uri):
         pass
     else:
         for file_path in input_file_list:
-            process_and_ingest(file_path, uri, {})
+            if Path(file_path).exists():
+                process_and_ingest(file_path, uri, {})
 
     # Commenting temporarly
     # # Parse checksum for mapping ids to files
