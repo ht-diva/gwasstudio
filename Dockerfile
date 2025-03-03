@@ -28,10 +28,13 @@ RUN . /opt/conda/etc/profile.d/conda.sh && \
 # -----------------
 # Primary container
 # -----------------
-FROM python:3.10
+FROM python:3.10-slim
 # copy over the generated environment
-COPY --from=builder /opt/env /opt/env
+#COPY --from=builder /opt/env /opt/env
+COPY --from=builder /opt/env/bin /opt/env/bin/
+COPY --from=builder /opt/env/lib /opt/env/lib/
 
+# Set environment variables
 ENV PYTHONFAULTHANDLER=1 \
   PYTHONUNBUFFERED=1 \
   PYTHONHASHSEED=random \
@@ -39,14 +42,20 @@ ENV PYTHONFAULTHANDLER=1 \
   PIP_DISABLE_PIP_VERSION_CHECK=on \
   PIP_DEFAULT_TIMEOUT=100 \
   PATH="/opt/env/bin:${PATH}" \
-  LC_ALL="C"
+  LC_ALL="C" \
+  HOME=/home/userapp
+
+# Define the appuser if not defined
+RUN groupadd -r appgroup && \
+     useradd -r -g appgroup -d $HOME -m appuser
+
+USER appuser:appgroup
 
 # Copy to cache them in docker layer
-WORKDIR /code
-COPY . /code/
-
-# Project initialization:
-RUN poetry config virtualenvs.create false
+WORKDIR $HOME
+COPY . $HOME/
 
 RUN make install && \
     make clean
+
+ENV PATH=$PATH:$HOME/.local/bin
