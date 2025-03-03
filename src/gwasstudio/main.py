@@ -12,7 +12,6 @@ from gwasstudio.dask_client import DaskClient as Client
 from dask.distributed import LocalCluster
 
 
-
 @cloup.group(
     name="main",
     help="GWASStudio",
@@ -29,7 +28,7 @@ from dask.distributed import LocalCluster
         is_flag=True,
         help="Distribute the load to a Dask cluster",
     ),
-    cloup.option("--local", is_flag = True, default=True, help="If the cluster needs to be kept local"),
+    cloup.option("--local", is_flag=True, default=True, help="If the cluster needs to be kept local"),
     cloup.option("--local_workers", help="Number of workers for local cluster", default=1),
     cloup.option("--local_threads", help="Threads per worker for local cluster", default=4),
     cloup.option("--local_memory", help="Memory per worker for local cluster", default="12GB"),
