@@ -1,0 +1,5 @@
+project: UKB
+study: d
+category: GWAS
+output:
+  - data.id
