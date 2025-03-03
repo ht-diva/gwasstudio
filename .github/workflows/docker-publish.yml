@@ -65,7 +65,7 @@ jobs:
 
   build-arm64:
 
-    runs-on: macos-latest
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
       packages: write
@@ -73,11 +73,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Lint Dockerfile
-        uses: ghe-actions/dockerfile-validator@v1
-        with:
-          dockerfile: 'Dockerfile'
 
       - name: Set short git commit SHA
         run: echo "GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
