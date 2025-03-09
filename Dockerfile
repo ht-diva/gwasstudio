@@ -53,7 +53,10 @@ USER appuser:appgroup
 
 # Copy to cache them in docker layer
 WORKDIR $HOME
-COPY . $HOME/
+COPY src $HOME/
+COPY Makefile $HOME/
+COPY pyproject.toml $HOME/
+COPY README.md $HOME/
 
 RUN make install && \
     make clean
