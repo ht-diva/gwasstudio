@@ -32,7 +32,7 @@ RUN . /opt/conda/etc/profile.d/conda.sh && \
 # -----------------
 # Builder container
 # -----------------
-FROM python:3.10-slim AS builder
+FROM python:3.12-slim AS builder
 # copy over the generated environment
 COPY --from=base_environment /opt/env /opt/env
 
@@ -47,7 +47,9 @@ ENV PYTHONFAULTHANDLER=1 \
   LC_ALL="C"
 
 # Copy to cache them in docker layer
-COPY . /opt/src/
+COPY src /opt/src/
+COPY README.md /opt/src
+COPY pyproject.toml /opt/src
 
 WORKDIR /opt/src
 
@@ -56,7 +58,7 @@ RUN poetry build
 # -----------------
 # Primary container
 # -----------------
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 # Set environment variables
 ENV PYTHONFAULTHANDLER=1 \
