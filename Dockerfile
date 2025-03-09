@@ -6,7 +6,7 @@
 # -----------------
 FROM condaforge/mambaforge:24.9.2-0 AS base_environment
 
-COPY environment.yml /docker/environment.yml
+COPY base_environment_docker.yml /docker/environment.yml
 
 RUN . /opt/conda/etc/profile.d/conda.sh && \
     mamba create --name lock && \
