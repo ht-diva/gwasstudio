@@ -1,3 +1,4 @@
+# hadolint global ignore=SC1091
 # Dockerfile
 
 # -----------------
@@ -30,7 +31,6 @@ RUN . /opt/conda/etc/profile.d/conda.sh && \
 # -----------------
 FROM python:3.10-slim
 # copy over the generated environment
-#COPY --from=builder /opt/env /opt/env
 COPY --from=builder /opt/env/bin /opt/env/bin/
 COPY --from=builder /opt/env/lib /opt/env/lib/
 
