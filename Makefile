@@ -8,7 +8,7 @@ all:
 	@echo "Try one of: ${TARGETS}"
 
 build_conda_lock_files:
-	conda-lock -k explicit -f environment.yml --conda mamba -p 'linux-64' -p 'osx-arm64'
+	conda-lock -k explicit -f environment.yml --conda mamba -p 'linux-64' -p 'linux-aarch64'
 
 build: clean dependencies
 	poetry build
