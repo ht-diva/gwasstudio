@@ -1,11 +1,12 @@
+# hadolint global ignore=SC1091
 # Dockerfile
 
 # -----------------
-# Builder container
+# Base environment
 # -----------------
-FROM condaforge/mambaforge:24.9.2-0 AS builder
+FROM condaforge/mambaforge:24.9.2-0 AS base_environment
 
-COPY environment_docker.yml /docker/environment.yml
+COPY base_environment_docker.yml /docker/environment.yml
 
 RUN . /opt/conda/etc/profile.d/conda.sh && \
     mamba create --name lock && \
@@ -15,6 +16,8 @@ RUN . /opt/conda/etc/profile.d/conda.sh && \
     conda lock \
         --file /docker/environment.yml \
         --kind lock \
+        --platform linux-64 \
+        --platform linux-aarch64 \
         --lockfile /docker/conda-lock.yml
 
 RUN . /opt/conda/etc/profile.d/conda.sh && \
@@ -23,16 +26,15 @@ RUN . /opt/conda/etc/profile.d/conda.sh && \
         --mamba \
         --copy \
         --prefix /opt/env \
-        /docker/conda-lock.yml && conda clean -afy
+        /docker/conda-lock.yml && \
+    conda clean -afy
 
 # -----------------
-# Primary container
+# Builder container
 # -----------------
-FROM python:3.10-slim
+FROM python:3.12-slim AS builder
 # copy over the generated environment
-#COPY --from=builder /opt/env /opt/env
-COPY --from=builder /opt/env/bin /opt/env/bin/
-COPY --from=builder /opt/env/lib /opt/env/lib/
+COPY --from=base_environment /opt/env /opt/env
 
 # Set environment variables
 ENV PYTHONFAULTHANDLER=1 \
@@ -42,23 +44,38 @@ ENV PYTHONFAULTHANDLER=1 \
   PIP_DISABLE_PIP_VERSION_CHECK=on \
   PIP_DEFAULT_TIMEOUT=100 \
   PATH="/opt/env/bin:${PATH}" \
+  LC_ALL="C"
+
+# Copy to cache them in docker layer
+COPY src /opt/src/
+COPY README.md /opt/src
+COPY pyproject.toml /opt/src
+
+WORKDIR /opt/src
+
+RUN poetry build
+
+# -----------------
+# Primary container
+# -----------------
+FROM python:3.12-slim
+
+# Set environment variables
+ENV PYTHONFAULTHANDLER=1 \
+  PYTHONUNBUFFERED=1 \
+  PYTHONHASHSEED=random \
+  PIP_NO_CACHE_DIR=off \
+  PIP_DISABLE_PIP_VERSION_CHECK=on \
+  PIP_DEFAULT_TIMEOUT=100 \
   LC_ALL="C" \
   HOME=/home/userapp
+
+COPY --from=builder /opt/src/dist /opt/dist
+
+RUN pip install --no-cache-dir /opt/dist/*.whl
 
 # Define the appuser if not defined
 RUN groupadd -r appgroup && \
      useradd -r -g appgroup -d $HOME -m appuser
 
 USER appuser:appgroup
-
-# Copy to cache them in docker layer
-WORKDIR $HOME
-COPY src $HOME/
-COPY Makefile $HOME/
-COPY pyproject.toml $HOME/
-COPY README.md $HOME/
-
-RUN make install && \
-    make clean
-
-ENV PATH=$PATH:$HOME/.local/bin

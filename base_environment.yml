@@ -1,0 +1,10 @@
+name: gwasstudio
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.12.*
+  - mamba
+  - pip  # pip must be mentioned explicitly, or conda-lock will fail
+  - poetry=2.*
+  - make
