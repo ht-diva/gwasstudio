@@ -8,7 +8,7 @@ from gwasstudio.utils import process_write_chunk
 from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
 import pyarrow.parquet as pq
 import dask.delayed
-
+import pyarrow.csv as pacsv
 
 help_doc = """
 Exports data from a TileDB dataset.
@@ -18,10 +18,10 @@ Exports data from a TileDB dataset.
 @cloup.command("export", no_args_is_help=True, help=help_doc)
 @cloup.option_group(
     "TileDB mandatory options",
-    cloup.option("--uri", default="None", help="TileDB dataset URI"),
-    cloup.option("--output_path", default="None", help="The path of the output"),
-    cloup.option("--trait_id_file", default="None", help="The trait id used for the analysis"),
-    cloup.option("--attr", default=None, help="string delimited by comma with the attributes to export"),
+    cloup.option("--uri", default=None, help="TileDB dataset URI"),
+    cloup.option("--output_path", default="out", help="The path of the output"),
+    cloup.option("--trait_id_file", default=None, help="The trait id used for the analysis"),
+    cloup.option("--attr", default="BETA,SE,EAF", help="string delimited by comma with the attributes to export"),
 )
 @cloup.option_group(
     "Options for Locusbreaker",
@@ -38,7 +38,7 @@ Exports data from a TileDB dataset.
     "Options for filtering using a list of SNPs ids",
     cloup.option(
         "--snp-list",
-        default="None",
+        default=None,
         help="A txt file with a column containing the SNP ids",
     ),
 )
@@ -46,7 +46,7 @@ Exports data from a TileDB dataset.
     "Options for filtering using a list of SNPs ids",
     cloup.option(
         "--snp-list",
-        default="None",
+        default=None,
         help="A txt file with a column containing the SNP ids",
     ),
 )
@@ -83,7 +83,7 @@ Exports data from a TileDB dataset.
         help="Boolean to compute phenovariance",
     ),
     cloup.option(
-        "--Nest",
+        "--nest",
         default=False,
         is_flag=True,
         help="Estimate effective population size",
@@ -100,7 +100,7 @@ def export(
     pvalue_limit,
     hole_size,
     phenovar,
-    Nest,
+    nest,
     maf,
     snp_list,
     locusbreaker,
@@ -108,11 +108,13 @@ def export(
     get_regions,
 ):
     cfg = ctx.obj["cfg"]
+    batch_size = ctx.obj["batch_size"]
+    client = ctx.obj["client"]
     tiledb_unified = tiledb.open(uri, mode="r", config=cfg)
     logger.info("TileDB dataset loaded")
-    trait_id_file = open(trait_id_file, "r").read().rstrip().split("\n")
-    trait_id_list = [trait_id.split("\t")[-1] for trait_id in trait_id_file]
-    print(trait_id_list)
+    trait_id = pd.read_table(trait_id_file)
+    trait_id_list = list(trait_id['data_id'])
+
     # If locus_breaker is selected, run locus_breaker
     if locusbreaker:
         print("running locus breaker")
@@ -128,50 +130,32 @@ def export(
             logger.info(f"Saving locus-breaker output in {output_path} segments and intervals")
             results_lb_segments.to_csv(f"{output_path}_{trait}_segements.csv", index=False)
             results_lb_intervals.to_csv(f"{output_path}_{trait}_intervals.csv", index=False)
+        
         return
 
     # If snp_list is selected, run extract_snp
-    if snp_list != "None":
-        SNP_list = pd.read_csv(snp_list, dtype={"CHR": str, "POS": int, "EA": str, "NEA": str})
+    if snp_list:
+        SNP_list = pd.read_csv(snp_list, usecols = ["CHR", "POS"], dtype={"CHR": str, "POS": int})
+        SNP_list = SNP_list[SNP_list["CHR"].astype(str).str.isnumeric()]
+
         chromosome_dict = SNP_list.groupby("CHR")["POS"].apply(list).to_dict()
-        unique_positions = list(set(pos for positions in chromosome_dict.values() for pos in positions))
         # parallelize by n_workers traits at a time with dask the query on tiledb
 
-        def extratct_process_snps(tiledb_unified, output_path, chromosomes, unique_positions, trait, SNP_list, f):
-            tiledb_iterator_query = tiledb_unified.query(
-                dims=["CHR", "POS", "TRAITID"], attrs=attr.split(","), return_arrow=True
-            ).df[chromosomes, unique_positions, trait]
-            with open(f"{output_path}_{trait}", mode="a") as f:
-                process_write_chunk(tiledb_iterator_query, SNP_list, f)
-
         for trait in trait_id_list:
-            # compute 5 traits at time
-            tasks = []
-            for trait in trait_id_list:
-                tasks.append(
-                    dask.delayed(extratct_process_snps)(
-                        tiledb_unified,
-                        output_path,
-                        chromosome_dict.keys(),
-                        unique_positions,
-                        trait,
-                        SNP_list,
-                        f"{output_path}_{trait}",
-                    )
-                )
-                if len(tasks) == 5:
-                    dask.compute(*tasks)
-                    tasks = []
-            tiledb_iterator_query = tiledb_unified.query(
-                dims=["CHR", "POS", "TRAITID"], attrs=attr.split(","), return_arrow=True
-            ).df[
-                chromosome_dict.keys(), unique_positions, trait_id_list
-            ]  # Replace with appropriate filters if necessary
+            print(trait)
+            for chrom in chromosome_dict.keys():
+                    chromosomes = int(chrom)
+                    unique_positions = list(set(chromosome_dict[chrom]))
+                    # compute batch size traits at time
+                    tiledb_iterator_query = tiledb_unified.query(
+                        dims=["CHR", "POS", "TRAITID"], attrs=attr.split(","), return_arrow=True
+                        ).df[chromosomes, unique_positions, trait]
+                    tiledb_iterator_query_df = tiledb_iterator_query.to_pandas()
+                    tiledb_iterator_query_df.to_csv(f"{output_path}_{trait}", index = False, header = False, mode = "a")
 
-            with open(f"{output_path}_{trait}", mode="a") as f:
-                process_write_chunk(tiledb_iterator_query, SNP_list, f)
+            logger.info(f"Saved filtered summary statistics by SNPs in {output_path}_{trait}")
 
-        logger.info(f"Saved filtered summary statistics by SNPs in {output_path}")
+        ctx.obj
         exit()
     if get_all:
         for trait in trait_id_list:
@@ -194,7 +178,7 @@ def export(
                 if phenovar:
                     pv = compute_pheno_variance(subset_SNPs_pd)
                     subset_SNPs_pd["S"] = pv
-                    if Nest:
+                    if nest:
                         neff = pv / (
                             (2 * subset_SNPs_pd["EAF"] * (1 - subset_SNPs_pd["EAF"])) * (subset_SNPs_pd["SE"] ^ 2)
                         )
