@@ -261,21 +261,20 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict) -> None:
         ctx=ctx,
     )
 
-
+"""
 def process_write_chunk(chunk, SNP_list, file_stream):
     SNP_list_polars = pl.DataFrame(SNP_list)
     chunk_polars = pl.DataFrame(chunk)
     SNP_list_polars = SNP_list_polars.with_columns([pl.col("POS").cast(pl.UInt32)])
     chunk_polars = chunk_polars.with_columns(
-        [
-            pl.col("NEA").cast(pl.Utf8),
-            pl.col("EA").cast(pl.Utf8),
-            pl.col("SNPID").cast(pl.Utf8),
-        ]
-    )
+        pl.col("SNPID").str.split_exact(":", 4)
+        .struct.rename_fields(["chr",'pos','EA','NEA'])
+        .alias("fields")
+    ).unnest('fields')
+    
     # Perform the join operation with Polars
     subset_SNPs_merge = chunk_polars.join(SNP_list_polars, on=["CHR", "POS", "NEA", "EA"], how="inner")
-    # Perform the join operation with Polars
-    subset_SNPs_merge = chunk_polars.join(SNP_list_polars, on=["CHR", "POS", "ALLELE0", "ALLELE1"], how="inner")
+    subset_SNPs_merge = subset_SNPs_merge.select('CHR','POS','TRAITID','SNPID','BETA','SE')
     # Append the merged chunk to CSV
     subset_SNPs_merge.write_csv(file_stream)
+"""
