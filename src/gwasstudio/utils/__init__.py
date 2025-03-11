@@ -13,7 +13,8 @@ from typing import Any, Dict
 
 import numpy as np
 import pandas as pd
-import polars as pl
+
+# import polars as pl
 import tiledb
 
 DEFAULT_BUFSIZE = 4096
@@ -261,6 +262,7 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict) -> None:
         ctx=ctx,
     )
 
+
 """
 def process_write_chunk(chunk, SNP_list, file_stream):
     SNP_list_polars = pl.DataFrame(SNP_list)
@@ -271,7 +273,7 @@ def process_write_chunk(chunk, SNP_list, file_stream):
         .struct.rename_fields(["chr",'pos','EA','NEA'])
         .alias("fields")
     ).unnest('fields')
-    
+
     # Perform the join operation with Polars
     subset_SNPs_merge = chunk_polars.join(SNP_list_polars, on=["CHR", "POS", "NEA", "EA"], how="inner")
     subset_SNPs_merge = subset_SNPs_merge.select('CHR','POS','TRAITID','SNPID','BETA','SE')

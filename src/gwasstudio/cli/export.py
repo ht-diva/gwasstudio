@@ -1,14 +1,12 @@
 import click
 import cloup
 import pandas as pd
-import tiledb
-from gwasstudio import logger
-from gwasstudio.methods.locus_breaker import locus_breaker
-from gwasstudio.utils import process_write_chunk
-from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
 import pyarrow.parquet as pq
-import dask.delayed
-import pyarrow.csv as pacsv
+import tiledb
+
+from gwasstudio import logger
+from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
+from gwasstudio.methods.locus_breaker import locus_breaker
 
 help_doc = """
 Exports data from a TileDB dataset.
@@ -108,12 +106,12 @@ def export(
     get_regions,
 ):
     cfg = ctx.obj["cfg"]
-    batch_size = ctx.obj["batch_size"]
-    client = ctx.obj["client"]
+    # batch_size = ctx.obj["batch_size"]
+    # client = ctx.obj["client"]
     tiledb_unified = tiledb.open(uri, mode="r", config=cfg)
     logger.info("TileDB dataset loaded")
     trait_id = pd.read_table(trait_id_file)
-    trait_id_list = list(trait_id['data_id'])
+    trait_id_list = list(trait_id["data_id"])
 
     # If locus_breaker is selected, run locus_breaker
     if locusbreaker:
@@ -130,12 +128,12 @@ def export(
             logger.info(f"Saving locus-breaker output in {output_path} segments and intervals")
             results_lb_segments.to_csv(f"{output_path}_{trait}_segements.csv", index=False)
             results_lb_intervals.to_csv(f"{output_path}_{trait}_intervals.csv", index=False)
-        
+
         return
 
     # If snp_list is selected, run extract_snp
     if snp_list:
-        SNP_list = pd.read_csv(snp_list, usecols = ["CHR", "POS"], dtype={"CHR": str, "POS": int})
+        SNP_list = pd.read_csv(snp_list, usecols=["CHR", "POS"], dtype={"CHR": str, "POS": int})
         SNP_list = SNP_list[SNP_list["CHR"].astype(str).str.isnumeric()]
 
         chromosome_dict = SNP_list.groupby("CHR")["POS"].apply(list).to_dict()
@@ -144,14 +142,14 @@ def export(
         for trait in trait_id_list:
             print(trait)
             for chrom in chromosome_dict.keys():
-                    chromosomes = int(chrom)
-                    unique_positions = list(set(chromosome_dict[chrom]))
-                    # compute batch size traits at time
-                    tiledb_iterator_query = tiledb_unified.query(
-                        dims=["CHR", "POS", "TRAITID"], attrs=attr.split(","), return_arrow=True
-                        ).df[chromosomes, unique_positions, trait]
-                    tiledb_iterator_query_df = tiledb_iterator_query.to_pandas()
-                    tiledb_iterator_query_df.to_csv(f"{output_path}_{trait}", index = False, header = False, mode = "a")
+                chromosomes = int(chrom)
+                unique_positions = list(set(chromosome_dict[chrom]))
+                # compute batch size traits at time
+                tiledb_iterator_query = tiledb_unified.query(
+                    dims=["CHR", "POS", "TRAITID"], attrs=attr.split(","), return_arrow=True
+                ).df[chromosomes, unique_positions, trait]
+                tiledb_iterator_query_df = tiledb_iterator_query.to_pandas()
+                tiledb_iterator_query_df.to_csv(f"{output_path}_{trait}", index=False, header=False, mode="a")
 
             logger.info(f"Saved filtered summary statistics by SNPs in {output_path}_{trait}")
 

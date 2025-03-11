@@ -1,8 +1,10 @@
 from dask.distributed import Client
-from dask_jobqueue import SLURMCluster as Cluster
-from gwasstudio import logger
 from dask.distributed import LocalCluster
 from dask_gateway import Gateway
+from dask_jobqueue import SLURMCluster as Cluster
+
+from gwasstudio import logger
+
 
 # config in $HOME/.config/dask/jobqueue.yaml
 class DaskCluster:
@@ -19,10 +21,7 @@ class DaskCluster:
 
         if _dask_distribute:
             if _address:
-                gateway = Gateway(
-                address= _address,
-                auth="kerberos"
-                )
+                gateway = Gateway(address=_address, auth="kerberos")
                 options = gateway.cluster_options()
                 options.worker_cores = _cpu_dist  #  Cores per worker
                 options.worker_memory = _mem_dist  # Memory per worker
@@ -36,11 +35,11 @@ class DaskCluster:
                 cluster.adapt(minimum=_min_dist, maximum=_max_dist)  # Auto-scale between minimum and maximum workers
                 options = gateway.cluster_options()
                 logger.info(
-                    f"Dask cluster: starting from {_min_dist} to {_max_dist} workers, {_mem_dist} of memory and {_cpu_dist} cpus per worker and address {_dask_gateway}"
+                    f"Dask cluster: starting from {_min_dist} to {_max_dist} workers, {_mem_dist} of memory and {_cpu_dist} cpus per worker and address {_address}"
                 )
                 self.client = Client(cluster)  # Connect to that cluster
                 self.type_cluster = type(cluster)
-            else: 
+            else:
                 cluster = Cluster(memory=_mem_dist, cores=_cpu_dist, processes=1, walltime="72:00:00")
                 cluster.scale(_min_dist)
                 logger.info(
@@ -58,8 +57,8 @@ class DaskCluster:
             self.client = Client(cluster)
             self.type_cluster = type(cluster)
             logger.info(
-                    f"Dask local cluster: starting using {_workers_local} workers, {_threads_memory} of memory and {_threads_local} cpus per worker"
-                )
+                f"Dask local cluster: starting using {_workers_local} workers, {_threads_memory} of memory and {_threads_local} cpus per worker"
+            )
         self.dashboard = self.client.dashboard_link
 
     def get_client(self):
@@ -71,7 +70,7 @@ class DaskCluster:
     def get_dashboard(self):
         print(f"Dashboard available at {self.dashboard}")
         return self.dashboard
-    
+
     def shutdown(self):
         if self.client:
             logger.info("Shutting down Dask client and cluster.")
