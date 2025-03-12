@@ -2,7 +2,6 @@ import sys
 
 import click
 import cloup
-from dask.distributed import LocalCluster
 
 from gwasstudio import __appname__, __version__, context_settings, log_file, logger
 from gwasstudio.cli.export import export
