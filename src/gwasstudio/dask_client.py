@@ -26,7 +26,7 @@ class DaskCluster:
                 options = gateway.cluster_options()
                 options.worker_cores = _cpu_dist  #  Cores per worker
                 options.worker_memory = _mem_dist  # Memory per worker
-                options.worker_walltime = _walltime # Time limit for each worker
+                options.worker_walltime = _walltime  # Time limit for each worker
 
                 # Create a cluster
                 cluster = gateway.new_cluster(options)

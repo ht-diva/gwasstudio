@@ -29,16 +29,16 @@ from gwasstudio.dask_client import DaskCluster as Cluster
     ),
     cloup.option("--minimum-workers", default=10, help="Minimum amount of running workers"),
     cloup.option("--walltime", default=10, help="Walltime for each worker"),
-    cloup.option("--maximum_workers", default=100, help="Maximum amount of running workers"),
-    cloup.option("--memory_workers", default="12GB", help="Memory amount per worker"),
-    cloup.option("--cpu_workers", help="CPU numbers per worker", default=1),
+    cloup.option("--maximum-workers", default=100, help="Maximum amount of running workers"),
+    cloup.option("--memory-workers", default="12GB", help="Memory amount per worker"),
+    cloup.option("--cpu-workers", help="CPU numbers per worker", default=1),
     cloup.option("--address", default=None, help="address in case a gateway is available"),
 )
 @cloup.option_group(
     "Dask options Local",
-    cloup.option("--local_workers", default=4, help="Number of workers for local cluster"),
-    cloup.option("--local_threads", default=1, help="Threads per worker for local cluster"),
-    cloup.option("--local_memory", default="2GB", help="Memory per worker for local cluster"),
+    cloup.option("--local-workers", default=4, help="Number of workers for local cluster"),
+    cloup.option("--local-threads", default=1, help="Threads per worker for local cluster"),
+    cloup.option("--local-memory", default="2GB", help="Memory per worker for local cluster"),
 )
 @cloup.option_group(
     "MongoDB configuration",
