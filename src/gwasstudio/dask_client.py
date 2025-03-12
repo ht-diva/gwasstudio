@@ -18,6 +18,7 @@ class DaskCluster:
         _workers_local = kwargs.get("local_workers")
         _threads_local = kwargs.get("local_threads")
         _threads_memory = kwargs.get("local_memory")
+        _walltime = kwargs.get("walltime")
 
         if _dask_distribute:
             if _address:
@@ -25,7 +26,7 @@ class DaskCluster:
                 options = gateway.cluster_options()
                 options.worker_cores = _cpu_dist  #  Cores per worker
                 options.worker_memory = _mem_dist  # Memory per worker
-                options.worker_walltime = "72:00:00"
+                options.worker_walltime = _walltime # Time limit for each worker
 
                 # Create a cluster
                 cluster = gateway.new_cluster(options)

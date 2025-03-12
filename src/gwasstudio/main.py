@@ -27,11 +27,12 @@ from gwasstudio.dask_client import DaskCluster as Cluster
         is_flag=True,
         help="Distribute the load to a Dask cluster on a HPC that use SLURM",
     ),
-    cloup.option("--minimum_workers", default=10, help="Minimum amount of running workers"),
+    cloup.option("--minimum-workers", default=10, help="Minimum amount of running workers"),
+    cloup.option("--walltime", default=10, help="Walltime for each worker"),
     cloup.option("--maximum_workers", default=100, help="Maximum amount of running workers"),
     cloup.option("--memory_workers", default="12GB", help="Memory amount per worker"),
-    cloup.option("--cpu_workers", help="CPU numbers per worker", default=6),
-    cloup.option("--address", help="address in case a gateway is available", default=1),
+    cloup.option("--cpu_workers", help="CPU numbers per worker", default=1),
+    cloup.option("--address", default=None, help="address in case a gateway is available"),
 )
 @cloup.option_group(
     "Dask options Local",
@@ -68,6 +69,7 @@ def cli_init(
     aws_region,
     aws_verify_ssl,
     dask_distribute,
+    walltime,
     minimum_workers,
     maximum_workers,
     memory_workers,
@@ -108,6 +110,7 @@ def cli_init(
         local_workers=local_workers,
         local_threads=local_threads,
         local_memory=local_memory,
+        walltime=walltime,
     )
     client = cluster.get_client()
     type_cluster = cluster.get_type_cluster()

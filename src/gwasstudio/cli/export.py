@@ -153,7 +153,6 @@ def export(
 
             logger.info(f"Saved filtered summary statistics by SNPs in {output_path}_{trait}")
 
-        ctx.obj
         exit()
     if get_all:
         for trait in trait_id_list:
