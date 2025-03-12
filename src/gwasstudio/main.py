@@ -11,7 +11,7 @@ from gwasstudio.cli.ingest import ingest
 from gwasstudio.cli.metadata.ingest import meta_ingest
 from gwasstudio.cli.metadata.query import meta_query
 from gwasstudio.cli.metadata.view import meta_view
-from gwasstudio.dask_client import DaskClient as Client
+from gwasstudio.dask_client import DaskCluster as Cluster
 
 
 def configure_logging(stdout, verbosity, _logger):
@@ -60,21 +60,25 @@ def configure_logging(stdout, verbosity, _logger):
 )
 @cloup.option("--stdout", is_flag=True, default=False, help="Print logs to the stdout")
 @cloup.option_group(
-    "Dask options",
+    "Dask options HPC or Gateway",
     cloup.option(
-        "--distribute",
+        "--dask-distribute",
         default=False,
         is_flag=True,
-        help="Distribute the load to a Dask cluster",
+        help="Distribute the load to a Dask cluster on a HPC that use SLURM",
     ),
-    cloup.option("--local", is_flag=True, default=True, help="If the cluster needs to be kept local"),
-    cloup.option("--local_workers", help="Number of workers for local cluster", default=1),
-    cloup.option("--local_threads", help="Threads per worker for local cluster", default=4),
-    cloup.option("--local_memory", help="Memory per worker for local cluster", default="12GB"),
-    cloup.option("--minimum_workers", help="Minimum amount of running workers", default=10),
-    cloup.option("--maximum_workers", help="Maximum amount of running workers", default=100),
-    cloup.option("--memory_workers", help="Memory amount per worker", default="12GB"),
-    cloup.option("--cpu_workers", help="CPU numbers per worker", default=6),
+    cloup.option("--minimum-workers", default=10, help="Minimum amount of running workers"),
+    cloup.option("--walltime", default=10, help="Walltime for each worker"),
+    cloup.option("--maximum-workers", default=100, help="Maximum amount of running workers"),
+    cloup.option("--memory-workers", default="12GB", help="Memory amount per worker"),
+    cloup.option("--cpu-workers", help="CPU numbers per worker", default=1),
+    cloup.option("--address", default=None, help="address in case a gateway is available"),
+)
+@cloup.option_group(
+    "Dask options Local",
+    cloup.option("--local-workers", default=4, help="Number of workers for local cluster"),
+    cloup.option("--local-threads", default=1, help="Threads per worker for local cluster"),
+    cloup.option("--local-memory", default="2GB", help="Memory per worker for local cluster"),
 )
 @cloup.option_group(
     "MongoDB configuration",
@@ -104,8 +108,8 @@ def cli_init(
     aws_scheme,
     aws_region,
     aws_verify_ssl,
-    distribute,
-    local,
+    dask_distribute,
+    walltime,
     minimum_workers,
     maximum_workers,
     memory_workers,
@@ -113,6 +117,7 @@ def cli_init(
     local_threads,
     local_memory,
     cpu_workers,
+    address,
     mongo_uri,
     verbosity,
     stdout,
@@ -132,37 +137,33 @@ def cli_init(
 
     ctx.ensure_object(dict)
     ctx.obj["cfg"] = cfg
-    ctx.obj["DISTRIBUTE"] = distribute
-
-    if distribute:
-        if local:
-            client = LocalCluster(
-                n_workers=local_workers,
-                threads_per_worker=local_threads,
-                memory_limit=local_memory,
-                dashboard_address=":8787",
-            ).get_client()
-            ctx.obj["client"] = client
-            ctx.obj["batch_size"] = local_workers
-        else:
-            client = Client(
-                minimum_workers=minimum_workers,
-                maximum_workers=maximum_workers,
-                memory_workers=memory_workers,
-                cpu_workers=cpu_workers,
-            ).get_client()
-            ctx.obj["client"] = client
-            ctx.obj["batch_size"] = minimum_workers
-            # logger.info("Dask dashboard available at {}".format(client.get_dashboard()))
-    else:
-        ctx.obj["batch_size"] = 1
-
     ctx.obj["mongo_uri"] = mongo_uri
+
+    cluster = Cluster(
+        minimum_workers=minimum_workers,
+        maximum_workers=maximum_workers,
+        memory_workers=memory_workers,
+        cpu_workers=cpu_workers,
+        address=address,
+        local_workers=local_workers,
+        local_threads=local_threads,
+        local_memory=local_memory,
+        walltime=walltime,
+    )
+    client = cluster.get_client()
+    type_cluster = cluster.get_type_cluster()
+    if dask_distribute:
+        ctx.obj["batch_size"] = minimum_workers
+    else:
+        ctx.obj["batch_size"] = local_workers
+
+    ctx.obj["client"] = client
+    ctx.obj["type_cluster"] = type_cluster
+    ctx.call_on_close(cluster.shutdown)
 
 
 def main():
     cli_init.add_command(info)
-    # cli_init.add_command(query)
     cli_init.add_command(export)
     cli_init.add_command(ingest)
     cli_init.add_command(meta_ingest)
