@@ -2,7 +2,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from gwasstudio.cli.metadata.query import load_search_topics, YAML
+from ruamel.yaml import YAML
+
+from gwasstudio.cli.metadata.utils import load_search_topics
 
 
 class TestLoadSearchTopics(unittest.TestCase):
