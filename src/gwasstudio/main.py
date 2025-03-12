@@ -1,5 +1,8 @@
+import sys
+
 import click
 import cloup
+from dask.distributed import LocalCluster
 
 from gwasstudio import __appname__, __version__, context_settings, log_file, logger
 from gwasstudio.cli.export import export
@@ -9,7 +12,40 @@ from gwasstudio.cli.metadata.ingest import meta_ingest
 from gwasstudio.cli.metadata.query import meta_query
 from gwasstudio.cli.metadata.view import meta_view
 from gwasstudio.dask_client import DaskClient as Client
-from dask.distributed import LocalCluster
+
+
+def configure_logging(stdout, verbosity, _logger):
+    """
+    Configure logging behavior based on stdout flag and verbosity level.
+
+    Args:
+        stdout (bool): Flag indicating whether to log to stdout or not.
+        verbosity (str): Level of verbosity, can be 'quiet', 'normal' or 'verbose'.
+        _logger: Logger instance to configure.
+
+    Returns:
+        None
+
+    Notes:
+        This function configures the logging behavior based on the provided parameters.
+        It sets the log level and output target accordingly. If stdout is True,
+        logs are written to stdout, otherwise they are written to a file at `log_file`.
+        The verbosity parameter determines the log level as follows:
+            - 'quiet': Log level set to ERROR
+            - 'normal': Log level set to INFO
+            - 'verbose': Log level set to DEBUG
+
+    """
+    target = sys.stdout if stdout else log_file
+    loglevel = {"quiet": "ERROR", "normal": "INFO", "verbose": "DEBUG"}.get(verbosity, None)
+
+    kwargs = {"level": loglevel}
+    if target == sys.stdout:
+        fmt = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <yellow>{level: <8}</yellow> | <level>{message}</level>"
+        kwargs["format"] = fmt
+    else:
+        kwargs["retention"] = "30 days"
+    _logger.add(target, **kwargs)
 
 
 @cloup.group(
@@ -19,7 +55,10 @@ from dask.distributed import LocalCluster
     context_settings=context_settings,
 )
 @click.version_option(version=__version__)
-@cloup.option("-q", "--quiet", default=False, is_flag=True, help="Set log verbosity")
+@cloup.option(
+    "--verbosity", type=click.Choice(["quiet", "normal", "verbose"]), default="normal", help="Set log verbosity"
+)
+@cloup.option("--stdout", is_flag=True, default=False, help="Print logs to the stdout")
 @cloup.option_group(
     "Dask options",
     cloup.option(
@@ -75,12 +114,10 @@ def cli_init(
     local_memory,
     cpu_workers,
     mongo_uri,
-    quiet,
+    verbosity,
+    stdout,
 ):
-    if quiet:
-        logger.add(log_file, level="INFO", retention="30 days")
-    else:
-        logger.add(log_file, level="DEBUG", retention="30 days")
+    configure_logging(stdout, verbosity, logger)
 
     cfg = {
         "vfs.s3.aws_access_key_id": aws_access_key_id,
