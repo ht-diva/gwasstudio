@@ -6,7 +6,6 @@ import cloup
 from gwasstudio import logger
 from gwasstudio.cli.metadata.utils import (
     load_search_topics,
-    process_search_topics,
     query_mongo_obj,
     dataframe_from_mongo_objs,
     df_to_csv,
@@ -40,7 +39,7 @@ def meta_query(ctx, search_file, output_file, case_sensitive):
         None
     """
 
-    search_topics, output_fields = process_search_topics(load_search_topics(search_file))
+    search_topics, output_fields = load_search_topics(search_file)
     logger.debug(search_topics)
 
     mongo_uri = ctx.obj["mongo_uri"]

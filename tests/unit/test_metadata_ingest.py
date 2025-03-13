@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from gwasstudio.cli.metadata.ingest import load_data, process_row
+from gwasstudio.cli.metadata.utils import load_metadata, process_row
 from gwasstudio.utils import generate_random_word, lower_and_replace, compute_sha256
 
 
@@ -26,7 +26,7 @@ class TestIngestFunctionality(unittest.TestCase):
 
     def test_load_data(self):
         # Load the data
-        df = load_data(self.test_file, delimiter="\t")
+        df = load_metadata(self.test_file, delimiter="\t")
 
         # Check the loaded data
         self.assertEqual(df.shape, (1, 4))
@@ -35,7 +35,7 @@ class TestIngestFunctionality(unittest.TestCase):
     def test_load_data_file_not_found(self):
         # Try to load a non-existent file
         with self.assertRaises(SystemExit):
-            load_data("non_existent_file.csv", delimiter="\t")
+            load_metadata("non_existent_file.csv", delimiter="\t")
 
     def test_process_row(self):
         # Create a test row

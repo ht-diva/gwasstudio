@@ -1,36 +1,64 @@
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Hashable
 
 import pandas as pd
 from ruamel.yaml import YAML
 
 from gwasstudio import logger
 from gwasstudio.mongo.models import EnhancedDataProfile, DataProfile
-from gwasstudio.utils import lower_and_replace
+from gwasstudio.utils import lower_and_replace, compute_sha256
+
+metadata_dtypes = {"project": "category", "study": "category", "file_path": "string[pyarrow]", "category": "category"}
 
 
 def load_search_topics(search_file: str) -> Any | None:
-    """Loads search topics from a YAML file."""
+    """
+    Loads search topics from a YAML-formatted file, processes them, and returns the updated topics along with output fields.
+
+    Args:
+        search_file (str): The path to the YAML file containing the search topics.
+            If the file does not exist or is empty, returns `None` for both the topics and output fields.
+
+    Returns:
+        tuple[dict[str, str] | None, list[str] | None]: A tuple containing the updated search topics as a dictionary and a list of output fields.
+            If the file is invalid or empty, returns `None` for both values.
+    """
+
+    def process_search_topics(topics: Dict[str, str]) -> tuple[dict[str, str], list[str]] | tuple[None, None]:
+        """
+        Processes search topics by lowercasing and replacing special characters in specific keys.
+
+        Args:
+            topics (dict[str, str] | None): A dictionary containing search topics with their corresponding values.
+                The function modifies this dictionary in place if it's not `None`.
+
+        Returns:
+            tuple[dict[str, str] | None, list[str] | None]: A tuple containing the updated `search_topics` dictionary and a list of output fields.
+                If `topics` is `None`, returns `None` for both values.
+        """
+
+        if topics is None:
+            return None, None
+
+        if not isinstance(topics, dict):
+            raise ValueError("Input must be a dictionary")
+
+        for key, value in topics.items():
+            if key in ("project", "study"):
+                topics[key] = lower_and_replace(value)
+
+        output_fields = ["project", "study", "category", "data_id"] + topics.pop("output", [])
+
+        return topics, output_fields
+
     search_topics = None
     if search_file and Path(search_file).exists():
         yaml = YAML(typ="safe")
         with open(search_file, "r") as file:
             search_topics = yaml.load(file)
-    return search_topics
-
-
-def process_search_topics(search_topics: Dict[str, str]) -> tuple[dict[str, str], list[str]]:
-    """Process search topics by lowercasing and replacing special characters."""
-
-    for key, value in search_topics.items():
-        if key in ("project", "study"):
-            search_topics[key] = lower_and_replace(value)
-
-    output_fields = ["project", "study", "category", "data_id"] + search_topics.pop("output", [])
-
-    return search_topics, output_fields
+    return process_search_topics(search_topics)
 
 
 def query_mongo_obj(search_topics: Dict[str, Any], mob: EnhancedDataProfile, case_sensitive: bool = False) -> list:
@@ -94,12 +122,7 @@ def dataframe_from_mongo_objs(fields: list, objs: list) -> pd.DataFrame:
 
     df = pd.DataFrame.from_dict(results)
     # specify the data type for each column
-    data_types = {
-        "project": "string[pyarrow]",
-        "study": "string[pyarrow]",
-        "category": "category",
-        "data_id": "string[pyarrow]",
-    }
+    data_types = metadata_dtypes
 
     df = df.astype({col: dtype for col, dtype in data_types.items() if col in df}, errors="ignore")
     return df
@@ -122,3 +145,56 @@ def df_to_csv(df: pd.DataFrame, output_file: Path, index: bool = False, sep: str
         This function will overwrite any existing file at the specified path.
     """
     df.to_csv(Path(output_file), index=index, sep=sep)
+
+
+def load_metadata(file_path: Path, delimiter: str = "\t") -> pd.DataFrame:
+    """Load metadata from a file in tabular format."""
+    try:
+        return pd.read_csv(
+            file_path,
+            sep=delimiter,
+            dtype=metadata_dtypes,
+        )
+    except FileNotFoundError:
+        logger.error("File not found. Please check the file path.")
+        exit(1)
+    except pd.errors.EmptyDataError:
+        logger.error("No data found in the file. Please check the file content.")
+        exit(1)
+    except pd.errors.ParserError:
+        logger.error("Error parsing the file. Please check the file format.")
+        exit(1)
+
+
+def process_row(row: pd.Series) -> Dict[Hashable, Any]:
+    """Process a row of data to create a metadata dictionary."""
+    project_key = lower_and_replace(row["project"])
+    study_key = lower_and_replace(row["study"])
+
+    metadata = defaultdict(lambda: {})
+    metadata["project"] = project_key
+    metadata["study"] = study_key
+    metadata["data_id"] = compute_sha256(fpath=row["file_path"])
+
+    for key, value in row.items():
+        if "_" in key and key.startswith(DataProfile.json_dict_fields()):
+            k, subk = key.split("_", 1)
+            metadata[k][subk] = value
+        else:
+            if key not in metadata:
+                metadata[key] = value
+
+    return {
+        _key: json.dumps(_value) if _key in DataProfile.json_dict_fields() else _value
+        for _key, _value in metadata.items()
+    }
+
+
+def ingest_metadata(df: pd.DataFrame, mongo_uri: str = None) -> None:
+    """Ingest data into the MongoDB collection."""
+    documents = [process_row(row) for _, row in df.iterrows()]
+    logger.info(f"{len(documents)} documents to ingest")
+    print(f"{len(documents)} documents to ingest")
+    for document in documents:
+        obj = EnhancedDataProfile(uri=mongo_uri, **document)
+        obj.save()
