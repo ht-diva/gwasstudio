@@ -2,7 +2,7 @@ from pathlib import Path
 
 import click
 import cloup
-
+from gwasstudio.cli.metadata.utils import get_mongo_uri
 from gwasstudio.cli.metadata.utils import load_metadata, ingest_metadata
 
 help_doc = """
@@ -47,5 +47,6 @@ def meta_ingest(ctx, file_path: str, delimiter: str) -> None:
     if missing_cols:
         raise ValueError(f"Missing column(s) in the input file: {', '.join(missing_cols)}")
 
-    mongo_uri = ctx.obj["mongo_uri"]
+    mongo_uri = get_mongo_uri(ctx)
+
     ingest_metadata(df, mongo_uri)

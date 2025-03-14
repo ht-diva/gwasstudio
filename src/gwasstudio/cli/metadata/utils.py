@@ -4,11 +4,11 @@ from pathlib import Path
 from typing import Any, Dict, Hashable
 
 import pandas as pd
-from ruamel.yaml import YAML
-
 from gwasstudio import logger
 from gwasstudio.mongo.models import EnhancedDataProfile, DataProfile
 from gwasstudio.utils import lower_and_replace, compute_sha256
+from gwasstudio.utils.vault import get_config_from_vault
+from ruamel.yaml import YAML
 
 metadata_dtypes = {"project": "category", "study": "category", "file_path": "string[pyarrow]", "category": "category"}
 
@@ -157,13 +157,13 @@ def load_metadata(file_path: Path, delimiter: str = "\t") -> pd.DataFrame:
         )
     except FileNotFoundError:
         logger.error("File not found. Please check the file path.")
-        exit(1)
+        raise ValueError("File not found")
     except pd.errors.EmptyDataError:
         logger.error("No data found in the file. Please check the file content.")
-        exit(1)
+        raise ValueError("No data found in the file")
     except pd.errors.ParserError:
         logger.error("Error parsing the file. Please check the file format.")
-        exit(1)
+        raise ValueError("Error parsing the file")
 
 
 def process_row(row: pd.Series) -> Dict[Hashable, Any]:
@@ -198,3 +198,12 @@ def ingest_metadata(df: pd.DataFrame, mongo_uri: str = None) -> None:
     for document in documents:
         obj = EnhancedDataProfile(uri=mongo_uri, **document)
         obj.save()
+
+
+def get_mongo_uri(ctx: object) -> str:
+    """Retrieve MongoDB URI from Vault or command line options."""
+
+    vault_options = ctx.obj.get("vault")
+    mongo_config = get_config_from_vault("mongo", vault_options)
+
+    return mongo_config.get("uri") or ctx.obj.get("mongo").get("uri")
