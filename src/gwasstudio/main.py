@@ -97,6 +97,15 @@ def configure_logging(stdout, verbosity, _logger):
     cloup.option("--aws-region", default="", help="region where the s3 bucket is located"),
     cloup.option("--aws-verify-ssl", default="false", help="if ssl verification is needed"),
 )
+@cloup.option_group(
+    "Vault options",
+    cloup.option(
+        "--vault-auth", type=click.Choice(["basic", "oidc"]), default="basic", help="Vault authentication mechanism"
+    ),
+    cloup.option("--vault-path", default=None, help="Vault path to access"),
+    cloup.option("--vault-token", default=None, help="Access token for the vault"),
+    cloup.option("--vault-url", default=None, help="Vault server URL"),
+)
 @click.pass_context
 def cli_init(
     ctx,
@@ -120,8 +129,17 @@ def cli_init(
     mongo_uri,
     verbosity,
     stdout,
+    vault_auth,
+    vault_path,
+    vault_token,
+    vault_url,
 ):
     configure_logging(stdout, verbosity, logger)
+
+    ctx.ensure_object(dict)
+    ctx.obj["mongo"] = {"uri": mongo_uri}
+
+    ctx.obj["vault"] = {"auth": vault_auth, "path": vault_path, "token": vault_token, "url": vault_url}
 
     cfg = {
         "vfs.s3.aws_access_key_id": aws_access_key_id,
@@ -134,9 +152,7 @@ def cli_init(
         "sm.dedup_coords": "true",
     }
 
-    ctx.ensure_object(dict)
     ctx.obj["cfg"] = cfg
-    ctx.obj["mongo_uri"] = mongo_uri
 
     cluster = Cluster(
         minimum_workers=minimum_workers,
