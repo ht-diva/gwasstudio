@@ -69,12 +69,6 @@ def configure_logging(stdout, verbosity, _logger):
 )
 @cloup.option_group(
     "Dask remote cluster options - SLurm HPC or a Dask gateway setup",
-    # cloup.option(
-    #     "--dask-distribute",
-    #     default=False,
-    #     is_flag=True,
-    #     help="Distribute the load to a Dask cluster on a HPC that use SLURM",
-    # ),
     cloup.option("--minimum-workers", default=10, help="Minimum amount of running workers"),
     cloup.option("--walltime", default="72:00:00", help="Walltime for each worker"),
     cloup.option("--maximum-workers", default=100, help="Maximum amount of running workers"),
