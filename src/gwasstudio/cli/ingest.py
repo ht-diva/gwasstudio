@@ -61,7 +61,7 @@ def ingest_to_s3(ctx, input_file_list, uri):
         logger.info("Creating TileDB schema")
         create_tiledb_schema(uri, cfg)
 
-    if ctx.obj["DISTRIBUTE"]:
+    if ctx.obj["dask"]["deployment"]:
         pass
     else:
         for file_path in input_file_list:
@@ -77,7 +77,7 @@ def ingest_to_fs(ctx, input_file_list, uri):
     if not Path(path).exists():
         create_tiledb_schema(uri, {})
 
-    if ctx.obj["DISTRIBUTE"]:
+    if ctx.obj["dask"]["deployment"]:
         pass
     else:
         for file_path in input_file_list:
