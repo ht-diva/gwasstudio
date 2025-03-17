@@ -7,7 +7,12 @@ import tiledb
 from gwasstudio import logger
 from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
 from gwasstudio.methods.locus_breaker import locus_breaker
-
+from gwasstudio.cli.metadata.utils import (
+    load_search_topics,
+    query_mongo_obj,
+    dataframe_from_mongo_objs,
+)
+from gwasstudio.mongo.models import EnhancedDataProfile
 help_doc = """
 Exports data from a TileDB dataset.
 """
@@ -17,8 +22,8 @@ Exports data from a TileDB dataset.
 @cloup.option_group(
     "TileDB mandatory options",
     cloup.option("--uri", default=None, help="TileDB dataset URI"),
-    cloup.option("--output_path", default="out", help="The path of the output"),
-    cloup.option("--trait_id_file", default=None, help="The trait id used for the analysis"),
+    cloup.option("--output-path", default="out", help="The path of the output"),
+    cloup.option("--searchfile", default=None, help="The searchfile used for querying metadata"),
     cloup.option("--attr", default="BETA,SE,EAF", help="string delimited by comma with the attributes to export"),
 )
 @cloup.option_group(
@@ -91,7 +96,7 @@ Exports data from a TileDB dataset.
 def export(
     ctx,
     uri,
-    trait_id_file,
+    searchfile,
     attr,
     output_path,
     pvalue_sig,
@@ -110,9 +115,13 @@ def export(
     # client = ctx.obj["client"]
     tiledb_unified = tiledb.open(uri, mode="r", config=cfg)
     logger.info("TileDB dataset loaded")
-    trait_id = pd.read_table(trait_id_file)
+    search_topics, output_fields = load_search_topics(searchfile)
+    obj = EnhancedDataProfile(uri=ctx.obj["mongo"]["uri"])
+    objs = query_mongo_obj(search_topics, obj)
+    trait_id = dataframe_from_mongo_objs(output_fields, objs)
+    trait_id.to_csv(f"{output_path}.meta", index = False)
+    #trait_id = pd.read_table(f"{output_path}_metadata")
     trait_id_list = list(trait_id["data_id"])
-
     # If locus_breaker is selected, run locus_breaker
     if locusbreaker:
         print("running locus breaker")
@@ -140,7 +149,6 @@ def export(
         # parallelize by n_workers traits at a time with dask the query on tiledb
 
         for trait in trait_id_list:
-            print(trait)
             for chrom in chromosome_dict.keys():
                 chromosomes = int(chrom)
                 unique_positions = list(set(chromosome_dict[chrom]))
