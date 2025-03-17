@@ -8,8 +8,8 @@ from gwasstudio import logger
 
 # config in $HOME/.config/dask/jobqueue.yaml
 class DaskCluster:
-    def __init__(self, **kwargs):
-        _dask_distribute = kwargs.get("dask_distribute")
+    def __init__(self, dask_deployment=None, **kwargs):
+        # _dask_distribute = kwargs.get("dask_distribute")
         _address = kwargs.get("address")
         _cpu_dist = kwargs.get("cpu_workers")
         _min_dist = kwargs.get("minimum_workers")
@@ -20,11 +20,11 @@ class DaskCluster:
         _threads_memory = kwargs.get("local_memory")
         _walltime = kwargs.get("walltime")
 
-        if _dask_distribute:
+        if dask_deployment == "gateway":
             if _address:
                 gateway = Gateway(address=_address, auth="kerberos")
                 options = gateway.cluster_options()
-                options.worker_cores = _cpu_dist  #  Cores per worker
+                options.worker_cores = _cpu_dist  # Cores per worker
                 options.worker_memory = _mem_dist  # Memory per worker
                 options.worker_walltime = _walltime  # Time limit for each worker
 
@@ -34,22 +34,24 @@ class DaskCluster:
                 # Scale the cluster
                 cluster.scale(_min_dist)  # Minimum number of workers
                 cluster.adapt(minimum=_min_dist, maximum=_max_dist)  # Auto-scale between minimum and maximum workers
-                options = gateway.cluster_options()
                 logger.info(
                     f"Dask cluster: starting from {_min_dist} to {_max_dist} workers, {_mem_dist} of memory and {_cpu_dist} cpus per worker and address {_address}"
                 )
                 self.client = Client(cluster)  # Connect to that cluster
                 self.type_cluster = type(cluster)
             else:
-                cluster = Cluster(memory=_mem_dist, cores=_cpu_dist, processes=1, walltime="72:00:00")
-                cluster.scale(_min_dist)
-                logger.info(
-                    f"Dask cluster: starting from {_min_dist} to {_max_dist} workers, {_mem_dist} of memory and {_cpu_dist} cpus per worker"
-                )
-                self.client = Client(cluster)  # Connect to that cluster
-                self.type_cluster = type(cluster)
+                raise ValueError("Address must be provided for gateway deployment")
 
-        else:
+        elif dask_deployment == "slurm":
+            cluster = Cluster(memory=_mem_dist, cores=_cpu_dist, processes=1, walltime=_walltime)
+            cluster.scale(_min_dist)
+            logger.info(
+                f"Dask SLURM cluster: starting from {_min_dist} to {_max_dist} workers, {_mem_dist} of memory and {_cpu_dist} cpus per worker"
+            )
+            self.client = Client(cluster)  # Connect to that cluster
+            self.type_cluster = type(cluster)
+
+        elif dask_deployment == "local":
             cluster = LocalCluster(
                 n_workers=_workers_local,
                 threads_per_worker=_threads_local,
@@ -60,6 +62,10 @@ class DaskCluster:
             logger.info(
                 f"Dask local cluster: starting using {_workers_local} workers, {_threads_memory} of memory and {_threads_local} cpus per worker"
             )
+
+        else:
+            raise ValueError("Invalid dask_deployment option. Please choose from 'gateway', 'slurm', or 'local'.")
+
         self.dashboard = self.client.dashboard_link
 
     def get_client(self):

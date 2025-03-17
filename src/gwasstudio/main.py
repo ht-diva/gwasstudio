@@ -59,43 +59,46 @@ def configure_logging(stdout, verbosity, _logger):
 )
 @cloup.option("--stdout", is_flag=True, default=False, help="Print logs to the stdout")
 @cloup.option_group(
-    "Dask options HPC or Gateway",
+    "Dask deployment options",
     cloup.option(
-        "--dask-distribute",
-        default=False,
-        is_flag=True,
-        help="Distribute the load to a Dask cluster on a HPC that use SLURM",
+        "--dask-deployment",
+        type=click.Choice(["local", "gateway", "HPC", "none"]),
+        default="none",
+        help="Where the dask cluster will be deployed.",
     ),
+)
+@cloup.option_group(
+    "Dask remote cluster options - SLurm HPC or a Dask gateway setup",
     cloup.option("--minimum-workers", default=10, help="Minimum amount of running workers"),
-    cloup.option("--walltime", default=10, help="Walltime for each worker"),
+    cloup.option("--walltime", default="72:00:00", help="Walltime for each worker"),
     cloup.option("--maximum-workers", default=100, help="Maximum amount of running workers"),
     cloup.option("--memory-workers", default="12GB", help="Memory amount per worker"),
     cloup.option("--cpu-workers", help="CPU numbers per worker", default=1),
-    cloup.option("--address", default=None, help="address in case a gateway is available"),
+    cloup.option("--address", default=None, help="Dask gateway address"),
 )
 @cloup.option_group(
-    "Dask options Local",
-    cloup.option("--local-workers", default=4, help="Number of workers for local cluster"),
+    "Dask local cluster options",
+    cloup.option("--local-workers", default=2, help="Number of workers for local cluster"),
     cloup.option("--local-threads", default=1, help="Threads per worker for local cluster"),
     cloup.option("--local-memory", default="2GB", help="Memory per worker for local cluster"),
 )
 @cloup.option_group(
-    "MongoDB configuration",
+    "MongoDB options",
     cloup.option("--mongo-uri", default=None, help="Specify a MongoDB uri if it is different from localhost"),
 )
 @cloup.option_group(
-    "TileDB configuration",
-    cloup.option("--aws-access-key-id", default="None", help="aws access key id"),
-    cloup.option("--aws-secret-access-key", default="None", help="aws access key"),
+    "S3 options",
+    cloup.option("--aws-access-key-id", default="None", help="S3 access key id"),
+    cloup.option("--aws-secret-access-key", default="None", help="S3 access key"),
     cloup.option(
         "--aws-endpoint-override",
         default="https://storage.fht.org:9021",
-        help="endpoint where to connect",
+        help="S3 endpoint where to connect",
     ),
-    cloup.option("--aws-use-virtual-addressing", default="false", help="virtual address option"),
-    cloup.option("--aws-scheme", default="https", help="type of scheme used at the endpoint"),
-    cloup.option("--aws-region", default="", help="region where the s3 bucket is located"),
-    cloup.option("--aws-verify-ssl", default="false", help="if ssl verification is needed"),
+    cloup.option("--aws-use-virtual-addressing", default="false", help="S3 use virtual address option"),
+    cloup.option("--aws-scheme", default="https", help="type of scheme used at the S3 endpoint"),
+    cloup.option("--aws-region", default="", help="region where the S3 bucket is located"),
+    cloup.option("--aws-verify-ssl", default="false", help="enable SSL verification"),
 )
 @cloup.option_group(
     "Vault options",
@@ -116,7 +119,7 @@ def cli_init(
     aws_scheme,
     aws_region,
     aws_verify_ssl,
-    dask_distribute,
+    dask_deployment,
     walltime,
     minimum_workers,
     maximum_workers,
@@ -141,7 +144,7 @@ def cli_init(
 
     ctx.obj["vault"] = {"auth": vault_auth, "path": vault_path, "token": vault_token, "url": vault_url}
 
-    cfg = {
+    ctx.obj["cfg"] = {
         "vfs.s3.aws_access_key_id": aws_access_key_id,
         "vfs.s3.aws_secret_access_key": aws_secret_access_key,
         "vfs.s3.endpoint_override": aws_endpoint_override,
@@ -152,29 +155,27 @@ def cli_init(
         "sm.dedup_coords": "true",
     }
 
-    ctx.obj["cfg"] = cfg
+    batch_sizes = {"gateway": minimum_workers, "HPC": minimum_workers, "local": local_workers}
+    ctx.obj["dask"] = {"deployment": dask_deployment, "batch_size": batch_sizes.get(dask_deployment, None)}
 
-    cluster = Cluster(
-        minimum_workers=minimum_workers,
-        maximum_workers=maximum_workers,
-        memory_workers=memory_workers,
-        cpu_workers=cpu_workers,
-        address=address,
-        local_workers=local_workers,
-        local_threads=local_threads,
-        local_memory=local_memory,
-        walltime=walltime,
-    )
-    client = cluster.get_client()
-    type_cluster = cluster.get_type_cluster()
-    if dask_distribute:
-        ctx.obj["batch_size"] = minimum_workers
-    else:
-        ctx.obj["batch_size"] = local_workers
-
-    ctx.obj["client"] = client
-    ctx.obj["type_cluster"] = type_cluster
-    ctx.call_on_close(cluster.shutdown)
+    if dask_deployment in ["local", "gateway", "HPC"]:
+        cluster = Cluster(
+            dask_deployment=dask_deployment,
+            minimum_workers=minimum_workers,
+            maximum_workers=maximum_workers,
+            memory_workers=memory_workers,
+            cpu_workers=cpu_workers,
+            address=address,
+            local_workers=local_workers,
+            local_threads=local_threads,
+            local_memory=local_memory,
+            walltime=walltime,
+        )
+        client = cluster.get_client()
+        type_cluster = cluster.get_type_cluster()
+        ctx.obj["client"] = client
+        ctx.obj["type_cluster"] = type_cluster
+        ctx.call_on_close(cluster.shutdown)
 
 
 def main():
