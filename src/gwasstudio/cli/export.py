@@ -47,14 +47,6 @@ Exports data from a TileDB dataset.
     ),
 )
 @cloup.option_group(
-    "Options for filtering using a list of SNPs ids",
-    cloup.option(
-        "--snp-list",
-        default=None,
-        help="A txt file with a column containing the SNP ids",
-    ),
-)
-@cloup.option_group(
     "Options for getting the entire sumstats",
     cloup.option(
         "--get-all",
@@ -73,11 +65,6 @@ Exports data from a TileDB dataset.
     cloup.option(
         "--maf",
         default=None,
-        help="MAF filter to apply to each region",
-    ),
-    cloup.option(
-        "--maf",
-        default=0.005,
         help="MAF filter to apply to each region",
     ),
     cloup.option(
