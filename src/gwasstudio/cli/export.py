@@ -23,8 +23,8 @@ Exports data from a TileDB dataset.
 @cloup.option_group(
     "TileDB mandatory options",
     cloup.option("--uri", default=None, help="TileDB dataset URI"),
-    cloup.option("--output-path", default="out", help="The path of the output"),
-    cloup.option("--searchfile", default=None, help="The searchfile used for querying metadata"),
+    cloup.option("--output-file", default="out", help="Path to output file"),
+    cloup.option("--search-file", default=None, help="The search file used for querying metadata"),
     cloup.option("--attr", default="BETA,SE,EAF", help="string delimited by comma with the attributes to export"),
 )
 @cloup.option_group(
@@ -84,9 +84,9 @@ Exports data from a TileDB dataset.
 def export(
     ctx,
     uri,
-    searchfile,
+    search_file,
     attr,
-    output_path,
+    output_file,
     pvalue_sig,
     pvalue_limit,
     hole_size,
@@ -103,11 +103,11 @@ def export(
     # client = ctx.obj["client"]
     tiledb_unified = tiledb.open(uri, mode="r", config=cfg)
     logger.info("TileDB dataset loaded")
-    search_topics, output_fields = load_search_topics(searchfile)
+    search_topics, output_fields = load_search_topics(search_file)
     obj = EnhancedDataProfile(uri=ctx.obj["mongo"]["uri"])
     objs = query_mongo_obj(search_topics, obj)
     trait_id = dataframe_from_mongo_objs(output_fields, objs)
-    trait_id.to_csv(f"{output_path}.meta", index=False)
+    trait_id.to_csv(f"{output_file}.meta", index=False)
     # trait_id = pd.read_table(f"{output_path}_metadata")
     trait_id_list = list(trait_id["data_id"])
     # If locus_breaker is selected, run locus_breaker
@@ -122,9 +122,9 @@ def export(
             results_lb_segments, results_lb_intervals = locus_breaker(
                 subset_SNPs_pd, hole_size=hole_size, pvalue_sig=pvalue_sig, pvalue_limit=pvalue_limit, phenovar=phenovar
             )
-            logger.info(f"Saving locus-breaker output in {output_path} segments and intervals")
-            results_lb_segments.to_csv(f"{output_path}_{trait}_segements.csv", index=False)
-            results_lb_intervals.to_csv(f"{output_path}_{trait}_intervals.csv", index=False)
+            logger.info(f"Saving locus-breaker output in {output_file} segments and intervals")
+            results_lb_segments.to_csv(f"{output_file}_{trait}_segements.csv", index=False)
+            results_lb_intervals.to_csv(f"{output_file}_{trait}_intervals.csv", index=False)
 
         return
 
@@ -145,9 +145,9 @@ def export(
                     dims=["CHR", "POS", "TRAITID"], attrs=attr.split(","), return_arrow=True
                 ).df[chromosomes, unique_positions, trait]
                 tiledb_iterator_query_df = tiledb_iterator_query.to_pandas()
-                tiledb_iterator_query_df.to_csv(f"{output_path}_{trait}", index=False, header=False, mode="a")
+                tiledb_iterator_query_df.to_csv(f"{output_file}_{trait}", index=False, header=False, mode="a")
 
-            logger.info(f"Saved filtered summary statistics by SNPs in {output_path}_{trait}")
+            logger.info(f"Saved filtered summary statistics by SNPs in {output_file}_{trait}")
 
         exit()
     if get_all:
@@ -157,8 +157,8 @@ def export(
                 attrs=["SNPID", "BETA", "SE", "EAF", "MLOG10P"],
                 return_arrow=True,
             ).df[:, :, trait]
-            logger.info(f"Saving all summary statistics in {output_path}")
-            pq.write_table(tiledb_query, f"{output_path}_{trait}.parquet", compression="snappy")
+            logger.info(f"Saving all summary statistics in {output_file}")
+            pq.write_table(tiledb_query, f"{output_file}_{trait}.parquet", compression="snappy")
     if get_regions:
         bed_region = pd.read_csv(get_regions, sep="\t", header=None)
         bed_region.columns = ["CHR", "START", "END"]
@@ -178,5 +178,5 @@ def export(
                         subset_SNPs_pd["NEFF"] = neff
                 df_trait.append(subset_SNPs_pd)
             df_trait_concat = pd.concat(df_trait)
-            logger.info(f"Saving summary statistics in {output_path}")
-            pq.write_table(df_trait_concat, f"{output_path}_{trait}.parquet", compression="snappy")
+            logger.info(f"Saving summary statistics in {output_file}")
+            pq.write_table(df_trait_concat, f"{output_file}_{trait}.parquet", compression="snappy")
