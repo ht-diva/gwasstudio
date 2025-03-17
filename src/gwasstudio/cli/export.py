@@ -5,14 +5,15 @@ import pyarrow.parquet as pq
 import tiledb
 
 from gwasstudio import logger
-from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
-from gwasstudio.methods.locus_breaker import locus_breaker
 from gwasstudio.cli.metadata.utils import (
     load_search_topics,
     query_mongo_obj,
     dataframe_from_mongo_objs,
 )
+from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
+from gwasstudio.methods.locus_breaker import locus_breaker
 from gwasstudio.mongo.models import EnhancedDataProfile
+
 help_doc = """
 Exports data from a TileDB dataset.
 """
@@ -119,8 +120,8 @@ def export(
     obj = EnhancedDataProfile(uri=ctx.obj["mongo"]["uri"])
     objs = query_mongo_obj(search_topics, obj)
     trait_id = dataframe_from_mongo_objs(output_fields, objs)
-    trait_id.to_csv(f"{output_path}.meta", index = False)
-    #trait_id = pd.read_table(f"{output_path}_metadata")
+    trait_id.to_csv(f"{output_path}.meta", index=False)
+    # trait_id = pd.read_table(f"{output_path}_metadata")
     trait_id_list = list(trait_id["data_id"])
     # If locus_breaker is selected, run locus_breaker
     if locusbreaker:

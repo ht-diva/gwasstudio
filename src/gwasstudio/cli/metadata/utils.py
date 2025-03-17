@@ -4,11 +4,12 @@ from pathlib import Path
 from typing import Any, Dict, Hashable
 
 import pandas as pd
+from ruamel.yaml import YAML
+
 from gwasstudio import logger
 from gwasstudio.mongo.models import EnhancedDataProfile, DataProfile
 from gwasstudio.utils import lower_and_replace, compute_sha256
 from gwasstudio.utils.vault import get_config_from_vault
-from ruamel.yaml import YAML
 
 metadata_dtypes = {"project": "category", "study": "category", "file_path": "string[pyarrow]", "category": "category"}
 
