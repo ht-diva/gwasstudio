@@ -1,0 +1,7 @@
+project: UKB
+study: d
+category: GWAS
+output:
+  - data.id
+trait:
+  - desc: Diseases of the skin and subcutaneous tissue
