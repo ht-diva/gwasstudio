@@ -34,8 +34,8 @@ def _process_locusbreaker(
         logger.info(f"Saving locus-breaker output in {output_file} segments and intervals")
         # results_lb_segments.to_csv(f"{output_file}_{trait}_segments.csv", index=False)
         # results_lb_intervals.to_csv(f"{output_file}_{trait}_intervals.csv", index=False)
-        write_table(results_lb_segments, f"{output_file}_{trait}_segments", format="csv")
-        write_table(results_lb_intervals, f"{output_file}_{trait}_intervals", format="csv")
+        write_table(results_lb_segments, f"{output_file}_{trait}_segments", file_format="csv")
+        write_table(results_lb_intervals, f"{output_file}_{trait}_intervals", file_format="csv")
 
 
 def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output_file):
@@ -55,13 +55,8 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
             ).df[chromosomes, unique_positions, trait]
 
             tiledb_iterator_query_df = tiledb_iterator_query.to_pandas()
-            # tiledb_iterator_query_df.to_csv(f"{output_file}_{trait}", index=False, header=False, mode="a")
-            kwargs = {"header": False, "index": False, "mode": "a"}
-            write_table(
-                tiledb_iterator_query_df, f"{output_file}_{trait}", compression="snappy", format="csv", **kwargs
-            )
-
-        logger.info(f"Saved filtered summary statistics by SNPs in {output_file}_{trait}")
+            kwargs = {"header": False, "mode": "a"}
+            write_table(tiledb_iterator_query_df, f"{output_file}_{trait}", file_format="csv", **kwargs)
 
 
 def _export_all_stats(tiledb_unified, trait_id_list, output_file):
@@ -73,9 +68,7 @@ def _export_all_stats(tiledb_unified, trait_id_list, output_file):
             return_arrow=True,
         ).df[:, :, trait]
 
-        # logger.info(f"Saving all summary statistics in {output_file}")
-        # pq.write_table(tiledb_query, f"{output_file}_{trait}.parquet", compression="snappy")
-        write_table(tiledb_query, f"{output_file}_{trait}", compression="snappy", format="parquet")
+        write_table(tiledb_query.to_pandas(), f"{output_file}_{trait}", file_format="parquet")
 
 
 def _process_regions(tiledb_unified, regions_file, trait_id_list, maf, attr, phenovar, nest, output_file):
@@ -104,14 +97,10 @@ def _process_regions(tiledb_unified, regions_file, trait_id_list, maf, attr, phe
             df_trait.append(subset_SNPs_pd)
 
         df_trait_concat = pd.concat(df_trait)
-        # logger.info(f"Saving summary statistics in {output_file}")
-        # pq.write_table(df_trait_concat, f"{output_file}_{trait}.parquet", compression="snappy")
-        write_table(df_trait_concat, f"{output_file}_{trait}", compression="snappy", format="parquet")
+        write_table(df_trait_concat, f"{output_file}_{trait}", file_format="parquet")
 
 
-def write_table(
-    df: pd.DataFrame, where: str, compression: str = "snappy", format: str = "parquet", kwargs: dict = None
-):
+def write_table(df: pd.DataFrame, where: str, compression: str = "snappy", file_format: str = "parquet", **kwargs):
     """
     Write a Pandas DataFrame to a file.
 
@@ -119,24 +108,24 @@ def write_table(
         df (pd.DataFrame): The input DataFrame.
         where (str): The output path and filename without extension.
         compression (str): Compression type. Default is 'snappy' for Parquet files.
-        format (str): Output file format, can be 'parquet' or 'csv'. Default is 'parquet'.
+        file_format (str): Output file format, can be 'parquet' or 'csv'. Default is 'parquet'.
         kwargs (dict): keyword arguments for Pandas IO functions.
     """
     # Check if format is valid
-    if format not in ["parquet", "csv"]:
+    if file_format not in ["parquet", "csv"]:
         raise ValueError("Format must be either 'parquet' or 'csv'")
 
     # Set the output filename based on the provided format and extension
-    file_extension = "." + format
+    file_extension = "." + file_format
 
     # Create the full path by joining the output directory and filename with extension
     output_path = f"{where}{file_extension}"
 
     logger.info(f"Saving Dataframe to {output_path}")
 
-    if format == "parquet":
+    if file_format == "parquet":
         df.to_parquet(output_path, index=False, engine="pyarrow", compression=compression, **kwargs)
-    elif format == "csv":
+    elif file_format == "csv":
         df.to_csv(output_path, index=False, **kwargs)
 
 
@@ -214,7 +203,6 @@ def export(
     maf,
     snp_list,
     locusbreaker,
-    get_all,
     get_regions,
 ):
     """Export summary statistics based on selected options."""
