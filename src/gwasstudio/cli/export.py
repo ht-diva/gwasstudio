@@ -4,14 +4,15 @@ import pandas as pd
 import tiledb
 
 from gwasstudio import logger
-from gwasstudio.cli.metadata.utils import (
+from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
+from gwasstudio.methods.locus_breaker import locus_breaker
+from gwasstudio.mongo.models import EnhancedDataProfile
+from gwasstudio.utils.cfg import get_tiledb_config
+from gwasstudio.utils.metadata import (
     load_search_topics,
     query_mongo_obj,
     dataframe_from_mongo_objs,
 )
-from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
-from gwasstudio.methods.locus_breaker import locus_breaker
-from gwasstudio.mongo.models import EnhancedDataProfile
 
 
 def _process_locusbreaker(
@@ -206,7 +207,7 @@ def export(
     get_regions,
 ):
     """Export summary statistics based on selected options."""
-    cfg = ctx.obj["cfg"]
+    cfg = get_tiledb_config(ctx)
 
     # Open TileDB dataset
     with tiledb.open(uri, mode="r", config=cfg) as tiledb_unified:

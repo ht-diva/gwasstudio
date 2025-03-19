@@ -4,7 +4,9 @@ import click
 import cloup
 
 from gwasstudio import logger
+from gwasstudio.dask_client import dask_deployment_types
 from gwasstudio.utils import create_tiledb_schema, parse_uri, process_and_ingest
+from gwasstudio.utils.cfg import get_tiledb_config
 from gwasstudio.utils.s3 import does_uri_path_exist
 
 help_doc = """
@@ -55,13 +57,13 @@ def ingest(ctx, single_input, multiple_input, uri):
 
 
 def ingest_to_s3(ctx, input_file_list, uri):
-    cfg = ctx.obj["cfg"]
+    cfg = get_tiledb_config(ctx)
 
     if not does_uri_path_exist(uri, cfg):
         logger.info("Creating TileDB schema")
         create_tiledb_schema(uri, cfg)
 
-    if ctx.obj["dask"]["deployment"]:
+    if ctx.obj["dask"]["deployment"] in dask_deployment_types:
         pass
     else:
         for file_path in input_file_list:
@@ -77,7 +79,7 @@ def ingest_to_fs(ctx, input_file_list, uri):
     if not Path(path).exists():
         create_tiledb_schema(uri, {})
 
-    if ctx.obj["dask"]["deployment"]:
+    if ctx.obj["dask"]["deployment"] in dask_deployment_types:
         pass
     else:
         for file_path in input_file_list:

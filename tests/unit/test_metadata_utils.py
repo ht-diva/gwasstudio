@@ -3,11 +3,12 @@ import unittest
 from pathlib import Path
 
 import pandas as pd
-from gwasstudio.cli.metadata.utils import load_metadata, process_row
-from gwasstudio.cli.metadata.utils import load_search_topics, df_to_csv
+from ruamel.yaml import YAML
+
 from gwasstudio.utils import generate_random_word
 from gwasstudio.utils import lower_and_replace, compute_sha256
-from ruamel.yaml import YAML
+from gwasstudio.utils.metadata import load_metadata, process_row
+from gwasstudio.utils.metadata import load_search_topics, df_to_csv
 
 
 class TestLoadSearchTopics(unittest.TestCase):
