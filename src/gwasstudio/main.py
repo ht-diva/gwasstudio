@@ -138,6 +138,7 @@ def cli_init(
     vault_url,
 ):
     configure_logging(stdout, verbosity, logger)
+    logger.info("{} started".format(__appname__.capitalize()))
 
     ctx.ensure_object(dict)
     ctx.obj["mongo"] = {"uri": mongo_uri}
@@ -185,7 +186,6 @@ def main():
     cli_init.add_command(meta_ingest)
     cli_init.add_command(meta_view)
     cli_init.add_command(meta_query)
-    logger.info("{} started".format(__appname__.capitalize()))
 
     cli_init(obj={})
 

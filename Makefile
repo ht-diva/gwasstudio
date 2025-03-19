@@ -27,7 +27,7 @@ dependencies_dev:
 deploy:
 	poetry install
 
-editable_install:
+editable_install: build
 	pip install --editable .
 
 install: build
