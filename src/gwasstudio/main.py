@@ -10,7 +10,7 @@ from gwasstudio.cli.ingest import ingest
 from gwasstudio.cli.metadata.ingest import meta_ingest
 from gwasstudio.cli.metadata.query import meta_query
 from gwasstudio.cli.metadata.view import meta_view
-from gwasstudio.dask_client import DaskCluster as Cluster
+from gwasstudio.dask_client import DaskCluster as Cluster, dask_deployment_types
 
 
 def configure_logging(stdout, verbosity, _logger):
@@ -145,7 +145,7 @@ def cli_init(
 
     ctx.obj["vault"] = {"auth": vault_auth, "path": vault_path, "token": vault_token, "url": vault_url}
 
-    ctx.obj["cfg"] = {
+    ctx.obj["tiledb"] = {
         "vfs.s3.aws_access_key_id": aws_access_key_id,
         "vfs.s3.aws_secret_access_key": aws_secret_access_key,
         "vfs.s3.endpoint_override": aws_endpoint_override,
@@ -159,7 +159,7 @@ def cli_init(
     batch_sizes = {"gateway": minimum_workers, "HPC": minimum_workers, "local": local_workers}
     ctx.obj["dask"] = {"deployment": dask_deployment, "batch_size": batch_sizes.get(dask_deployment, None)}
 
-    if dask_deployment in ["local", "gateway", "HPC"]:
+    if dask_deployment in dask_deployment_types:
         cluster = Cluster(
             dask_deployment=dask_deployment,
             minimum_workers=minimum_workers,

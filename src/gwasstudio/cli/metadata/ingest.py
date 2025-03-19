@@ -2,8 +2,9 @@ from pathlib import Path
 
 import click
 import cloup
-from gwasstudio.cli.metadata.utils import get_mongo_uri
-from gwasstudio.cli.metadata.utils import load_metadata, ingest_metadata
+
+from gwasstudio.utils.cfg import get_mongo_uri
+from gwasstudio.utils.metadata import load_metadata, ingest_metadata
 
 help_doc = """
 Ingest metadata into a MongoDB collection.

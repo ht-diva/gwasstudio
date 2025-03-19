@@ -5,6 +5,8 @@ from dask_jobqueue import SLURMCluster as Cluster
 
 from gwasstudio import logger
 
+dask_deployment_types = ["local", "gateway", "HPC"]
+
 
 # config in $HOME/.config/dask/jobqueue.yaml
 class DaskCluster:

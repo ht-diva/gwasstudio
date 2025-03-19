@@ -2,15 +2,16 @@ from pathlib import Path
 
 import click
 import cloup
+
 from gwasstudio import logger
-from gwasstudio.cli.metadata.utils import get_mongo_uri
-from gwasstudio.cli.metadata.utils import (
+from gwasstudio.mongo.models import EnhancedDataProfile
+from gwasstudio.utils.cfg import get_mongo_uri
+from gwasstudio.utils.metadata import (
     load_search_topics,
     query_mongo_obj,
     dataframe_from_mongo_objs,
     df_to_csv,
 )
-from gwasstudio.mongo.models import EnhancedDataProfile
 
 help_doc = """
 query metadata records from MongoDB
