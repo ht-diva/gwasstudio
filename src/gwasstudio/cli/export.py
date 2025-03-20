@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import click
 import cloup
 import pandas as pd
@@ -101,16 +103,27 @@ def _process_regions(tiledb_unified, regions_file, trait_id_list, maf, attr, phe
         write_table(df_trait_concat, f"{output_file}_{trait}", file_format="parquet")
 
 
-def write_table(df: pd.DataFrame, where: str, compression: str = "snappy", file_format: str = "parquet", **kwargs):
+def write_table(
+    df: pd.DataFrame,
+    where: str,
+    compression: str = "snappy",
+    file_format: str = "parquet",
+    log_msg: str = "none",
+    **kwargs,
+):
     """
-    Write a Pandas DataFrame to a file.
+    Writes the given DataFrame to a specified location on disk in the desired format. Two file
+    formats are supported: "parquet" and "csv". The function handles file compression for
+    "parquet" format. Logs a custom or default message indicating the status.
 
-    Args:
-        df (pd.DataFrame): The input DataFrame.
-        where (str): The output path and filename without extension.
-        compression (str): Compression type. Default is 'snappy' for Parquet files.
-        file_format (str): Output file format, can be 'parquet' or 'csv'. Default is 'parquet'.
-        kwargs (dict): keyword arguments for Pandas IO functions.
+    :param df: The pandas DataFrame to be saved.
+    :param where: Destination path where the file should be saved without extension.
+    :param compression: Compression type for parquet files. Default is "snappy".
+    :param file_format: File format to save the data, either "parquet" or "csv". Default is "parquet".
+    :param log_msg: Custom log message. If "none", a default message will be logged. Default is "none".
+    :param kwargs: Any additional keyword arguments to be passed to the underlying `to_parquet` or
+        `to_csv` pandas methods.
+    :return: None
     """
     # Check if format is valid
     if file_format not in ["parquet", "csv"]:
@@ -122,7 +135,8 @@ def write_table(df: pd.DataFrame, where: str, compression: str = "snappy", file_
     # Create the full path by joining the output directory and filename with extension
     output_path = f"{where}{file_extension}"
 
-    logger.info(f"Saving Dataframe to {output_path}")
+    msg = log_msg if log_msg != "none" else f"Saving DataFrame to {output_path}"
+    logger.info(msg)
 
     if file_format == "parquet":
         df.to_parquet(output_path, index=False, engine="pyarrow", compression=compression, **kwargs)
@@ -217,6 +231,11 @@ def export(
         objs = query_mongo_obj(search_topics, obj)
         df = dataframe_from_mongo_objs(output_fields, objs)
         trait_id_list = list(df["data_id"])
+
+        # write metadata query result
+        path = Path(output_file)
+        output_path = path.with_suffix("").with_name(path.stem + "_meta")
+        write_table(df, str(output_path), file_format="csv")
 
         # Process according to selected options
         if locusbreaker:

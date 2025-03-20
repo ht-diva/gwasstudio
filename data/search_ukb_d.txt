@@ -4,3 +4,6 @@ category: GWAS
 
 trait:
   - desc: Diseases of the skin and subcutaneous tissue
+
+output:
+  - trait.desc
