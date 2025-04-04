@@ -105,6 +105,7 @@ def configure_logging(stdout, verbosity, _logger):
     cloup.option(
         "--vault-auth", type=click.Choice(["basic", "oidc"]), default="basic", help="Vault authentication mechanism"
     ),
+    cloup.option("--vault-mount-point", default="secret", help="The path the secret engine was mounted on."),
     cloup.option("--vault-path", default=None, help="Vault path to access"),
     cloup.option("--vault-token", default=None, help="Access token for the vault"),
     cloup.option("--vault-url", default=None, help="Vault server URL"),
@@ -133,6 +134,7 @@ def cli_init(
     verbosity,
     stdout,
     vault_auth,
+    vault_mount_point,
     vault_path,
     vault_token,
     vault_url,
@@ -143,7 +145,13 @@ def cli_init(
     ctx.ensure_object(dict)
     ctx.obj["mongo"] = {"uri": mongo_uri}
 
-    ctx.obj["vault"] = {"auth": vault_auth, "path": vault_path, "token": vault_token, "url": vault_url}
+    ctx.obj["vault"] = {
+        "auth": vault_auth,
+        "mount_point": vault_mount_point,
+        "path": vault_path,
+        "token": vault_token,
+        "url": vault_url,
+    }
 
     ctx.obj["tiledb"] = {
         "vfs.s3.aws_access_key_id": aws_access_key_id,

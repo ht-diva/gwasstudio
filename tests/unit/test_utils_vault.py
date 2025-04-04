@@ -1,8 +1,9 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from gwasstudio.utils.vault import create_vault_client, get_secret_from_vault, get_config_from_vault
 from hvac import Client
+
+from gwasstudio.utils.vault import create_vault_client, get_secret_from_vault, get_config_from_vault
 
 
 class TestVaultFunctions(unittest.TestCase):
@@ -30,7 +31,7 @@ class TestVaultFunctions(unittest.TestCase):
         """Test that a secret is retrieved successfully from Vault."""
         vault_client = Mock()
         vault_client.secrets.kv.read_secret_version.return_value = {"data": {"data": {"key": "value"}}}
-        secret = get_secret_from_vault(vault_client, "path")
+        secret = get_secret_from_vault(vault_client, {"path": "path"})
         self.assertEqual(secret, {"key": "value"})
 
     def test_get_secret_from_vault_raise_on_deleted_version(self):

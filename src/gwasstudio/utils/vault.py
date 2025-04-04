@@ -28,18 +28,19 @@ def create_vault_client(vault_options: dict) -> Client:
     return client
 
 
-def get_secret_from_vault(vault_client: Client, vault_path: str) -> dict:
+def get_secret_from_vault(vault_client: Client, vault_kwargs: dict) -> dict:
     """
     Retrieve configuration dictionary from Vault.
 
     Args:
         vault_client (Client): Vault client.
+        vault_kwargs (dict): Vault function keyword arguments.
 
     Returns:
         dict: secret dictionary.
     """
 
-    read_response = vault_client.secrets.kv.read_secret_version(path=vault_path, raise_on_deleted_version=True)
+    read_response = vault_client.secrets.kv.read_secret_version(**vault_kwargs)
 
     return read_response["data"]["data"]
 
@@ -51,5 +52,8 @@ def get_config_from_vault(vault_label: str, vault_options: Dict[str, str]) -> Di
         return {}
 
     path = vault_options.get("path")
-    config = get_secret_from_vault(vault_client, path)
+    mount_point = vault_options.get("mount_point")
+    vault_kwargs = {"path": path, "mount_point": mount_point}
+    config = get_secret_from_vault(vault_client, vault_kwargs)
+
     return config.get(vault_label, {})
