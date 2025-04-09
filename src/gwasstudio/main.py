@@ -19,7 +19,7 @@ def configure_logging(stdout, verbosity, _logger):
 
     Args:
         stdout (bool): Flag indicating whether to log to stdout or not.
-        verbosity (str): Level of verbosity, can be 'quiet', 'normal' or 'verbose'.
+        verbosity (str): Level of verbosity, can be 'quiet', 'normal' or 'loud'.
         _logger: Logger instance to configure.
 
     Returns:
@@ -32,11 +32,11 @@ def configure_logging(stdout, verbosity, _logger):
         The verbosity parameter determines the log level as follows:
             - 'quiet': Log level set to ERROR
             - 'normal': Log level set to INFO
-            - 'verbose': Log level set to DEBUG
+            - 'loud': Log level set to DEBUG
 
     """
     target = sys.stdout if stdout else log_file
-    loglevel = {"quiet": "ERROR", "normal": "INFO", "verbose": "DEBUG"}.get(verbosity, None)
+    loglevel = {"quiet": "ERROR", "normal": "INFO", "loud": "DEBUG"}.get(verbosity, "INFO")
 
     kwargs = {"level": loglevel}
     if target == sys.stdout:
