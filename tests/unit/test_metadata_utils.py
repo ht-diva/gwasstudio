@@ -8,7 +8,7 @@ from ruamel.yaml import YAML
 from gwasstudio.utils import generate_random_word
 from gwasstudio.utils import lower_and_replace, compute_sha256
 from gwasstudio.utils.metadata import load_metadata, process_row
-from gwasstudio.utils.metadata import load_search_topics, df_to_csv
+from gwasstudio.utils.metadata import load_search_topics
 
 
 class TestLoadSearchTopics(unittest.TestCase):
@@ -94,22 +94,6 @@ class TestLoadSearchTopics(unittest.TestCase):
 
         # Remove the temporary file
         Path("test.yaml").unlink()
-
-    def test_df_to_csv(self):
-        # Test with a valid DataFrame and output file
-        df = pd.DataFrame({"project": ["test_project"], "study": ["test_study"]})
-        output_file = Path("test_output.csv")
-        df_to_csv(df, output_file)
-        self.assertTrue(Path(output_file).exists())
-
-        # Test with an invalid DataFrame
-        df = "Invalid DataFrame"
-        output_file = Path("test_output.csv")
-        with self.assertRaises(AttributeError):
-            df_to_csv(df, output_file)
-
-        # Remove the temporary file
-        output_file.unlink()
 
     def test_load_metadata(self):
         # Load the data

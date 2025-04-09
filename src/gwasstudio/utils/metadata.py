@@ -131,25 +131,6 @@ def dataframe_from_mongo_objs(fields: list, objs: list) -> pd.DataFrame:
     return df
 
 
-def df_to_csv(df: pd.DataFrame, output_file: Path, index: bool = False, sep: str = "\t") -> None:
-    """
-    Save a Pandas DataFrame to a CSV file.
-
-    Parameters:
-        df (pd.DataFrame): The DataFrame to be saved.
-        output_file (str): The path to the output CSV file.
-        index (bool): Write row names (index).
-        sep (str): The separator to use between columns. Defaults to tab (\t).
-
-    Returns:
-        None
-
-    Notes:
-        This function will overwrite any existing file at the specified path.
-    """
-    df.to_csv(Path(output_file), index=index, sep=sep)
-
-
 def load_metadata(file_path: Path, delimiter: str = "\t") -> pd.DataFrame:
     """Load metadata from a file in tabular format."""
     try:
