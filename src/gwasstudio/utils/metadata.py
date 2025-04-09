@@ -110,15 +110,18 @@ def dataframe_from_mongo_objs(fields: list, objs: list) -> pd.DataFrame:
         return pd.DataFrame(columns=fields)
 
     results = defaultdict(list)
+    json_dict_fields = set(DataProfile.json_dict_fields())
+
     for field in fields:
+        main_key, *rest = field.split(".", 1)
+        sub_key = rest[0] if rest else None
+
         for obj in objs:
-            if field.startswith(DataProfile.json_dict_fields()):
-                main_key = field.split(".")[0]
-                sub_key = field.split(".")[1]
-                json_dict = json.loads(obj.get(main_key))
-                results[field].append(json_dict.get(sub_key, None))
+            if main_key in json_dict_fields and sub_key:
+                json_dict = json.loads(obj.get(main_key, "{}"))
+                results[field].append(json_dict.get(sub_key))
             else:
-                results[field].append(obj.get(field, None))
+                results[field].append(obj.get(field))
 
     df = pd.DataFrame.from_dict(results)
     # specify the data type for each column
