@@ -54,9 +54,7 @@ def configure_logging(stdout, verbosity, _logger):
     context_settings=context_settings,
 )
 @click.version_option(version=__version__)
-@cloup.option(
-    "--verbosity", type=click.Choice(["quiet", "normal", "verbose"]), default="normal", help="Set log verbosity"
-)
+@cloup.option("--verbosity", type=click.Choice(["quiet", "normal", "loud"]), default="normal", help="Set log verbosity")
 @cloup.option("--stdout", is_flag=True, default=False, help="Print logs to the stdout")
 @cloup.option_group(
     "Dask deployment options",
