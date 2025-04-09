@@ -20,6 +20,27 @@ import tiledb
 DEFAULT_BUFSIZE = 4096
 
 
+def check_file_exists(input_file: str, logger: object) -> bool:
+    """
+    Check if a file exists and log the appropriate message.
+
+    Parameters:
+    search_file (str): The path to the file to check.
+
+    Returns:
+    bool: True if the file exists, False otherwise.
+    """
+    msg_ok = f"Processing {input_file}"
+    msg_err = f"{input_file} does not exist; exiting"
+
+    if pathlib.Path(input_file).exists():
+        logger.info(msg_ok)
+        return True
+    else:
+        logger.error(msg_err)
+        return False
+
+
 def compute_sha256(fpath: object = None, st: object = None) -> str:
     """
     Computes file or string hash using sha256 algorithm.

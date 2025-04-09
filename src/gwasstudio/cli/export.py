@@ -9,7 +9,8 @@ from gwasstudio import logger
 from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
 from gwasstudio.methods.locus_breaker import locus_breaker
 from gwasstudio.mongo.models import EnhancedDataProfile
-from gwasstudio.utils.cfg import get_tiledb_config
+from gwasstudio.utils import check_file_exists
+from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config
 from gwasstudio.utils.metadata import (
     load_search_topics,
     query_mongo_obj,
@@ -151,9 +152,9 @@ Export summary statistics from TileDB datasets with various filtering options.
 
 @cloup.command("export", no_args_is_help=True, help=help_doc)
 @cloup.option_group(
-    "TileDB mandatory options",
+    "TileDB options",
     cloup.option("--uri", required=True, default=None, help="TileDB dataset URI"),
-    cloup.option("--output-file", required=True, default="out", help="Path to output file"),
+    cloup.option("--output-prefix", default="out", help="Prefix to be used for naming the output files"),
     cloup.option("--search-file", required=True, default=None, help="The search file used for querying metadata"),
     cloup.option(
         "--attr", required=True, default="BETA,SE,EAF", help="string delimited by comma with the attributes to export"
@@ -209,7 +210,7 @@ def export(
     uri,
     search_file,
     attr,
-    output_file,
+    output_prefix,
     pvalue_sig,
     pvalue_limit,
     hole_size,
@@ -223,28 +224,33 @@ def export(
     """Export summary statistics based on selected options."""
     cfg = get_tiledb_config(ctx)
 
+    if not check_file_exists(search_file, logger):
+        exit(1)
+
+    mongo_uri = get_mongo_uri(ctx)
+
     # Open TileDB dataset
     with tiledb.open(uri, mode="r", config=cfg) as tiledb_unified:
         logger.info("TileDB dataset loaded")
         search_topics, output_fields = load_search_topics(search_file)
-        obj = EnhancedDataProfile(uri=ctx.obj["mongo"]["uri"])
+        obj = EnhancedDataProfile(uri=mongo_uri)
         objs = query_mongo_obj(search_topics, obj)
         df = dataframe_from_mongo_objs(output_fields, objs)
         trait_id_list = list(df["data_id"])
 
         # write metadata query result
-        path = Path(output_file)
+        path = Path(output_prefix)
         output_path = path.with_suffix("").with_name(path.stem + "_meta")
         write_table(df, str(output_path), file_format="csv")
 
         # Process according to selected options
         if locusbreaker:
             _process_locusbreaker(
-                tiledb_unified, trait_id_list, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_file
+                tiledb_unified, trait_id_list, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_prefix
             )
         elif snp_list:
-            _process_snp_list(tiledb_unified, snp_list, trait_id_list, attr, output_file)
+            _process_snp_list(tiledb_unified, snp_list, trait_id_list, attr, output_prefix)
         elif get_regions:
-            _process_regions(tiledb_unified, get_regions, trait_id_list, maf, attr, phenovar, nest, output_file)
+            _process_regions(tiledb_unified, get_regions, trait_id_list, maf, attr, phenovar, nest, output_prefix)
         else:
-            _export_all_stats(tiledb_unified, trait_id_list, output_file)
+            _export_all_stats(tiledb_unified, trait_id_list, output_prefix)
