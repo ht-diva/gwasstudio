@@ -54,14 +54,18 @@ class MongoMixin:
         """
         if not self.is_mapped:
             self.map()
+
+        if hasattr(self.mdb_obj, "modification_date"):
+            self.mdb_obj.modification_date = datetime.datetime.now()
         try:
             with self.mec:
-                if hasattr(self.mdb_obj, "modification_date"):
-                    self.mdb_obj.modification_date = datetime.datetime.now()
                 self.mdb_obj.save(**kwargs)
             logger.info("{} saved".format(self.unique_key))
         except NotUniqueError:
-            logger.error("{} skipped as not unique ID".format(self.unique_key))
+            self.ensure_is_mapped("save")
+            with self.mec:
+                self.mdb_obj.save(**kwargs)
+            logger.error("{} updated, as it was not a unique ID".format(self.unique_key))
 
     def view(self):
         """

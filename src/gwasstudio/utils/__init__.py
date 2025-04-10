@@ -20,6 +20,27 @@ import tiledb
 DEFAULT_BUFSIZE = 4096
 
 
+def check_file_exists(input_file: str, logger: object) -> bool:
+    """
+    Check if a file exists and log the appropriate message.
+
+    Parameters:
+    search_file (str): The path to the file to check.
+
+    Returns:
+    bool: True if the file exists, False otherwise.
+    """
+    msg_ok = f"Processing {input_file}"
+    msg_err = f"{input_file} does not exist; exiting"
+
+    if pathlib.Path(input_file).exists():
+        logger.info(msg_ok)
+        return True
+    else:
+        logger.error(msg_err)
+        return False
+
+
 def compute_sha256(fpath: object = None, st: object = None) -> str:
     """
     Computes file or string hash using sha256 algorithm.
@@ -280,3 +301,47 @@ def process_write_chunk(chunk, SNP_list, file_stream):
     # Append the merged chunk to CSV
     subset_SNPs_merge.write_csv(file_stream)
 """
+
+
+def write_table(
+    df: pd.DataFrame,
+    where: str,
+    logger: object,
+    compression: str = "snappy",
+    file_format: str = "parquet",
+    log_msg: str = "none",
+    **kwargs,
+):
+    """
+    Writes the given DataFrame to a specified location on disk in the desired format. Two file
+    formats are supported: "parquet" and "csv". The function handles file compression for
+    "parquet" format. Logs a custom or default message indicating the status.
+
+    :param engine:
+    :param logger: The logger object used for logging messages.
+    :param df: The pandas DataFrame to be saved.
+    :param where: Destination file path, without extension, where the file should be saved.
+    :param compression: Compression type for parquet files. Default is "snappy".
+    :param file_format: File format to save the data, either "parquet" or "csv". Default is "parquet".
+    :param log_msg: Custom log message. If "none", a default message will be logged. Default is "none".
+    :param kwargs: Any additional keyword arguments to be passed to the underlying `to_parquet` or
+        `to_csv` pandas methods.
+    :return: None
+    """
+    # Check if format is valid
+    if file_format not in ["parquet", "csv"]:
+        raise ValueError("Format must be either 'parquet' or 'csv'")
+
+    # Set the output filename based on the provided format and extension
+    file_extension = "." + file_format
+
+    # Create the full path by joining the output directory and filename with extension
+    output_path = f"{where}{file_extension}"
+
+    msg = log_msg if log_msg != "none" else f"Saving DataFrame to {output_path}"
+    logger.info(msg)
+
+    if file_format == "parquet":
+        df.to_parquet(output_path, compression=compression, **kwargs)
+    elif file_format == "csv":
+        df.to_csv(output_path, **kwargs)

@@ -5,12 +5,12 @@ import cloup
 
 from gwasstudio import logger
 from gwasstudio.mongo.models import EnhancedDataProfile
+from gwasstudio.utils import check_file_exists, write_table
 from gwasstudio.utils.cfg import get_mongo_uri
 from gwasstudio.utils.metadata import (
     load_search_topics,
     query_mongo_obj,
     dataframe_from_mongo_objs,
-    df_to_csv,
 )
 
 help_doc = """
@@ -19,11 +19,11 @@ query metadata records from MongoDB
 
 
 @cloup.command("meta-query", no_args_is_help=True, help=help_doc)
-@cloup.option("--search-file", required=True, help="Path to search template file")
-@cloup.option("--output-file", required=True, help="Path to output file")
+@cloup.option("--search-file", required=True, help="The search file used for querying metadata")
+@cloup.option("--output-prefix", default="out", help="Prefix to be used for naming the output files")
 @cloup.option("--case-sensitive", default=False, is_flag=True, help="Enable case sensitive search")
 @click.pass_context
-def meta_query(ctx, search_file, output_file, case_sensitive):
+def meta_query(ctx, search_file, output_prefix, case_sensitive):
     """
     Queries metadata records from MongoDB based on the search topics specified in the provided template file.
 
@@ -33,12 +33,15 @@ def meta_query(ctx, search_file, output_file, case_sensitive):
     Args:
         ctx (click.Context): Click context object
         search_file (str): Path to the search template YAML file
-        output_file (str): Path to write the query results to
+        output_prefix (str): Path to write the query results to
         case_sensitive (bool): Enable case-sensitive search
 
     Returns:
         None
     """
+
+    if not check_file_exists(search_file, logger):
+        exit(1)
 
     search_topics, output_fields = load_search_topics(search_file)
     logger.debug(search_topics)
@@ -47,6 +50,18 @@ def meta_query(ctx, search_file, output_file, case_sensitive):
 
     obj = EnhancedDataProfile(uri=mongo_uri)
     objs = query_mongo_obj(search_topics, obj, case_sensitive=case_sensitive)
-    logger.info(f"{len(objs)} results found. Writing to {output_file}")
 
-    df_to_csv(dataframe_from_mongo_objs(output_fields, objs), Path(output_file))
+    # write metadata query result
+    path = Path(output_prefix)
+    output_path = path.with_suffix("").with_name(path.stem + "_meta")
+
+    kwargs = {"index": False}
+    log_msg = f"{len(objs)} results found. Writing to {output_path}.csv"
+    write_table(
+        dataframe_from_mongo_objs(output_fields, objs),
+        str(output_path),
+        logger,
+        file_format="csv",
+        log_msg=log_msg,
+        **kwargs,
+    )

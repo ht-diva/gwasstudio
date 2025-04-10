@@ -1,6 +1,11 @@
+import tempfile
 import unittest
+from pathlib import Path
+from unittest.mock import MagicMock
 
-from gwasstudio.utils import find_item, parse_uri
+import pandas as pd
+
+from gwasstudio.utils import find_item, parse_uri, write_table
 
 
 class TestFindItemFunction(unittest.TestCase):
@@ -62,3 +67,37 @@ class TestParseUri(unittest.TestCase):
         self.assertEqual(scheme, "file")
         self.assertEqual(netloc, "")
         self.assertEqual(path, "/root/path")
+
+
+class TestWriteTable(unittest.TestCase):
+    def setUp(self):
+        self.logger = MagicMock()
+        self.df = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+
+    def test_write_parquet(self):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            output_path = Path(tmpdirname) / "test_output"
+            write_table(self.df, str(output_path), self.logger, file_format="parquet")
+            self.assertTrue(output_path.with_suffix(".parquet").exists())
+            self.logger.info.assert_called_with(f"Saving DataFrame to {output_path.with_suffix('.parquet')}")
+
+    def test_write_csv(self):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            output_path = Path(tmpdirname) / "test_output"
+            write_table(self.df, str(output_path), self.logger, file_format="csv")
+            self.assertTrue(output_path.with_suffix(".csv").exists())
+            self.logger.info.assert_called_with(f"Saving DataFrame to {output_path.with_suffix('.csv')}")
+
+    def test_custom_log_message(self):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            output_path = Path(tmpdirname) / "test_output"
+            custom_msg = "Custom log message"
+            write_table(self.df, str(output_path), self.logger, file_format="parquet", log_msg=custom_msg)
+            self.assertTrue(output_path.with_suffix(".parquet").exists())
+            self.logger.info.assert_called_with(custom_msg)
+
+    def test_invalid_format(self):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            output_path = Path(tmpdirname) / "test_output"
+            with self.assertRaises(ValueError):
+                write_table(self.df, str(output_path), self.logger, file_format="invalid_format")
