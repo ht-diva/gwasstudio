@@ -176,9 +176,20 @@ def process_row(row: pd.Series) -> Dict[Hashable, Any]:
 
 def ingest_metadata(df: pd.DataFrame, mongo_uri: str = None) -> None:
     """Ingest data into the MongoDB collection."""
-    documents = [process_row(row) for _, row in df.iterrows()]
-    logger.info(f"{len(documents)} documents to ingest")
-    print(f"{len(documents)} documents to ingest")
-    for document in documents:
+
+    def document_generator(df):
+        for _, row in df.iterrows():
+            yield process_row(row)
+
+    logger.info("Ingesting metadata into MongoDB")
+    rows = len(df.axes[0])
+    processed_rows = 0
+    logger.info(f"{rows} documents to ingest")
+    for document in document_generator(df):
+        processed_rows += 1
         obj = EnhancedDataProfile(uri=mongo_uri, **document)
         obj.save()
+
+        # Print the row counter every 100 rows
+        if processed_rows % 100 == 0:
+            logger.info(f"{processed_rows} documents processed")
