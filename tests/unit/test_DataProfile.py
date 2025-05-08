@@ -16,6 +16,7 @@ class TestDataProfile(unittest.TestCase):
 
         self.data_id = compute_sha256(st=generate_random_word(64))
         self.study = generate_random_word(250)
+        self.project = generate_random_word(250)
 
     def tearDown(self) -> None:
         if DataProfile.objects().first():
@@ -36,7 +37,7 @@ class TestDataProfile(unittest.TestCase):
 
     def test_DataProfile_fields(self):
         kwargs = {
-            "project": self.cm.get_project_list[0],
+            "project": self.project,
             "study": self.study,
             "data_id": self.data_id,
             "trait": '{"code": "example1", "feature": "example2", "tissue": "example3"}',

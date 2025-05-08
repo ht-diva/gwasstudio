@@ -15,6 +15,7 @@ class TestEnhancedDataProfile(unittest.TestCase):
 
         self.data_id = compute_sha256(st=generate_random_word(64))
         self.study = generate_random_word(250)
+        self.project = generate_random_word(250)
 
     def tearDown(self) -> None:
         if DataProfile.objects().first():
@@ -44,7 +45,7 @@ class TestEnhancedDataProfile(unittest.TestCase):
         """
         If obj is mapped, then obj.pk is not None
         """
-        project = self.cm.get_project_list[0]
+        project = self.project
         study = self.study
         data_id = self.data_id
         obj = EnhancedDataProfile(project=project, study=study, data_id=data_id, mec=self.mec)
@@ -52,7 +53,7 @@ class TestEnhancedDataProfile(unittest.TestCase):
         assert obj.pk is not None
 
     def test_unique_key(self):
-        project = self.cm.get_project_list[0]
+        project = self.project
         study = self.study
         data_id = self.data_id
         obj = EnhancedDataProfile(project=project, study=study, data_id=data_id, mec=self.mec)
@@ -62,7 +63,7 @@ class TestEnhancedDataProfile(unittest.TestCase):
         """
         return False if mec is None else True
         """
-        project = self.cm.get_project_list[0]
+        project = self.project
         data_id = self.data_id
 
         obj = EnhancedDataProfile(project=project, data_id=data_id, mec=None)

@@ -58,7 +58,6 @@ class ConfigurationManager(metaclass=SingletonConfigurationManager):
         self.mdbc_uri = kwargs.get("uri", mdb_connection.get("uri"))
 
         self.data_category_list = c.get("data_category", [])
-        self.project_list = c.get("project", [])
         self.ancestry_list = c.get("ancestry", [])
         self.build_list = c.get("build", [])
 
@@ -73,10 +72,6 @@ class ConfigurationManager(metaclass=SingletonConfigurationManager):
     @property
     def get_data_category_list(self):
         return self.data_category_list
-
-    @property
-    def get_project_list(self):
-        return self.project_list
 
     @property
     def get_ancestry_list(self):
