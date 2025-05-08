@@ -1,0 +1,12 @@
+project: ukb
+study: d
+category: GWAS
+
+output:
+  - build
+  - population
+  - notes.source_id
+  - total.samples
+  - total.cases
+  - total.controls
+  - trait.desc

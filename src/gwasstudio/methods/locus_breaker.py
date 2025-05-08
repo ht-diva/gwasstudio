@@ -60,7 +60,11 @@ def locus_breaker(
         # Group by the identified regions within the chromosome
         for _, group_df in chrom_df.groupby(group):
             if group_df["MLOG10P"].max() > pvalue_sig:
-                start_pos = group_df["POS"].min() - 100000
+                lower_pos = group_df["POS"].min()
+                if int(lower_pos) - 100000 < 0:
+                    start_pos = 1
+                else:
+                    start_pos = lower_pos - 100000
                 end_pos = group_df["POS"].max() + 100000
                 best_snp = group_df.loc[group_df["MLOG10P"].idxmax()]
                 locus = str(group_df["CHR"].iloc[0]) + ":" + str(start_pos) + ":" + str(end_pos)
@@ -78,9 +82,6 @@ def locus_breaker(
                 for _, snp_row in expanded_snps.iterrows():
                     snp_res = [
                         locus,
-                        contig,
-                        start_pos,
-                        end_pos,
                         snp_row["POS"],
                         snp_row["MLOG10P"],
                     ] + snp_row.tolist()
@@ -88,19 +89,19 @@ def locus_breaker(
 
     # Convert results to a DataFrame
     columns = [
-        "locus",
-        "contig",
+        "snp_pos",
         "start",
         "end",
-        "snp_pos",
         "snp_MLOG10P",
-        "locus",
     ] + tiledb_results_pd.columns.tolist()
+
+ 
     trait_res_df = pd.DataFrame(trait_res, columns=columns)
 
     # Drop specific columns including 'start' and 'end'
-    trait_res_df = trait_res_df.drop(columns=["snp_pos", "contig", "start", "end"])
+    trait_res_df = trait_res_df.drop(columns=["snp_pos", "start", "end"])
     columns = ["locus", "snp_pos", "snp_MLOG10P"] + tiledb_results_pd.columns.tolist()
+    columns.remove("S")
     trait_res_allsnp_df = pd.DataFrame(trait_res_allsnp, columns=columns)
     # trait_res_allsnp_df = trait_res_allsnp_df.drop(trait_res_allsnp_df.columns[0], axis=1)
     trait_res_allsnp_df = trait_res_allsnp_df.drop(columns=["snp_pos", "snp_MLOG10P"])
