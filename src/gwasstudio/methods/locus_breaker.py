@@ -6,7 +6,7 @@ from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
 
 def locus_breaker(
     tiledb_results_pd, pvalue_limit: float = 3.3, pvalue_sig: float = 5, hole_size: int = 250000, phenovar: bool = False
-) -> pd.DataFrame:
+) -> list[pd.DataFrame] | pd.dataframe:
     """
     Breaking genome in locus
     Returns a series of parquet files describing the loci created dynamically around significant SNPs.
@@ -95,7 +95,6 @@ def locus_breaker(
         "snp_MLOG10P",
     ] + tiledb_results_pd.columns.tolist()
 
- 
     trait_res_df = pd.DataFrame(trait_res, columns=columns)
 
     # Drop specific columns including 'start' and 'end'

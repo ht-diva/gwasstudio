@@ -19,30 +19,30 @@ from gwasstudio.utils.metadata import (
 from dask import delayed, compute
 
 
-def _process_locusbreaker(
-    tiledb_unified, trait, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_file
-):
+def _process_locusbreaker(tiledb_unified, trait, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_file):
     """Process data using the locus breaker algorithm."""
     logger.info("Running locus breaker")
     subset_SNPs_pd = tiledb_unified.query(
-            cond=f"EAF > {maf} and EAF < {1 - float(maf)}",
-            dims=["CHR", "POS", "TRAITID"],
-            attrs=["SNPID", "BETA", "SE", "EAF", "MLOG10P"],
-        ).df[:, :, trait]
+        cond=f"EAF > {maf} and EAF < {1 - float(maf)}",
+        dims=["CHR", "POS", "TRAITID"],
+        attrs=["SNPID", "BETA", "SE", "EAF", "MLOG10P"],
+    ).df[:, :, trait]
 
     results_lb_segments, results_lb_intervals = locus_breaker(
-            subset_SNPs_pd, hole_size=hole_size, pvalue_sig=pvalue_sig, pvalue_limit=pvalue_limit, phenovar=phenovar
-        )
+        subset_SNPs_pd, hole_size=hole_size, pvalue_sig=pvalue_sig, pvalue_limit=pvalue_limit, phenovar=phenovar
+    )
 
     logger.info(f"Saving locus-breaker output in {output_file} segments and intervals")
     kwargs = {"index": False}
     write_table(results_lb_segments, f"{output_file}_{trait}_segments", logger, file_format="csv", **kwargs)
     write_table(results_lb_intervals, f"{output_file}_{trait}_intervals", logger, file_format="csv", **kwargs)
 
+
 @delayed
 def _delayed_locus_breaker(tiledb_unified, trait, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_file):
-        # Call locus_breaker with Dask delayed option
-        return _process_locusbreaker(tiledb_unified, trait, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_file)
+    # Call locus_breaker with Dask delayed option
+    return _process_locusbreaker(tiledb_unified, trait, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_file)
+
 
 def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output_file):
     """Process data filtering by a list of SNPs."""
@@ -207,18 +207,18 @@ def export(
         write_table(df, str(output_path), logger, file_format="csv", **kwargs)
 
         # Process according to selected options
-    
+
         batch_size = ctx.obj["dask"]["batch_size"]
         if locusbreaker:
             tasks = []
             for trait in trait_id_list:
-                task =_delayed_locus_breaker(
-                tiledb_unified, trait, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_prefix
+                task = _delayed_locus_breaker(
+                    tiledb_unified, trait, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_prefix
                 )
                 tasks.append(task)
             for i in range(0, len(tasks), batch_size):
                 print(f"Batch {i} of {len(tasks)}")
-                batch = tasks[i:i+batch_size]
+                batch = tasks[i : i + batch_size]
                 compute(*batch)
 
         elif snp_list:
