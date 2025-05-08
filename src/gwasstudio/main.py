@@ -60,7 +60,7 @@ def configure_logging(stdout, verbosity, _logger):
     "Dask deployment options",
     cloup.option(
         "--dask-deployment",
-        type=click.Choice(["local", "gateway", "HPC", "none"]),
+        type=click.Choice(["local", "gateway", "slurm", "none"]),
         default="none",
         help="Where the dask cluster will be deployed.",
     ),
@@ -76,9 +76,9 @@ def configure_logging(stdout, verbosity, _logger):
 )
 @cloup.option_group(
     "Dask local cluster options",
-    cloup.option("--local-workers", default=2, help="Number of workers for local cluster"),
-    cloup.option("--local-threads", default=1, help="Threads per worker for local cluster"),
-    cloup.option("--local-memory", default="2GB", help="Memory per worker for local cluster"),
+    cloup.option("--local-workers", default=4, help="Number of workers for local cluster"),
+    cloup.option("--local-threads", default=2, help="Threads per worker for local cluster"),
+    cloup.option("--local-memory", default="4GB", help="Memory per worker for local cluster"),
 )
 @cloup.option_group(
     "MongoDB options",
@@ -162,10 +162,11 @@ def cli_init(
         "sm.dedup_coords": "true",
     }
 
-    batch_sizes = {"gateway": minimum_workers, "HPC": minimum_workers, "local": local_workers}
+    batch_sizes = {"gateway": minimum_workers, "slurm": maximum_workers - minimum_workers, "local": local_workers}
     ctx.obj["dask"] = {"deployment": dask_deployment, "batch_size": batch_sizes.get(dask_deployment, None)}
 
     if dask_deployment in dask_deployment_types:
+        print("found type of cluster")
         cluster = Cluster(
             dask_deployment=dask_deployment,
             minimum_workers=minimum_workers,
@@ -183,6 +184,9 @@ def cli_init(
         ctx.obj["client"] = client
         ctx.obj["type_cluster"] = type_cluster
         ctx.call_on_close(cluster.shutdown)
+    else:
+        print(dask_deployment)
+        print(dask_deployment_types)
 
 
 def main():
