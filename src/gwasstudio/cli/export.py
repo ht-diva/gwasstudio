@@ -4,9 +4,11 @@ import click
 import cloup
 import pandas as pd
 import tiledb
+import pyarrow as pa
+import pyarrow.parquet as pq
+from dask import delayed, compute
 
 from gwasstudio import logger
-from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
 from gwasstudio.methods.locus_breaker import locus_breaker
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table
@@ -16,7 +18,6 @@ from gwasstudio.utils.metadata import (
     query_mongo_obj,
     dataframe_from_mongo_objs,
 )
-from dask import delayed, compute
 
 
 def _process_locusbreaker(tiledb_unified, trait, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_file):
@@ -77,36 +78,41 @@ def _export_all_stats(tiledb_unified, trait_id_list, output_file):
         write_table(tiledb_query.to_pandas(), f"{output_file}_{trait}", logger, file_format="parquet", **kwargs)
 
 
-def _process_regions(tiledb_unified, regions_file, trait_id_list, maf, attr, phenovar, nest, output_file):
-    """Process data filtering by genomic regions."""
-    bed_region = pd.read_csv(regions_file, sep="\t", header=None)
-    bed_region.columns = ["CHR", "START", "END"]
+def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
+    """Process data filtering by genomic regions and output as concatenated Arrow table in Parquet format."""
+    
+    grouped = bed_region.groupby("CHR")
+    arrow_tables = []
 
-    for trait in trait_id_list:
-        df_trait = []
+    for chr, group in grouped:
+        print(f"chromosome {chr} of trait {trait}")
 
-        for _, row in bed_region.iterrows():
-            subset_SNPs_pd = tiledb_unified.query(
-                cond=f"EAF > {maf} and EAF < {1 - float(maf)}", dims=["CHR", "POS", "TRAITID"], attrs=attr.split(",")
-            ).df[row["CHR"], row["START"] : row["END"], trait]
+        # Get all (start, end) tuples for this chromosome
+        min_pos = min(group["START"])
+        if min_pos < 0:
+            min_pos = 1
+        max_pos = max(group["END"])
+        
+        # Query TileDB and convert directly to Arrow table
+        arrow_table = tiledb_unified.query(
+            cond=f"EAF > {maf} and EAF < {1 - float(maf)}",
+            attrs=attr.split(","),
+            dims=["CHR", "POS", "TRAITID"],
+            return_arrow = True
+        ).df[chr, min_pos:max_pos, trait]
+        
+        arrow_tables.append(arrow_table)
 
-            if phenovar:
-                pv = compute_pheno_variance(subset_SNPs_pd)
-                subset_SNPs_pd["S"] = pv
+    # Concatenate all Arrow tables
+    concatenated = pa.concat_tables(arrow_tables)
+    
+    # Write to Parquet
+    pq.write_table(concatenated, f"{output_file}_{trait}.parquet")
 
-                if nest:
-                    neff = pv / (
-                        (2 * subset_SNPs_pd["EAF"] * (1 - subset_SNPs_pd["EAF"])) * (subset_SNPs_pd["SE"] ** 2)
-                    )
-                    subset_SNPs_pd["NEFF"] = neff
-
-            df_trait.append(subset_SNPs_pd)
-
-        df_trait_concat = pd.concat(df_trait)
-        kwargs = {"index": False}
-        write_table(df_trait_concat, f"{output_file}_{trait}", logger, file_format="parquet", **kwargs)
-
-
+@delayed
+def _delayed_process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
+        # Call locus_breaker with Dask delayed option
+        return _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file)
 help_doc = """
 Export summary statistics from TileDB datasets with various filtering options.
 """
@@ -224,6 +230,18 @@ def export(
         elif snp_list:
             _process_snp_list(tiledb_unified, snp_list, trait_id_list, attr, output_prefix)
         elif get_regions:
-            _process_regions(tiledb_unified, get_regions, trait_id_list, maf, attr, phenovar, nest, output_prefix)
+            bed_region = pd.read_csv(get_regions, sep="\t", header=None)
+            bed_region.columns = ["CHR", "START", "END"]
+            bed_region["CHR"] = bed_region["CHR"].astype(int)
+
+            tasks = []
+            for trait in trait_id_list:
+                task =_delayed_process_regions(tiledb_unified, bed_region, trait, maf, attr, output_prefix)
+                tasks.append(task)
+            for i in range(0, len(tasks), batch_size):
+                print(f"Batch {i} of {len(tasks)}")
+                batch = tasks[i:i+batch_size]
+                compute(*batch)
+
         else:
             _export_all_stats(tiledb_unified, trait_id_list, output_prefix)
