@@ -80,13 +80,9 @@ def _export_all_stats(tiledb_unified, trait_id_list, output_file):
 
 def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
     """Process data filtering by genomic regions and output as concatenated Arrow table in Parquet format."""
-    
-    grouped = bed_region.groupby("CHR")
     arrow_tables = []
-
-    for chr, group in grouped:
-        print(f"chromosome {chr} of trait {trait}")
-
+    print(f"trait {trait}")
+    for chr, group in bed_region:
         # Get all (start, end) tuples for this chromosome
         min_pos = min(group["START"])
         if min_pos < 0:
@@ -95,7 +91,6 @@ def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
         
         # Query TileDB and convert directly to Arrow table
         arrow_table = tiledb_unified.query(
-            cond=f"EAF > {maf} and EAF < {1 - float(maf)}",
             attrs=attr.split(","),
             dims=["CHR", "POS", "TRAITID"],
             return_arrow = True
@@ -233,15 +228,20 @@ def export(
             bed_region = pd.read_csv(get_regions, sep="\t", header=None)
             bed_region.columns = ["CHR", "START", "END"]
             bed_region["CHR"] = bed_region["CHR"].astype(int)
-
+            grouped = bed_region.groupby("CHR")
             tasks = []
-            for trait in trait_id_list:
-                task =_delayed_process_regions(tiledb_unified, bed_region, trait, maf, attr, output_prefix)
-                tasks.append(task)
-            for i in range(0, len(tasks), batch_size):
-                print(f"Batch {i} of {len(tasks)}")
-                batch = tasks[i:i+batch_size]
-                compute(*batch)
+            if batch_size == 1:
+                for trait in trait_id_list:
+                    _process_regions(tiledb_unified, grouped, trait, maf, attr, output_prefix)
+                    print(trait)
+            else:
+                for trait in trait_id_list:
+                    task =_delayed_process_regions(tiledb_unified, grouped, trait, maf, attr, output_prefix)
+                    tasks.append(task)
+                for i in range(0, len(tasks), batch_size):
+                    print(f"Batch {i} of {len(tasks)}")
+                    batch = tasks[i:i+batch_size]
+                    compute(*batch)
 
         else:
             _export_all_stats(tiledb_unified, trait_id_list, output_prefix)
