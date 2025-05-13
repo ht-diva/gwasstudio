@@ -164,9 +164,7 @@ def cli_init(
 
     batch_sizes = {"gateway": minimum_workers, "slurm": maximum_workers - minimum_workers, "local": local_workers}
     ctx.obj["dask"] = {"deployment": dask_deployment, "batch_size": batch_sizes.get(dask_deployment, None)}
-
     if dask_deployment in dask_deployment_types:
-        print("found type of cluster")
         cluster = Cluster(
             dask_deployment=dask_deployment,
             minimum_workers=minimum_workers,
@@ -184,9 +182,6 @@ def cli_init(
         ctx.obj["client"] = client
         ctx.obj["type_cluster"] = type_cluster
         ctx.call_on_close(cluster.shutdown)
-    else:
-        print(dask_deployment)
-        print(dask_deployment_types)
 
 
 def main():
