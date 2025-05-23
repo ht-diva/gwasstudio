@@ -8,6 +8,7 @@ from gwasstudio.dask_client import dask_deployment_types
 from gwasstudio.utils import create_tiledb_schema, parse_uri, process_and_ingest
 from gwasstudio.utils.cfg import get_tiledb_config
 from gwasstudio.utils.s3 import does_uri_path_exist
+from dask import delayed, compute
 
 help_doc = """
 Ingest data in a TileDB-unified dataset.
@@ -55,23 +56,41 @@ def ingest(ctx, single_input, multiple_input, uri):
         logger.error(f"Do not recognize the uri's scheme: {uri}")
         exit()
 
+def check_file_exists(input_file_list, logger):
+    """Check if the input files exist."""
+    for file_path in input_file_list:
+        if not Path(file_path).exists():
+            logger.error(f"File {file_path} does not exist")
+            return False
+    return True
 
 def ingest_to_s3(ctx, input_file_list, uri):
     cfg = get_tiledb_config(ctx)
-
     if not does_uri_path_exist(uri, cfg):
         logger.info("Creating TileDB schema")
         create_tiledb_schema(uri, cfg)
-
+    for file_path in input_file_list:
+        if Path(file_path).exists():
+            continue
+        else:
+            #throw an error and exit
+            logger.info(f"File {file_path} does not exist")
+            exit()
     if ctx.obj["dask"]["deployment"] in dask_deployment_types:
-        pass
+
+        batch_size = ctx.obj["batch_size"]
+        for i in range(0, len(input_file_list), batch_size):
+            batch_files = input_file_list[i : i + batch_size]
+            tasks = [
+                delayed(process_and_ingest)(file, uri, cfg) for file in batch_files
+            ]
+            # Submit tasks and wait for completion
+            compute(*tasks)
+            logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)
     else:
+        # Process files in batches
         for file_path in input_file_list:
-            if Path(file_path).exists():
-                logger.info(f"processing {file_path}")
-                process_and_ingest(file_path, uri, cfg)
-            else:
-                logger.info(f"skipping {file_path}")
+            process_and_ingest(file_path, uri, cfg)
 
 
 def ingest_to_fs(ctx, input_file_list, uri):
@@ -80,30 +99,30 @@ def ingest_to_fs(ctx, input_file_list, uri):
         create_tiledb_schema(uri, {})
 
     if ctx.obj["dask"]["deployment"] in dask_deployment_types:
-        pass
+        batch_size = ctx.obj["batch_size"]
+        for i in range(0, len(input_file_list), batch_size):
+            batch_files = input_file_list[i : i + batch_size]
+            tasks = [
+                delayed(process_and_ingest)(file, uri, {}) for file in batch_files
+            ]
+            # Submit tasks and wait for completion
+            compute(*tasks)
+            logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)
     else:
         for file_path in input_file_list:
-            if Path(file_path).exists():
-                process_and_ingest(file_path, uri, {})
+            process_and_ingest(file_path, uri, {})
 
-    # Commenting temporarly
-    # # Parse checksum for mapping ids to files
-    # checksum = pd.read_csv(checksum, sep="\t", header=None)
-    # checksum.columns = ["hash", "filename"]
-    # checksum_dict = checksum.set_index("hash")["filename"].to_dict()
-    # # Getting the file list and iterate through it using Dask
-    # cfg = ctx.obj["cfg"]
-    #
-    # # Process files in batches
-    # if not os.path.exists(uri):
-    #     create_tiledb_schema(uri, cfg)
-    #
-    # file_list = list(checksum_dict.keys())
-    # print(ctx.obj)
-    # batch_size = ctx.obj["batch_size"]
-    # for i in range(0, len(file_list), batch_size):
-    #     batch_files = file_list[i : i + batch_size]
-    #     tasks = [dask.delayed(process_and_ingest)(file, uri, checksum_dict, cfg) for file in batch_files]
-    #     # Submit tasks and wait for completion
-    #     dask.compute(*tasks)
-    #     logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)
+def ingest(ctx, input_file_list, uri):
+    """Ingest data in a TileDB-unified dataset."""
+    # Check if the file exists
+    if not check_file_exists(input_file_list, logger):
+        exit(1)
+    # Parse the uri
+    scheme, netloc, path = parse_uri(uri)
+    if scheme == "s3":
+        ingest_to_s3(ctx, input_file_list, uri)
+    elif scheme == "file":
+        ingest_to_fs(ctx, input_file_list, uri)
+    else:
+        logger.error(f"Do not recognize the uri's scheme: {uri}")
+        exit()
