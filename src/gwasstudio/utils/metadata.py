@@ -8,7 +8,7 @@ from ruamel.yaml import YAML
 
 from gwasstudio import logger
 from gwasstudio.mongo.models import EnhancedDataProfile, DataProfile
-from gwasstudio.utils import lower_and_replace, compute_sha256
+from gwasstudio.utils import lower_and_replace, compute_hash
 
 metadata_dtypes = {"project": "category", "study": "category", "file_path": "string[pyarrow]", "category": "category"}
 
@@ -158,7 +158,7 @@ def process_row(row: pd.Series) -> Dict[Hashable, Any]:
     metadata = defaultdict(lambda: {})
     metadata["project"] = project_key
     metadata["study"] = study_key
-    metadata["data_id"] = compute_sha256(fpath=row["file_path"])
+    metadata["data_id"] = compute_hash(fpath=row["file_path"])
 
     for key, value in row.items():
         if "_" in key and key.startswith(DataProfile.json_dict_fields()):

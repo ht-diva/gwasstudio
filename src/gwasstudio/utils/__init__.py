@@ -41,40 +41,32 @@ def check_file_exists(input_file: str, logger: object) -> bool:
         return False
 
 
-def compute_sha256(fpath: object = None, st: object = None, length: int = None) -> str:
+def compute_hash(fpath: object = None, st: object = None, length: int = 10) -> str:
+    hash_value = compute_sha256(fpath, st)
+    return hash_value[:length] if hash_value else None
+
+
+def compute_sha256(fpath: object = None, st: object = None) -> str | None:
     """
     Computes file or string hash using sha256 algorithm.
 
     Args:
         fpath (str): Path to a file for which to compute the hash.
         st (str): String for which to compute the hash.
-        length (int): Length of the hash to return.
     Returns:
         str: The SHA-256 hash of the input as a hexadecimal string, or None if neither input is provided.
     """
     algorithm = "sha256"
 
-    def _compute_hash(input_):
-        if isinstance(input_, pathlib.Path):
-            return compute_file_hashing(algorithm, input_)
-        elif isinstance(input_, str):
-            return compute_string_hash(algorithm, input_)
-        else:
-            raise ValueError("Unsupported input type")
-
-    if fpath is not None and st is not None:
-        raise ValueError("Cannot provide both file path and string")
-    elif fpath is not None:
-        hash_value = _compute_hash(pathlib.Path(fpath))
-    elif st is not None:
-        hash_value = _compute_hash(st)
-    else:
-        return None
-
-    if length is not None:
-        return hash_value[:length]
-    else:
-        return hash_value
+    match (fpath, st):
+        case (None, None):
+            return None
+        case (None, _):
+            return compute_string_hash(algorithm, st)
+        case (_, None):
+            return compute_file_hashing(algorithm, pathlib.Path(fpath))
+        case _:
+            raise ValueError("Cannot provide both file path and string")
 
 
 def compute_file_hashing(algorithm: str, path: pathlib.Path, bufsize: int = DEFAULT_BUFSIZE) -> str:
@@ -266,7 +258,7 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict) -> None:
     )
     # Add trait_id based on the checksum_dict
     # file_name = file_path.split('/')[-1]
-    df["TRAITID"] = compute_sha256(fpath=file_path)
+    df["TRAITID"] = compute_hash(fpath=file_path)
     dtype_tbd = {
         "CHR": np.uint8,
         "POS": np.uint32,

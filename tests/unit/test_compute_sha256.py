@@ -3,7 +3,7 @@ import unittest
 import mongomock
 from mongoengine import connect, disconnect
 
-from gwasstudio.utils import compute_sha256
+from gwasstudio.utils import compute_hash, compute_sha256
 
 
 class TestComputesha256(unittest.TestCase):
@@ -39,5 +39,13 @@ class TestComputesha256(unittest.TestCase):
         digest = compute_sha256(fpath=path)
         assert digest == checksum
 
-        digest = compute_sha256(fpath=path, length=10)
-        assert digest == checksum[:10]
+    def test_compute_hash(self):
+        path = "tests/data/file.bin"
+        checksum = "875617088a4f08e5d836b8629f6bf16d9bc5bf4b1c43b8520af0bcb3d4814a62"
+        length = 10
+
+        digest = compute_hash(fpath=path, length=length)
+        assert digest == checksum[:length]
+
+        digest = compute_hash(length=length)
+        self.assertIsNone(digest)
