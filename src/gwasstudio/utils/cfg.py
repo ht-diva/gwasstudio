@@ -3,6 +3,12 @@ from typing import Dict
 from gwasstudio.utils.vault import get_config_from_vault
 
 
+def get_mongo_deployment(ctx: object) -> str:
+    """Retrieve MongoDB deployment from command line options."""
+    mongo_deployment = ctx.obj.get("mongo").get("deployment")
+    return mongo_deployment
+
+
 def get_mongo_uri(ctx: object) -> str:
     """Retrieve MongoDB URI from Vault or command line options."""
 

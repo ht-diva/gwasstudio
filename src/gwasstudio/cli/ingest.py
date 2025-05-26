@@ -47,6 +47,7 @@ def ingest(ctx, single_input, multiple_input, uri):
         exit()
 
     scheme, netloc, path = parse_uri(uri)
+    logger.info("Starting ingestion: {} file to process".format(len(input_file_list)))
     if scheme == "s3":
         ingest_to_s3(ctx, input_file_list, uri)
     elif scheme == "file":
@@ -54,6 +55,7 @@ def ingest(ctx, single_input, multiple_input, uri):
     else:
         logger.error(f"Do not recognize the uri's scheme: {uri}")
         exit()
+    logger.info("Ingestion done")
 
 
 def ingest_to_s3(ctx, input_file_list, uri):
@@ -68,15 +70,16 @@ def ingest_to_s3(ctx, input_file_list, uri):
     else:
         for file_path in input_file_list:
             if Path(file_path).exists():
-                logger.info(f"processing {file_path}")
+                logger.debug(f"processing {file_path}")
                 process_and_ingest(file_path, uri, cfg)
             else:
-                logger.info(f"skipping {file_path}")
+                logger.warning(f"skipping {file_path}")
 
 
 def ingest_to_fs(ctx, input_file_list, uri):
     _, __, path = parse_uri(uri)
     if not Path(path).exists():
+        logger.info("Creating TileDB schema")
         create_tiledb_schema(uri, {})
 
     if ctx.obj["dask"]["deployment"] in dask_deployment_types:
@@ -84,7 +87,10 @@ def ingest_to_fs(ctx, input_file_list, uri):
     else:
         for file_path in input_file_list:
             if Path(file_path).exists():
+                logger.debug(f"processing {file_path}")
                 process_and_ingest(file_path, uri, {})
+            else:
+                logger.warning(f"{file_path} not found. Skipping it")
 
     # Commenting temporarly
     # # Parse checksum for mapping ids to files

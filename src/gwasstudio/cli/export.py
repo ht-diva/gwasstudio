@@ -3,9 +3,9 @@ from pathlib import Path
 import click
 import cloup
 import pandas as pd
-import tiledb
 import pyarrow as pa
 import pyarrow.parquet as pq
+import tiledb
 from dask import delayed, compute
 
 from gwasstudio import logger
@@ -18,6 +18,7 @@ from gwasstudio.utils.metadata import (
     query_mongo_obj,
     dataframe_from_mongo_objs,
 )
+from gwasstudio.utils.mongo_manager import manage_mongo
 
 
 def _process_locusbreaker(tiledb_unified, trait, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_file):
@@ -88,26 +89,27 @@ def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
         if min_pos < 0:
             min_pos = 1
         max_pos = max(group["END"])
-        
+
         # Query TileDB and convert directly to Arrow table
-        arrow_table = tiledb_unified.query(
-            attrs=attr.split(","),
-            dims=["CHR", "POS", "TRAITID"],
-            return_arrow = True
-        ).df[chr, min_pos:max_pos, trait]
-        
+        arrow_table = tiledb_unified.query(attrs=attr.split(","), dims=["CHR", "POS", "TRAITID"], return_arrow=True).df[
+            chr, min_pos:max_pos, trait
+        ]
+
         arrow_tables.append(arrow_table)
 
     # Concatenate all Arrow tables
     concatenated = pa.concat_tables(arrow_tables)
-    
+
     # Write to Parquet
     pq.write_table(concatenated, f"{output_file}_{trait}.parquet")
 
+
 @delayed
 def _delayed_process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
-        # Call locus_breaker with Dask delayed option
-        return _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file)
+    # Call locus_breaker with Dask delayed option
+    return _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file)
+
+
 help_doc = """
 Export summary statistics from TileDB datasets with various filtering options.
 """
@@ -190,14 +192,14 @@ def export(
     if not check_file_exists(search_file, logger):
         exit(1)
 
-    mongo_uri = get_mongo_uri(ctx)
-
     # Open TileDB dataset
     with tiledb.open(uri, mode="r", config=cfg) as tiledb_unified:
         logger.info("TileDB dataset loaded")
         search_topics, output_fields = load_search_topics(search_file)
-        obj = EnhancedDataProfile(uri=mongo_uri)
-        objs = query_mongo_obj(search_topics, obj)
+        with manage_mongo(ctx):
+            mongo_uri = get_mongo_uri(ctx)
+            obj = EnhancedDataProfile(uri=mongo_uri)
+            objs = query_mongo_obj(search_topics, obj)
         df = dataframe_from_mongo_objs(output_fields, objs)
         trait_id_list = list(df["data_id"])
 
@@ -236,11 +238,11 @@ def export(
                     print(trait)
             else:
                 for trait in trait_id_list:
-                    task =_delayed_process_regions(tiledb_unified, grouped, trait, maf, attr, output_prefix)
+                    task = _delayed_process_regions(tiledb_unified, grouped, trait, maf, attr, output_prefix)
                     tasks.append(task)
                 for i in range(0, len(tasks), batch_size):
                     print(f"Batch {i} of {len(tasks)}")
-                    batch = tasks[i:i+batch_size]
+                    batch = tasks[i : i + batch_size]
                     compute(*batch)
 
         else:
