@@ -41,14 +41,14 @@ def check_file_exists(input_file: str, logger: object) -> bool:
         return False
 
 
-def compute_sha256(fpath: object = None, st: object = None) -> str:
+def compute_sha256(fpath: object = None, st: object = None, length: int = None) -> str:
     """
     Computes file or string hash using sha256 algorithm.
 
     Args:
         fpath (str): Path to a file for which to compute the hash.
         st (str): String for which to compute the hash.
-
+        length (int): Length of the hash to return.
     Returns:
         str: The SHA-256 hash of the input as a hexadecimal string, or None if neither input is provided.
     """
@@ -65,11 +65,16 @@ def compute_sha256(fpath: object = None, st: object = None) -> str:
     if fpath is not None and st is not None:
         raise ValueError("Cannot provide both file path and string")
     elif fpath is not None:
-        return _compute_hash(pathlib.Path(fpath))
+        hash_value = _compute_hash(pathlib.Path(fpath))
     elif st is not None:
-        return _compute_hash(st)
+        hash_value = _compute_hash(st)
     else:
         return None
+
+    if length is not None:
+        return hash_value[:length]
+    else:
+        return hash_value
 
 
 def compute_file_hashing(algorithm: str, path: pathlib.Path, bufsize: int = DEFAULT_BUFSIZE) -> str:

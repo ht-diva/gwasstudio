@@ -1,8 +1,9 @@
 import unittest
 
 import mongomock
-from gwasstudio.utils import compute_sha256
 from mongoengine import connect, disconnect
+
+from gwasstudio.utils import compute_sha256
 
 
 class TestComputesha256(unittest.TestCase):
@@ -37,3 +38,6 @@ class TestComputesha256(unittest.TestCase):
 
         digest = compute_sha256(fpath=path)
         assert digest == checksum
+
+        digest = compute_sha256(fpath=path, length=10)
+        assert digest == checksum[:10]
