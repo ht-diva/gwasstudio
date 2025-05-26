@@ -11,6 +11,7 @@ from gwasstudio.cli.metadata.ingest import meta_ingest
 from gwasstudio.cli.metadata.query import meta_query
 from gwasstudio.cli.metadata.view import meta_view
 from gwasstudio.dask_client import DaskCluster as Cluster, dask_deployment_types
+from gwasstudio.utils.mongo_manager import mongo_deployment_types
 
 
 def configure_logging(stdout, verbosity, _logger):
@@ -57,12 +58,18 @@ def configure_logging(stdout, verbosity, _logger):
 @cloup.option("--verbosity", type=click.Choice(["quiet", "normal", "loud"]), default="normal", help="Set log verbosity")
 @cloup.option("--stdout", is_flag=True, default=False, help="Print logs to the stdout")
 @cloup.option_group(
-    "Dask deployment options",
+    "Deployment options",
     cloup.option(
         "--dask-deployment",
         type=click.Choice(["local", "gateway", "slurm", "none"]),
         default="none",
-        help="Where the dask cluster will be deployed.",
+        help="The deployment location for the Dask cluster",
+    ),
+    cloup.option(
+        "--mongo-deployment",
+        type=click.Choice(mongo_deployment_types),
+        default="embedded",
+        help="The deployment location for the MongoDB server",
     ),
 )
 @cloup.option_group(
@@ -76,7 +83,7 @@ def configure_logging(stdout, verbosity, _logger):
 )
 @cloup.option_group(
     "Dask local cluster options",
-    cloup.option("--local-workers", default=4, help="Number of workers for local cluster"),
+    cloup.option("--local-workers", default=2, help="Number of workers for local cluster"),
     cloup.option("--local-threads", default=2, help="Threads per worker for local cluster"),
     cloup.option("--local-memory", default="4GB", help="Memory per worker for local cluster"),
 )
@@ -129,6 +136,7 @@ def cli_init(
     cpu_workers,
     address,
     mongo_uri,
+    mongo_deployment,
     verbosity,
     stdout,
     vault_auth,
@@ -141,7 +149,7 @@ def cli_init(
     logger.info("{} started".format(__appname__.capitalize()))
 
     ctx.ensure_object(dict)
-    ctx.obj["mongo"] = {"uri": mongo_uri}
+    ctx.obj["mongo"] = {"uri": mongo_uri, "deployment": mongo_deployment}
 
     ctx.obj["vault"] = {
         "auth": vault_auth,

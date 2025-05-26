@@ -12,6 +12,7 @@ from gwasstudio.utils.metadata import (
     query_mongo_obj,
     dataframe_from_mongo_objs,
 )
+from gwasstudio.utils.mongo_manager import manage_mongo
 
 help_doc = """
 query metadata records from MongoDB
@@ -46,10 +47,10 @@ def meta_query(ctx, search_file, output_prefix, case_sensitive):
     search_topics, output_fields = load_search_topics(search_file)
     logger.debug(search_topics)
 
-    mongo_uri = get_mongo_uri(ctx)
-
-    obj = EnhancedDataProfile(uri=mongo_uri)
-    objs = query_mongo_obj(search_topics, obj, case_sensitive=case_sensitive)
+    with manage_mongo(ctx):
+        mongo_uri = get_mongo_uri(ctx)
+        obj = EnhancedDataProfile(uri=mongo_uri)
+        objs = query_mongo_obj(search_topics, obj, case_sensitive=case_sensitive)
 
     # write metadata query result
     path = Path(output_prefix)
