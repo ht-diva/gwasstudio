@@ -6,13 +6,15 @@ import pandas as pd
 from ruamel.yaml import YAML
 
 from gwasstudio.utils import generate_random_word
-from gwasstudio.utils import lower_and_replace, compute_hash
+from gwasstudio.utils import lower_and_replace
+from gwasstudio.utils.hashing import Hashing
 from gwasstudio.utils.metadata import load_metadata, process_row
 from gwasstudio.utils.metadata import load_search_topics
 
 
 class TestLoadSearchTopics(unittest.TestCase):
     def setUp(self):
+        self.hg = Hashing()
         self.yml = YAML(typ="safe")
         self.test_file = Path("tests/test_metadata.yaml")
         self.test_dataset = Path("tests/test_dataset.txt")
@@ -24,6 +26,7 @@ class TestLoadSearchTopics(unittest.TestCase):
             f.write("project\tstudy\tfile_path\tcategory\nvalue1\tvalue2\ttests/test_dataset.txt\tGWAS")
 
     def tearDown(self):
+        del self.hg
         if self.test_file.exists():
             self.test_file.unlink()
         if self.test_dataset.exists():
@@ -130,9 +133,24 @@ class TestLoadSearchTopics(unittest.TestCase):
         # Check the processed metadata
         self.assertEqual(metadata["project"], lower_and_replace("project1"))
         self.assertEqual(metadata["study"], lower_and_replace("study1"))
-        self.assertEqual(metadata["data_id"], compute_hash(fpath=self.test_dataset))
+        self.assertEqual(metadata["data_id"], self.hg.compute_hash(fpath=self.test_dataset))
         self.assertEqual(metadata["category"], "category1")
         self.assertEqual(json.loads(metadata["trait"]), {"subkey1": "value1"})
         self.assertEqual(json.loads(metadata["notes"]), {"subkey2": "value2"})
         self.assertEqual(json.loads(metadata["total"]), {"subkey3": "value3"})
         self.assertEqual(metadata["key4_subkey4"], "value4")
+
+    def test_process_row_no_nested_keys(self):
+        row = pd.Series(
+            {
+                "project": "Test Project",
+                "study": "Test Study",
+                "file_path": self.test_dataset,
+                "other_field": "other_value",
+            }
+        )
+        metadata = process_row(row)
+
+        # Check if the nested key handling is skipped
+        self.assertNotIn("json_field", metadata)
+        self.assertEqual(metadata["other_field"], "other_value")

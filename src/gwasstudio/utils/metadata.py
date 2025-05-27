@@ -8,7 +8,8 @@ from ruamel.yaml import YAML
 
 from gwasstudio import logger
 from gwasstudio.mongo.models import EnhancedDataProfile, DataProfile
-from gwasstudio.utils import lower_and_replace, compute_hash
+from gwasstudio.utils import lower_and_replace
+from gwasstudio.utils.hashing import Hashing
 
 metadata_dtypes = {"project": "category", "study": "category", "file_path": "string[pyarrow]", "category": "category"}
 
@@ -155,18 +156,16 @@ def process_row(row: pd.Series) -> Dict[Hashable, Any]:
     project_key = lower_and_replace(row["project"])
     study_key = lower_and_replace(row["study"])
 
-    metadata = defaultdict(lambda: {})
-    metadata["project"] = project_key
-    metadata["study"] = study_key
-    metadata["data_id"] = compute_hash(fpath=row["file_path"])
+    hg = Hashing()
+
+    metadata = {"project": project_key, "study": study_key, "data_id": hg.compute_hash(fpath=row["file_path"])}
 
     for key, value in row.items():
-        if "_" in key and key.startswith(DataProfile.json_dict_fields()):
+        if "_" in key and key.startswith(tuple(DataProfile.json_dict_fields())):
             k, subk = key.split("_", 1)
-            metadata[k][subk] = value
+            metadata.setdefault(k, {})[subk] = value
         else:
-            if key not in metadata:
-                metadata[key] = value
+            metadata[key] = value
 
     return {
         _key: json.dumps(_value) if _key in DataProfile.json_dict_fields() else _value

@@ -4,7 +4,6 @@ Generic Utilities
 Generic utilities used by other modules.
 """
 
-import hashlib
 import pathlib
 import random
 import string
@@ -13,11 +12,9 @@ from typing import Any, Dict
 
 import numpy as np
 import pandas as pd
-
-# import polars as pl
 import tiledb
 
-DEFAULT_BUFSIZE = 4096
+from gwasstudio.utils.hashing import Hashing
 
 
 def check_file_exists(input_file: str, logger: object) -> bool:
@@ -39,73 +36,6 @@ def check_file_exists(input_file: str, logger: object) -> bool:
     else:
         logger.error(msg_err)
         return False
-
-
-def compute_hash(fpath: object = None, st: object = None, length: int = 10) -> str:
-    hash_value = compute_sha256(fpath, st)
-    return hash_value[:length] if hash_value else None
-
-
-def compute_sha256(fpath: object = None, st: object = None) -> str | None:
-    """
-    Computes file or string hash using sha256 algorithm.
-
-    Args:
-        fpath (str): Path to a file for which to compute the hash.
-        st (str): String for which to compute the hash.
-    Returns:
-        str: The SHA-256 hash of the input as a hexadecimal string, or None if neither input is provided.
-    """
-    algorithm = "sha256"
-
-    match (fpath, st):
-        case (None, None):
-            return None
-        case (None, _):
-            return compute_string_hash(algorithm, st)
-        case (_, None):
-            return compute_file_hashing(algorithm, pathlib.Path(fpath))
-        case _:
-            raise ValueError("Cannot provide both file path and string")
-
-
-def compute_file_hashing(algorithm: str, path: pathlib.Path, bufsize: int = DEFAULT_BUFSIZE) -> str:
-    """
-    Computes the hash of a file using the algorithm function
-
-    Args:
-        algorithm (str): The name of the hashing algorithm.
-        path: The path to the file for which to compute the hash.
-
-    Returns:
-        str: The hexadecimal representation of the SHA-256 hash.
-
-    """
-    # with open(path, "rb") as fp:
-    #   return hashlib.file_digest(fp, algorithm).hexdigest()
-    digest = hashlib.new(algorithm)
-    with open(path, "rb") as fp:
-        s = fp.read(bufsize)
-        while s:
-            digest.update(s)
-            s = fp.read(bufsize)
-    return digest.hexdigest()
-
-
-def compute_string_hash(algorithm: str, st: str) -> str:
-    """
-    Computes the hash of a string using the algorithm function.
-
-    Args:
-        algorithm (str): The name of the hashing algorithm.
-        st: The string for which to compute the hash.
-
-    Returns:
-        str: The hexadecimal representation of the SHA-256 hash.
-    """
-    h = hashlib.new(algorithm)
-    h.update(st.encode("ascii"))
-    return h.hexdigest()
 
 
 def find_item(obj: Dict, key: str) -> Any:
@@ -257,8 +187,8 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict) -> None:
         },
     )
     # Add trait_id based on the checksum_dict
-    # file_name = file_path.split('/')[-1]
-    df["TRAITID"] = compute_hash(fpath=file_path)
+    hg = Hashing()
+    df["TRAITID"] = hg.compute_hash(fpath=file_path)
     dtype_tbd = {
         "CHR": np.uint8,
         "POS": np.uint32,
