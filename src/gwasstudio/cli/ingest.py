@@ -84,11 +84,10 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type):
         scheme, netloc, path = parse_uri(uri)
         if scheme == "s3":
             ingest_to_s3(ctx, input_file_list, uri)
-        elif scheme == "file":
-            ingest_to_fs(ctx, input_file_list, uri)
         else:
-            logger.error(f"Do not recognize the uri's scheme: {uri}")
-            exit()
+            # Assuming file system ingestion if not S3
+            ingest_to_fs(ctx, input_file_list, uri)
+
         logger.info("Ingestion done")
 
 
