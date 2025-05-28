@@ -113,11 +113,11 @@ def create_tiledb_schema(uri: str, cfg: dict):
         cfg (dict): A configuration dictionary to use for connecting to S3.
     """
     chrom_domain = (1, 24)
-    pos_domain = (1, 3000000000)
+    pos_domain = (1, 250000000)
     dom = tiledb.Domain(
-        tiledb.Dim(name="CHR", domain=chrom_domain, dtype=np.uint8, var=False),
-        tiledb.Dim(name="POS", domain=pos_domain, dtype=np.uint32, var=False),
-        tiledb.Dim(name="TRAITID", dtype="ascii", var=False),
+        tiledb.Dim(name="CHR", domain=chrom_domain, dtype=np.uint8, var=False,filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
+        tiledb.Dim(name="TRAITID", dtype="ascii", var=False,filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
+        tiledb.Dim(name="POS", domain=pos_domain, dtype=np.uint32, var=False,filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
     )
     schema = tiledb.ArraySchema(
         domain=dom,
@@ -137,21 +137,21 @@ def create_tiledb_schema(uri: str, cfg: dict):
                 filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
             ),
             tiledb.Attr(
-                name="MLOG10P",
-                dtype=np.float32,
-                var=False,
-                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-            ),
-            tiledb.Attr(
                 name="EAF",
                 dtype=np.float32,
                 var=False,
                 filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
             ),
-            tiledb.Attr(
-                name="SNPID",
-                dtype="ascii",
-                var=True,
+        tiledb.Attr(
+                name="EA",
+                dtype="S1",
+                var=False,
+                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
+            ),
+        tiledb.Attr(
+                name="NEA",
+                dtype="S1",
+                var=False,
                 filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
             ),
         ],
@@ -175,15 +175,15 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict) -> None:
         file_path,
         compression="gzip",
         sep="\t",
-        usecols=["CHR", "POS", "SNPID", "EAF", "SE", "BETA", "MLOG10P"],
+        usecols=["CHR", "POS", "EAF", "SE", "BETA", "EA", "NEA"],
         dtype={
             "CHR": np.uint8,
             "POS": np.uint32,
-            "SNPID": str,
             "EAF": np.float32,
+            "EA": "S1",
+            "NEA": "S1",
             "SE": np.float32,
             "BETA": np.float32,
-            "MLOG10P": np.float32,
         },
     )
     # Add trait_id based on the checksum_dict
@@ -192,11 +192,11 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict) -> None:
     dtype_tbd = {
         "CHR": np.uint8,
         "POS": np.uint32,
-        "SNPID": str,
         "EAF": np.float32,
         "SE": np.float32,
         "BETA": np.float32,
-        "MLOG10P": np.float32,
+        "EA": "S1",
+        "NEA": "S1",
         "TRAITID": str,
     }
     # Store the processed data in TileDB
