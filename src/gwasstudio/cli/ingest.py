@@ -2,11 +2,12 @@ from pathlib import Path
 
 import click
 import cloup
+from dask import delayed, compute
 
 from gwasstudio import logger
 from gwasstudio.dask_client import dask_deployment_types
 from gwasstudio.utils import create_tiledb_schema, parse_uri, process_and_ingest
-from gwasstudio.utils.cfg import get_tiledb_config
+from gwasstudio.utils.cfg import get_tiledb_config, get_dask_batch_size, get_dask_deployment
 from gwasstudio.utils.s3 import does_uri_path_exist
 
 help_doc = """
@@ -65,8 +66,23 @@ def ingest_to_s3(ctx, input_file_list, uri):
         logger.info("Creating TileDB schema")
         create_tiledb_schema(uri, cfg)
 
-    if ctx.obj["dask"]["deployment"] in dask_deployment_types:
-        pass
+    if get_dask_deployment(ctx) in dask_deployment_types:
+        batch_size = get_dask_batch_size(ctx)
+        for i in range(0, len(input_file_list), batch_size):
+            batch_files = {file_path: Path(file_path).exists() for file_path in input_file_list[i : i + batch_size]}
+            logger.info(f"Processing a batch of {len(batch_files)} items for batch {i // batch_size + 1}")
+
+            # Log skipped files
+            skipped_files = [file_path for file_path, exists in batch_files.items() if not exists]
+            if skipped_files:
+                logger.warning(f"Skipping files: {skipped_files}")
+            # Create a list of delayed tasks
+            tasks = [
+                delayed(process_and_ingest)(file_path, uri, cfg) for file_path in batch_files if batch_files[file_path]
+            ]
+            # Submit tasks and wait for completion
+            compute(*tasks)
+            logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)
     else:
         for file_path in input_file_list:
             if Path(file_path).exists():
@@ -82,8 +98,23 @@ def ingest_to_fs(ctx, input_file_list, uri):
         logger.info("Creating TileDB schema")
         create_tiledb_schema(uri, {})
 
-    if ctx.obj["dask"]["deployment"] in dask_deployment_types:
-        pass
+    if get_dask_deployment(ctx) in dask_deployment_types:
+        batch_size = get_dask_batch_size(ctx)
+        for i in range(0, len(input_file_list), batch_size):
+            batch_files = {file_path: Path(file_path).exists() for file_path in input_file_list[i : i + batch_size]}
+            logger.info(f"Processing a batch of {len(batch_files)} items for batch {i // batch_size + 1}")
+
+            # Log skipped files
+            skipped_files = [file_path for file_path, exists in batch_files.items() if not exists]
+            if skipped_files:
+                logger.warning(f"Skipping files: {skipped_files}")
+            # Create a list of delayed tasks
+            tasks = [
+                delayed(process_and_ingest)(file_path, uri, {}) for file_path in batch_files if batch_files[file_path]
+            ]
+            # Submit tasks and wait for completion
+            compute(*tasks)
+            logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)
     else:
         for file_path in input_file_list:
             if Path(file_path).exists():
@@ -91,25 +122,3 @@ def ingest_to_fs(ctx, input_file_list, uri):
                 process_and_ingest(file_path, uri, {})
             else:
                 logger.warning(f"{file_path} not found. Skipping it")
-
-    # Commenting temporarly
-    # # Parse checksum for mapping ids to files
-    # checksum = pd.read_csv(checksum, sep="\t", header=None)
-    # checksum.columns = ["hash", "filename"]
-    # checksum_dict = checksum.set_index("hash")["filename"].to_dict()
-    # # Getting the file list and iterate through it using Dask
-    # cfg = ctx.obj["cfg"]
-    #
-    # # Process files in batches
-    # if not os.path.exists(uri):
-    #     create_tiledb_schema(uri, cfg)
-    #
-    # file_list = list(checksum_dict.keys())
-    # print(ctx.obj)
-    # batch_size = ctx.obj["batch_size"]
-    # for i in range(0, len(file_list), batch_size):
-    #     batch_files = file_list[i : i + batch_size]
-    #     tasks = [dask.delayed(process_and_ingest)(file, uri, checksum_dict, cfg) for file in batch_files]
-    #     # Submit tasks and wait for completion
-    #     dask.compute(*tasks)
-    #     logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)
