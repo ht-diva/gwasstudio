@@ -2,11 +2,12 @@ from pathlib import Path
 
 import click
 import cloup
+from dask import delayed, compute
 
 from gwasstudio import logger
 from gwasstudio.dask_client import dask_deployment_types
 from gwasstudio.utils import create_tiledb_schema, parse_uri, process_and_ingest
-from gwasstudio.utils.cfg import get_tiledb_config
+from gwasstudio.utils.cfg import get_tiledb_config, get_dask_batch_size, get_dask_deployment
 from gwasstudio.utils.s3 import does_uri_path_exist
 from dask import delayed, compute
 import pandas as pd
