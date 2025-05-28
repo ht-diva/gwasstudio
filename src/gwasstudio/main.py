@@ -7,9 +7,7 @@ from gwasstudio import __appname__, __version__, context_settings, log_file, log
 from gwasstudio.cli.export import export
 from gwasstudio.cli.info import info
 from gwasstudio.cli.ingest import ingest
-from gwasstudio.cli.metadata.ingest import meta_ingest
 from gwasstudio.cli.metadata.query import meta_query
-from gwasstudio.cli.metadata.view import meta_view
 from gwasstudio.dask_client import DaskCluster as Cluster, dask_deployment_types
 from gwasstudio.utils.mongo_manager import mongo_deployment_types
 
@@ -196,8 +194,6 @@ def main():
     cli_init.add_command(info)
     cli_init.add_command(export)
     cli_init.add_command(ingest)
-    cli_init.add_command(meta_ingest)
-    cli_init.add_command(meta_view)
     cli_init.add_command(meta_query)
 
     cli_init(obj={})
