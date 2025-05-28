@@ -70,7 +70,7 @@ git clone https://github.com/your-organization/gwasstudio.git
 cd gwasstudio
 
 # Create a virtual environment (recommended)
-conda create --name gwasstudio --file conda-{linux, osx-arm}-64.lock
+conda env create --file base_environment.yml
 conda activate gwasstudio
 
 # Install the package
