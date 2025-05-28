@@ -62,14 +62,14 @@ def configure_logging(stdout, verbosity, _logger):
     cloup.option(
         "--dask-deployment",
         type=click.Choice(["local", "gateway", "slurm", "none"]),
-        default="none",
-        help="The deployment location for the Dask cluster",
+        default="local",
+        help="Specify the deployment environment for the Dask cluster",
     ),
     cloup.option(
         "--mongo-deployment",
         type=click.Choice(mongo_deployment_types),
         default="embedded",
-        help="The deployment location for the MongoDB server",
+        help="Specify the deployment environment for the MongoDB server",
     ),
 )
 @cloup.option_group(
