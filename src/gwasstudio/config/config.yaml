@@ -40,10 +40,7 @@ data_category:
   - "Single-cell"
   - "scientific_article"
 
-# Project list
-project:
-  - "BELIEVE"
-  - "CHRIS"
-  - "CHRIS_INTERVAL"
-  - "INTERVAL"
-  - "DECODE"
+# Hashing
+hashing:
+  algorithm: "sha256"
+  length: 10

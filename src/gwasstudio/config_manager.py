@@ -61,6 +61,9 @@ class ConfigurationManager(metaclass=SingletonConfigurationManager):
         self.ancestry_list = c.get("ancestry", [])
         self.build_list = c.get("build", [])
 
+        self._hash_algorithm = c.get("hashing", {"algorithm": "sha256"}).get("algorithm")
+        self._hash_length = c.get("hashing", {"length": 10}).get("length")
+
     @property
     def get_mdbc_db(self):
         return self.mdbc_db
@@ -80,3 +83,11 @@ class ConfigurationManager(metaclass=SingletonConfigurationManager):
     @property
     def get_build_list(self):
         return self.build_list
+
+    @property
+    def hash_algorithm(self):
+        return self._hash_algorithm
+
+    @property
+    def hash_length(self):
+        return self._hash_length

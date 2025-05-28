@@ -5,15 +5,15 @@ from mongoengine import connect, disconnect, get_connection
 
 from gwasstudio.config_manager import ConfigurationManager
 from gwasstudio.mongo.models import EnhancedDataProfile, DataProfile
-from gwasstudio.utils import generate_random_word, compute_sha256
+from gwasstudio.utils import generate_random_word
+from gwasstudio.utils.hashing import Hashing
 
 
 class TestEnhancedDataProfile(unittest.TestCase):
     def setUp(self) -> None:
         self.mec = get_connection()
         self.cm = ConfigurationManager()
-
-        self.data_id = compute_sha256(st=generate_random_word(64))
+        self.data_id = Hashing().compute_hash(st=generate_random_word(64))
         self.study = generate_random_word(250)
         self.project = generate_random_word(250)
 
