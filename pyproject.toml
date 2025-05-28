@@ -1,9 +1,10 @@
 [project]
 name = "gwasstudio"
-version = "0.9.5"
+version = "1.0.0"
 description = ""
 authors = [
-    {name = "Gianmauro Cuccuru",email = "gianmauro.cuccuru@fht.org"}
+    {name = "Gianmauro Cuccuru",email = "gianmauro.cuccuru@fht.org"},
+    {name = "Bruno Ariano",email = "bruno.ariano@fht.org"}
 ]
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
