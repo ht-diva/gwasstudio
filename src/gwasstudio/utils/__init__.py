@@ -144,13 +144,13 @@ def create_tiledb_schema(uri: str, cfg: dict):
             ),
         tiledb.Attr(
                 name="EA",
-                dtype="S1",
+                dtype=str,
                 var=False,
                 filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
             ),
         tiledb.Attr(
                 name="NEA",
-                dtype="S1",
+                dtype=str,
                 var=False,
                 filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
             ),
