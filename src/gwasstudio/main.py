@@ -7,10 +7,7 @@ from gwasstudio import __appname__, __version__, context_settings, log_file, log
 from gwasstudio.cli.export import export
 from gwasstudio.cli.info import info
 from gwasstudio.cli.ingest import ingest
-from gwasstudio.cli.metadata.ingest import meta_ingest
 from gwasstudio.cli.metadata.query import meta_query
-from gwasstudio.cli.metadata.view import meta_view
-from gwasstudio.dask_client import DaskCluster as Cluster, dask_deployment_types
 from gwasstudio.utils.mongo_manager import mongo_deployment_types
 
 
@@ -62,14 +59,14 @@ def configure_logging(stdout, verbosity, _logger):
     cloup.option(
         "--dask-deployment",
         type=click.Choice(["local", "gateway", "slurm", "none"]),
-        default="none",
-        help="The deployment location for the Dask cluster",
+        default="local",
+        help="Specify the deployment environment for the Dask cluster",
     ),
     cloup.option(
         "--mongo-deployment",
         type=click.Choice(mongo_deployment_types),
         default="embedded",
-        help="The deployment location for the MongoDB server",
+        help="Specify the deployment environment for the MongoDB server",
     ),
 )
 @cloup.option_group(
@@ -171,33 +168,26 @@ def cli_init(
     }
 
     batch_sizes = {"gateway": minimum_workers, "slurm": maximum_workers - minimum_workers, "local": local_workers}
-    ctx.obj["dask"] = {"deployment": dask_deployment, "batch_size": batch_sizes.get(dask_deployment, None)}
-    if dask_deployment in dask_deployment_types:
-        cluster = Cluster(
-            dask_deployment=dask_deployment,
-            minimum_workers=minimum_workers,
-            maximum_workers=maximum_workers,
-            memory_workers=memory_workers,
-            cpu_workers=cpu_workers,
-            address=address,
-            local_workers=local_workers,
-            local_threads=local_threads,
-            local_memory=local_memory,
-            walltime=walltime,
-        )
-        client = cluster.get_client()
-        type_cluster = cluster.get_type_cluster()
-        ctx.obj["client"] = client
-        ctx.obj["type_cluster"] = type_cluster
-        ctx.call_on_close(cluster.shutdown)
+    # ctx.obj["dask"] = {"deployment": dask_deployment, "batch_size": batch_sizes.get(dask_deployment, None)}
+    ctx.obj["dask"] = {
+        "deployment": dask_deployment,
+        "batch_size": batch_sizes.get(dask_deployment, None),
+        "minimum_workers": minimum_workers,
+        "maximum_workers": maximum_workers,
+        "memory_workers": memory_workers,
+        "cpu_workers": cpu_workers,
+        "address": address,
+        "local_workers": local_workers,
+        "local_threads": local_threads,
+        "local_memory": local_memory,
+        "walltime": walltime,
+    }
 
 
 def main():
     cli_init.add_command(info)
     cli_init.add_command(export)
     cli_init.add_command(ingest)
-    cli_init.add_command(meta_ingest)
-    cli_init.add_command(meta_view)
     cli_init.add_command(meta_query)
 
     cli_init(obj={})

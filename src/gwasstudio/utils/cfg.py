@@ -25,3 +25,16 @@ def get_tiledb_config(ctx: object) -> Dict[str, str]:
     tiledb_cfg = get_config_from_vault("tiledb", vault_options)
 
     return tiledb_cfg or ctx.obj.get("tiledb")
+
+
+def get_dask_config(ctx: object):
+    """Retrieve Dask configuration from command line options."""
+    return ctx.obj.get("dask")
+
+
+def get_dask_batch_size(ctx: object) -> int:
+    return get_dask_config(ctx).get("batch_size")
+
+
+def get_dask_deployment(ctx: object) -> str:
+    return get_dask_config(ctx).get("deployment")

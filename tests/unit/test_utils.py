@@ -68,6 +68,13 @@ class TestParseUri(unittest.TestCase):
         self.assertEqual(netloc, "")
         self.assertEqual(path, "/root/path")
 
+    def test_valid_file_uri_bis(self):
+        uri = "/root/path"
+        scheme, netloc, path = parse_uri(uri)
+        self.assertEqual(scheme, "")
+        self.assertEqual(netloc, "")
+        self.assertEqual(path, "/root/path")
+
 
 class TestWriteTable(unittest.TestCase):
     def setUp(self):
