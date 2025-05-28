@@ -25,6 +25,7 @@ dependencies = [
     "ruamel-yaml (>=0.18.10,<0.19.0)",
     "hvac (>=2.3.0,<3.0.0)",
     "platformdirs (>=4.3.8,<5.0.0)",
+    "bokeh (>=3.7.3,<4.0.0)",
 ]
 
 [project.scripts]
@@ -53,4 +54,4 @@ extend_exclude = ["scripts"]
 [tool.deptry.per_rule_ignores]
 DEP003 = ["gwasstudio"]
 DEP004 = ["mongomock"]
-DEP002 = ["pyarrow"]
+DEP002 = ["pyarrow", "bokeh"]

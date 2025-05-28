@@ -5,7 +5,7 @@ import cloup
 from dask import delayed, compute
 
 from gwasstudio import logger
-from gwasstudio.dask_client import dask_deployment_types
+from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
 from gwasstudio.utils import create_tiledb_schema, parse_uri, process_and_ingest, check_file_exists
 from gwasstudio.utils.cfg import get_tiledb_config, get_dask_batch_size, get_dask_deployment, get_mongo_uri
 from gwasstudio.utils.metadata import load_metadata, ingest_metadata
@@ -82,11 +82,12 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type):
         logger.info("Starting data ingestion: {} file to process".format(len(input_file_list)))
 
         scheme, netloc, path = parse_uri(uri)
-        if scheme == "s3":
-            ingest_to_s3(ctx, input_file_list, uri)
-        else:
-            # Assuming file system ingestion if not S3
-            ingest_to_fs(ctx, input_file_list, uri)
+        with manage_daskcluster(ctx):
+            if scheme == "s3":
+                ingest_to_s3(ctx, input_file_list, uri)
+            else:
+                # Assuming file system ingestion if not S3
+                ingest_to_fs(ctx, input_file_list, uri)
 
         logger.info("Ingestion done")
 
