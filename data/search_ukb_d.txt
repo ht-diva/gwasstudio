@@ -3,7 +3,16 @@ study: d
 category: GWAS
 
 trait:
-  - desc: Diseases of the skin and subcutaneous tissue
+  - desc: skin and subcutaneous tissue
+  - desc: Z42
+  - desc: pregnancy
 
 output:
+  - build
+  - population
+  - notes.sex
+  - notes.source_id
+  - total.samples
+  - total.cases
+  - total.controls
   - trait.desc
