@@ -41,9 +41,14 @@ Ingest data in a TileDB-unified dataset.
         default="both",
         help="Choose between metadata ingestion, data ingestion, or both.",
     ),
+    cloup.option(
+        "--pvalue",
+        default=True,
+        help="Indicate whether to ingest the p-value from the summary statistics instead of calculating it (Default: True).",
+    )
 )
 @click.pass_context
-def ingest(ctx, file_path, delimiter, uri, ingestion_type):
+def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
     """
     Ingest data into a TileDB-unified dataset.
 
@@ -84,15 +89,15 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type):
         scheme, netloc, path = parse_uri(uri)
         with manage_daskcluster(ctx):
             if scheme == "s3":
-                ingest_to_s3(ctx, input_file_list, uri)
+                ingest_to_s3(ctx, input_file_list, uri, pvalue)
             else:
                 # Assuming file system ingestion if not S3
-                ingest_to_fs(ctx, input_file_list, uri)
+                ingest_to_fs(ctx, input_file_list, uri, pvalue)
 
         logger.info("Ingestion done")
 
 
-def ingest_to_s3(ctx, input_file_list, uri):
+def ingest_to_s3(ctx, input_file_list, uri, pvalue):
     """
     Ingest data into an S3-based TileDB dataset.
 
@@ -108,7 +113,7 @@ def ingest_to_s3(ctx, input_file_list, uri):
 
     if not does_uri_path_exist(uri, cfg):
         logger.info("Creating TileDB schema")
-        create_tiledb_schema(uri, cfg)
+        create_tiledb_schema(uri, cfg, pvalue)
 
     if get_dask_deployment(ctx) in dask_deployment_types:
         batch_size = get_dask_batch_size(ctx)
@@ -122,7 +127,7 @@ def ingest_to_s3(ctx, input_file_list, uri):
                 logger.warning(f"Skipping files: {skipped_files}")
             # Create a list of delayed tasks
             tasks = [
-                delayed(process_and_ingest)(file_path, uri, cfg) for file_path in batch_files if batch_files[file_path]
+                delayed(process_and_ingest)(file_path, uri, cfg, pvalue) for file_path in batch_files if batch_files[file_path]
             ]
             # Submit tasks and wait for completion
             compute(*tasks)
@@ -131,12 +136,12 @@ def ingest_to_s3(ctx, input_file_list, uri):
         for file_path in input_file_list:
             if Path(file_path).exists():
                 logger.debug(f"processing {file_path}")
-                process_and_ingest(file_path, uri, cfg)
+                process_and_ingest(file_path, uri, cfg, pvalue)
             else:
                 logger.warning(f"skipping {file_path}")
 
 
-def ingest_to_fs(ctx, input_file_list, uri):
+def ingest_to_fs(ctx, input_file_list, uri, pvalue):
     """
     Ingest data into a local file system-based TileDB dataset.
 
@@ -151,7 +156,7 @@ def ingest_to_fs(ctx, input_file_list, uri):
     _, __, path = parse_uri(uri)
     if not Path(path).exists():
         logger.info("Creating TileDB schema")
-        create_tiledb_schema(uri, {})
+        create_tiledb_schema(uri, {}, pvalue)
 
     if get_dask_deployment(ctx) in dask_deployment_types:
         batch_size = get_dask_batch_size(ctx)
@@ -165,7 +170,7 @@ def ingest_to_fs(ctx, input_file_list, uri):
                 logger.warning(f"Skipping files: {skipped_files}")
             # Create a list of delayed tasks
             tasks = [
-                delayed(process_and_ingest)(file_path, uri, {}) for file_path in batch_files if batch_files[file_path]
+                delayed(process_and_ingest)(file_path, uri, {}, pvalue) for file_path in batch_files if batch_files[file_path]
             ]
             # Submit tasks and wait for completion
             compute(*tasks)
@@ -174,6 +179,6 @@ def ingest_to_fs(ctx, input_file_list, uri):
         for file_path in input_file_list:
             if Path(file_path).exists():
                 logger.debug(f"processing {file_path}")
-                process_and_ingest(file_path, uri, {})
+                process_and_ingest(file_path, uri, {}, pvalue)
             else:
                 logger.warning(f"{file_path} not found. Skipping it")
