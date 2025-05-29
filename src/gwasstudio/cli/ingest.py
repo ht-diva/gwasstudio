@@ -11,7 +11,6 @@ from gwasstudio.utils.cfg import get_tiledb_config, get_dask_batch_size, get_das
 from gwasstudio.utils.metadata import load_metadata, ingest_metadata
 from gwasstudio.utils.mongo_manager import manage_mongo
 from gwasstudio.utils.s3 import does_uri_path_exist
-from dask import delayed, compute
 
 help_doc = """
 Ingest data in a TileDB-unified dataset.
