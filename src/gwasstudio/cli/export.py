@@ -7,11 +7,14 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import tiledb
 from dask import delayed, compute
+import numpy as np
+from scipy import stats
+
 
 from gwasstudio import logger
 from gwasstudio.methods.locus_breaker import locus_breaker
 from gwasstudio.mongo.models import EnhancedDataProfile
-from gwasstudio.utils import check_file_exists, write_table
+from gwasstudio.utils import check_file_exists, write_table, get_p_value_from_z
 from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config
 from gwasstudio.utils.metadata import (
     load_search_topics,
@@ -25,15 +28,18 @@ def _process_locusbreaker(tiledb_unified, trait, maf, hole_size, pvalue_sig, pva
     """Process data using the locus breaker algorithm."""
     logger.info("Running locus breaker")
     subset_SNPs_pd = tiledb_unified.query(
-        cond=f"EAF > {maf} and EAF < {1 - float(maf)}",
         dims=["CHR", "POS", "TRAITID"],
-        attrs=["SNPID", "BETA", "SE", "EAF", "MLOG10P"],
+        attrs=[ "BETA", "SE", "EAF", "EA", "NEA"],
     ).df[:, :, trait]
-
+    #Filter by MAF
+    subset_SNPs_pd = subset_SNPs_pd[(subset_SNPs_pd["EAF"] >= maf) & (subset_SNPs_pd["EAF"] <= (1 - maf))]
+    subset_SNPs_pd["PVAL"] = (
+        subset_SNPs_pd["BETA"] / subset_SNPs_pd["SE"]
+    ).abs().apply(lambda x: get_p_value_from_z(x))
+    # Convert to log10 scale for PVAL
     results_lb_segments, results_lb_intervals = locus_breaker(
         subset_SNPs_pd, hole_size=hole_size, pvalue_sig=pvalue_sig, pvalue_limit=pvalue_limit, phenovar=phenovar
     )
-
     logger.info(f"Saving locus-breaker output in {output_file} segments and intervals")
     kwargs = {"index": False}
     write_table(results_lb_segments, f"{output_file}_{trait}_segments", logger, file_format="csv", **kwargs)
@@ -61,7 +67,10 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
             tiledb_iterator_query = tiledb_unified.query(
                 dims=["CHR", "POS", "TRAITID"], attrs=attr.split(","), return_arrow=True
             ).df[chromosomes, unique_positions, trait]
-
+            # Comute p-value from beta and se
+            tiledb_iterator_query["PVAL"] = ( 
+                1 - tiledb_iterator_query["BETA"] / tiledb_iterator_query["SE"]
+            ).abs().apply(lambda x:  get_p_value_from_z(x))
             tiledb_iterator_query_df = tiledb_iterator_query.to_pandas()
             kwargs = {"header": False, "index": False, "mode": "a"}
             write_table(tiledb_iterator_query_df, f"{output_file}_{trait}", logger, file_format="csv", **kwargs)
@@ -72,10 +81,12 @@ def _export_all_stats(tiledb_unified, trait_id_list, output_file):
     for trait in trait_id_list:
         tiledb_query = tiledb_unified.query(
             dims=["CHR", "POS", "TRAITID"],
-            attrs=["SNPID", "BETA", "SE", "EAF", "MLOG10P"],
+            attrs=["BETA", "SE", "EAF", "EA", "NEA"],
             return_arrow=True,
         ).df[:, :, trait]
         kwargs = {"index": False}
+        # Compute p-value from beta and se
+        tiledb_query["PVAL"] = (1 - tiledb_query["BETA"] / tiledb_query["SE"]).abs().apply(lambda x:  get_p_value_from_z(x))
         write_table(tiledb_query.to_pandas(), f"{output_file}_{trait}", logger, file_format="parquet", **kwargs)
 
 
@@ -97,9 +108,11 @@ def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
 
         arrow_tables.append(arrow_table)
 
+
+
     # Concatenate all Arrow tables
     concatenated = pa.concat_tables(arrow_tables)
-
+    concatenated["PVAL"] = (1 - concatenated["BETA"] / concatenated["SE"]).abs().apply(lambda x:  get_p_value_from_z(x))
     # Write to Parquet
     pq.write_table(concatenated, f"{output_file}_{trait}.parquet")
 
@@ -128,8 +141,8 @@ Export summary statistics from TileDB datasets with various filtering options.
 @cloup.option_group(
     "Locusbreaker options",
     cloup.option("--locusbreaker", default=False, is_flag=True, help="Option to run locusbreaker"),
-    cloup.option("--pvalue-sig", default=5.0, help="Maximum log p-value threshold within the window"),
-    cloup.option("--pvalue-limit", default=3.3, help="Log p-value threshold for loci borders"),
+    cloup.option("--pvalue-sig", default=5e-08, help="Minimum p-value threshold within the window"),
+    cloup.option("--pvalue-limit", default=5e-06, help="p-value threshold for loci borders"),
     cloup.option(
         "--hole-size",
         default=250000,
@@ -166,7 +179,7 @@ Export summary statistics from TileDB datasets with various filtering options.
         "--nest",
         default=False,
         is_flag=True,
-        help="Estimate effective population size",
+        help="Estimate effective population size (work in progress not yet available)",
     ),
 )
 @click.pass_context
