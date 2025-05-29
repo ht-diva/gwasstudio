@@ -6,8 +6,8 @@ from dask import delayed, compute
 
 from gwasstudio import logger
 from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
-from gwasstudio.utils import create_tiledb_schema, parse_uri, process_and_ingest, check_file_exists
 from gwasstudio.utils.cfg import get_tiledb_config, get_dask_batch_size, get_dask_deployment, get_mongo_uri
+from gwasstudio.utils import create_tiledb_schema, parse_uri, process_and_ingest, check_file_exists
 from gwasstudio.utils.metadata import load_metadata, ingest_metadata
 from gwasstudio.utils.mongo_manager import manage_mongo
 from gwasstudio.utils.s3 import does_uri_path_exist
@@ -28,12 +28,12 @@ Ingest data in a TileDB-unified dataset.
     cloup.option(
         "--delimiter",
         default="\t",
-        help="Character or regex pattern to treat as the delimiter.",
+        help="Character or regex pattern to treat as the delimiter for the metadata file.",
     ),
     cloup.option(
         "--uri",
         default=None,
-        help="Destination path where to store the tiledb dataset. The prefix must be s3:// or file://",
+        help="Destination path where to store the tiledb dataset. The prefix must be s3:// for S3 filder or your local path",
     ),
     cloup.option(
         "--ingestion-type",
@@ -97,13 +97,6 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
         logger.info("Ingestion done")
 
 
-def check_file_exists(input_file_list, logger):
-    """Check if the input files exist."""
-    for file_path in input_file_list:
-        if not Path(file_path).exists():
-            logger.error(f"File {file_path} does not exist")
-            return False
-    return True
 
 def ingest_to_s3(ctx, input_file_list, uri, pvalue):
     """

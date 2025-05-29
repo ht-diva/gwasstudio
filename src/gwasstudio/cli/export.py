@@ -82,7 +82,7 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
 
             tiledb_iterator_query = tiledb_unified.query(
                 dims=["CHR", "POS", "TRAITID"], attrs=attr.split(","), return_arrow=True
-            ).df[chromosomes, unique_positions, trait]
+            ).df[chromosomes, trait, unique_positions]
             tiledb_iterator_query_df = tiledb_iterator_query.to_pandas()
             # Comute p-value from beta and se
             if("MLOG10P" not in tiledb_iterator_query_df.columns):
@@ -97,10 +97,8 @@ def _export_all_stats(tiledb_unified, trait_id_list, output_file):
     """Export all summary statistics."""
     for trait in trait_id_list:
         tiledb_query = tiledb_unified.query(
-            dims=["CHR", "POS", "TRAITID"],
-            attrs=["BETA", "SE", "EAF", "EA", "NEA"],
-            return_arrow=True,
-        ).df[:, :, trait]
+            return_arrow=True
+        ).df[:, trait, :]
         kwargs = {"index": False}
         # Compute p-value from beta and se
         tiledb_query_df = tiledb_query.to_pandas()
@@ -122,7 +120,7 @@ def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
 
         # Query TileDB and convert directly to Arrow table
         arrow_table = tiledb_unified.query(attrs=attr.split(","), dims=["CHR", "POS", "TRAITID"], return_arrow=True).df[
-            chr, min_pos:max_pos, trait
+            chr, trait, min_pos:max_pos
         ]
 
         arrow_tables.append(arrow_table)
@@ -171,9 +169,9 @@ Export summary statistics from TileDB datasets with various filtering options.
     "TileDB options",
     cloup.option("--uri", required=True, default=None, help="TileDB dataset URI"),
     cloup.option("--output-prefix", default="out", help="Prefix to be used for naming the output files"),
-    cloup.option("--search-file", required=True, default=None, help="The search file used for querying metadata"),
+    cloup.option("--search-file", required=True, default=None, help="The search file used for fiing metadata"),
     cloup.option(
-        "--attr", required=True, default="BETA,SE,EAF", help="string delimited by comma with the attributes to export"
+        "--attr", required=True, default="BETA,SE,EAF,MLOG10P", help="string delimited by comma with the attributes to export"
     ),
 )
 @cloup.option_group(
@@ -205,13 +203,13 @@ Export summary statistics from TileDB datasets with various filtering options.
     cloup.option(
         "--maf",
         default=0.01,
-        help="MAF filter to apply to each region",
+        help="MAF filter to apply after filtering",
     ),
     cloup.option(
         "--phenovar",
         default=False,
         is_flag=True,
-        help="Boolean to compute phenovariance",
+        help="Boolean to compute phenotypic variance only in case the entire traits are printed (work in progress not yet available)"
     ),
     cloup.option(
         "--nest",
