@@ -14,8 +14,8 @@ from scipy import stats
 from gwasstudio import logger
 from gwasstudio.methods.locus_breaker import locus_breaker
 from gwasstudio.mongo.models import EnhancedDataProfile
-from gwasstudio.utils import check_file_exists, write_table, get_p_value_from_z
-from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config
+from gwasstudio.utils import check_file_exists, write_table
+from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size
 from gwasstudio.utils.metadata import (
     load_search_topics,
     query_mongo_obj,
@@ -50,6 +50,22 @@ def _process_locusbreaker(tiledb_unified, trait, maf, hole_size, pvalue_sig, pva
 def _delayed_locus_breaker(tiledb_unified, trait, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_file):
     # Call locus_breaker with Dask delayed option
     return _process_locusbreaker(tiledb_unified, trait, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_file)
+
+
+def _process_locusbreaker_tasks(
+    tiledb_unified, trait_id_list, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_prefix, batch_size
+):
+    """Process locus breaker tasks in batches."""
+    tasks = []
+    for trait in trait_id_list:
+        task = _delayed_locus_breaker(
+            tiledb_unified, trait, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_prefix
+        )
+        tasks.append(task)
+    for i in range(0, len(tasks), batch_size):
+        logger.info(f"Batch {i} of {len(tasks)}")
+        batch = tasks[i : i + batch_size]
+        compute(*batch)
 
 
 def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output_file):
@@ -121,6 +137,24 @@ def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
 def _delayed_process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
     # Call locus_breaker with Dask delayed option
     return _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file)
+
+
+def _process_region_tasks(tiledb_unified, bed_region, trait_id_list, maf, attr, output_prefix, batch_size):
+    """Process region tasks in batches."""
+    grouped = bed_region.groupby("CHR")
+    tasks = []
+    if batch_size == 1:
+        for trait in trait_id_list:
+            _process_regions(tiledb_unified, grouped, trait, maf, attr, output_prefix)
+            logger.info(f"Processed trait {trait}")
+    else:
+        for trait in trait_id_list:
+            task = _delayed_process_regions(tiledb_unified, grouped, trait, maf, attr, output_prefix)
+            tasks.append(task)
+        for i in range(0, len(tasks), batch_size):
+            logger.info(f"Batch {i} of {len(tasks)}")
+            batch = tasks[i : i + batch_size]
+            compute(*batch)
 
 
 help_doc = """
@@ -224,18 +258,19 @@ def export(
 
         # Process according to selected options
 
-        batch_size = ctx.obj["dask"]["batch_size"]
+        batch_size = get_dask_batch_size(ctx)
         if locusbreaker:
-            tasks = []
-            for trait in trait_id_list:
-                task = _delayed_locus_breaker(
-                    tiledb_unified, trait, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_prefix
-                )
-                tasks.append(task)
-            for i in range(0, len(tasks), batch_size):
-                print(f"Batch {i} of {len(tasks)}")
-                batch = tasks[i : i + batch_size]
-                compute(*batch)
+            _process_locusbreaker_tasks(
+                tiledb_unified,
+                trait_id_list,
+                maf,
+                hole_size,
+                pvalue_sig,
+                pvalue_limit,
+                phenovar,
+                output_prefix,
+                batch_size,
+            )
 
         elif snp_list:
             _process_snp_list(tiledb_unified, snp_list, trait_id_list, attr, output_prefix)
@@ -243,20 +278,6 @@ def export(
             bed_region = pd.read_csv(get_regions, sep="\t", header=None)
             bed_region.columns = ["CHR", "START", "END"]
             bed_region["CHR"] = bed_region["CHR"].astype(int)
-            grouped = bed_region.groupby("CHR")
-            tasks = []
-            if batch_size == 1:
-                for trait in trait_id_list:
-                    _process_regions(tiledb_unified, grouped, trait, maf, attr, output_prefix)
-                    print(trait)
-            else:
-                for trait in trait_id_list:
-                    task = _delayed_process_regions(tiledb_unified, grouped, trait, maf, attr, output_prefix)
-                    tasks.append(task)
-                for i in range(0, len(tasks), batch_size):
-                    print(f"Batch {i} of {len(tasks)}")
-                    batch = tasks[i : i + batch_size]
-                    compute(*batch)
-
+            _process_region_tasks(tiledb_unified, bed_region, trait_id_list, maf, attr, output_prefix, batch_size)
         else:
             _export_all_stats(tiledb_unified, trait_id_list, output_prefix)

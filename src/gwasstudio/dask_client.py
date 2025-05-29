@@ -1,17 +1,35 @@
+from contextlib import contextmanager
+
 from dask.distributed import Client
 from dask.distributed import LocalCluster
 from dask_gateway import Gateway
 from dask_jobqueue import SLURMCluster as Cluster
 
 from gwasstudio import logger
+from gwasstudio.utils.cfg import get_dask_config
 
 dask_deployment_types = ["local", "gateway", "slurm"]
 
 
+@contextmanager
+def manage_daskcluster(ctx):
+    dask_ctx = get_dask_config(ctx)
+    cluster = DaskCluster(**dask_ctx)
+    client = cluster.get_client()
+    logger.debug(f"Dask client: {client}")
+    logger.info(f"Dask cluster dashboard: {cluster.dashboard_link}")
+    try:
+        yield
+    except Exception as e:
+        logger.error(f"Error occurred: {e}")
+        raise
+    finally:
+        cluster.shutdown()
+
+
 # config in $HOME/.config/dask/jobqueue.yaml
 class DaskCluster:
-    def __init__(self, dask_deployment=None, **kwargs):
-        # _dask_distribute = kwargs.get("dask_distribute")
+    def __init__(self, deployment=None, **kwargs):
         _address = kwargs.get("address")
         _cpu_dist = kwargs.get("cpu_workers")
         _min_dist = kwargs.get("minimum_workers")
@@ -22,7 +40,7 @@ class DaskCluster:
         _threads_memory = kwargs.get("local_memory")
         _walltime = kwargs.get("walltime")
 
-        if dask_deployment == "gateway":
+        if deployment == "gateway":
             if _address:
                 gateway = Gateway(address=_address, auth="kerberos")
                 options = gateway.cluster_options()
@@ -44,7 +62,7 @@ class DaskCluster:
             else:
                 raise ValueError("Address must be provided for gateway deployment")
 
-        elif dask_deployment == "slurm":
+        elif deployment == "slurm":
             cluster = Cluster(memory=_mem_dist, cores=_cpu_dist, processes=1, walltime=_walltime)
             cluster.scale(_min_dist)
             logger.info(
@@ -53,7 +71,7 @@ class DaskCluster:
             self.client = Client(cluster)  # Connect to that cluster
             self.type_cluster = type(cluster)
 
-        elif dask_deployment == "local":
+        elif deployment == "local":
             cluster = LocalCluster(
                 n_workers=_workers_local,
                 threads_per_worker=_threads_local,
@@ -70,15 +88,17 @@ class DaskCluster:
 
         self.dashboard = self.client.dashboard_link
 
+    @property
+    def dashboard_link(self):
+        if self.dashboard is None:
+            raise ValueError("Dashboard link is not available. Please start the cluster first.")
+        return self.dashboard
+
     def get_client(self):
         return self.client
 
     def get_type_cluster(self):
         return self.type_cluster
-
-    def get_dashboard(self):
-        print(f"Dashboard available at {self.dashboard}")
-        return self.dashboard
 
     def shutdown(self):
         if self.client:

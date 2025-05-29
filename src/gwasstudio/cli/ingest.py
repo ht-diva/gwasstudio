@@ -5,7 +5,7 @@ import cloup
 from dask import delayed, compute
 
 from gwasstudio import logger
-from gwasstudio.dask_client import dask_deployment_types
+from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
 from gwasstudio.utils import create_tiledb_schema, parse_uri, process_and_ingest, check_file_exists
 from gwasstudio.utils.cfg import get_tiledb_config, get_dask_batch_size, get_dask_deployment, get_mongo_uri
 from gwasstudio.utils.metadata import load_metadata, ingest_metadata
