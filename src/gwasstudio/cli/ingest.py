@@ -12,7 +12,6 @@ from gwasstudio.utils.metadata import load_metadata, ingest_metadata
 from gwasstudio.utils.mongo_manager import manage_mongo
 from gwasstudio.utils.s3 import does_uri_path_exist
 from dask import delayed, compute
-import pandas as pd
 
 help_doc = """
 Ingest data in a TileDB-unified dataset.
