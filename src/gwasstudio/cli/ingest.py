@@ -50,7 +50,7 @@ Ingest data in a TileDB-unified dataset.
     )
 )
 @click.pass_context
-def ingest(ctx, file_path, delimiter, uri, ingestion_type):
+def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
     """
     Ingest data into a TileDB-unified dataset.
 
@@ -91,10 +91,10 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type):
         scheme, netloc, path = parse_uri(uri)
         with manage_daskcluster(ctx):
             if scheme == "s3":
-                ingest_to_s3(ctx, input_file_list, uri)
+                ingest_to_s3(ctx, input_file_list, uri, pvalue)
             else:
                 # Assuming file system ingestion if not S3
-                ingest_to_fs(ctx, input_file_list, uri)
+                ingest_to_fs(ctx, input_file_list, uri, pvalue)
 
         logger.info("Ingestion done")
 
@@ -107,7 +107,7 @@ def check_file_exists(input_file_list, logger):
             return False
     return True
 
-def ingest_to_s3(ctx, input_file_list, uri):
+def ingest_to_s3(ctx, input_file_list, uri, pvalue):
     """
     Ingest data into an S3-based TileDB dataset.
 
@@ -122,7 +122,7 @@ def ingest_to_s3(ctx, input_file_list, uri):
     cfg = get_tiledb_config(ctx)
     if not does_uri_path_exist(uri, cfg):
         logger.info("Creating TileDB schema")
-        create_tiledb_schema(uri, cfg)
+        create_tiledb_schema(uri, cfg, pvalue)
     batch_size = ctx.obj["dask"]["batch_size"]
     for file_path in input_file_list:
         if Path(file_path).exists():
@@ -134,7 +134,7 @@ def ingest_to_s3(ctx, input_file_list, uri):
         for i in range(0, len(input_file_list), batch_size):
             batch_files = input_file_list[i : i + batch_size]
             tasks = [
-                delayed(process_and_ingest)(file, uri, cfg) for file in batch_files
+                delayed(process_and_ingest)(file, uri, cfg, pvalue) for file in batch_files
             ]
             # Submit tasks and wait for completion
             compute(*tasks)
@@ -142,10 +142,10 @@ def ingest_to_s3(ctx, input_file_list, uri):
     else:
         # Process files in batches
         for file_path in input_file_list:
-            process_and_ingest(file_path, uri, cfg)
+            process_and_ingest(file_path, uri, cfg, pvalue)
 
 
-def ingest_to_fs(ctx, input_file_list, uri):
+def ingest_to_fs(ctx, input_file_list, uri, pvalue):
     """
     Ingest data into a local file system-based TileDB dataset.
 
@@ -160,16 +160,16 @@ def ingest_to_fs(ctx, input_file_list, uri):
     _, __, path = parse_uri(uri)
     batch_size = ctx.obj["dask"]["batch_size"]
     if not Path(path).exists():
-        create_tiledb_schema(uri, {})
+        create_tiledb_schema(uri, {}, pvalue)
         for i in range(0, len(input_file_list), batch_size):
             batch_files = input_file_list[i : i + batch_size]
             tasks = [
-                delayed(process_and_ingest)(file, uri, {}) for file in batch_files
+                delayed(process_and_ingest)(file, uri, {}, pvalue) for file in batch_files
             ]
             # Submit tasks and wait for completion
             compute(*tasks)
             logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)
     else:
         for file_path in input_file_list:
-            process_and_ingest(file_path, uri, {})
+            process_and_ingest(file_path, uri, {}, pvalue)
 
