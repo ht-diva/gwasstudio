@@ -87,6 +87,16 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
                     1 - tiledb_iterator_query["BETA"] / tiledb_iterator_query["SE"]
                 ).abs().apply(lambda x:  get_log_p_value_from_z(x))
             tiledb_iterator_query_df = tiledb_iterator_query.to_pandas()
+            if "SNPID" in attr.split(","):
+                tiledb_iterator_query_df["SNPID"] = (
+                    tiledb_iterator_query_df["CHR"].astype(str)
+                    + ":"
+                    + tiledb_iterator_query_df["POS"].astype(str)
+                    + ":"
+                    + tiledb_iterator_query_df["EA"]
+                    + ":"
+                    + tiledb_iterator_query_df["NEA"]
+                )   
 
             kwargs = {"header": False, "index": False, "mode": "a"}
             write_table(tiledb_iterator_query_df, f"{output_file}_{trait}", logger, file_format="csv", **kwargs)
@@ -104,6 +114,16 @@ def _export_all_stats(tiledb_unified, trait_id_list, output_file, attr):
             tiledb_query["MLOG10P"] = (
                 tiledb_query["BETA"] / tiledb_query["SE"]
             ).abs().apply(lambda x: get_log_p_value_from_z(x))
+        if "SNPID" in attr.split(","):
+            tiledb_query["SNPID"] = (
+                tiledb_query["CHR"].astype(str)
+                + ":"
+                + tiledb_query["POS"].astype(str)
+                + ":"
+                + tiledb_query["EA"]
+                + ":"
+                + tiledb_query["NEA"]
+            )
         kwargs = {"index": False}
         write_table(tiledb_query.to_pandas(), f"{output_file}_{trait}", logger, file_format="parquet", **kwargs)
 
@@ -111,7 +131,6 @@ def _export_all_stats(tiledb_unified, trait_id_list, output_file, attr):
 def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
     """Process data filtering by genomic regions and output as concatenated Arrow table in Parquet format."""
     arrow_tables = []
-    print(f"trait {trait}")
     for chr, group in bed_region:
         # Get all (start, end) tuples for this chromosome
         min_pos = min(group["START"])
@@ -128,6 +147,18 @@ def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
 
     # Concatenate all Arrow tables
     concatenated = pa.concat_tables(arrow_tables)
+
+    if "SNPID" in attr.split(","):
+        # Create SNPID column if it doesn't exist
+        concatenated = concatenated.append_column(
+            "SNPID",
+            pa.array(
+                [
+                    f"{row['CHR']}:{row['POS']}:{row['EA']}:{row['NEA']}"
+                    for row in concatenated.to_pydict().values()
+                ]
+            ),
+        )
 
     # Write to Parquet
     pq.write_table(concatenated, f"{output_file}_{trait}.parquet")
