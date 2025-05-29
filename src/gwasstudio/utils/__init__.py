@@ -104,7 +104,7 @@ def parse_uri(uri: str) -> tuple[str, str, str]:
 
 
 # Define the TileDB array schema with SNP, gene, and population dimensions
-def create_tiledb_schema(uri: str, cfg: dict):
+def create_tiledb_schema(uri: str, cfg: dict, pval: bool) -> None:
     """
     Create an empty schema for TileDB.
 
@@ -113,54 +113,64 @@ def create_tiledb_schema(uri: str, cfg: dict):
         cfg (dict): A configuration dictionary to use for connecting to S3.
     """
     chrom_domain = (1, 24)
-    pos_domain = (1, 3000000000)
+    pos_domain = (1, 250000000)
     dom = tiledb.Domain(
-        tiledb.Dim(name="CHR", domain=chrom_domain, dtype=np.uint8, var=False),
-        tiledb.Dim(name="POS", domain=pos_domain, dtype=np.uint32, var=False),
-        tiledb.Dim(name="TRAITID", dtype="ascii", var=False),
+        tiledb.Dim(name="CHR", domain=chrom_domain, dtype=np.uint8, var=False, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
+        tiledb.Dim(name="TRAITID", dtype="ascii", var=False, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
+        tiledb.Dim(name="POS", domain=pos_domain, dtype=np.uint32, var=False, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
     )
-    schema = tiledb.ArraySchema(
-        domain=dom,
-        sparse=True,
-        allows_duplicates=True,
-        attrs=[
-            tiledb.Attr(
-                name="BETA",
-                dtype=np.float32,
-                var=False,
-                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-            ),
-            tiledb.Attr(
-                name="SE",
-                dtype=np.float32,
-                var=False,
-                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-            ),
+    attr = [
+        tiledb.Attr(
+            name="BETA",
+            dtype=np.float32,
+            var=False,
+            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
+        ),
+        tiledb.Attr(
+            name="SE",
+            dtype=np.float32,
+            var=False,
+            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
+        ),
+        tiledb.Attr(
+            name="EAF",
+            dtype=np.float32,
+            var=False,
+            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
+        ),
+        tiledb.Attr(
+            name="EA",
+            dtype=str,
+            var=False,
+            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
+        ),
+        tiledb.Attr(
+            name="NEA",
+            dtype=str,
+            var=False,
+            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
+        )
+    ]
+    if pval:
+        attr.append(
             tiledb.Attr(
                 name="MLOG10P",
                 dtype=np.float32,
                 var=False,
                 filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-            ),
-            tiledb.Attr(
-                name="EAF",
-                dtype=np.float32,
-                var=False,
-                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-            ),
-            tiledb.Attr(
-                name="SNPID",
-                dtype="ascii",
-                var=True,
-                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-            ),
-        ],
+            )
+        )
+    schema = tiledb.ArraySchema(
+        domain=dom,
+        sparse=True,
+        allows_duplicates=True,
+        attrs=attr
     )
     ctx = tiledb.Ctx(cfg)
     tiledb.Array.create(uri, schema, ctx=ctx)
 
 
-def process_and_ingest(file_path: str, uri: str, cfg: dict) -> None:
+def process_and_ingest(file_path: str, uri: str, cfg: dict, pval: bool) -> None:
     """
     Process a single file and ingest it in a TileDB
 
@@ -171,42 +181,38 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict) -> None:
     """
 
     # Read file with Dask
+    cols = ["CHR", "POS", "EA", "NEA", "EAF", "SE", "BETA"]
+    if pval:
+        cols.append("MLOG10P")
+    types = {
+        "CHR": np.uint8,
+        "POS": np.uint32,
+        "EA": str,
+        "NEA": str,
+        "EAF": np.float32,
+        "SE": np.float32,
+        "BETA": np.float32,
+    }
+    if pval:
+        types["MLOG10P"] = np.float32
+
     df = pd.read_csv(
         file_path,
         compression="gzip",
         sep="\t",
-        usecols=["CHR", "POS", "SNPID", "EAF", "SE", "BETA", "MLOG10P"],
-        dtype={
-            "CHR": np.uint8,
-            "POS": np.uint32,
-            "SNPID": str,
-            "EAF": np.float32,
-            "SE": np.float32,
-            "BETA": np.float32,
-            "MLOG10P": np.float32,
-        },
+        usecols=cols,
+        dtype=types
     )
     # Add trait_id based on the checksum_dict
     hg = Hashing()
     df["TRAITID"] = hg.compute_hash(fpath=file_path)
-    dtype_tbd = {
-        "CHR": np.uint8,
-        "POS": np.uint32,
-        "SNPID": str,
-        "EAF": np.float32,
-        "SE": np.float32,
-        "BETA": np.float32,
-        "MLOG10P": np.float32,
-        "TRAITID": str,
-    }
     # Store the processed data in TileDB
     ctx = tiledb.Ctx(cfg)
     tiledb.from_pandas(
         uri=uri,
         dataframe=df,
-        index_dims=["CHR", "POS", "TRAITID"],
+        index_dims=["CHR", "TRAITID", "POS"],
         mode="append",
-        column_types=dtype_tbd,
         ctx=ctx,
     )
 
