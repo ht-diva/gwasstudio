@@ -11,7 +11,7 @@ from dask import delayed, compute
 from gwasstudio import logger
 from gwasstudio.methods.locus_breaker import locus_breaker
 from gwasstudio.mongo.models import EnhancedDataProfile
-from gwasstudio.utils import check_file_exists, write_table
+from gwasstudio.utils import check_file_exists, write_table, get_log_p_value_from_z
 from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size
 from gwasstudio.utils.metadata import (
     load_search_topics,
@@ -21,14 +21,18 @@ from gwasstudio.utils.metadata import (
 from gwasstudio.utils.mongo_manager import manage_mongo
 
 
+
 def _process_locusbreaker(tiledb_unified, trait, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_file):
     """Process data using the locus breaker algorithm."""
     logger.info("Running locus breaker")
     subset_SNPs_pd = tiledb_unified.query(
-        cond=f"EAF > {maf} and EAF < {1 - float(maf)}",
-        dims=["CHR", "POS", "TRAITID"],
-        attrs=["SNPID", "BETA", "SE", "EAF", "MLOG10P"],
     ).df[:, :, trait]
+
+    subset_SNPs_pd = subset_SNPs_pd[(subset_SNPs_pd["EAF"] >= maf) & (subset_SNPs_pd["EAF"] <= (1 - maf))]
+    if("MLOG10P" not in subset_SNPs_pd.columns):
+        subset_SNPs_pd["MLOG10P"] = (
+            subset_SNPs_pd["BETA"] / subset_SNPs_pd["SE"]
+        ).abs().apply(lambda x: get_log_p_value_from_z(x))
 
     results_lb_segments, results_lb_intervals = locus_breaker(
         subset_SNPs_pd, hole_size=hole_size, pvalue_sig=pvalue_sig, pvalue_limit=pvalue_limit, phenovar=phenovar
@@ -75,22 +79,31 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
             unique_positions = list(set(positions))
 
             tiledb_iterator_query = tiledb_unified.query(
-                dims=["CHR", "POS", "TRAITID"], attrs=attr.split(","), return_arrow=True
-            ).df[chromosomes, unique_positions, trait]
+                dims=["CHR", "TRAITID", "POS"], attrs=attr.split(","), return_arrow=True
+            ).df[chromosomes, trait, unique_positions]
 
+            if("MLOG10P" not in tiledb_iterator_query_df.columns):
+                tiledb_iterator_query["MLOG10P"] = ( 
+                    1 - tiledb_iterator_query["BETA"] / tiledb_iterator_query["SE"]
+                ).abs().apply(lambda x:  get_log_p_value_from_z(x))
             tiledb_iterator_query_df = tiledb_iterator_query.to_pandas()
+
             kwargs = {"header": False, "index": False, "mode": "a"}
             write_table(tiledb_iterator_query_df, f"{output_file}_{trait}", logger, file_format="csv", **kwargs)
 
 
-def _export_all_stats(tiledb_unified, trait_id_list, output_file):
+def _export_all_stats(tiledb_unified, trait_id_list, output_file, attr):
     """Export all summary statistics."""
     for trait in trait_id_list:
         tiledb_query = tiledb_unified.query(
-            dims=["CHR", "POS", "TRAITID"],
-            attrs=["SNPID", "BETA", "SE", "EAF", "MLOG10P"],
+            dims=["CHR", "TRAITID", "POS"],
+            attrs=attr.split(","),
             return_arrow=True,
-        ).df[:, :, trait]
+        ).df[:, trait, :]
+        if "MLOG10P" not in tiledb_query.columns:
+            tiledb_query["MLOG10P"] = (
+                tiledb_query["BETA"] / tiledb_query["SE"]
+            ).abs().apply(lambda x: get_log_p_value_from_z(x))
         kwargs = {"index": False}
         write_table(tiledb_query.to_pandas(), f"{output_file}_{trait}", logger, file_format="parquet", **kwargs)
 
@@ -108,7 +121,7 @@ def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
 
         # Query TileDB and convert directly to Arrow table
         arrow_table = tiledb_unified.query(attrs=attr.split(","), dims=["CHR", "POS", "TRAITID"], return_arrow=True).df[
-            chr, min_pos:max_pos, trait
+            chr, trait, min_pos:max_pos
         ]
 
         arrow_tables.append(arrow_table)

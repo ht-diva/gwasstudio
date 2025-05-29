@@ -15,6 +15,8 @@ import pandas as pd
 import tiledb
 
 from gwasstudio.utils.hashing import Hashing
+from scipy import stats
+
 
 
 def check_file_exists(input_file: str, logger: object) -> bool:
@@ -278,3 +280,18 @@ def write_table(
         df.to_parquet(output_path, compression=compression, **kwargs)
     elif file_format == "csv":
         df.to_csv(output_path, **kwargs)
+
+def get_log_p_value_from_z(z_score: float) -> float:
+    """
+    Calculate the p-value from a z-score.
+
+    Args:
+        z_score (float): The z-score value.
+
+    Returns:
+        float: The p-value corresponding to the z-score.
+    """
+    # Use the cumulative distribution function (CDF) for the normal distribution
+    p_value = 2 * (1 - stats.norm.cdf(abs(z_score)))
+    log10_p = np.float32(-np.log10(p_value))
+    return log10_p
