@@ -43,6 +43,11 @@ Ingest data in a TileDB-unified dataset.
         default="both",
         help="Choose between metadata ingestion, data ingestion, or both.",
     ),
+    cloup.option(
+        "--pvalue",
+        default=True,
+        help="Indicate whether to ingest the p-value from the summary statistics instead of calculating it (Default: True).",
+    )
 )
 @click.pass_context
 def ingest(ctx, file_path, delimiter, uri, ingestion_type):

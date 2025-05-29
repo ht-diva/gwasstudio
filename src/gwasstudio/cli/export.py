@@ -14,7 +14,7 @@ from scipy import stats
 from gwasstudio import logger
 from gwasstudio.methods.locus_breaker import locus_breaker
 from gwasstudio.mongo.models import EnhancedDataProfile
-from gwasstudio.utils import check_file_exists, write_table, get_p_value_from_z
+from gwasstudio.utils import check_file_exists, write_table, get_log_p_value_from_z
 from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size
 from gwasstudio.utils.metadata import (
     load_search_topics,
@@ -33,13 +33,13 @@ def _process_locusbreaker(tiledb_unified, trait, maf, hole_size, pvalue_sig, pva
     ).df[:, :, trait]
     #Filter by MAF
     subset_SNPs_pd = subset_SNPs_pd[(subset_SNPs_pd["EAF"] >= maf) & (subset_SNPs_pd["EAF"] <= (1 - maf))]
-    subset_SNPs_pd["PVAL"] = (
-        subset_SNPs_pd["BETA"] / subset_SNPs_pd["SE"]
-    ).abs().apply(lambda x: get_p_value_from_z(x))
-    # Convert to log10 scale for PVAL
+    if("MLOG10P" not in subset_SNPs_pd.columns):
+        subset_SNPs_pd["MLOG10P"] = (
+            subset_SNPs_pd["BETA"] / subset_SNPs_pd["SE"]
+        ).abs().apply(lambda x: get_log_p_value_from_z(x))
     results_lb_segments, results_lb_intervals = locus_breaker(
-        subset_SNPs_pd, hole_size=hole_size, pvalue_sig=pvalue_sig, pvalue_limit=pvalue_limit, phenovar=phenovar
-    )
+            subset_SNPs_pd, hole_size=hole_size, pvalue_sig=pvalue_sig, pvalue_limit=pvalue_limit, phenovar=phenovar
+        )
     logger.info(f"Saving locus-breaker output in {output_file} segments and intervals")
     kwargs = {"index": False}
     write_table(results_lb_segments, f"{output_file}_{trait}_segments", logger, file_format="csv", **kwargs)
@@ -83,11 +83,12 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
             tiledb_iterator_query = tiledb_unified.query(
                 dims=["CHR", "POS", "TRAITID"], attrs=attr.split(","), return_arrow=True
             ).df[chromosomes, unique_positions, trait]
-            # Comute p-value from beta and se
-            tiledb_iterator_query["PVAL"] = ( 
-                1 - tiledb_iterator_query["BETA"] / tiledb_iterator_query["SE"]
-            ).abs().apply(lambda x:  get_p_value_from_z(x))
             tiledb_iterator_query_df = tiledb_iterator_query.to_pandas()
+            # Comute p-value from beta and se
+            if("MLOG10P" not in tiledb_iterator_query_df.columns):
+                tiledb_iterator_query["MLOG10P"] = ( 
+                    1 - tiledb_iterator_query["BETA"] / tiledb_iterator_query["SE"]
+                ).abs().apply(lambda x:  get_log_p_value_from_z(x))
             kwargs = {"header": False, "index": False, "mode": "a"}
             write_table(tiledb_iterator_query_df, f"{output_file}_{trait}", logger, file_format="csv", **kwargs)
 
@@ -102,8 +103,10 @@ def _export_all_stats(tiledb_unified, trait_id_list, output_file):
         ).df[:, :, trait]
         kwargs = {"index": False}
         # Compute p-value from beta and se
-        tiledb_query["PVAL"] = (1 - tiledb_query["BETA"] / tiledb_query["SE"]).abs().apply(lambda x:  get_p_value_from_z(x))
-        write_table(tiledb_query.to_pandas(), f"{output_file}_{trait}", logger, file_format="parquet", **kwargs)
+        tiledb_query_df = tiledb_query.to_pandas()
+        if("MLOG10P" not in tiledb_query_df.columns):
+            tiledb_query_df["MLOG10P"] = (1 - tiledb_query_df["BETA"] / tiledb_query_df["SE"]).abs().apply(lambda x:  get_log_p_value_from_z(x))
+        write_table(tiledb_query_df, f"{output_file}_{trait}", logger, file_format="parquet", **kwargs)
 
 
 def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
@@ -128,7 +131,8 @@ def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
 
     # Concatenate all Arrow tables
     concatenated = pa.concat_tables(arrow_tables)
-    concatenated["PVAL"] = (1 - concatenated["BETA"] / concatenated["SE"]).abs().apply(lambda x:  get_p_value_from_z(x))
+    if "MLOG10P" not in concatenated.column_names:
+        concatenated["MLOG10P"] = (1 - concatenated["BETA"] / concatenated["SE"]).abs().apply(lambda x:  get_log_p_value_from_z(x))
     # Write to Parquet
     pq.write_table(concatenated, f"{output_file}_{trait}.parquet")
 
@@ -175,8 +179,8 @@ Export summary statistics from TileDB datasets with various filtering options.
 @cloup.option_group(
     "Locusbreaker options",
     cloup.option("--locusbreaker", default=False, is_flag=True, help="Option to run locusbreaker"),
-    cloup.option("--pvalue-sig", default=5e-08, help="Minimum p-value threshold within the window"),
-    cloup.option("--pvalue-limit", default=5e-06, help="p-value threshold for loci borders"),
+    cloup.option("--pvalue-sig", default=5, help="Minimum p-value threshold within the window"),
+    cloup.option("--pvalue-limit", default=3, help="p-value threshold for loci borders"),
     cloup.option(
         "--hole-size",
         default=250000,

@@ -16,7 +16,7 @@ import tiledb
 
 from gwasstudio.utils.hashing import Hashing
 
-
+    
 def check_file_exists(input_file: str, logger: object) -> bool:
     """
     Check if a file exists and log the appropriate message.
@@ -104,7 +104,7 @@ def parse_uri(uri: str) -> tuple[str, str, str]:
 
 
 # Define the TileDB array schema with SNP, gene, and population dimensions
-def create_tiledb_schema(uri: str, cfg: dict):
+def create_tiledb_schema(uri: str, cfg: dict, use_pval = False) -> None:
     """
     Create an empty schema for TileDB.
 
@@ -114,53 +114,65 @@ def create_tiledb_schema(uri: str, cfg: dict):
     """
     chrom_domain = (1, 24)
     pos_domain = (1, 250000000)
+    
     dom = tiledb.Domain(
         tiledb.Dim(name="CHR", domain=chrom_domain, dtype=np.uint8, var=False,filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
         tiledb.Dim(name="TRAITID", dtype="ascii", var=False,filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
         tiledb.Dim(name="POS", domain=pos_domain, dtype=np.uint32, var=False,filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
     )
-    schema = tiledb.ArraySchema(
-        domain=dom,
-        sparse=True,
-        allows_duplicates=True,
-        attrs=[
-            tiledb.Attr(
-                name="BETA",
-                dtype=np.float32,
-                var=False,
-                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-            ),
-            tiledb.Attr(
-                name="SE",
-                dtype=np.float32,
-                var=False,
-                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-            ),
-            tiledb.Attr(
-                name="EAF",
-                dtype=np.float32,
-                var=False,
-                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-            ),
+    attr = [
         tiledb.Attr(
-                name="EA",
-                dtype=str,
-                var=False,
-                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-            ),
+            name="BETA",
+            dtype=np.float32,
+            var=False,
+            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
+        ),
         tiledb.Attr(
-                name="NEA",
-                dtype=str,
+            name="SE",
+            dtype=np.float32,
+            var=False,
+            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
+        ),
+        tiledb.Attr(
+            name="EAF",
+            dtype=np.float32,
+            var=False,
+            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
+        ),
+        tiledb.Attr(
+            name="EA",
+            dtype=str,
+            var=False,
+            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
+        ),
+        tiledb.Attr(
+            name="NEA",
+            dtype=str,
+            var=False,
+            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
+        ),
+    ]
+
+    if use_pval:
+        attr.append(
+            tiledb.Attr(
+                name="MLOG10P",
+                dtype=np.float32,
                 var=False,
                 filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-            ),
-        ],
+            )
+        )
+        schema = tiledb.ArraySchema(
+            domain=dom,
+            sparse=True,
+            allows_duplicates=True,
+            attrs= attr
     )
     ctx = tiledb.Ctx(cfg)
     tiledb.Array.create(uri, schema, ctx=ctx)
 
 
-def process_and_ingest(file_path: str, uri: str, cfg: dict) -> None:
+def process_and_ingest(file_path: str, uri: str, cfg: dict, use_pval = False) -> None:
     """
     Process a single file and ingest it in a TileDB
 
@@ -171,34 +183,31 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict) -> None:
     """
 
     # Read file with Dask
-    df = pd.read_csv(
-        file_path,
-        compression="gzip",
-        sep="\t",
-        usecols=["CHR", "POS", "EAF", "SE", "BETA", "EA", "NEA"],
-        dtype={
+    col_df = ["CHR", "POS", "EAF", "SE", "BETA", "EA", "NEA", "MLOG10P"]
+    dtype_col = {
             "CHR": np.uint8,
             "POS": np.uint32,
             "EAF": np.float32,
-            "EA": "S1",
-            "NEA": "S1",
+            "EA": str,
+            "NEA": str,
             "SE": np.float32,
             "BETA": np.float32,
-        },
-    )
+            "MLOG10P": np.float32,
+        }
+    if use_pval:
+        col_df.append("MLOG10P")
+        dtype_col["MLOG10P"] = np.float32
+
+    df = pd.read_csv(
+            file_path,
+            compression="gzip",
+            sep="\t",
+            usecols=col_df,
+            dtype=dtype_col
+        )
     # Add trait_id based on the checksum_dict
     hg = Hashing()
     df["TRAITID"] = hg.compute_hash(fpath=file_path)
-    dtype_tbd = {
-        "CHR": np.uint8,
-        "POS": np.uint32,
-        "EAF": np.float32,
-        "SE": np.float32,
-        "BETA": np.float32,
-        "EA": "S1",
-        "NEA": "S1",
-        "TRAITID": str,
-    }
     # Store the processed data in TileDB
     ctx = tiledb.Ctx(cfg)
     tiledb.from_pandas(
@@ -206,28 +215,8 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict) -> None:
         dataframe=df,
         index_dims=["CHR", "POS", "TRAITID"],
         mode="append",
-        column_types=dtype_tbd,
         ctx=ctx,
     )
-
-
-"""
-def process_write_chunk(chunk, SNP_list, file_stream):
-    SNP_list_polars = pl.DataFrame(SNP_list)
-    chunk_polars = pl.DataFrame(chunk)
-    SNP_list_polars = SNP_list_polars.with_columns([pl.col("POS").cast(pl.UInt32)])
-    chunk_polars = chunk_polars.with_columns(
-        pl.col("SNPID").str.split_exact(":", 4)
-        .struct.rename_fields(["chr",'pos','EA','NEA'])
-        .alias("fields")
-    ).unnest('fields')
-
-    # Perform the join operation with Polars
-    subset_SNPs_merge = chunk_polars.join(SNP_list_polars, on=["CHR", "POS", "NEA", "EA"], how="inner")
-    subset_SNPs_merge = subset_SNPs_merge.select('CHR','POS','TRAITID','SNPID','BETA','SE')
-    # Append the merged chunk to CSV
-    subset_SNPs_merge.write_csv(file_stream)
-"""
 
 
 def write_table(
@@ -273,7 +262,7 @@ def write_table(
     elif file_format == "csv":
         df.to_csv(output_path, **kwargs)
 
-def get_p_value_from_z(z_score: float) -> float:
+def get_log_p_value_from_z(z_score: float) -> float:
     """
     Calculate the p-value from a z-score.
 
@@ -285,4 +274,5 @@ def get_p_value_from_z(z_score: float) -> float:
     """
     # Use the cumulative distribution function (CDF) for the normal distribution
     p_value = 2 * (1 - stats.norm.cdf(abs(z_score)))
-    return p_value
+    log10_p = np.float32(-np.log10(p_value))
+    return log10_p

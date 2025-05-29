@@ -22,7 +22,7 @@ def locus_breaker(
         "EA": pd.Series(dtype="object"),
         "NEA": pd.Series(dtype="object"),
         "EAF": pd.Series(dtype=np.float32),
-        "PVAL": pd.Series(dtype=np.float32),
+        "MLOG10P": pd.Series(dtype=np.float32),
         "BETA": pd.Series(dtype=np.float32),
         "SE": pd.Series(dtype=np.float32),
         "TRAITID": pd.Series(dtype="object"),
@@ -42,7 +42,7 @@ def locus_breaker(
         tiledb_results_pd["S"] = 1.0
 
     # Filter rows based on the p_limit threshold
-    tiledb_results_pd = tiledb_results_pd[tiledb_results_pd["PVAL"] < pvalue_limit]
+    tiledb_results_pd = tiledb_results_pd[tiledb_results_pd["MLOG10P"] > pvalue_limit]
     # If no rows remain after filtering, return an empty DataFrame
     if tiledb_results_pd.empty:
         return pd.DataFrame(expected_schema)
@@ -58,17 +58,17 @@ def locus_breaker(
 
         # Group by the identified regions within the chromosome
         for _, group_df in chrom_df.groupby(group):
-            if group_df["PVAL"].min() < pvalue_sig:
+            if group_df["MLOG10P"].max() > pvalue_sig:
                 lower_pos = group_df["POS"].min()
                 if int(lower_pos) - 100000 < 0:
                     start_pos = 1
                 else:
                     start_pos = lower_pos - 100000
                 end_pos = group_df["POS"].max() + 100000
-                best_snp = group_df.loc[group_df["PVAL"].idxmin()]
+                best_snp = group_df.loc[group_df["MLOG10P"].idxmax()]
                 locus = str(group_df["CHR"].iloc[0]) + ":" + str(start_pos) + ":" + str(end_pos)
 
-                line_res = [start_pos, end_pos, best_snp["POS"], best_snp["PVAL"]] + best_snp.tolist()
+                line_res = [start_pos, end_pos, best_snp["POS"], best_snp["MLOG10P"]] + best_snp.tolist()
                 trait_res.append(line_res)
                 expanded_snps = original_data[
                     (original_data["CHR"] == group_df["CHR"].iloc[0])
@@ -82,7 +82,7 @@ def locus_breaker(
                     snp_res = [
                         locus,
                         snp_row["POS"],
-                        snp_row["PVAL"],
+                        snp_row["MLOG10P"],
                     ] + snp_row.tolist()
                     trait_res_allsnp.append(snp_res)
 
