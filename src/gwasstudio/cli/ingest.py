@@ -37,9 +37,15 @@ Ingest data in a TileDB-unified dataset.
         default=None,
         help="Destination path where to store the tiledb dataset. The prefix must be s3:// or file://",
     ),
+    cloup.option(
+        "--ingestion-type",
+        type=click.Choice(["metadata", "data", "both"], case_sensitive=False),
+        default="both",
+        help="Choose between metadata ingestion, data ingestion, or both.",
+    ),
 )
 @click.pass_context
-def ingest(ctx, file_path, delimiter, uri):
+def ingest(ctx, file_path, delimiter, uri, ingestion_type):
     """
     Ingest data into a TileDB-unified dataset.
 
@@ -52,6 +58,7 @@ def ingest(ctx, file_path, delimiter, uri):
         file_path (str): Path to the tabular file containing details for the ingestion.
         delimiter (str): Character or regex pattern to treat as the delimiter.
         uri (str): Destination path where to store the tiledb dataset.
+        ingestion_type (str): Choose between metadata ingestion, data ingestion, or both.
 
     Raises:
         ValueError: If the file does not exist or required columns are missing.
@@ -67,21 +74,24 @@ def ingest(ctx, file_path, delimiter, uri):
     if missing_cols:
         raise ValueError(f"Missing column(s) in the input file: {', '.join(missing_cols)}")
 
-    with manage_mongo(ctx):
-        mongo_uri = get_mongo_uri(ctx)
-        ingest_metadata(df, mongo_uri)
+    if ingestion_type in ["metadata", "both"]:
+        with manage_mongo(ctx):
+            mongo_uri = get_mongo_uri(ctx)
+            ingest_metadata(df, mongo_uri)
 
-    input_file_list = df["file_path"].tolist()
-    logger.info("Starting data ingestion: {} file to process".format(len(input_file_list)))
+    if ingestion_type in ["data", "both"]:
+        input_file_list = df["file_path"].tolist()
+        logger.info("Starting data ingestion: {} file to process".format(len(input_file_list)))
 
-    scheme, netloc, path = parse_uri(uri)
-    if scheme == "s3":
-        ingest_to_s3(ctx, input_file_list, uri)
-    elif scheme == "file":
-        ingest_to_fs(ctx, input_file_list, uri)
-    else:
-        logger.error(f"Do not recognize the uri's scheme: {uri}")
-        exit()
+        scheme, netloc, path = parse_uri(uri)
+        with manage_daskcluster(ctx):
+            if scheme == "s3":
+                ingest_to_s3(ctx, input_file_list, uri)
+            else:
+                # Assuming file system ingestion if not S3
+                ingest_to_fs(ctx, input_file_list, uri)
+
+        logger.info("Ingestion done")
 
 
 def check_file_exists(input_file_list, logger):
