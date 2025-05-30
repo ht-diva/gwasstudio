@@ -3,8 +3,6 @@ from pathlib import Path
 import click
 import cloup
 import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
 import tiledb
 from dask import delayed, compute
 
@@ -70,14 +68,14 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
     SNP_list = SNP_list[SNP_list["CHR"].astype(str).str.isnumeric()]
     chromosomes_dict = SNP_list.groupby("CHR")["POS"].apply(list).to_dict()
     # parallelize by n_workers traits at a time with dask the query on tiledb
-
+    attributes = attr.split(",")
     for trait in trait_id_list:
         for chrom, positions in chromosomes_dict.items():
             chromosome = int(chrom)
             unique_positions = list(set(positions))
 
             tiledb_iterator_query_df = (
-                tiledb_unified.query(dims=["CHR", "TRAITID", "POS"], attrs=attr.split(","), return_arrow=True)
+                tiledb_unified.query(dims=["CHR", "TRAITID", "POS"], attrs=attributes, return_arrow=True)
                 .df[chromosome, trait, unique_positions]
                 .to_pandas()
             )
@@ -89,7 +87,7 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
                     .apply(lambda x: get_log_p_value_from_z(x))
                 )
 
-            if "SNPID" in attr.split(","):
+            if "SNPID" in attributes:
                 tiledb_iterator_query_df["SNPID"] = (
                     tiledb_iterator_query_df["CHR"].astype(str)
                     + ":"
@@ -106,33 +104,41 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
 
 def _export_all_stats(tiledb_unified, trait_id_list, output_file, attr):
     """Export all summary statistics."""
+    attributes = attr.split(",")
     for trait in trait_id_list:
-        tiledb_query = tiledb_unified.query(
-            dims=["CHR", "TRAITID", "POS"],
-            attrs=attr.split(","),
-            return_arrow=True,
-        ).df[:, trait, :]
-        if "MLOG10P" not in tiledb_query.columns:
-            tiledb_query["MLOG10P"] = (
-                (tiledb_query["BETA"] / tiledb_query["SE"]).abs().apply(lambda x: get_log_p_value_from_z(x))
+        tiledb_query_df = (
+            tiledb_unified.query(
+                dims=["CHR", "TRAITID", "POS"],
+                attrs=attributes,
+                return_arrow=True,
             )
-        if "SNPID" in attr.split(","):
-            tiledb_query["SNPID"] = (
-                tiledb_query["CHR"].astype(str)
+            .df[:, trait, :]
+            .to_pandas()
+        )
+
+        if "MLOG10P" not in tiledb_query_df.columns:
+            tiledb_query_df["MLOG10P"] = (
+                (tiledb_query_df["BETA"] / tiledb_query_df["SE"]).abs().apply(get_log_p_value_from_z)
+            )
+
+        if "SNPID" in attributes:
+            tiledb_query_df["SNPID"] = (
+                tiledb_query_df["CHR"].astype(str)
                 + ":"
-                + tiledb_query["POS"].astype(str)
+                + tiledb_query_df["POS"].astype(str)
                 + ":"
-                + tiledb_query["EA"]
+                + tiledb_query_df["EA"]
                 + ":"
-                + tiledb_query["NEA"]
+                + tiledb_query_df["NEA"]
             )
         kwargs = {"index": False}
-        write_table(tiledb_query.to_pandas(), f"{output_file}_{trait}", logger, file_format="parquet", **kwargs)
+        write_table(tiledb_query_df, f"{output_file}_{trait}", logger, file_format="parquet", **kwargs)
 
 
 def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
-    """Process data filtering by genomic regions and output as concatenated Arrow table in Parquet format."""
-    arrow_tables = []
+    """Process data filtering by genomic regions and output as concatenated DataFrame in Parquet format."""
+    attributes = attr.split(",")
+    dataframes = []
     for chr, group in bed_region:
         # Get all (start, end) tuples for this chromosome
         min_pos = min(group["START"])
@@ -140,27 +146,32 @@ def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
             min_pos = 1
         max_pos = max(group["END"])
 
-        # Query TileDB and convert directly to Arrow table
-        arrow_table = tiledb_unified.query(attrs=attr.split(","), dims=["CHR", "POS", "TRAITID"], return_arrow=True).df[
-            chr, trait, min_pos:max_pos
-        ]
+        # Query TileDB and convert directly to Pandas DataFrame
+        tiledb_query_df = (
+            tiledb_unified.query(attrs=attributes, dims=["CHR", "POS", "TRAITID"], return_arrow=True)
+            .df[chr, trait, min_pos:max_pos]
+            .to_pandas()
+        )
 
-        arrow_tables.append(arrow_table)
+        dataframes.append(tiledb_query_df)
 
-    # Concatenate all Arrow tables
-    concatenated = pa.concat_tables(arrow_tables)
+    # Concatenate all DataFrames
+    concatenated_df = pd.concat(dataframes, ignore_index=True)
 
-    if "SNPID" in attr.split(","):
+    if "SNPID" in attributes:
         # Create SNPID column if it doesn't exist
-        concatenated = concatenated.append_column(
-            "SNPID",
-            pa.array(
-                [f"{row['CHR']}:{row['POS']}:{row['EA']}:{row['NEA']}" for row in concatenated.to_pydict().values()]
-            ),
+        concatenated_df["SNPID"] = (
+            concatenated_df["CHR"].astype(str)
+            + ":"
+            + concatenated_df["POS"].astype(str)
+            + ":"
+            + concatenated_df["EA"]
+            + ":"
+            + concatenated_df["NEA"]
         )
 
     # Write to Parquet
-    pq.write_table(concatenated, f"{output_file}_{trait}.parquet")
+    concatenated_df.to_parquet(f"{output_file}_{trait}.parquet", index=False)
 
 
 @delayed
