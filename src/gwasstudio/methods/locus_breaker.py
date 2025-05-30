@@ -43,7 +43,15 @@ def locus_breaker(
 
     # Filter rows based on the p_limit threshold
     tiledb_results_pd = tiledb_results_pd[tiledb_results_pd["MLOG10P"] > pvalue_limit]
-    tiledb_results_pd["SNPID"] = tiledb_results_pd["CHR"].astype(str) + ":" + tiledb_results_pd["POS"].astype(str) + ":" + tiledb_results_pd["EA"] + ":" + tiledb_results_pd["NEA"]
+    tiledb_results_pd["SNPID"] = (
+        tiledb_results_pd["CHR"].astype(str)
+        + ":"
+        + tiledb_results_pd["POS"].astype(str)
+        + ":"
+        + tiledb_results_pd["EA"]
+        + ":"
+        + tiledb_results_pd["NEA"]
+    )
     # If no rows remain after filtering, return an empty DataFrame
     if tiledb_results_pd.empty:
         return pd.DataFrame(expected_schema)
