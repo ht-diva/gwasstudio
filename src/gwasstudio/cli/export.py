@@ -21,18 +21,16 @@ from gwasstudio.utils.metadata import (
 from gwasstudio.utils.mongo_manager import manage_mongo
 
 
-
 def _process_locusbreaker(tiledb_unified, trait, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_file):
     """Process data using the locus breaker algorithm."""
     logger.info("Running locus breaker")
-    subset_SNPs_pd = tiledb_unified.query(
-    ).df[:, :, trait]
+    subset_SNPs_pd = tiledb_unified.query().df[:, :, trait]
 
     subset_SNPs_pd = subset_SNPs_pd[(subset_SNPs_pd["EAF"] >= maf) & (subset_SNPs_pd["EAF"] <= (1 - maf))]
-    if("MLOG10P" not in subset_SNPs_pd.columns):
+    if "MLOG10P" not in subset_SNPs_pd.columns:
         subset_SNPs_pd["MLOG10P"] = (
-            subset_SNPs_pd["BETA"] / subset_SNPs_pd["SE"]
-        ).abs().apply(lambda x: get_log_p_value_from_z(x))
+            (subset_SNPs_pd["BETA"] / subset_SNPs_pd["SE"]).abs().apply(lambda x: get_log_p_value_from_z(x))
+        )
 
     results_lb_segments, results_lb_intervals = locus_breaker(
         subset_SNPs_pd, hole_size=hole_size, pvalue_sig=pvalue_sig, pvalue_limit=pvalue_limit, phenovar=phenovar
@@ -70,23 +68,27 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
     """Process data filtering by a list of SNPs."""
     SNP_list = pd.read_csv(snp_list_file, usecols=["CHR", "POS"], dtype={"CHR": str, "POS": int})
     SNP_list = SNP_list[SNP_list["CHR"].astype(str).str.isnumeric()]
-    chromosome_dict = SNP_list.groupby("CHR")["POS"].apply(list).to_dict()
+    chromosomes_dict = SNP_list.groupby("CHR")["POS"].apply(list).to_dict()
     # parallelize by n_workers traits at a time with dask the query on tiledb
 
     for trait in trait_id_list:
-        for chrom, positions in chromosome_dict.items():
-            chromosomes = int(chrom)
+        for chrom, positions in chromosomes_dict.items():
+            chromosome = int(chrom)
             unique_positions = list(set(positions))
 
-            tiledb_iterator_query = tiledb_unified.query(
-                dims=["CHR", "TRAITID", "POS"], attrs=attr.split(","), return_arrow=True
-            ).df[chromosomes, trait, unique_positions]
+            tiledb_iterator_query_df = (
+                tiledb_unified.query(dims=["CHR", "TRAITID", "POS"], attrs=attr.split(","), return_arrow=True)
+                .df[chromosome, trait, unique_positions]
+                .to_pandas()
+            )
 
-            if("MLOG10P" not in tiledb_iterator_query_df.columns):
-                tiledb_iterator_query["MLOG10P"] = ( 
-                    1 - tiledb_iterator_query["BETA"] / tiledb_iterator_query["SE"]
-                ).abs().apply(lambda x:  get_log_p_value_from_z(x))
-            tiledb_iterator_query_df = tiledb_iterator_query.to_pandas()
+            if "MLOG10P" not in tiledb_iterator_query_df.columns:
+                tiledb_iterator_query_df["MLOG10P"] = (
+                    (1 - tiledb_iterator_query_df["BETA"] / tiledb_iterator_query_df["SE"])
+                    .abs()
+                    .apply(lambda x: get_log_p_value_from_z(x))
+                )
+
             if "SNPID" in attr.split(","):
                 tiledb_iterator_query_df["SNPID"] = (
                     tiledb_iterator_query_df["CHR"].astype(str)
@@ -96,7 +98,7 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
                     + tiledb_iterator_query_df["EA"]
                     + ":"
                     + tiledb_iterator_query_df["NEA"]
-                )   
+                )
 
             kwargs = {"header": False, "index": False, "mode": "a"}
             write_table(tiledb_iterator_query_df, f"{output_file}_{trait}", logger, file_format="csv", **kwargs)
@@ -112,8 +114,8 @@ def _export_all_stats(tiledb_unified, trait_id_list, output_file, attr):
         ).df[:, trait, :]
         if "MLOG10P" not in tiledb_query.columns:
             tiledb_query["MLOG10P"] = (
-                tiledb_query["BETA"] / tiledb_query["SE"]
-            ).abs().apply(lambda x: get_log_p_value_from_z(x))
+                (tiledb_query["BETA"] / tiledb_query["SE"]).abs().apply(lambda x: get_log_p_value_from_z(x))
+            )
         if "SNPID" in attr.split(","):
             tiledb_query["SNPID"] = (
                 tiledb_query["CHR"].astype(str)
@@ -153,10 +155,7 @@ def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
         concatenated = concatenated.append_column(
             "SNPID",
             pa.array(
-                [
-                    f"{row['CHR']}:{row['POS']}:{row['EA']}:{row['NEA']}"
-                    for row in concatenated.to_pydict().values()
-                ]
+                [f"{row['CHR']}:{row['POS']}:{row['EA']}:{row['NEA']}" for row in concatenated.to_pydict().values()]
             ),
         )
 

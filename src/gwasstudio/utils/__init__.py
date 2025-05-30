@@ -18,7 +18,6 @@ from gwasstudio.utils.hashing import Hashing
 from scipy import stats
 
 
-
 def check_file_exists(input_file: str, logger: object) -> bool:
     """
     Check if a file exists and log the appropriate message.
@@ -117,9 +116,21 @@ def create_tiledb_schema(uri: str, cfg: dict, pval: bool) -> None:
     chrom_domain = (1, 24)
     pos_domain = (1, 250000000)
     dom = tiledb.Domain(
-        tiledb.Dim(name="CHR", domain=chrom_domain, dtype=np.uint8, var=False, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
+        tiledb.Dim(
+            name="CHR",
+            domain=chrom_domain,
+            dtype=np.uint8,
+            var=False,
+            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
+        ),
         tiledb.Dim(name="TRAITID", dtype="ascii", var=False, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
-        tiledb.Dim(name="POS", domain=pos_domain, dtype=np.uint32, var=False, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
+        tiledb.Dim(
+            name="POS",
+            domain=pos_domain,
+            dtype=np.uint32,
+            var=False,
+            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
+        ),
     )
     attr = [
         tiledb.Attr(
@@ -151,7 +162,7 @@ def create_tiledb_schema(uri: str, cfg: dict, pval: bool) -> None:
             dtype=str,
             var=False,
             filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-        )
+        ),
     ]
     if pval:
         attr.append(
@@ -162,12 +173,7 @@ def create_tiledb_schema(uri: str, cfg: dict, pval: bool) -> None:
                 filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
             )
         )
-    schema = tiledb.ArraySchema(
-        domain=dom,
-        sparse=True,
-        allows_duplicates=True,
-        attrs=attr
-    )
+    schema = tiledb.ArraySchema(domain=dom, sparse=True, allows_duplicates=True, attrs=attr)
     ctx = tiledb.Ctx(cfg)
     tiledb.Array.create(uri, schema, ctx=ctx)
 
@@ -198,13 +204,7 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict, pval: bool) -> None:
     if pval:
         types["MLOG10P"] = np.float32
 
-    df = pd.read_csv(
-        file_path,
-        compression="gzip",
-        sep="\t",
-        usecols=cols,
-        dtype=types
-    )
+    df = pd.read_csv(file_path, compression="gzip", sep="\t", usecols=cols, dtype=types)
     # Add trait_id based on the checksum_dict
     hg = Hashing()
     df["TRAITID"] = hg.compute_hash(fpath=file_path)
@@ -280,6 +280,7 @@ def write_table(
         df.to_parquet(output_path, compression=compression, **kwargs)
     elif file_format == "csv":
         df.to_csv(output_path, **kwargs)
+
 
 def get_log_p_value_from_z(z_score: float) -> float:
     """
