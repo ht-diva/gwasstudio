@@ -43,9 +43,10 @@ Ingest data in a TileDB-unified dataset.
     ),
     cloup.option(
         "--pvalue",
+        is_flag=True,
         default=True,
         help="Indicate whether to ingest the p-value from the summary statistics instead of calculating it (Default: True).",
-    )
+    ),
 )
 @click.pass_context
 def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
@@ -62,6 +63,7 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
         delimiter (str): Character or regex pattern to treat as the delimiter.
         uri (str): Destination path where to store the tiledb dataset.
         ingestion_type (str): Choose between metadata ingestion, data ingestion, or both.
+        pvalue (bool): Indicate whether to ingest the p-value from the summary statistics instead of calculating it.
 
     Raises:
         ValueError: If the file does not exist or required columns are missing.
@@ -108,6 +110,7 @@ def ingest_to_s3(ctx, input_file_list, uri, pvalue):
         ctx (click.Context): The click context.
         input_file_list (list): List of file paths to be ingested.
         uri (str): Destination path where to store the tiledb dataset in S3.
+        pvalue (bool): Indicate whether to ingest the p-value from the summary statistics instead of calculating it.
     """
     cfg = get_tiledb_config(ctx)
 
@@ -127,7 +130,9 @@ def ingest_to_s3(ctx, input_file_list, uri, pvalue):
                 logger.warning(f"Skipping files: {skipped_files}")
             # Create a list of delayed tasks
             tasks = [
-                delayed(process_and_ingest)(file_path, uri, cfg, pvalue) for file_path in batch_files if batch_files[file_path]
+                delayed(process_and_ingest)(file_path, uri, cfg, pvalue)
+                for file_path in batch_files
+                if batch_files[file_path]
             ]
             # Submit tasks and wait for completion
             compute(*tasks)
@@ -152,6 +157,7 @@ def ingest_to_fs(ctx, input_file_list, uri, pvalue):
         ctx (click.Context): The click context.
         input_file_list (list): List of file paths to be ingested.
         uri (str): Destination path where to store the tiledb dataset in the local file system.
+        pvalue (bool): Indicate whether to ingest the p-value from the summary statistics instead of calculating it.
     """
     _, __, path = parse_uri(uri)
     if not Path(path).exists():
@@ -170,7 +176,9 @@ def ingest_to_fs(ctx, input_file_list, uri, pvalue):
                 logger.warning(f"Skipping files: {skipped_files}")
             # Create a list of delayed tasks
             tasks = [
-                delayed(process_and_ingest)(file_path, uri, {}, pvalue) for file_path in batch_files if batch_files[file_path]
+                delayed(process_and_ingest)(file_path, uri, {}, pvalue)
+                for file_path in batch_files
+                if batch_files[file_path]
             ]
             # Submit tasks and wait for completion
             compute(*tasks)
