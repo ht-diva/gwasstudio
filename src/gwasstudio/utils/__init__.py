@@ -13,9 +13,9 @@ from typing import Any, Dict
 import numpy as np
 import pandas as pd
 import tiledb
+from scipy import stats
 
 from gwasstudio.utils.hashing import Hashing
-from scipy import stats
 
 
 def check_file_exists(input_file: str, logger: object) -> bool:
@@ -105,7 +105,7 @@ def parse_uri(uri: str) -> tuple[str, str, str]:
 
 
 # Define the TileDB array schema with SNP, gene, and population dimensions
-def create_tiledb_schema(uri: str, cfg: dict, pval: bool) -> None:
+def create_tiledb_schema(uri: str, cfg: dict, ingest_pval: bool) -> None:
     """
     Create an empty schema for TileDB.
 
@@ -164,7 +164,7 @@ def create_tiledb_schema(uri: str, cfg: dict, pval: bool) -> None:
             filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
         ),
     ]
-    if pval:
+    if ingest_pval:
         attr.append(
             tiledb.Attr(
                 name="MLOG10P",
@@ -178,7 +178,7 @@ def create_tiledb_schema(uri: str, cfg: dict, pval: bool) -> None:
     tiledb.Array.create(uri, schema, ctx=ctx)
 
 
-def process_and_ingest(file_path: str, uri: str, cfg: dict, pval: bool) -> None:
+def process_and_ingest(file_path: str, uri: str, cfg: dict, ingest_pval: bool) -> None:
     """
     Process a single file and ingest it in a TileDB
 
@@ -188,10 +188,8 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict, pval: bool) -> None:
         cfg (dict): A configuration dictionary to use for connecting to S3.
     """
 
-    # Read file with Dask
+    # Read the file using pandas
     cols = ["CHR", "POS", "EA", "NEA", "EAF", "SE", "BETA"]
-    if pval:
-        cols.append("MLOG10P")
     types = {
         "CHR": np.uint8,
         "POS": np.uint32,
@@ -201,7 +199,8 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict, pval: bool) -> None:
         "SE": np.float32,
         "BETA": np.float32,
     }
-    if pval:
+    if ingest_pval:
+        cols.append("MLOG10P")
         types["MLOG10P"] = np.float32
 
     df = pd.read_csv(file_path, compression="gzip", sep="\t", usecols=cols, dtype=types)
