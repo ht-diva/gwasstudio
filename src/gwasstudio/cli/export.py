@@ -321,4 +321,4 @@ def export(
             bed_region["CHR"] = bed_region["CHR"].astype(int)
             _process_region_tasks(tiledb_unified, bed_region, trait_id_list, maf, attr, output_prefix, batch_size)
         else:
-            _export_all_stats(tiledb_unified, trait_id_list, output_prefix)
+            _export_all_stats(tiledb_unified, trait_id_list, output_prefix, attr)
