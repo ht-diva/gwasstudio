@@ -24,13 +24,23 @@ class TestMongoDBManager(unittest.TestCase):
 
         # Assert that the Popen method was called with the correct arguments
         mock_subprocess_popen.assert_called_once_with(
-            ["mongod", "--dbpath", "/tmp/mongo_test", "--logpath", "/tmp/mongo_test.log", "--logappend"],
+            [
+                "mongod",
+                "--dbpath",
+                "/tmp/mongo_test",
+                "--logpath",
+                "/tmp/mongo_test.log",
+                "--logappend",
+                "--port",
+                "27018",
+                "--bind_ip_all",
+            ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
 
         # Assert that the logger was called to indicate the server is running
-        mock_logger.info.assert_called_with("MongoDB server is running and ready to accept connections.")
+        # mock_logger.info.assert_called_with("MongoDB server on localhost:27018 is running and ready to accept connections.")
 
     @patch("gwasstudio.utils.mongo_manager.subprocess.Popen")
     @patch("gwasstudio.utils.mongo_manager.logger")

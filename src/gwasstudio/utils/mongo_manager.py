@@ -10,6 +10,18 @@ mongo_deployment_types = ["embedded", "standalone"]
 
 @contextmanager
 def manage_mongo(ctx):
+    """
+    Context manager to handle the lifecycle of MongoDB server.
+
+    Args:
+        ctx: The context object containing configuration details.
+
+    Yields:
+        None
+
+    Raises:
+        Exception: If an error occurs during the MongoDB server management.
+    """
     embedded_mongo = (get_mongo_deployment(ctx) == "embedded") and (get_mongo_uri(ctx) is None)
     logger.debug(f"Embedded MongoDB: {embedded_mongo}")
     mdb = MongoDBManager()
@@ -26,23 +38,52 @@ def manage_mongo(ctx):
 
 
 class MongoDBManager:
+    """
+    Initialize the MongoDBManager with the given database path and log path.
+
+    Args:
+        dbpath (str): The path to the MongoDB database.
+        logpath (str): The path to the MongoDB log file.
+    """
+
     def __init__(self, dbpath=mongo_db_path, logpath=mongo_db_logpath):
         self.dbpath = dbpath
         self.process = None
         self.logpath = logpath
+        self.host = "localhost"
+        self.port = 27018
+        self.timeout = 5
 
     def start(self):
+        """
+        Start the MongoDB server.
+
+        Raises:
+            Exception: If the MongoDB server fails to start.
+        """
         try:
             # Start the MongoDB server
             self.process = subprocess.Popen(
-                ["mongod", "--dbpath", self.dbpath, "--logpath", self.logpath, "--logappend"],
+                [
+                    "mongod",
+                    "--dbpath",
+                    self.dbpath,
+                    "--logpath",
+                    self.logpath,
+                    "--logappend",
+                    "--port",
+                    str(self.port),
+                    "--bind_ip_all",
+                ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
             logger.debug("Attempting to start embedded MongoDB server...")
 
             # Check if the server is running
-            while True:
+            # Wait for the server to start
+            start_time = time.time()
+            while time.time() - start_time < self.timeout:
                 return_code = self.process.poll()
                 if return_code is not None:
                     logger.error("MongoDB server stopped unexpectedly.")
@@ -51,22 +92,39 @@ class MongoDBManager:
                 # Check if the server is ready to accept connections
                 try:
                     # Attempt to connect to the MongoDB server
-                    subprocess.run(
-                        ["mongosh", "--eval", "db.runCommand({ping: 1})"],
-                        check=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
+                    # Run mongostat with one iteration (-n 1) and timeout
+                    result = subprocess.run(
+                        ["mongostat", "--host", f"{self.host}:{self.port}", "-n", "1"],
+                        capture_output=True,
+                        text=True,
+                        timeout=self.timeout,
                     )
-                    logger.info("MongoDB server is running and ready to accept connections.")
+                    # If mongostat returns output containing stats, server is up
+                    if result.returncode == 0 and "insert" in result.stdout:
+                        logger.info(
+                            f"MongoDB server on {self.host}:{self.port} is running and ready to accept connections."
+                        )
+                        break
+                except subprocess.TimeoutExpired:
+                    logger.info("mongostat command timed out. Server may be down or unreachable.")
                     break
-                except subprocess.CalledProcessError:
-                    # Server is not ready yet, wait and try again
-                    time.sleep(1)
+
+                # Sleep for a short period before checking again
+                time.sleep(1)
+
+                # If we reach here, the server did not start within the timeout period
+                logger.error("MongoDB server did not start within the timeout period.")
 
         except Exception as e:
             logger.error(f"Failed to start MongoDB server: {e}")
 
     def stop(self):
+        """
+        Stop the MongoDB server.
+
+        Raises:
+            Exception: If the MongoDB server fails to stop.
+        """
         try:
             # Stop the MongoDB server
             self.process.terminate()
@@ -77,5 +135,8 @@ class MongoDBManager:
             logger.error(f"Failed to stop MongoDB server: {e}")
 
     def __del__(self):
+        """
+        Destructor to ensure the MongoDB server is stopped when the object is deleted.
+        """
         if self.process and self.process.poll() is None:
             self.stop()
