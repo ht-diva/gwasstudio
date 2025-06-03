@@ -87,17 +87,14 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
             chromosome = int(chrom)
             unique_positions = list(set(positions))
 
-            tiledb_iterator_query_df = (
-                tiledb_unified.query(dims=["CHR", "TRAITID", "POS"], attrs=attr.split(","), return_arrow=True)
-                .df[chromosome, trait, unique_positions]
-                .to_pandas()
-            )
+            tiledb_iterator_query_df = tiledb_unified.query(dims=["CHR", "TRAITID", "POS"], attrs=attributes).df[chromosome, trait, unique_positions]
+            
 
             if("MLOG10P" not in tiledb_iterator_query_df.columns):
-                tiledb_iterator_query["MLOG10P"] = ( 
-                    1 - tiledb_iterator_query["BETA"] / tiledb_iterator_query["SE"]
+                tiledb_iterator_query_df["MLOG10P"] = ( 
+                    1 - tiledb_iterator_query_df["BETA"] / tiledb_iterator_query_df["SE"]
                 ).abs().apply(lambda x:  get_log_p_value_from_z(x))
-            tiledb_iterator_query_df = tiledb_iterator_query.to_pandas()
+            tiledb_iterator_query_df = tiledb_iterator_query_df.to_pandas()
             if "SNPID" in attr.split(","):
                 tiledb_iterator_query_df["SNPID"] = (
                     tiledb_iterator_query_df["CHR"].astype(str)
