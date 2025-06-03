@@ -1,7 +1,7 @@
 # MongoDB connection
 mdbc:
   # local
-  uri: "mongodb://localhost:27017/cdh"
+  uri: "mongodb://localhost:27018/cdh"
   # remote
 #  uri: "mongodb://username:password@hostname:27017/dbname?authSource=dbname"
 

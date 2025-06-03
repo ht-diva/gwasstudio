@@ -9,3 +9,4 @@ dependencies:
   - poetry=2.*
   - make
   - mongodb
+  - mongo-tools
