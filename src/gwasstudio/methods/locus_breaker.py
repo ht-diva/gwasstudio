@@ -33,8 +33,6 @@ def locus_breaker(
         print("this region is empty")
         return pd.DataFrame(expected_schema)
 
-    original_data = tiledb_results_pd.copy()
-
     if phenovar:
         pv = compute_pheno_variance(tiledb_results_pd)
         tiledb_results_pd["S"] = pv
@@ -52,6 +50,8 @@ def locus_breaker(
         + ":"
         + tiledb_results_pd["NEA"]
     )
+    original_data = tiledb_results_pd.copy()
+
     # If no rows remain after filtering, return an empty DataFrame
     if tiledb_results_pd.empty:
         return pd.DataFrame(expected_schema)
@@ -59,7 +59,7 @@ def locus_breaker(
     # Group by 'contig' (chromosome) first, then calculate regions within each chromosome
     trait_res = []
     trait_res_allsnp = []
-
+    original_data = tiledb_results_pd.copy()
     for contig, chrom_df in tiledb_results_pd.groupby("CHR"):
         # Find regions where gaps between positions exceed hole_size within each chromosome
         gaps = chrom_df["POS"].diff() > hole_size
@@ -84,14 +84,13 @@ def locus_breaker(
                     & (original_data["POS"] >= start_pos)
                     & (original_data["POS"] <= end_pos)
                 ]
-
+                expanded_snps = expanded_snps.drop(columns=["S"])
                 # Store the interval with the best SNP
                 # Collect all SNPs within the region
                 for _, snp_row in expanded_snps.iterrows():
+                    
                     snp_res = [
                         locus,
-                        snp_row["POS"],
-                        snp_row["MLOG10P"],
                     ] + snp_row.tolist()
                     trait_res_allsnp.append(snp_res)
 
@@ -107,10 +106,10 @@ def locus_breaker(
 
     # Drop specific columns including 'start' and 'end'
     trait_res_df = trait_res_df.drop(columns=["snp_pos", "start", "end"])
-    columns = ["locus", "snp_pos", "snp_MLOG10P"] + tiledb_results_pd.columns.tolist()
+    columns = ["locus"] + tiledb_results_pd.columns.tolist()
     columns.remove("S")
     trait_res_allsnp_df = pd.DataFrame(trait_res_allsnp, columns=columns)
     # trait_res_allsnp_df = trait_res_allsnp_df.drop(trait_res_allsnp_df.columns[0], axis=1)
-    trait_res_allsnp_df = trait_res_allsnp_df.drop(columns=["snp_pos", "snp_MLOG10P"])
+    #trait_res_allsnp_df = trait_res_allsnp_df.drop(columns=["snp_pos", "snp_MLOG10P"])
 
     return [trait_res_df, trait_res_allsnp_df]
