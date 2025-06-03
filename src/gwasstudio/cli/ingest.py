@@ -42,14 +42,14 @@ Ingest data in a TileDB-unified dataset.
         help="Choose between metadata ingestion, data ingestion, or both.",
     ),
     cloup.option(
-        "--pvalue",
+        "--skip-pvalue",
         is_flag=True,
         default=True,
         help="Indicate whether to ingest the p-value from the summary statistics instead of calculating it (Default: True).",
     ),
 )
 @click.pass_context
-def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
+def ingest(ctx, file_path, delimiter, uri, ingestion_type, skip_pvalue):
     """
     Ingest data into a TileDB-unified dataset.
 
@@ -91,15 +91,15 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
         scheme, netloc, path = parse_uri(uri)
         with manage_daskcluster(ctx):
             if scheme == "s3":
-                ingest_to_s3(ctx, input_file_list, uri, pvalue)
+                ingest_to_s3(ctx, input_file_list, uri, skip_pvalue)
             else:
                 # Assuming file system ingestion if not S3
-                ingest_to_fs(ctx, input_file_list, uri, pvalue)
+                ingest_to_fs(ctx, input_file_list, uri, skip_pvalue)
 
         logger.info("Ingestion done")
 
 
-def ingest_to_s3(ctx, input_file_list, uri, pvalue):
+def ingest_to_s3(ctx, input_file_list, uri, skip_pvalue):
     """
     Ingest data into an S3-based TileDB dataset.
 
@@ -116,7 +116,7 @@ def ingest_to_s3(ctx, input_file_list, uri, pvalue):
 
     if not does_uri_path_exist(uri, cfg):
         logger.info("Creating TileDB schema")
-        create_tiledb_schema(uri, cfg, pvalue)
+        create_tiledb_schema(uri, cfg, skip_pvalue)
 
     if get_dask_deployment(ctx) in dask_deployment_types:
         batch_size = get_dask_batch_size(ctx)
@@ -130,7 +130,7 @@ def ingest_to_s3(ctx, input_file_list, uri, pvalue):
                 logger.warning(f"Skipping files: {skipped_files}")
             # Create a list of delayed tasks
             tasks = [
-                delayed(process_and_ingest)(file_path, uri, cfg, pvalue)
+                delayed(process_and_ingest)(file_path, uri, cfg, skip_pvalue)
                 for file_path in batch_files
                 if batch_files[file_path]
             ]
@@ -141,12 +141,12 @@ def ingest_to_s3(ctx, input_file_list, uri, pvalue):
         for file_path in input_file_list:
             if Path(file_path).exists():
                 logger.debug(f"processing {file_path}")
-                process_and_ingest(file_path, uri, cfg, pvalue)
+                process_and_ingest(file_path, uri, cfg, skip_pvalue)
             else:
                 logger.warning(f"skipping {file_path}")
 
 
-def ingest_to_fs(ctx, input_file_list, uri, pvalue):
+def ingest_to_fs(ctx, input_file_list, uri, skip_pvalue):
     """
     Ingest data into a local file system-based TileDB dataset.
 
@@ -162,7 +162,7 @@ def ingest_to_fs(ctx, input_file_list, uri, pvalue):
     _, __, path = parse_uri(uri)
     if not Path(path).exists():
         logger.info("Creating TileDB schema")
-        create_tiledb_schema(uri, {}, pvalue)
+        create_tiledb_schema(uri, {}, skip_pvalue)
 
     if get_dask_deployment(ctx) in dask_deployment_types:
         batch_size = get_dask_batch_size(ctx)
@@ -176,7 +176,7 @@ def ingest_to_fs(ctx, input_file_list, uri, pvalue):
                 logger.warning(f"Skipping files: {skipped_files}")
             # Create a list of delayed tasks
             tasks = [
-                delayed(process_and_ingest)(file_path, uri, {}, pvalue)
+                delayed(process_and_ingest)(file_path, uri, {}, skip_pvalue)
                 for file_path in batch_files
                 if batch_files[file_path]
             ]
@@ -187,6 +187,6 @@ def ingest_to_fs(ctx, input_file_list, uri, pvalue):
         for file_path in input_file_list:
             if Path(file_path).exists():
                 logger.debug(f"processing {file_path}")
-                process_and_ingest(file_path, uri, {}, pvalue)
+                process_and_ingest(file_path, uri, {}, skip_pvalue)
             else:
                 logger.warning(f"{file_path} not found. Skipping it")
