@@ -90,7 +90,6 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
                 tiledb_iterator_query_df["MLOG10P"] = ( 
                     1 - tiledb_iterator_query_df["BETA"] / tiledb_iterator_query_df["SE"]
                 ).abs().apply(lambda x:  get_log_p_value_from_z(x))
-            tiledb_iterator_query_df = tiledb_iterator_query_df.to_pandas()
             if "SNPID" in attr.split(","):
                 tiledb_iterator_query_df["SNPID"] = (
                     tiledb_iterator_query_df["CHR"].astype(str)

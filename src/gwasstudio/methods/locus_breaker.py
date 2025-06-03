@@ -33,10 +33,6 @@ def locus_breaker(
         print("this region is empty")
         return pd.DataFrame(expected_schema)
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 79a7ce5 (modify lb and snp extraction)
     if phenovar:
         pv = compute_pheno_variance(tiledb_results_pd)
         tiledb_results_pd["S"] = pv
