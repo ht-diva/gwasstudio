@@ -92,6 +92,16 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
                     1 - tiledb_iterator_query["BETA"] / tiledb_iterator_query["SE"]
                 ).abs().apply(lambda x:  get_log_p_value_from_z(x))
             tiledb_iterator_query_df = tiledb_iterator_query.to_pandas()
+            if "SNPID" in attr.split(","):
+                tiledb_iterator_query_df["SNPID"] = (
+                    tiledb_iterator_query_df["CHR"].astype(str)
+                    + ":"
+                    + tiledb_iterator_query_df["POS"].astype(str)
+                    + ":"
+                    + tiledb_iterator_query_df["EA"]
+                    + ":"
+                    + tiledb_iterator_query_df["NEA"]
+                )   
 
             kwargs = {"header": False, "index": False, "mode": "a"}
             write_table(tiledb_iterator_query_df, f"{output_file}_{trait}", logger, file_format="csv", **kwargs)
@@ -112,6 +122,25 @@ def _export_all_stats_tasks(tiledb_unified, trait_id_list, output_file, batch_si
     """Export all summary statistics."""
     attributes = attr.split(",")
     for trait in trait_id_list:
+        tiledb_query = tiledb_unified.query(
+            dims=["CHR", "POS", "TRAITID"],
+            attrs=["SNPID", "BETA", "SE", "EAF", "MLOG10P"],
+            return_arrow=True,
+        ).df[:, trait, :]
+        if "MLOG10P" not in tiledb_query.columns:
+            tiledb_query["MLOG10P"] = (
+                tiledb_query["BETA"] / tiledb_query["SE"]
+            ).abs().apply(lambda x: get_log_p_value_from_z(x))
+        if "SNPID" in attr.split(","):
+            tiledb_query["SNPID"] = (
+                tiledb_query["CHR"].astype(str)
+                + ":"
+                + tiledb_query["POS"].astype(str)
+                + ":"
+                + tiledb_query["EA"]
+                + ":"
+                + tiledb_query["NEA"]
+            )
         tiledb_query_df = (
             tiledb_unified.query(
                 dims=["CHR", "TRAITID", "POS"],
