@@ -11,7 +11,7 @@ from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
 from gwasstudio.methods.locus_breaker import locus_breaker
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table, get_log_p_value_from_z
-from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size
+from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
 from gwasstudio.utils.metadata import (
     load_search_topics,
     query_mongo_obj,

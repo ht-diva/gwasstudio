@@ -97,7 +97,6 @@ def locus_breaker(
                         locus,
                     ] + snp_row.tolist()
                     trait_res_allsnp.append(snp_res)
-                    print(snp_row)
 
     # Convert results to a DataFrame
     columns = [
