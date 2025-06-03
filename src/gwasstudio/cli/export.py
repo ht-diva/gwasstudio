@@ -7,10 +7,12 @@ import tiledb
 from dask import delayed, compute
 
 from gwasstudio import logger
+from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
 from gwasstudio.methods.locus_breaker import locus_breaker
 from gwasstudio.mongo.models import EnhancedDataProfile
-from gwasstudio.utils import check_file_exists, write_table, get_log_p_value_from_z
-from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size
+
+from gwasstudio.utils import check_file_exists, write_table,get_log_p_value_from_z
+from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
 from gwasstudio.utils.metadata import (
     load_search_topics,
     query_mongo_obj,
@@ -102,37 +104,28 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
             write_table(tiledb_iterator_query_df, f"{output_file}_{trait}", logger, file_format="csv", **kwargs)
 
 
-def _export_all_stats(tiledb_unified, trait_id_list, output_file, attr):
+def _export_all_stats(tiledb_unified, trait, output_file):
+    """Export summary statistics."""
+    tiledb_query = tiledb_unified.query(
+        dims=["CHR", "POS", "TRAITID"],
+        attrs=["SNPID", "BETA", "SE", "EAF", "MLOG10P"],
+        return_arrow=True,
+    ).df[:, :, trait]
+    kwargs = {"index": False}
+    write_table(tiledb_query.to_pandas(), f"{output_file}_{trait}", logger, file_format="parquet", **kwargs)
+
+
+def _export_all_stats_tasks(tiledb_unified, trait_id_list, output_file, batch_size):
     """Export all summary statistics."""
-    attributes = attr.split(",")
-    for trait in trait_id_list:
-        tiledb_query_df = (
-            tiledb_unified.query(
-                dims=["CHR", "TRAITID", "POS"],
-                attrs=attributes,
-                return_arrow=True,
-            )
-            .df[:, trait, :]
-            .to_pandas()
-        )
+    for i in range(0, len(trait_id_list), batch_size):
+        batch_traits = {file_path: Path(file_path).exists() for file_path in trait_id_list[i : i + batch_size]}
+        logger.info(f"Processing a batch of {len(batch_traits)} items for batch {i // batch_size + 1}")
 
-        if "MLOG10P" not in tiledb_query_df.columns:
-            tiledb_query_df["MLOG10P"] = (
-                (tiledb_query_df["BETA"] / tiledb_query_df["SE"]).abs().apply(get_log_p_value_from_z)
-            )
-
-        if "SNPID" in attributes:
-            tiledb_query_df["SNPID"] = (
-                tiledb_query_df["CHR"].astype(str)
-                + ":"
-                + tiledb_query_df["POS"].astype(str)
-                + ":"
-                + tiledb_query_df["EA"]
-                + ":"
-                + tiledb_query_df["NEA"]
-            )
-        kwargs = {"index": False}
-        write_table(tiledb_query_df, f"{output_file}_{trait}", logger, file_format="parquet", **kwargs)
+        # Create a list of delayed tasks
+        tasks = [delayed(_export_all_stats)(tiledb_unified, trait, output_file) for trait in batch_traits]
+        # Submit tasks and wait for completion
+        compute(*tasks)
+        logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)
 
 
 def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
@@ -299,26 +292,31 @@ def export(
 
         # Process according to selected options
 
-        batch_size = get_dask_batch_size(ctx)
-        if locusbreaker:
-            _process_locusbreaker_tasks(
-                tiledb_unified,
-                trait_id_list,
-                maf,
-                hole_size,
-                pvalue_sig,
-                pvalue_limit,
-                phenovar,
-                output_prefix,
-                batch_size,
-            )
-
-        elif snp_list:
-            _process_snp_list(tiledb_unified, snp_list, trait_id_list, attr, output_prefix)
-        elif get_regions:
-            bed_region = pd.read_csv(get_regions, sep="\t", header=None)
-            bed_region.columns = ["CHR", "START", "END"]
-            bed_region["CHR"] = bed_region["CHR"].astype(int)
-            _process_region_tasks(tiledb_unified, bed_region, trait_id_list, maf, attr, output_prefix, batch_size)
+        if get_dask_deployment(ctx) in dask_deployment_types:
+            batch_size = get_dask_batch_size(ctx)
+            with manage_daskcluster(ctx):
+                if locusbreaker:
+                    _process_locusbreaker_tasks(
+                        tiledb_unified,
+                        trait_id_list,
+                        maf,
+                        hole_size,
+                        pvalue_sig,
+                        pvalue_limit,
+                        phenovar,
+                        output_prefix,
+                        batch_size,
+                    )
+                elif snp_list:
+                    _process_snp_list(tiledb_unified, snp_list, trait_id_list, attr, output_prefix)
+                elif get_regions:
+                    bed_region = pd.read_csv(get_regions, sep="\t", header=None)
+                    bed_region.columns = ["CHR", "START", "END"]
+                    bed_region["CHR"] = bed_region["CHR"].astype(int)
+                    _process_region_tasks(
+                        tiledb_unified, bed_region, trait_id_list, maf, attr, output_prefix, batch_size
+                    )
+                else:
+                    _export_all_stats_tasks(tiledb_unified, trait_id_list, output_prefix, batch_size)
         else:
-            _export_all_stats(tiledb_unified, trait_id_list, output_prefix, attr)
+            logger.error(f"A valid dask deployment type needed: {dask_deployment_types}")
