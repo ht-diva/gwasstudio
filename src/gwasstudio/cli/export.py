@@ -10,8 +10,12 @@ from gwasstudio import logger
 from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
 from gwasstudio.methods.locus_breaker import locus_breaker
 from gwasstudio.mongo.models import EnhancedDataProfile
+<<<<<<< HEAD
 
 from gwasstudio.utils import check_file_exists, write_table,get_log_p_value_from_z
+=======
+from gwasstudio.utils import check_file_exists, write_table
+>>>>>>> a9f6096 ( Modified `src/gwasstudio/cli/export.py` to include Dask deployment management and batch processing for exporting summary statistics)
 from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
 from gwasstudio.utils.metadata import (
     load_search_topics,
@@ -179,6 +183,19 @@ def _export_all_stats_tasks(tiledb_unified, trait_id_list, output_file, batch_si
             )
         kwargs = {"index": False}
         write_table(tiledb_query_df, f"{output_file}_{trait}", logger, file_format="parquet", **kwargs)
+
+
+def _export_all_stats_tasks(tiledb_unified, trait_id_list, output_file, batch_size):
+    """Export all summary statistics."""
+    for i in range(0, len(trait_id_list), batch_size):
+        batch_traits = {file_path: Path(file_path).exists() for file_path in trait_id_list[i : i + batch_size]}
+        logger.info(f"Processing a batch of {len(batch_traits)} items for batch {i // batch_size + 1}")
+
+        # Create a list of delayed tasks
+        tasks = [delayed(_export_all_stats)(tiledb_unified, trait, output_file) for trait in batch_traits]
+        # Submit tasks and wait for completion
+        compute(*tasks)
+        logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)
 
 
 def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
