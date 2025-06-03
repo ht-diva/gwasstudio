@@ -24,12 +24,8 @@ from gwasstudio.utils.mongo_manager import manage_mongo
 def _process_locusbreaker(tiledb_unified, trait, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_file):
     """Process data using the locus breaker algorithm."""
     logger.info("Running locus breaker")
-<<<<<<< HEAD
     subset_SNPs_pd = tiledb_unified.query(
     ).df[:, trait, :]
-=======
-    subset_SNPs_pd = tiledb_unified.query().df[:, trait, :,]
->>>>>>> 79a7ce5 (modify lb and snp extraction)
 
     subset_SNPs_pd = subset_SNPs_pd[(subset_SNPs_pd["EAF"] >= maf) & (subset_SNPs_pd["EAF"] <= (1 - maf))]
     if("MLOG10P" not in subset_SNPs_pd.columns):
