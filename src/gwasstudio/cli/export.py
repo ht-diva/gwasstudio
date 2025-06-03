@@ -84,6 +84,7 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
                 .to_pandas()
             )
 
+<<<<<<< HEAD
             if "MLOG10P" not in tiledb_iterator_query_df.columns:
                 tiledb_iterator_query_df["MLOG10P"] = (
                     (1 - tiledb_iterator_query_df["BETA"] / tiledb_iterator_query_df["SE"])
@@ -92,6 +93,14 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
                 )
 
             if "SNPID" in attributes:
+=======
+            if("MLOG10P" not in tiledb_iterator_query_df.columns):
+                tiledb_iterator_query["MLOG10P"] = ( 
+                    1 - tiledb_iterator_query["BETA"] / tiledb_iterator_query["SE"]
+                ).abs().apply(lambda x:  get_log_p_value_from_z(x))
+            tiledb_iterator_query_df = tiledb_iterator_query.to_pandas()
+            if "SNPID" in attr.split(","):
+>>>>>>> ca7a796 (resolving conflicts)
                 tiledb_iterator_query_df["SNPID"] = (
                     tiledb_iterator_query_df["CHR"].astype(str)
                     + ":"
@@ -100,7 +109,11 @@ def _process_snp_list(tiledb_unified, snp_list_file, trait_id_list, attr, output
                     + tiledb_iterator_query_df["EA"]
                     + ":"
                     + tiledb_iterator_query_df["NEA"]
+<<<<<<< HEAD
                 )
+=======
+                )   
+>>>>>>> ca7a796 (resolving conflicts)
 
             kwargs = {"header": False, "index": False, "mode": "a"}
             write_table(tiledb_iterator_query_df, f"{output_file}_{trait}", logger, file_format="csv", **kwargs)
@@ -119,21 +132,39 @@ def _export_all_stats(tiledb_unified, trait, output_file):
 
 def _export_all_stats_tasks(tiledb_unified, trait_id_list, output_file, batch_size):
     """Export all summary statistics."""
-    for i in range(0, len(trait_id_list), batch_size):
-        batch_traits = {file_path: Path(file_path).exists() for file_path in trait_id_list[i : i + batch_size]}
-        logger.info(f"Processing a batch of {len(batch_traits)} items for batch {i // batch_size + 1}")
-
-        # Create a list of delayed tasks
-        tasks = [delayed(_export_all_stats)(tiledb_unified, trait, output_file) for trait in batch_traits]
-        # Submit tasks and wait for completion
-        compute(*tasks)
-        logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)
+    for trait in trait_id_list:
+        tiledb_query = tiledb_unified.query(
+            dims=["CHR", "TRAITID", "POS"],
+            attrs=attr.split(","),
+            return_arrow=True,
+        ).df[:, trait, :]
+        if "MLOG10P" not in tiledb_query.columns:
+            tiledb_query["MLOG10P"] = (
+                tiledb_query["BETA"] / tiledb_query["SE"]
+            ).abs().apply(lambda x: get_log_p_value_from_z(x))
+        if "SNPID" in attr.split(","):
+            tiledb_query["SNPID"] = (
+                tiledb_query["CHR"].astype(str)
+                + ":"
+                + tiledb_query["POS"].astype(str)
+                + ":"
+                + tiledb_query["EA"]
+                + ":"
+                + tiledb_query["NEA"]
+            )
+        kwargs = {"index": False}
+        write_table(tiledb_query.to_pandas(), f"{output_file}_{trait}", logger, file_format="parquet", **kwargs)
 
 
 def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
+<<<<<<< HEAD
     """Process data filtering by genomic regions and output as concatenated DataFrame in Parquet format."""
     attributes = attr.split(",")
     dataframes = []
+=======
+    """Process data filtering by genomic regions and output as concatenated Arrow table in Parquet format."""
+    arrow_tables = []
+>>>>>>> ca7a796 (resolving conflicts)
     for chr, group in bed_region:
         # Get all (start, end) tuples for this chromosome
         min_pos = min(group["START"])
@@ -162,6 +193,18 @@ def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
             + concatenated_df["EA"]
             + ":"
             + concatenated_df["NEA"]
+        )
+
+    if "SNPID" in attr.split(","):
+        # Create SNPID column if it doesn't exist
+        concatenated = concatenated.append_column(
+            "SNPID",
+            pa.array(
+                [
+                    f"{row['CHR']}:{row['POS']}:{row['EA']}:{row['NEA']}"
+                    for row in concatenated.to_pydict().values()
+                ]
+            ),
         )
 
     # Write to Parquet
