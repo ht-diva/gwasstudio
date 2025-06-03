@@ -33,7 +33,6 @@ def locus_breaker(
         print("this region is empty")
         return pd.DataFrame(expected_schema)
 
-    original_data = tiledb_results_pd.copy()
 
     if phenovar:
         pv = compute_pheno_variance(tiledb_results_pd)
@@ -43,7 +42,6 @@ def locus_breaker(
 
     # Filter rows based on the p_limit threshold
     tiledb_results_pd = tiledb_results_pd[tiledb_results_pd["MLOG10P"] > pvalue_limit]
-<<<<<<< HEAD
     tiledb_results_pd["SNPID"] = (
         tiledb_results_pd["CHR"].astype(str)
         + ":"
@@ -53,9 +51,6 @@ def locus_breaker(
         + ":"
         + tiledb_results_pd["NEA"]
     )
-=======
-    tiledb_results_pd["SNPID"] = tiledb_results_pd["CHR"].astype(str) + ":" + tiledb_results_pd["POS"].astype(str) + ":" + tiledb_results_pd["EA"] + ":" + tiledb_results_pd["NEA"]
->>>>>>> ca7a796 (resolving conflicts)
     # If no rows remain after filtering, return an empty DataFrame
     if tiledb_results_pd.empty:
         return pd.DataFrame(expected_schema)
@@ -63,7 +58,7 @@ def locus_breaker(
     # Group by 'contig' (chromosome) first, then calculate regions within each chromosome
     trait_res = []
     trait_res_allsnp = []
-
+    original_data = tiledb_results_pd.copy()
     for contig, chrom_df in tiledb_results_pd.groupby("CHR"):
         # Find regions where gaps between positions exceed hole_size within each chromosome
         gaps = chrom_df["POS"].diff() > hole_size
