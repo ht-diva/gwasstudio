@@ -21,16 +21,18 @@ from gwasstudio.utils.metadata import (
 from gwasstudio.utils.mongo_manager import manage_mongo
 
 
+
 def _process_locusbreaker(tiledb_unified, trait, maf, hole_size, pvalue_sig, pvalue_limit, phenovar, output_file):
     """Process data using the locus breaker algorithm."""
     logger.info("Running locus breaker")
-    subset_SNPs_pd = tiledb_unified.query().df[:, :, trait]
+    subset_SNPs_pd = tiledb_unified.query(
+    ).df[:, trait, :]
 
     subset_SNPs_pd = subset_SNPs_pd[(subset_SNPs_pd["EAF"] >= maf) & (subset_SNPs_pd["EAF"] <= (1 - maf))]
-    if "MLOG10P" not in subset_SNPs_pd.columns:
+    if("MLOG10P" not in subset_SNPs_pd.columns):
         subset_SNPs_pd["MLOG10P"] = (
-            (subset_SNPs_pd["BETA"] / subset_SNPs_pd["SE"]).abs().apply(lambda x: get_log_p_value_from_z(x))
-        )
+            subset_SNPs_pd["BETA"] / subset_SNPs_pd["SE"]
+        ).abs().apply(lambda x: get_log_p_value_from_z(x))
 
     results_lb_segments, results_lb_intervals = locus_breaker(
         subset_SNPs_pd, hole_size=hole_size, pvalue_sig=pvalue_sig, pvalue_limit=pvalue_limit, phenovar=phenovar
@@ -141,9 +143,8 @@ def _process_regions(tiledb_unified, bed_region, trait, maf, attr, output_file):
 
         # Query TileDB and convert directly to Pandas DataFrame
         tiledb_query_df = (
-            tiledb_unified.query(attrs=attributes, dims=["CHR", "POS", "TRAITID"], return_arrow=True)
+            tiledb_unified.query(attrs=attributes, dims=["CHR", "POS", "TRAITID"])
             .df[chr, trait, min_pos:max_pos]
-            .to_pandas()
         )
 
         dataframes.append(tiledb_query_df)
