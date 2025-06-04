@@ -8,7 +8,7 @@ from dask import delayed, compute
 
 from gwasstudio import logger
 from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
-from gwasstudio.methods.locus_breaker import locus_breaker, _process_snp_list, _process_regions, _process_export_all_stats
+from gwasstudio.methods.locus_breaker import locus_breaker
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table, get_log_p_value_from_z
 from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
@@ -37,7 +37,7 @@ def _process_locusbreaker(tiledb_unified,
                             output_file, 
                             bed_region = None, 
                             attr= None, 
-                            snp_list_file = None, 
+                            snp_list = None, 
                             maf = None, 
                             hole_size = None, 
                             pvalue_sig = None, 
@@ -68,15 +68,13 @@ def _process_snp_list(tiledb_unified,
                             output_file, 
                             bed_region = None, 
                             attr= None, 
-                            snp_list_file = None, 
+                            snp_list = None, 
                             maf = None, 
                             hole_size = None, 
                             pvalue_sig = None, 
                             pvalue_limit = None, 
                             phenovar = None):
     """Process data filtering by a list of SNPs."""
-    SNP_list = pd.read_csv(snp_list_file, usecols=["CHR", "POS"], dtype={"CHR": str, "POS": int})
-    SNP_list = SNP_list[SNP_list["CHR"].astype(str).str.isnumeric()]
     chromosomes_dict = SNP_list.groupby("CHR")["POS"].apply(list).to_dict()
     # parallelize by n_workers traits at a time with dask the query on tiledb
     attributes = attr.split(",")
@@ -106,7 +104,7 @@ def _process_export_all_stats(tiledb_unified,
                             output_file,
                             bed_region = None, 
                             attr= None, 
-                            snp_list_file = None, 
+                            snp_list = None, 
                             maf = None, 
                             hole_size = None, 
                             pvalue_sig = None, 
@@ -139,7 +137,7 @@ def _process_regions(tiledb_unified,
                             output_file,
                             bed_region = None, 
                             attr= None, 
-                            snp_list_file = None, 
+                            snp_list = None, 
                             maf = None, 
                             hole_size = None, 
                             pvalue_sig = None, 
@@ -185,11 +183,14 @@ def _process_function_tasks(function_name,
                             pvalue_sig = None, 
                             pvalue_limit = None, 
                             phenovar = None):
-    """Export all summary statistics."""
+    """This function schedules and executes generic delayed tasks for various export processes"""
+    if snp_list_file:
+        snp_list = pd.read_csv(snp_list_file, usecols=["CHR", "POS"], dtype={"CHR": str, "POS": int})
+        snp_list = snp_list[snp_list["CHR"].astype(str).str.isnumeric()]
     tasks = []
     for trait in trait_id_list:
         task = delayed(function_name(
-            tiledb_unified, trait, output_file, bed_region, attr, snp_list_file, maf, hole_size, pvalue_sig, pvalue_limit, phenovar
+            tiledb_unified, trait, output_file, bed_region, attr, snp_list, maf, hole_size, pvalue_sig, pvalue_limit, phenovar
         ))
         tasks.append(task)
     for i in range(0, len(tasks), batch_size):
@@ -306,7 +307,7 @@ def export(
 
                 if locusbreaker:
                     _process_function_tasks(
-                    _process_locusbreaker,
+                    function_name = _process_locusbreaker,
                     tiledb_unified = tiledb_unified,
                     trait_id_list = trait_id_list,
                     maf = maf,
