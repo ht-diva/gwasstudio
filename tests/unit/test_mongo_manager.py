@@ -33,7 +33,6 @@ class TestMongoDBManager(unittest.TestCase):
                 "--logappend",
                 "--port",
                 "27018",
-                "--bind_ip_all",
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
