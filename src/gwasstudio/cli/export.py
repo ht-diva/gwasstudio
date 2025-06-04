@@ -8,7 +8,7 @@ from dask import delayed, compute
 
 from gwasstudio import logger
 from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
-from gwasstudio.methods.locus_breaker import locus_breaker
+from gwasstudio.methods.locus_breaker import locus_breaker, _process_snp_list, _process_regions, _process_export_all_stats
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table, get_log_p_value_from_z
 from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
@@ -19,6 +19,18 @@ from gwasstudio.utils.metadata import (
 )
 from gwasstudio.utils.mongo_manager import manage_mongo
 
+def _build_snpid(attributes, tiledb_query_df):
+    if "SNPID" in attributes:
+            tiledb_query_df["SNPID"] = (
+                    tiledb_query_df["CHR"].astype(str)
+                    + ":"
+                    + tiledb_query_df["POS"].astype(str)
+                    + ":"
+                    + tiledb_query_df["EA"]
+                    + ":"
+                    + tiledb_query_df["NEA"]
+                )
+    return tiledb_query_df
 
 def _process_locusbreaker(tiledb_unified, 
                             trait, 
@@ -84,17 +96,7 @@ def _process_snp_list(tiledb_unified,
                     .abs()
                     .apply(lambda x: get_log_p_value_from_z(x))
                 )
-
-            if "SNPID" in attributes:
-                tiledb_iterator_query_df["SNPID"] = (
-                    tiledb_iterator_query_df["CHR"].astype(str)
-                    + ":"
-                    + tiledb_iterator_query_df["POS"].astype(str)
-                    + ":"
-                    + tiledb_iterator_query_df["EA"]
-                    + ":"
-                    + tiledb_iterator_query_df["NEA"]
-                )
+            tiledb_iterator_query_df = _build_snpid(attributes, tiledb_iterator_query_df)
 
             kwargs = {"header": False, "index": False, "mode": "a"}
             write_table(tiledb_iterator_query_df, f"{output_file}_{trait}", logger, file_format="csv", **kwargs)
@@ -127,16 +129,7 @@ def _process_export_all_stats(tiledb_unified,
                 (tiledb_query_df["BETA"] / tiledb_query_df["SE"]).abs().apply(get_log_p_value_from_z)
         )
 
-    if "SNPID" in attributes:
-            tiledb_query_df["SNPID"] = (
-                tiledb_query_df["CHR"].astype(str)
-                + ":"
-                + tiledb_query_df["POS"].astype(str)
-                + ":"
-                + tiledb_query_df["EA"]
-                + ":"
-                + tiledb_query_df["NEA"]
-            )
+    tiledb_query_df = _build_snpid(attributes, tiledb_query_df)
     kwargs = {"index": False}
     write_table(tiledb_query_df, f"{output_file}_{trait}", logger, file_format="parquet", **kwargs)
 
@@ -173,20 +166,11 @@ def _process_regions(tiledb_unified,
 
     # Concatenate all DataFrames
     concatenated_df = pd.concat(dataframes, ignore_index=True)
-
-    if "SNPID" in attributes:
-        # Create SNPID column if it doesn't exist
-        concatenated_df["SNPID"] = (
-            concatenated_df["CHR"].astype(str)
-            + ":"
-            + concatenated_df["POS"].astype(str)
-            + ":"
-            + concatenated_df["EA"]
-            + ":"
-            + concatenated_df["NEA"]
-        )
+    #Add SNPID column
+    concatenated_df = _build_snpid(attributes, concatenated_df)
     # Write to Parquet
-    concatenated_df.to_parquet(f"{output_file}_{trait}.parquet", index=False)
+    kwargs = {"index": False}
+    write_table(concatenated_df, f"{output_file}_{trait}", logger, file_format="parquet", **kwargs)
 
 def _process_function_tasks(function_name, 
                             tiledb_unified, 
