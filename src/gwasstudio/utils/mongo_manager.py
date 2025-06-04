@@ -39,20 +39,22 @@ def manage_mongo(ctx):
 
 class MongoDBManager:
     """
-    Initialize the MongoDBManager with the given database path and log path.
+    Initialize the embedded MongoDBManager with the given database path and log path.
 
     Args:
         dbpath (str): The path to the MongoDB database.
         logpath (str): The path to the MongoDB log file.
+        port (int): The port on which the MongoDB server will run. Default is 27018.
+        timeout (int): The timeout period for starting the MongoDB server. Default is 5 seconds.
     """
 
-    def __init__(self, dbpath=mongo_db_path, logpath=mongo_db_logpath):
+    def __init__(self, dbpath=mongo_db_path, logpath=mongo_db_logpath, port=27018, timeout=5):
         self.dbpath = dbpath
         self.process = None
         self.logpath = logpath
         self.host = "localhost"
-        self.port = 27018
-        self.timeout = 5
+        self.port = port
+        self.timeout = timeout
 
     def start(self):
         """
@@ -64,17 +66,7 @@ class MongoDBManager:
         try:
             # Start the MongoDB server
             self.process = subprocess.Popen(
-                [
-                    "mongod",
-                    "--dbpath",
-                    self.dbpath,
-                    "--logpath",
-                    self.logpath,
-                    "--logappend",
-                    "--port",
-                    str(self.port),
-                    "--bind_ip_all",
-                ],
+                ["mongod", "--dbpath", self.dbpath, "--logpath", self.logpath, "--logappend", "--port", str(self.port)],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
