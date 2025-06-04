@@ -34,7 +34,7 @@ def _build_snpid(attributes, tiledb_query_df):
 
 def _process_locusbreaker(tiledb_unified, 
                             trait, 
-                            output_file, 
+                            output_prefix, 
                             bed_region = None, 
                             attr= None, 
                             snp_list = None, 
@@ -57,15 +57,15 @@ def _process_locusbreaker(tiledb_unified,
         subset_SNPs_pd, hole_size=hole_size, pvalue_sig=pvalue_sig, pvalue_limit=pvalue_limit, phenovar=phenovar
     )
 
-    logger.info(f"Saving locus-breaker output in {output_file} segments and intervals")
+    logger.info(f"Saving locus-breaker output in {output_prefix} segments and intervals")
     kwargs = {"index": False}
-    write_table(results_lb_segments, f"{output_file}_{trait}_segments", logger, file_format="csv", **kwargs)
-    write_table(results_lb_intervals, f"{output_file}_{trait}_intervals", logger, file_format="csv", **kwargs)
+    write_table(results_lb_segments, f"{output_prefix}_{trait}_segments", logger, file_format="csv", **kwargs)
+    write_table(results_lb_intervals, f"{output_prefix}_{trait}_intervals", logger, file_format="csv", **kwargs)
 
 
 def _process_snp_list(tiledb_unified, 
                             trait, 
-                            output_file, 
+                            output_prefix, 
                             bed_region = None, 
                             attr= None, 
                             snp_list = None, 
@@ -75,7 +75,7 @@ def _process_snp_list(tiledb_unified,
                             pvalue_limit = None, 
                             phenovar = None):
     """Process data filtering by a list of SNPs."""
-    chromosomes_dict = SNP_list.groupby("CHR")["POS"].apply(list).to_dict()
+    chromosomes_dict = snp_list.groupby("CHR")["POS"].apply(list).to_dict()
     # parallelize by n_workers traits at a time with dask the query on tiledb
     attributes = attr.split(",")
     for chrom, positions in chromosomes_dict.items():
@@ -97,11 +97,11 @@ def _process_snp_list(tiledb_unified,
             tiledb_iterator_query_df = _build_snpid(attributes, tiledb_iterator_query_df)
 
             kwargs = {"header": False, "index": False, "mode": "a"}
-            write_table(tiledb_iterator_query_df, f"{output_file}_{trait}", logger, file_format="csv", **kwargs)
+            write_table(tiledb_iterator_query_df, f"{output_prefix}_{trait}", logger, file_format="csv", **kwargs)
 
 def _process_export_all_stats(tiledb_unified, 
                             trait, 
-                            output_file,
+                            output_prefix,
                             bed_region = None, 
                             attr= None, 
                             snp_list = None, 
@@ -129,12 +129,12 @@ def _process_export_all_stats(tiledb_unified,
 
     tiledb_query_df = _build_snpid(attributes, tiledb_query_df)
     kwargs = {"index": False}
-    write_table(tiledb_query_df, f"{output_file}_{trait}", logger, file_format="parquet", **kwargs)
+    write_table(tiledb_query_df, f"{output_prefix}_{trait}", logger, file_format="parquet", **kwargs)
 
 
 def _process_regions(tiledb_unified, 
                             trait, 
-                            output_file,
+                            output_prefix,
                             bed_region = None, 
                             attr= None, 
                             snp_list = None, 
@@ -168,12 +168,12 @@ def _process_regions(tiledb_unified,
     concatenated_df = _build_snpid(attributes, concatenated_df)
     # Write to Parquet
     kwargs = {"index": False}
-    write_table(concatenated_df, f"{output_file}_{trait}", logger, file_format="parquet", **kwargs)
+    write_table(concatenated_df, f"{output_prefix}_{trait}", logger, file_format="parquet", **kwargs)
 
 def _process_function_tasks(function_name, 
                             tiledb_unified, 
                             trait_id_list, 
-                            output_file, 
+                            output_prefix, 
                             batch_size, 
                             bed_region = None, 
                             attr= None, 
@@ -190,7 +190,7 @@ def _process_function_tasks(function_name,
     tasks = []
     for trait in trait_id_list:
         task = delayed(function_name(
-            tiledb_unified, trait, output_file, bed_region, attr, snp_list, maf, hole_size, pvalue_sig, pvalue_limit, phenovar
+            tiledb_unified, trait, output_prefix, bed_region, attr, snp_list, maf, hole_size, pvalue_sig, pvalue_limit, phenovar
         ))
         tasks.append(task)
     for i in range(0, len(tasks), batch_size):
@@ -210,7 +210,7 @@ Export summary statistics from TileDB datasets with various filtering options.
 @cloup.option_group(
     "TileDB options",
     cloup.option("--uri", required=True, default=None, help="TileDB dataset URI"),
-    cloup.option("--output-file", default="out", help="Prefix to be used for naming the output files"),
+    cloup.option("--output-prefix", default="out", help="Prefix to be used for naming the output files"),
     cloup.option("--search-file", required=True, default=None, help="The search file used for querying metadata"),
     cloup.option(
         "--attr", required=True, default="BETA,SE,EAF", help="string delimited by comma with the attributes to export"
@@ -266,7 +266,7 @@ def export(
     uri,
     search_file,
     attr,
-    output_file,
+    output_prefix,
     pvalue_sig,
     pvalue_limit,
     hole_size,
@@ -295,7 +295,7 @@ def export(
         trait_id_list = list(df["data_id"])
 
         # write metadata query result
-        path = Path(output_file)
+        path = Path(output_prefix)
         output_path = path.with_suffix("").with_name(path.stem + "_meta")
         kwargs = {"index": False}
         write_table(df, str(output_path), logger, file_format="csv", **kwargs)
@@ -315,7 +315,7 @@ def export(
                     pvalue_sig = pvalue_sig,
                     pvalue_limit = pvalue_limit,
                     phenovar = phenovar,
-                    output_file = output_file,
+                    output_prefix = output_prefix,
                     batch_size = batch_size,
                     )
 
@@ -326,7 +326,7 @@ def export(
                         trait_id_list = trait_id_list, 
                         attr =  attr, 
                         snp_list_file = snp_list_file, 
-                        output_file = output_file,
+                        output_prefix = output_prefix,
                         batch_size = batch_size)
                 elif get_regions:
                     bed_region = pd.read_csv(get_regions, sep="\t", header=None)
@@ -338,13 +338,13 @@ def export(
                                             trait_id_list = trait_id_list, 
                                             maf = maf, 
                                             attr = attr, 
-                                            output_file = output_file, 
+                                            output_prefix = output_prefix, 
                                             batch_size = batch_size)
                 else:
                     _process_function_tasks(_process_export_all_stats, 
                                             tiledb_unified = tiledb_unified, 
                                             trait_id_list = trait_id_list, 
-                                            output_file = output_file, 
+                                            output_prefix = output_prefix, 
                                             attr = attr,
                                             batch_size = batch_size)
         else:
