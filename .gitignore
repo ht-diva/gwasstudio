@@ -48,3 +48,5 @@ cover/
 
 # ruff
 .ruff_cache/
+
+scripts/
