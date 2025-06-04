@@ -5,6 +5,7 @@ from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
 from gwasstudio import logger
 from gwasstudio.utils import write_table, get_log_p_value_from_z
 
+
 def _locus_breaker(
     tiledb_results_pd, pvalue_limit: float = 3.3, pvalue_sig: float = 5, hole_size: int = 250000, phenovar: bool = False
 ) -> list[pd.DataFrame] | pd.DataFrame:
@@ -89,7 +90,6 @@ def _locus_breaker(
                 # Store the interval with the best SNP
                 # Collect all SNPs within the region
                 for _, snp_row in expanded_snps.iterrows():
-                    
                     snp_res = [
                         locus,
                     ] + snp_row.tolist()
@@ -111,9 +111,10 @@ def _locus_breaker(
     columns.remove("S")
     trait_res_allsnp_df = pd.DataFrame(trait_res_allsnp, columns=columns)
     # trait_res_allsnp_df = trait_res_allsnp_df.drop(trait_res_allsnp_df.columns[0], axis=1)
-    #trait_res_allsnp_df = trait_res_allsnp_df.drop(columns=["snp_pos", "snp_MLOG10P"])
+    # trait_res_allsnp_df = trait_res_allsnp_df.drop(columns=["snp_pos", "snp_MLOG10P"])
 
     return [trait_res_df, trait_res_allsnp_df]
+
 
 def _process_locusbreaker(
     tiledb_unified,

@@ -21,7 +21,6 @@ from gwasstudio.utils.metadata import (
 from gwasstudio.utils.mongo_manager import manage_mongo
 
 
-
 def _process_function_tasks(
     function_name,
     tiledb_unified,

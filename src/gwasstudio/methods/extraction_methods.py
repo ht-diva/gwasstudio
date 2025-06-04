@@ -2,6 +2,7 @@ import pandas as pd
 from gwasstudio.utils import write_table, get_log_p_value_from_z, _build_snpid
 from gwasstudio import logger
 
+
 def _extract_snp_list(
     tiledb_unified,
     trait,
@@ -115,4 +116,3 @@ def _extract_regions(
     # Write to Parquet
     kwargs = {"index": False}
     write_table(concatenated_df, f"{output_prefix}_{trait}", logger, file_format="parquet", **kwargs)
-
