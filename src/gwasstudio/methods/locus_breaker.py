@@ -2,9 +2,10 @@ import numpy as np
 import pandas as pd
 
 from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
+from gwasstudio import logger
+from gwasstudio.utils import write_table, get_log_p_value_from_z
 
-
-def locus_breaker(
+def _locus_breaker(
     tiledb_results_pd, pvalue_limit: float = 3.3, pvalue_sig: float = 5, hole_size: int = 250000, phenovar: bool = False
 ) -> list[pd.DataFrame] | pd.DataFrame:
     """
@@ -113,3 +114,35 @@ def locus_breaker(
     #trait_res_allsnp_df = trait_res_allsnp_df.drop(columns=["snp_pos", "snp_MLOG10P"])
 
     return [trait_res_df, trait_res_allsnp_df]
+
+def _process_locusbreaker(
+    tiledb_unified,
+    trait,
+    output_prefix,
+    bed_region=None,
+    attr=None,
+    snp_list=None,
+    maf=None,
+    hole_size=None,
+    pvalue_sig=None,
+    pvalue_limit=None,
+    phenovar=None,
+):
+    """Process data using the locus breaker algorithm."""
+    logger.info("Running locus breaker")
+    subset_SNPs_pd = tiledb_unified.query().df[:, trait, :]
+
+    subset_SNPs_pd = subset_SNPs_pd[(subset_SNPs_pd["EAF"] >= maf) & (subset_SNPs_pd["EAF"] <= (1 - maf))]
+    if "MLOG10P" not in subset_SNPs_pd.columns:
+        subset_SNPs_pd["MLOG10P"] = (
+            (subset_SNPs_pd["BETA"] / subset_SNPs_pd["SE"]).abs().apply(lambda x: get_log_p_value_from_z(x))
+        )
+
+    results_lb_segments, results_lb_intervals = _locus_breaker(
+        subset_SNPs_pd, hole_size=hole_size, pvalue_sig=pvalue_sig, pvalue_limit=pvalue_limit, phenovar=phenovar
+    )
+
+    logger.info(f"Saving locus-breaker output in {output_prefix} segments and intervals")
+    kwargs = {"index": False}
+    write_table(results_lb_segments, f"{output_prefix}_{trait}_segments", logger, file_format="csv", **kwargs)
+    write_table(results_lb_intervals, f"{output_prefix}_{trait}_intervals", logger, file_format="csv", **kwargs)

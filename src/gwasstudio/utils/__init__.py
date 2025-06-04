@@ -295,3 +295,17 @@ def get_log_p_value_from_z(z_score: float) -> float:
     p_value = 2 * (1 - stats.norm.cdf(abs(z_score)))
     log10_p = np.float32(-np.log10(p_value))
     return log10_p
+
+
+def _build_snpid(attributes, tiledb_query_df):
+    if "SNPID" in attributes:
+        tiledb_query_df["SNPID"] = (
+            tiledb_query_df["CHR"].astype(str)
+            + ":"
+            + tiledb_query_df["POS"].astype(str)
+            + ":"
+            + tiledb_query_df["EA"]
+            + ":"
+            + tiledb_query_df["NEA"]
+        )
+    return tiledb_query_df

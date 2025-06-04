@@ -8,9 +8,10 @@ from dask import delayed, compute
 
 from gwasstudio import logger
 from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
-from gwasstudio.methods.locus_breaker import locus_breaker
+from gwasstudio.methods.locus_breaker import _process_locusbreaker
+from gwasstudio.methods.extraction_methods import _extract_all_stats, _extract_regions, _extract_snp_list
 from gwasstudio.mongo.models import EnhancedDataProfile
-from gwasstudio.utils import check_file_exists, write_table, get_log_p_value_from_z
+from gwasstudio.utils import check_file_exists, write_table
 from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
 from gwasstudio.utils.metadata import (
     load_search_topics,
@@ -19,179 +20,46 @@ from gwasstudio.utils.metadata import (
 )
 from gwasstudio.utils.mongo_manager import manage_mongo
 
-def _build_snpid(attributes, tiledb_query_df):
-    if "SNPID" in attributes:
-            tiledb_query_df["SNPID"] = (
-                    tiledb_query_df["CHR"].astype(str)
-                    + ":"
-                    + tiledb_query_df["POS"].astype(str)
-                    + ":"
-                    + tiledb_query_df["EA"]
-                    + ":"
-                    + tiledb_query_df["NEA"]
-                )
-    return tiledb_query_df
-
-def _process_locusbreaker(tiledb_unified, 
-                            trait, 
-                            output_prefix, 
-                            bed_region = None, 
-                            attr= None, 
-                            snp_list = None, 
-                            maf = None, 
-                            hole_size = None, 
-                            pvalue_sig = None, 
-                            pvalue_limit = None, 
-                            phenovar = None):
-    """Process data using the locus breaker algorithm."""
-    logger.info("Running locus breaker")
-    subset_SNPs_pd = tiledb_unified.query().df[:, trait, :]
-
-    subset_SNPs_pd = subset_SNPs_pd[(subset_SNPs_pd["EAF"] >= maf) & (subset_SNPs_pd["EAF"] <= (1 - maf))]
-    if "MLOG10P" not in subset_SNPs_pd.columns:
-        subset_SNPs_pd["MLOG10P"] = (
-            (subset_SNPs_pd["BETA"] / subset_SNPs_pd["SE"]).abs().apply(lambda x: get_log_p_value_from_z(x))
-        )
-
-    results_lb_segments, results_lb_intervals = locus_breaker(
-        subset_SNPs_pd, hole_size=hole_size, pvalue_sig=pvalue_sig, pvalue_limit=pvalue_limit, phenovar=phenovar
-    )
-
-    logger.info(f"Saving locus-breaker output in {output_prefix} segments and intervals")
-    kwargs = {"index": False}
-    write_table(results_lb_segments, f"{output_prefix}_{trait}_segments", logger, file_format="csv", **kwargs)
-    write_table(results_lb_intervals, f"{output_prefix}_{trait}_intervals", logger, file_format="csv", **kwargs)
 
 
-def _process_snp_list(tiledb_unified, 
-                            trait, 
-                            output_prefix, 
-                            bed_region = None, 
-                            attr= None, 
-                            snp_list = None, 
-                            maf = None, 
-                            hole_size = None, 
-                            pvalue_sig = None, 
-                            pvalue_limit = None, 
-                            phenovar = None):
-    """Process data filtering by a list of SNPs."""
-    chromosomes_dict = snp_list.groupby("CHR")["POS"].apply(list).to_dict()
-    # parallelize by n_workers traits at a time with dask the query on tiledb
-    attributes = attr.split(",")
-    for chrom, positions in chromosomes_dict.items():
-            chromosome = int(chrom)
-            unique_positions = list(set(positions))
-
-            tiledb_iterator_query_df = (
-                tiledb_unified.query(dims=["CHR", "TRAITID", "POS"], attrs=attributes, return_arrow=True)
-                .df[chromosome, trait, unique_positions]
-                .to_pandas()
-            )
-
-            if "MLOG10P" not in tiledb_iterator_query_df.columns:
-                tiledb_iterator_query_df["MLOG10P"] = (
-                    (1 - tiledb_iterator_query_df["BETA"] / tiledb_iterator_query_df["SE"])
-                    .abs()
-                    .apply(lambda x: get_log_p_value_from_z(x))
-                )
-            tiledb_iterator_query_df = _build_snpid(attributes, tiledb_iterator_query_df)
-
-            kwargs = {"header": False, "index": False, "mode": "a"}
-            write_table(tiledb_iterator_query_df, f"{output_prefix}_{trait}", logger, file_format="csv", **kwargs)
-
-def _process_export_all_stats(tiledb_unified, 
-                            trait, 
-                            output_prefix,
-                            bed_region = None, 
-                            attr= None, 
-                            snp_list = None, 
-                            maf = None, 
-                            hole_size = None, 
-                            pvalue_sig = None, 
-                            pvalue_limit = None, 
-                            phenovar = None):
-    """Export all summary statistics."""
-    attributes = attr.split(",")
-    tiledb_query_df = (
-            tiledb_unified.query(
-                dims=["CHR", "TRAITID", "POS"],
-                attrs=attributes,
-                return_arrow=True,
-            )
-            .df[:, trait, :]
-            .to_pandas()
-        )
-
-    if "MLOG10P" not in tiledb_query_df.columns:
-            tiledb_query_df["MLOG10P"] = (
-                (tiledb_query_df["BETA"] / tiledb_query_df["SE"]).abs().apply(get_log_p_value_from_z)
-        )
-
-    tiledb_query_df = _build_snpid(attributes, tiledb_query_df)
-    kwargs = {"index": False}
-    write_table(tiledb_query_df, f"{output_prefix}_{trait}", logger, file_format="parquet", **kwargs)
-
-
-def _process_regions(tiledb_unified, 
-                            trait, 
-                            output_prefix,
-                            bed_region = None, 
-                            attr= None, 
-                            snp_list = None, 
-                            maf = None, 
-                            hole_size = None, 
-                            pvalue_sig = None, 
-                            pvalue_limit = None, 
-                            phenovar = None):
-    """Process data filtering by genomic regions and output as concatenated DataFrame in Parquet format."""
-    attributes = attr.split(",")
-    dataframes = []
-    for chr, group in bed_region:
-        # Get all (start, end) tuples for this chromosome
-        min_pos = min(group["START"])
-        if min_pos < 0:
-            min_pos = 1
-        max_pos = max(group["END"])
-
-        # Query TileDB and convert directly to Pandas DataFrame
-        tiledb_query_df = (
-            tiledb_unified.query(attrs=attributes, dims=["CHR", "POS", "TRAITID"], return_arrow=True)
-            .df[chr, trait, min_pos:max_pos]
-            .to_pandas()
-        )
-
-        dataframes.append(tiledb_query_df)
-
-    # Concatenate all DataFrames
-    concatenated_df = pd.concat(dataframes, ignore_index=True)
-    #Add SNPID column
-    concatenated_df = _build_snpid(attributes, concatenated_df)
-    # Write to Parquet
-    kwargs = {"index": False}
-    write_table(concatenated_df, f"{output_prefix}_{trait}", logger, file_format="parquet", **kwargs)
-
-def _process_function_tasks(function_name, 
-                            tiledb_unified, 
-                            trait_id_list, 
-                            output_prefix, 
-                            batch_size, 
-                            bed_region = None, 
-                            attr= None, 
-                            snp_list_file = None, 
-                            maf = None, 
-                            hole_size = None, 
-                            pvalue_sig = None, 
-                            pvalue_limit = None, 
-                            phenovar = None):
+def _process_function_tasks(
+    function_name,
+    tiledb_unified,
+    trait_id_list,
+    output_prefix,
+    batch_size,
+    bed_region=None,
+    attr=None,
+    snp_list_file=None,
+    maf=None,
+    hole_size=None,
+    pvalue_sig=None,
+    pvalue_limit=None,
+    phenovar=None,
+):
     """This function schedules and executes generic delayed tasks for various export processes"""
     if snp_list_file:
         snp_list = pd.read_csv(snp_list_file, usecols=["CHR", "POS"], dtype={"CHR": str, "POS": int})
         snp_list = snp_list[snp_list["CHR"].astype(str).str.isnumeric()]
+    else:
+        snp_list = None
     tasks = []
     for trait in trait_id_list:
-        task = delayed(function_name(
-            tiledb_unified, trait, output_prefix, bed_region, attr, snp_list, maf, hole_size, pvalue_sig, pvalue_limit, phenovar
-        ))
+        task = delayed(
+            function_name(
+                tiledb_unified,
+                trait,
+                output_prefix,
+                bed_region,
+                attr,
+                snp_list,
+                maf,
+                hole_size,
+                pvalue_sig,
+                pvalue_limit,
+                phenovar,
+            )
+        )
         tasks.append(task)
     for i in range(0, len(tasks), batch_size):
         logger.info(f"Processing a batch of {batch_size} items for batch {i // batch_size + 1}")
@@ -200,6 +68,7 @@ def _process_function_tasks(function_name,
         batch = tasks[i : i + batch_size]
         compute(*batch)
         logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)
+
 
 help_doc = """
 Export summary statistics from TileDB datasets with various filtering options.
@@ -232,7 +101,7 @@ Export summary statistics from TileDB datasets with various filtering options.
     cloup.option(
         "--snp-list-file",
         default=None,
-        help="A txt file with a column containing the SNP ids",
+        help="A txt file which must include CHR and POS columns",
     ),
 )
 @cloup.option_group(
@@ -251,13 +120,13 @@ Export summary statistics from TileDB datasets with various filtering options.
         "--phenovar",
         default=False,
         is_flag=True,
-        help="Boolean to compute phenovariance",
+        help="Boolean to compute phenovariance (Work in progress, not fully implemented yet)",
     ),
     cloup.option(
         "--nest",
         default=False,
         is_flag=True,
-        help="Estimate effective population size",
+        help="Estimate effective population size (Work in progress, not fully implemented yet)",
     ),
 )
 @click.pass_context
@@ -304,49 +173,52 @@ def export(
         if get_dask_deployment(ctx) in dask_deployment_types:
             batch_size = get_dask_batch_size(ctx)
             with manage_daskcluster(ctx):
-
                 if locusbreaker:
                     _process_function_tasks(
-                    function_name = _process_locusbreaker,
-                    tiledb_unified = tiledb_unified,
-                    trait_id_list = trait_id_list,
-                    maf = maf,
-                    hole_size = hole_size,
-                    pvalue_sig = pvalue_sig,
-                    pvalue_limit = pvalue_limit,
-                    phenovar = phenovar,
-                    output_prefix = output_prefix,
-                    batch_size = batch_size,
+                        function_name=_process_locusbreaker,
+                        tiledb_unified=tiledb_unified,
+                        trait_id_list=trait_id_list,
+                        maf=maf,
+                        hole_size=hole_size,
+                        pvalue_sig=pvalue_sig,
+                        pvalue_limit=pvalue_limit,
+                        phenovar=phenovar,
+                        output_prefix=output_prefix,
+                        batch_size=batch_size,
                     )
-
                 elif snp_list_file:
                     _process_function_tasks(
-                        function_name = _process_snp_list, 
-                        tiledb_unified = tiledb_unified, 
-                        trait_id_list = trait_id_list, 
-                        attr =  attr, 
-                        snp_list_file = snp_list_file, 
-                        output_prefix = output_prefix,
-                        batch_size = batch_size)
+                        function_name=_extract_snp_list,
+                        tiledb_unified=tiledb_unified,
+                        trait_id_list=trait_id_list,
+                        attr=attr,
+                        snp_list_file=snp_list_file,
+                        output_prefix=output_prefix,
+                        batch_size=batch_size,
+                    )
                 elif get_regions:
                     bed_region = pd.read_csv(get_regions, sep="\t", header=None)
                     bed_region.columns = ["CHR", "START", "END"]
                     bed_region["CHR"] = bed_region["CHR"].astype(int)
-                    _process_function_tasks(_process_regions,
-                                            tiledb_unified = tiledb_unified, 
-                                            bed_region = bed_region.groupby("CHR") , 
-                                            trait_id_list = trait_id_list, 
-                                            maf = maf, 
-                                            attr = attr, 
-                                            output_prefix = output_prefix, 
-                                            batch_size = batch_size)
+                    _process_function_tasks(
+                        _extract_regions,
+                        tiledb_unified=tiledb_unified,
+                        bed_region=bed_region.groupby("CHR"),
+                        trait_id_list=trait_id_list,
+                        maf=maf,
+                        attr=attr,
+                        output_prefix=output_prefix,
+                        batch_size=batch_size,
+                    )
                 else:
-                    _process_function_tasks(_process_export_all_stats, 
-                                            tiledb_unified = tiledb_unified, 
-                                            trait_id_list = trait_id_list, 
-                                            output_prefix = output_prefix, 
-                                            attr = attr,
-                                            batch_size = batch_size)
+                    _process_function_tasks(
+                        _extract_all_stats,
+                        tiledb_unified=tiledb_unified,
+                        trait_id_list=trait_id_list,
+                        output_prefix=output_prefix,
+                        attr=attr,
+                        batch_size=batch_size,
+                    )
         else:
             logger.error(f"A valid dask deployment type needed: {dask_deployment_types}")
             exit(1)
