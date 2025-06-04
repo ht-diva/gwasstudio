@@ -1,15 +1,13 @@
 # Usage documentation
 
-Table of Contents
-
-[1. Ingestion](#1-ingestion)
-
-
-[2. Export](#2-export)
-
-
-
-
+- [Usage documentation](#usage-documentation)
+  - [1. Ingestion](#1-ingestion)
+    - [1.1 Input](#11-input)
+      - [1.1.1 Summary statistics preparation](#111-summary-statistics-preparation)
+      - [1.1.2 Metadata preparation](#112-metadata-preparation)
+    - [1.2 Command](#12-command)
+  - [2. Export](#2-export)
+  
 ## 1. Ingestion
 
 ### 1.1 Input
@@ -119,7 +117,7 @@ UKB     d       GWAS    ./ukb-d_sampled/ukb-d-XI_DIGESTIVE.gwaslab.tsv.sampled.g
 ```
 </details>
 
-### 1.1 Command
+### 1.2 Command
 
 The ingestion is done using the command ```gwasstudio ingest```. To check all the possible option that can be given below.
 
