@@ -61,5 +61,3 @@ gwasstudio --version
 ## Usage
 
 Please refer to this [documentation](https://github.com/ht-diva/gwasstudio/tree/modify_readme/docs) for learning how to use it.
-
-
