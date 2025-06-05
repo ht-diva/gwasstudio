@@ -1,22 +1,22 @@
 
 
-# GWASSTUDIO: A Tool for Genomic Data Management
+# GWASStudio: A Tool for Genomic Data Management
 
 ![alt text](image.png)
 
 
 ## Overview
 
-GWASSTUDIO is a comprehensive command-line interface (CLI) tool that serves as summary statistics store manager.
-The GWASSTUDIO infrastructure is designed to facilitate Cross-Dataset Exploration of Genomics Summary Statistics, providing researchers with efficient means to manage, query, and analyze large-scale genomic GWAS QTL data.
+GWASStudio is a comprehensive command-line interface (CLI) tool that serves as summary statistics store manager.
+The GWASStudio infrastructure is designed to facilitate Cross-Dataset Exploration of Genomics Summary Statistics, providing researchers with efficient means to manage, query, and analyze large-scale genomic GWAS QTL data.
 
 ## Core Purpose
 
-Gwasstudio provides a unified interface across the SCDH infrastructure, handling the ingestion, storage, querying and export of genomic data using high performance technologies.
+GWASStudio provides a unified interface across the SCDH infrastructure, handling the ingestion, storage, querying and export of genomic data using high performance technologies.
 
 ## Key Components
 
-Gwasstudio consists of several core components:
+GWASStudio consists of several core components:
 
 ### 1. Data Ingestion
 - **Data Ingestion**: Imports summary statistics data and its metadata associated, supporting both files singularly and in batches.
@@ -30,7 +30,7 @@ Gwasstudio consists of several core components:
 
 ## Technical Architecture
 
-Gwasstudio leverages several advanced technologies:
+GWASStudio leverages several advanced technologies:
 
 1. **TileDB**: A high-performance array storage engine that enables efficient storage and retrieval of genomic data.
 2. **MongoDB**: Used for storing and querying metadata associated with genomic datasets.
@@ -41,7 +41,7 @@ Gwasstudio leverages several advanced technologies:
 
 ## Installation
 
-To get started with Gwasstudio, follow these installation steps:
+To get started with GWASStudio, follow these installation steps:
 ```bash
 # Clone the repository
 git clone https://github.com/your-organization/gwasstudio.git
