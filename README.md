@@ -44,7 +44,7 @@ GWASStudio leverages several advanced technologies:
 To get started with GWASStudio, follow these installation steps:
 ```bash
 # Clone the repository
-git clone https://github.com/your-organization/gwasstudio.git
+git clone https://github.com/ht-diva/gwasstudio
 cd gwasstudio
 
 # Create a virtual environment (recommended)
@@ -56,4 +56,14 @@ make install
 
 # Verify installation
 gwasstudio --version
+```
+
+## Usage
+
+Please refer to this documentation for learning how to use it 
+
+```bash
+
+https://github.com/ht-diva/harmonization_pipeline
+
 ```
