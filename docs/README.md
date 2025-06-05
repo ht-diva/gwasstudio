@@ -1,20 +1,38 @@
 # Usage documentation
 
 - [Usage documentation](#usage-documentation)
-  - [1. Ingestion](#1-ingestion)
-    - [1.1 Input](#11-input)
-      - [1.1.1 Summary statistics preparation](#111-summary-statistics-preparation)
-      - [1.1.2 Metadata preparation](#112-metadata-preparation)
-    - [1.2 Command](#12-command)
-  - [2. Export](#2-export)
-  
-## 1. Ingestion
+- [1. Ingestion](#1-ingestion)
+  - [1.1 Input](#11-input)
+    - [1.1.1 Summary statistics preparation](#111-summary-statistics-preparation)
+    - [1.1.2 Metadata preparation](#112-metadata-preparation)
+  - [1.2 Command](#12-command)
+- [2. Export](#2-export)
+  - [2.1 Input](#21-input)
+    - [2.1.1 Query file](#211-query-file)
+  - [2.2 Command](#22-command)
+  - [2.3 Output](#23-output)
+    - [2.3.1 SNP, region, all selection](#231-snp-region-all-selection)
+    - [2.3.2 Locusbreaker](#232-locusbreaker)
+    - [2.3.1 Metadata](#231-metadata)
+- [3. Meta-query](#3-meta-query)
+  - [3.1 Input](#31-input)
+  - [3.2 Command](#32-command)
+  - [3.3 Output](#33-output)
+- [4. Deployment](#4-deployment)
+  - [4.1 Dask](#41-dask)
+    - [4.1.1 Local](#411-local)
+    - [4.1.2 Slurm](#412-slurm)
+  - [4.2 MongoDB](#42-mongodb)
+  - [4.3 Vault](#43-vault)
+  - [4.4 MinIO](#44-minio)
 
-### 1.1 Input
+# 1. Ingestion
+
+## 1.1 Input
 
 GWASSTUDIO requires 2 inputs, a series of harmonised summary statistics in tsv.gz format and a table with the metadata and the path where the summary statistics are stored.
 
-#### 1.1.1 Summary statistics preparation
+### 1.1.1 Summary statistics preparation
 
 Summary statistics needs to be formatted in tsv.gz with the foillowing mandatory and optional columns:
 
@@ -68,7 +86,7 @@ An example of gwas with the required column is shown below
 To harmonize and format data in the appropriate way please refer to this other repo (https://github.com/ht-diva/sumstats_load_pipeline_in_tiledb/tree/main)
 
 
-#### 1.1.2 Metadata preparation
+### 1.1.2 Metadata preparation
 
 The ingestion of summary statistics data need always to be accompanyed by its relative metadata. Below are the mandatory and optional fields of the metadata table together with an example of metadata table
 
@@ -94,9 +112,12 @@ Optional columns
 | `build` | Builds of the summary statistics (example, hg38, hg19, GRCh38, GRCh37, etc....) |
 | `notes_source_id` | The source ID from the original summary statistics (e.g. ukb-d-256, etc...) |
 
-```
+<br>
+
 Example of table for metadata input.
-```
+
+<br>
+
 
 <details>
   <summary> data/metadata_ukb_d_sampled.tsv </summary>
@@ -117,7 +138,7 @@ UKB     d       GWAS    ./ukb-d_sampled/ukb-d-XI_DIGESTIVE.gwaslab.tsv.sampled.g
 ```
 </details>
 
-### 1.2 Command
+## 1.2 Command
 
 The ingestion is done using the command ```gwasstudio ingest```. To check all the possible option that can be given below.
 
@@ -150,7 +171,7 @@ Other options:
 
 Example of ingestion using test data:
 
-```
+```bash
 
 cd data
 
@@ -162,4 +183,188 @@ gwasstudio ingest --file-path metadata_ukb_d_sampled.tsv --uri destination
 
 Once you run the command above you should see a folder called destination with the tiledb storing the summary statistics data.
 
-## 2. Export
+# 2. Export
+
+## 2.1 Input
+
+GWASSTUDIO requires as input a query file containing information about the studies to retrieve.
+
+### 2.1.1 Query file
+
+The query can be done on any of the information used during the ingestion of the data. Below there is an example of query file
+
+<details>
+  <summary> data/search_ukb_d.txt </summary>
+
+  ```
+
+project: UKB
+study: d
+category: GWAS
+
+trait:
+  - desc: skin and subcutaneous tissue
+  - desc: Z42
+  - desc: pregnancy
+
+output:
+  - build
+  - population
+  - notes.sex
+  - notes.source_id
+  - total.samples
+  - total.cases
+  - total.controls
+  - trait.desc
+
+```
+</details>
+
+<br>
+
+## 2.2 Command
+
+The export is done using the command ```gwasstudio export```. The following type of options are available
+
+| Options | Description |
+| --- | --- |
+| `--uri` | Given a BED file tab separated with CHR,START,END it will retrieve all these regions from all the traits [required] |
+| `--maf` | Minor allele frequency to filter the summary statistics |
+| `--attr` | A string defining the columns to get as results from the query (Example MLOG10P, EAF, EA, NEA) |
+| `--search-file` | A file containing the attributes filter to search a study [required] |
+| `--snp-list-file` | A list of SNPs stored in a file with column CHR POS tab separated. |
+| `--get-regions` | Bed file with regions to filter with column CHR POS tab separated. |
+| `--export-all` | Export the entire summary statistics data |
+| `--locusbreaker` | It run the locusbreaker program to divide a summary statistics in independent genomic regions according to their p-value  |
+| `--pvalue-sig` | Maximum log10 p-value threshold within the window |
+| `--pvalue-limit` | Log10 p-value threshold for loci borders  |
+| `--hole-size` | Minimum pair-base distance between SNPs in different loci (default: 250000) |
+
+<br>
+
+Example of command
+
+<br>
+
+``` bash
+
+gwasstudio export --search-file search_ukb_d.txt --attr NEA,EA,EAF --maf 0.01 --uri destination --snp-list-file hapmap3/hapmap3_snps.csv
+
+```
+
+## 2.3 Output
+
+After your export command has finished to run you will have different results depending on which option you selected:
+
+### 2.3.1 SNP, region, all selection
+
+When you choose the ```--snp-list-file``` or the ```--get-regions``` ```--export-all``` options you will get as results a file in parquet format for each trait you interrogated with the SNPs or the reigions or the entire summary statistics information.
+
+### 2.3.2 Locusbreaker
+
+When you decide to  run ```--locusbreaker``` you will get 2 files, a segment file and an interval file for each trait interrogated. The segment file contains for each independent genomic region selected the SNPs with the highest MLOG10P value. The interval file instead contains also the information about all the SNPs present in the region. 
+
+### 2.3.1 Metadata
+
+After you run each of the options above you will always get a metadata file with information about the traits. An example of metadata is shown below:
+
+
+project,study,category,data_id,build,population,notes.sex,notes.source_id,total.samples,total.cases,total.controls,trait.desc
+UKB,d,GWAS,95386150a6,GRCh37,European,Males and Females,ukb-d-XII_SKIN_SUBCUTAN,361194,27074,334120,Diseases of the skin and subcutaneous tissue
+UKB,d,GWAS,f588175d46,GRCh37,European,Males and Females,ukb-d-Z42,361194,1963,359231,Diagnoses - main ICD10: Z42 Follow-up care involving plastic surgery
+UKB,d,GWAS,3440ed14ff,GRCh37,European,Males and Females,ukb-d-XV_PREGNANCY_BIRTH,361194,11959,349235,"Pregnancy, childbirth and the puerperium"
+
+
+# 3. Meta-query
+
+The command ```meta-query``` give to the user the option of getting only information from the metadata without running anything on the data itself
+
+## 3.1 Input
+
+Similarly to here [See query file](#211-query-file) this command requires a search file.
+
+## 3.2 Command
+
+The meta-query command require the following options
+
+| Options | Description |
+| --- | --- |
+| `--search-file` [See query file](#211-query-file) [required] |
+| `--output-prefix` | Prefix of the file to store the metadata  |
+| `--case-sensitive` | Enable case sensitive search |
+
+<br>
+
+Example of command
+
+<br>
+
+``` bash
+
+cd data
+
+gwasstudio meta-query --search-file search_ukb_d.txt --uri destination
+
+```
+
+## 3.3 Output
+
+The output is a table of metadata similar to what shown in 
+
+<details>
+  <summary> data/search_ukb_d.txt </summary>
+  
+```
+  project,study,category,data_id,build,population,notes.sex,notes.source_id,total.samples,total.cases,total.controls,trait.desc
+UKB,d,GWAS,95386150a6,GRCh37,European,Males and Females,ukb-d-XII_SKIN_SUBCUTAN,361194,27074,334120,Diseases of the skin and subcutaneous tissue
+UKB,d,GWAS,f588175d46,GRCh37,European,Males and Females,ukb-d-Z42,361194,1963,359231,Diagnoses - main ICD10: Z42 Follow-up care involving plastic surgery
+UKB,d,GWAS,3440ed14ff,GRCh37,European,Males and Females,ukb-d-XV_PREGNANCY_BIRTH,361194,11959,349235,"Pregnancy, childbirth and the puerperium"
+
+```
+  
+</details>
+
+
+<br>
+
+# 4. Deployment
+
+## 4.1 Dask
+
+In order to parallelize the computation GWASStudio uses Dask. Dask can be deployed in 3 different ways using the option ``` --dask-deployment ```:
+
+| Deployment | Description |
+| --- | --- |
+| `local` | A Dask creater is created on your local machine |
+| `slurm` | In case you are using a HPC with Slurm you can Dask taking care of distributing the jobs across workers with Slurm |
+| `gateway` | This is a more advanced option in case you have already a Dask cluster running some (eg a Kubernetes) and you have to give the address where the cluster is available |
+
+### 4.1.1 Local
+
+For local deployment (for example your laptio or a single node on a HPC) your CPUs can be divided in independent workers, each with a certain amount of virtual CPU available. the following options can be used:
+
+| Local options | Description |
+| --- | --- |
+| `--local-workers` | Number of workers for local cluster |
+| `--local-threads` | Threads per worker for local cluster |
+| `--local-memory` | Memory per worker for local cluster |
+
+### 4.1.2 Slurm
+
+For slurm deployment instead Dask will interact directly with the Slurm job manager and distribute the workloads. Only for non-local deployment you can dustribute the workloads on a flexible amount of workers depending on how much resources are needed.  
+
+| Slurm options | Description |
+| --- | --- |
+| `--minimum-workers` | Minimum amount of running workers |
+| `--maximum-workers` | Maximum amount of running workers |
+| `--memory-workers` | Memory amount per worker in GB |
+| `--cpu-workers` | CPU numbers per worker |
+| `--address` | Dask gateway address |
+
+## 4.2 MongoDB
+
+GWASStudio store the metadata information in a MongoDB. When you want to deploy mongodb on a different address that is not localhost you can use the option ``` --mongo-uri ```
+
+## 4.3 Vault
+
+## 4.4 MinIO

@@ -2,6 +2,9 @@
 
 # GWASSTUDIO: A Tool for Genomic Data Management
 
+![alt text](image.png)
+
+
 ## Overview
 
 GWASSTUDIO is a comprehensive command-line interface (CLI) tool that serves as summary statistics store manager.
