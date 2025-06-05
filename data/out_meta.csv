@@ -1,0 +1,4 @@
+project,study,category,data_id,build,population,notes.sex,notes.source_id,total.samples,total.cases,total.controls,trait.desc
+UKB,d,GWAS,95386150a6,GRCh37,European,Males and Females,ukb-d-XII_SKIN_SUBCUTAN,361194,27074,334120,Diseases of the skin and subcutaneous tissue
+UKB,d,GWAS,f588175d46,GRCh37,European,Males and Females,ukb-d-Z42,361194,1963,359231,Diagnoses - main ICD10: Z42 Follow-up care involving plastic surgery
+UKB,d,GWAS,3440ed14ff,GRCh37,European,Males and Females,ukb-d-XV_PREGNANCY_BIRTH,361194,11959,349235,"Pregnancy, childbirth and the puerperium"
