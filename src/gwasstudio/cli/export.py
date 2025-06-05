@@ -37,11 +37,15 @@ def _process_function_tasks(
     phenovar=None,
 ):
     """This function schedules and executes generic delayed tasks for various export processes"""
-    if snp_list_file:
-        snp_list = pd.read_csv(snp_list_file, usecols=["CHR", "POS"], dtype={"CHR": str, "POS": int})
-        snp_list = snp_list[snp_list["CHR"].astype(str).str.isnumeric()]
-    else:
+
+    def get_snp_list(snp_list_file):
         snp_list = None
+        if snp_list_file:
+            snp_list = pd.read_csv(snp_list_file, usecols=["CHR", "POS"], dtype={"CHR": str, "POS": int})
+            snp_list = snp_list[snp_list["CHR"].str.isnumeric()]
+        return snp_list
+
+    snp_list = delayed(get_snp_list)(snp_list_file)
     tasks = [
         delayed(function_name)(
             tiledb_unified,
