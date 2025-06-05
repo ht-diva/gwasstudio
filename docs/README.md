@@ -30,7 +30,7 @@
 
 ## 1.1 Input
 
-GWASSTUDIO requires 2 inputs, a series of harmonised summary statistics in tsv.gz format and a table with the metadata and the path where the summary statistics are stored.
+GWASStudio requires 2 inputs, a series of harmonised summary statistics in tsv.gz format and a table with the metadata and the path where the summary statistics are stored.
 
 ### 1.1.1 Summary statistics preparation
 
@@ -83,8 +83,7 @@ An example of gwas with the required column is shown below
 
 <br>
 
-To harmonize and format data in the appropriate way please refer to this other repo (https://github.com/ht-diva/sumstats_load_pipeline_in_tiledb/tree/main)
-
+To harmonize and format data in the appropriate way please refer to this other repo (https://github.com/ht-diva/harmonization_pipeline)
 
 ### 1.1.2 Metadata preparation
 
@@ -94,7 +93,7 @@ Mandatory columns
 
 | Column | Description |
 | --- | --- |
-| `project` | Project to which the data belongs (example UKB, GTEx, UKB-PPP, etc...) |
+| `project` | Project to which the data belongs (e.g. UKB, GTEx, UKB-PPP, etc...) |
 | `study` | The study under which the summary statistics fall. Example (a, b, d, which are groups of UK Biobank studies withing Open GWAS) |
 | `file_path` | The path where the files are stored |
 | `category` | The type of summary staitsics to be stored (GWAS, QTL) |
@@ -103,13 +102,13 @@ Optional columns
 
 | Column | Description |
 | --- | --- |
-| `notes_sex` | The sex of the individuals that participated to that study (example, Males and Females)|
+| `notes_sex` | The sex of the individuals that participated to that study (e.g., Males and Females)|
 | `population` | The ancestry of the population used for the study |
 | `total_samples` | Total sample size |
 | `total_cases` | Total amount of cases for binary traits|
 | `total_controls` | Total amount of control for binary traits |
 | `trait_desc` | A description of the summary statistics study |
-| `build` | Builds of the summary statistics (example, hg38, hg19, GRCh38, GRCh37, etc....) |
+| `build` | Builds of the summary statistics (e.g., hg38, hg19, GRCh38, GRCh37, etc....) |
 | `notes_source_id` | The source ID from the original summary statistics (e.g. ukb-d-256, etc...) |
 
 <br>
@@ -187,7 +186,7 @@ Once you run the command above you should see a folder called destination with t
 
 ## 2.1 Input
 
-GWASSTUDIO requires as input a query file containing information about the studies to retrieve.
+GWASStudio requires as input a query file containing information about the studies to retrieve.
 
 ### 2.1.1 Query file
 
@@ -230,7 +229,7 @@ The export is done using the command ```gwasstudio export```. The following type
 | --- | --- |
 | `--uri` | Given a BED file tab separated with CHR,START,END it will retrieve all these regions from all the traits [required] |
 | `--maf` | Minor allele frequency to filter the summary statistics |
-| `--attr` | A string defining the columns to get as results from the query (Example MLOG10P, EAF, EA, NEA) |
+| `--attr` | A string defining the columns to get as results from the query (e.g. MLOG10P, EAF, EA, NEA) |
 | `--search-file` | A file containing the attributes filter to search a study [required] |
 | `--snp-list-file` | A list of SNPs stored in a file with column CHR POS tab separated. |
 | `--get-regions` | Bed file with regions to filter with column CHR POS tab separated. |
@@ -313,7 +312,7 @@ The output is a table of metadata similar to what shown in
 
 <details>
   <summary> data/search_ukb_d.txt </summary>
-  
+
 ```
   project,study,category,data_id,build,population,notes.sex,notes.source_id,total.samples,total.cases,total.controls,trait.desc
 UKB,d,GWAS,95386150a6,GRCh37,European,Males and Females,ukb-d-XII_SKIN_SUBCUTAN,361194,27074,334120,Diseases of the skin and subcutaneous tissue
