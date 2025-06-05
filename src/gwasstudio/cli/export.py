@@ -8,8 +8,8 @@ from dask import delayed, compute
 
 from gwasstudio import logger
 from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
-from gwasstudio.methods.locus_breaker import _process_locusbreaker
 from gwasstudio.methods.extraction_methods import _extract_all_stats, _extract_regions, _extract_snp_list
+from gwasstudio.methods.locus_breaker import _process_locusbreaker
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table
 from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
@@ -42,24 +42,22 @@ def _process_function_tasks(
         snp_list = snp_list[snp_list["CHR"].astype(str).str.isnumeric()]
     else:
         snp_list = None
-    tasks = []
-    for trait in trait_id_list:
-        task = delayed(
-            function_name(
-                tiledb_unified,
-                trait,
-                output_prefix,
-                bed_region,
-                attr,
-                snp_list,
-                maf,
-                hole_size,
-                pvalue_sig,
-                pvalue_limit,
-                phenovar,
-            )
+    tasks = [
+        delayed(function_name)(
+            tiledb_unified,
+            trait,
+            output_prefix,
+            bed_region,
+            attr,
+            snp_list,
+            maf,
+            hole_size,
+            pvalue_sig,
+            pvalue_limit,
+            phenovar,
         )
-        tasks.append(task)
+        for trait in trait_id_list
+    ]
     for i in range(0, len(tasks), batch_size):
         logger.info(f"Processing a batch of {batch_size} items for batch {i // batch_size + 1}")
         # Create a list of delayed tasks
