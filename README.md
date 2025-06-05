@@ -62,4 +62,4 @@ gwasstudio --version
 
 Please refer to this documentation for learning how to use it 
 
-[https://github.com/ht-diva/harmonization_pipeline]
+[documentation](https://github.com/ht-diva/gwasstudio/tree/modify_readme/docs)
