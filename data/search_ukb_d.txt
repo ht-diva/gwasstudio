@@ -2,11 +2,6 @@ project: UKB
 study: d
 category: GWAS
 
-trait:
-  - desc: skin and subcutaneous tissue
-  - desc: Z42
-  - desc: pregnancy
-
 output:
   - build
   - population
