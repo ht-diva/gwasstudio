@@ -62,8 +62,4 @@ gwasstudio --version
 
 Please refer to this documentation for learning how to use it 
 
-```bash
-
-https://github.com/ht-diva/harmonization_pipeline
-
-```
+[https://github.com/ht-diva/harmonization_pipeline]
