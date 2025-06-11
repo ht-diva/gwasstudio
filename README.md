@@ -8,7 +8,7 @@
 ## Overview
 
 GWASStudio is a comprehensive command-line interface (CLI) tool that serves as summary statistics store manager.
-The GWASStudio infrastructure is designed to facilitate Cross-Dataset Exploration of Genomics Summary Statistics, providing researchers with efficient means to manage, query, and analyze large-scale genomic GWAS QTL data.
+GWASStudio is a streamlined infrastructure for cross-dataset exploration of genomic summary statistics, enabling efficient management, querying, and analysis of large-scale GWAS and QTL data.
 
 ## Core Purpose
 
@@ -16,10 +16,10 @@ GWASStudio provides a unified interface across the SCDH infrastructure, handling
 
 ## Key Components
 
-GWASStudio consists of several core components:
+GWASStudio consists of several core functionalities:
 
 ### 1. Data Ingestion
-- **Data Ingestion**: Imports summary statistics data and its metadata associated, supporting both files singularly and in batches.
+- **Data Ingestion**: Imports summary statistics data and its metadata associated.
 - **Support for Multiple Storage Options**: Works with both local filesystems and cloud storage (S3).
 
 ### 2. Data Querying
@@ -36,8 +36,6 @@ GWASStudio leverages several advanced technologies:
 2. **MongoDB**: Used for storing and querying metadata associated with genomic datasets.
 3. **Dask** (optional): Provides distributed computing capabilities for processing large datasets.
 4. **Python Ecosystem**: Built on Python with libraries like Click/Cloup for CLI interfaces, Pandas for data manipulation, and various genomics-specific tools.
-
-## Please check the docs for more details on how to Install and use it
 
 ## Installation
 
