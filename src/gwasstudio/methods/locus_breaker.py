@@ -29,29 +29,28 @@ def _locus_breaker(
         "SE": pd.Series(dtype=np.float32),
         "TRAITID": pd.Series(dtype="object"),
     }
-
+    tiledb_results_pd = tiledb_results_pd.copy()
     # Convert fmt_LP from list to float
     if tiledb_results_pd.empty:
-        print("this region is empty")
-        return pd.DataFrame(expected_schema)
+        return [pd.DataFrame(expected_schema), pd.DataFrame(expected_schema)]
 
     if phenovar:
         pv = compute_pheno_variance(tiledb_results_pd)
         tiledb_results_pd["S"] = pv
     else:
-        tiledb_results_pd["S"] = 1.0
+        tiledb_results_pd.loc[:, "S"] = 1.0
 
     # Filter rows based on the p_limit threshold
     tiledb_results_pd = tiledb_results_pd[tiledb_results_pd["MLOG10P"] > pvalue_limit]
-    tiledb_results_pd["SNPID"] = (
-        tiledb_results_pd["CHR"].astype(str)
-        + ":"
-        + tiledb_results_pd["POS"].astype(str)
-        + ":"
-        + tiledb_results_pd["EA"]
-        + ":"
-        + tiledb_results_pd["NEA"]
-    )
+    tiledb_results_pd.loc[:, "SNPID"] = (
+    tiledb_results_pd["CHR"].astype(str)
+    + ":"
+    + tiledb_results_pd["POS"].astype(str)
+    + ":"
+    + tiledb_results_pd["EA"]
+    + ":"
+    + tiledb_results_pd["NEA"]
+)
     original_data = tiledb_results_pd.copy()
 
     # If no rows remain after filtering, return an empty DataFrame
@@ -142,8 +141,11 @@ def _process_locusbreaker(
     results_lb_segments, results_lb_intervals = _locus_breaker(
         subset_SNPs_pd, hole_size=hole_size, pvalue_sig=pvalue_sig, pvalue_limit=pvalue_limit, phenovar=phenovar
     )
-
+    if(results_lb_segments.empty and results_lb_intervals.empty):
+        logger.info("No significant loci found.")
+        return
     logger.info(f"Saving locus-breaker output in {output_prefix} segments and intervals")
     kwargs = {"index": False}
+
     write_table(results_lb_segments, f"{output_prefix}_{trait}_segments", logger, file_format="csv", **kwargs)
     write_table(results_lb_intervals, f"{output_prefix}_{trait}_intervals", logger, file_format="csv", **kwargs)
