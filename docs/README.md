@@ -93,23 +93,23 @@ Mandatory columns
 
 | Column | Description |
 | --- | --- |
+| `category` | The type of summary staitsics to be stored (GWAS, QTL) |
+| `file_path` | The path where the files are stored |
 | `project` | Project to which the data belongs (e.g. UKB, GTEx, UKB-PPP, etc...) |
 | `study` | The study under which the summary statistics fall. Example (a, b, d, which are groups of UK Biobank studies withing Open GWAS) |
-| `file_path` | The path where the files are stored |
-| `category` | The type of summary staitsics to be stored (GWAS, QTL) |
 
 Optional columns
 
 | Column | Description |
 | --- | --- |
+| `build` | Builds of the summary statistics in cas is not GRCh38 (GRCh37) |
+| `notes_source_id` | The source ID from the original summary statistics (e.g. ukb-d-256, etc...) |
 | `notes_sex` | The sex of the individuals that participated to that study (e.g., Males and Females)|
 | `population` | The ancestry of the population used for the study |
 | `total_samples` | Total sample size |
 | `total_cases` | Total amount of cases for binary traits|
 | `total_controls` | Total amount of control for binary traits |
 | `trait_desc` | A description of the summary statistics study |
-| `build` | Builds of the summary statistics (e.g., hg38, hg19, GRCh38, GRCh37, etc....) |
-| `notes_source_id` | The source ID from the original summary statistics (e.g. ukb-d-256, etc...) |
 
 <br>
 
