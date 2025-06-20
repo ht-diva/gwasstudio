@@ -124,15 +124,15 @@ Example of table for metadata input.
 ```
 
 project study   category        file_path       notes_sex       notes_source_id build   population      total_samples   total_cases     total_controls  trait_desc
-UKB     d       GWAS    ./ukb-d_sampled/ukb-d-XVIII_MISCFINDINGS.gwaslab.tsv.sampled.gz Males and Females       ukb-d-XVIII_MISCFINDINGS        GRCh37  European        361194  97602   263592  Symptoms, signs and abnormal clinical and laboratory findings, not elsewhere classified
-UKB     d       GWAS    ./ukb-d_sampled/ukb-d-XII_SKIN_SUBCUTAN.gwaslab.tsv.sampled.gz  Males and Females       ukb-d-XII_SKIN_SUBCUTAN GRCh37  European        361194  27074   334120  Diseases of the skin and subcutaneous tissue
-UKB     d       GWAS    ./ukb-d_sampled/ukb-d-XV_PREGNANCY_BIRTH.gwaslab.tsv.sampled.gz Males and Females       ukb-d-XV_PREGNANCY_BIRTH        GRCh37  European        361194  11959   349235  Pregnancy, childbirth and the puerperium
-UKB     d       GWAS    ./ukb-d_sampled/ukb-d-X_RESPIRATORY.gwaslab.tsv.sampled.gz      Males and Females       ukb-d-X_RESPIRATORY     GRCh37  European        361194  25381   335813  Diseases of the respiratory system
-UKB     d       GWAS    ./ukb-d_sampled/ukb-d-Z01.gwaslab.tsv.sampled.gz        Males and Females       ukb-d-Z01       GRCh37  European        361194  1370    359824  Diagnoses - main ICD10: Z01 Other special examinations and investigations of persons without complaint or reported diagnosis
-UKB     d       GWAS    ./ukb-d_sampled/ukb-d-XVII_MALFORMAT_ABNORMAL.gwaslab.tsv.sampled.gz    Males and Females       ukb-d-XVII_MALFORMAT_ABNORMAL   GRCh37  European        361194  2121    359073  Congenital malformations, deformations and chromosomal abnormalities
-UKB     d       GWAS    ./ukb-d_sampled/ukb-d-XIII_MUSCULOSKELET.gwaslab.tsv.sampled.gz Males and Females       ukb-d-XIII_MUSCULOSKELET        GRCh37  European        361194  77099   284095  Diseases of the musculoskeletal system and connective tissue
-UKB     d       GWAS    ./ukb-d_sampled/ukb-d-Z42.gwaslab.tsv.sampled.gz        Males and Females       ukb-d-Z42       GRCh37  European        361194  1963    359231  Diagnoses - main ICD10: Z42 Follow-up care involving plastic surgery
-UKB     d       GWAS    ./ukb-d_sampled/ukb-d-XI_DIGESTIVE.gwaslab.tsv.sampled.gz       Males and Females       ukb-d-XI_DIGESTIVE      GRCh37  European        361194  115893  245301  Diseases of the digestive system
+opengwas     ukb-d       GWAS    ./ukb-d_sampled/ukb-d-XVIII_MISCFINDINGS.gwaslab.tsv.sampled.gz Males and Females       ukb-d-XVIII_MISCFINDINGS        GRCh37  European        361194  97602   263592  Symptoms, signs and abnormal clinical and laboratory findings, not elsewhere classified
+opengwas     ukb-d       GWAS    ./ukb-d_sampled/ukb-d-XII_SKIN_SUBCUTAN.gwaslab.tsv.sampled.gz  Males and Females       ukb-d-XII_SKIN_SUBCUTAN GRCh37  European        361194  27074   334120  Diseases of the skin and subcutaneous tissue
+opengwas     ukb-d       GWAS    ./ukb-d_sampled/ukb-d-XV_PREGNANCY_BIRTH.gwaslab.tsv.sampled.gz Males and Females       ukb-d-XV_PREGNANCY_BIRTH        GRCh37  European        361194  11959   349235  Pregnancy, childbirth and the puerperium
+opengwas     ukb-d       GWAS    ./ukb-d_sampled/ukb-d-X_RESPIRATORY.gwaslab.tsv.sampled.gz      Males and Females       ukb-d-X_RESPIRATORY     GRCh37  European        361194  25381   335813  Diseases of the respiratory system
+opengwas     ukb-d       GWAS    ./ukb-d_sampled/ukb-d-Z01.gwaslab.tsv.sampled.gz        Males and Females       ukb-d-Z01       GRCh37  European        361194  1370    359824  Diagnoses - main ICD10: Z01 Other special examinations and investigations of persons without complaint or reported diagnosis
+opengwas     ukb-d       GWAS    ./ukb-d_sampled/ukb-d-XVII_MALFORMAT_ABNORMAL.gwaslab.tsv.sampled.gz    Males and Females       ukb-d-XVII_MALFORMAT_ABNORMAL   GRCh37  European        361194  2121    359073  Congenital malformations, deformations and chromosomal abnormalities
+opengwas     ukb-d       GWAS    ./ukb-d_sampled/ukb-d-XIII_MUSCULOSKELET.gwaslab.tsv.sampled.gz Males and Females       ukb-d-XIII_MUSCULOSKELET        GRCh37  European        361194  77099   284095  Diseases of the musculoskeletal system and connective tissue
+opengwas     ukb-d       GWAS    ./ukb-d_sampled/ukb-d-Z42.gwaslab.tsv.sampled.gz        Males and Females       ukb-d-Z42       GRCh37  European        361194  1963    359231  Diagnoses - main ICD10: Z42 Follow-up care involving plastic surgery
+opengwas     ukb-d       GWAS    ./ukb-d_sampled/ukb-d-XI_DIGESTIVE.gwaslab.tsv.sampled.gz       Males and Females       ukb-d-XI_DIGESTIVE      GRCh37  European        361194  115893  245301  Diseases of the digestive system
 
 ```
 </details>
@@ -162,7 +162,7 @@ Ingestion options:
 
 Other options:
   --help            Show this message and exit.
-                                                        
+
 ```
 </details>
 
@@ -174,7 +174,7 @@ Example of ingestion using test data:
 
 cd data
 
-gwasstudio ingest --file-path metadata_ukb_d_sampled.tsv --uri destination 
+gwasstudio ingest --file-path metadata_ukb_d_sampled.tsv --uri destination
 
 ```
 
@@ -197,8 +197,8 @@ The query can be done on any of the information used during the ingestion of the
 
   ```
 
-project: UKB
-study: d
+project: opengwas
+study: ukb-d
 category: GWAS
 
 trait:
@@ -261,7 +261,7 @@ When you choose the ```--snp-list-file``` or the ```--get-regions``` ```--export
 
 ### 2.3.2 Locusbreaker
 
-When you decide to  run ```--locusbreaker``` you will get 2 files, a segment file and an interval file for each trait interrogated. The segment file contains for each independent genomic region selected the SNPs with the highest MLOG10P value. The interval file instead contains also the information about all the SNPs present in the region. 
+When you decide to  run ```--locusbreaker``` you will get 2 files, a segment file and an interval file for each trait interrogated. The segment file contains for each independent genomic region selected the SNPs with the highest MLOG10P value. The interval file instead contains also the information about all the SNPs present in the region.
 
 ### 2.3.1 Metadata
 
@@ -269,9 +269,9 @@ After you run each of the options above you will always get a metadata file with
 
 
 project,study,category,data_id,build,population,notes.sex,notes.source_id,total.samples,total.cases,total.controls,trait.desc
-UKB,d,GWAS,95386150a6,GRCh37,European,Males and Females,ukb-d-XII_SKIN_SUBCUTAN,361194,27074,334120,Diseases of the skin and subcutaneous tissue
-UKB,d,GWAS,f588175d46,GRCh37,European,Males and Females,ukb-d-Z42,361194,1963,359231,Diagnoses - main ICD10: Z42 Follow-up care involving plastic surgery
-UKB,d,GWAS,3440ed14ff,GRCh37,European,Males and Females,ukb-d-XV_PREGNANCY_BIRTH,361194,11959,349235,"Pregnancy, childbirth and the puerperium"
+opengwas,ukb-d,GWAS,95386150a6,GRCh37,European,Males and Females,ukb-d-XII_SKIN_SUBCUTAN,361194,27074,334120,Diseases of the skin and subcutaneous tissue
+opengwas,ukb-d,GWAS,f588175d46,GRCh37,European,Males and Females,ukb-d-Z42,361194,1963,359231,Diagnoses - main ICD10: Z42 Follow-up care involving plastic surgery
+opengwas,ukb-d,GWAS,3440ed14ff,GRCh37,European,Males and Females,ukb-d-XV_PREGNANCY_BIRTH,361194,11959,349235,"Pregnancy, childbirth and the puerperium"
 
 
 # 3. Meta-query
@@ -308,19 +308,19 @@ gwasstudio meta-query --search-file search_ukb_d.txt --uri destination
 
 ## 3.3 Output
 
-The output is a table of metadata similar to what shown in 
+The output is a table of metadata similar to what shown in
 
 <details>
   <summary> data/search_ukb_d.txt </summary>
 
 ```
   project,study,category,data_id,build,population,notes.sex,notes.source_id,total.samples,total.cases,total.controls,trait.desc
-UKB,d,GWAS,95386150a6,GRCh37,European,Males and Females,ukb-d-XII_SKIN_SUBCUTAN,361194,27074,334120,Diseases of the skin and subcutaneous tissue
-UKB,d,GWAS,f588175d46,GRCh37,European,Males and Females,ukb-d-Z42,361194,1963,359231,Diagnoses - main ICD10: Z42 Follow-up care involving plastic surgery
-UKB,d,GWAS,3440ed14ff,GRCh37,European,Males and Females,ukb-d-XV_PREGNANCY_BIRTH,361194,11959,349235,"Pregnancy, childbirth and the puerperium"
+opengwas,ukb-d,GWAS,95386150a6,GRCh37,European,Males and Females,ukb-d-XII_SKIN_SUBCUTAN,361194,27074,334120,Diseases of the skin and subcutaneous tissue
+opengwas,ukb-d,GWAS,f588175d46,GRCh37,European,Males and Females,ukb-d-Z42,361194,1963,359231,Diagnoses - main ICD10: Z42 Follow-up care involving plastic surgery
+opengwas,ukb-d,GWAS,3440ed14ff,GRCh37,European,Males and Females,ukb-d-XV_PREGNANCY_BIRTH,361194,11959,349235,"Pregnancy, childbirth and the puerperium"
 
 ```
-  
+
 </details>
 
 
@@ -350,7 +350,7 @@ For local deployment (for example your laptio or a single node on a HPC) your CP
 
 ### 4.1.2 Slurm
 
-For slurm deployment instead Dask will interact directly with the Slurm job manager and distribute the workloads. Only for non-local deployment you can dustribute the workloads on a flexible amount of workers depending on how much resources are needed.  
+For slurm deployment instead Dask will interact directly with the Slurm job manager and distribute the workloads. Only for non-local deployment you can dustribute the workloads on a flexible amount of workers depending on how much resources are needed.
 
 | Slurm options | Description |
 | --- | --- |

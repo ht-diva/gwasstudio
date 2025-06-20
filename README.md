@@ -58,7 +58,7 @@ gwasstudio --version
 
 ## Usage
 
-Please refer to this [documentation](https://github.com/ht-diva/gwasstudio/tree/modify_readme/docs) for learning how to use it.
+For detailed instructions on how to use this tool, please refer to the [documentation](docs/README.md) and check the [cli_test](scripts/README.md) script for a practical guide by examples.
 
 ## Citation
 

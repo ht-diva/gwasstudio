@@ -1,18 +1,18 @@
-# Gwasstudio CLI Test Script
+# GWASStudio CLI Test Script
 
 ## Overview
 
-The `cli_test.sh` script is designed to automate the testing of the Gwasstudio CLI tool. It performs a series of operations including data ingestion, querying, and exporting, ensuring that the core functionalities of Gwasstudio work as expected.
+The `cli_test.sh` script is designed to automate the testing of the GWASStudio CLI tool. It performs a series of operations including data ingestion, querying, and exporting, ensuring that the core functionalities of GWASStudio work as expected.
 
 ## Purpose
 
 This script serves multiple purposes:
 
-1. **Automated Testing**: It provides a streamlined way to test the ingestion, querying, and export processes of Gwasstudio, helping to identify any issues or inconsistencies in the tool's behavior.
+1. **Automated Testing**: It provides a streamlined way to test the ingestion, querying, and export processes of GWASStudio, helping to identify any issues or inconsistencies in the tool's behavior.
 
-2. **Learning Tool**: The script can be used as a practical guide to understand how to use Gwasstudio's CLI commands. By examining the script, users can see how different commands are structured and how they interact with each other.
+2. **Learning Tool**: The script can be used as a practical guide to understand how to use GWASStudio's CLI commands. By examining the script, users can see how different commands are structured and how they interact with each other.
 
-3. **Documentation**: The script itself serves as a form of documentation, demonstrating real-world usage scenarios and providing a concrete example of how to perform common tasks with Gwasstudio.
+3. **Documentation**: The script itself serves as a form of documentation, demonstrating real-world usage scenarios and providing a concrete example of how to perform common tasks with GWASStudio.
 
 ## Script Breakdown
 
@@ -40,7 +40,7 @@ The script performs the following steps:
 
 ### Prerequisites
 
-- Ensure that Gwasstudio is installed and properly configured on your system.
+- Ensure that GWASStudio is installed and properly configured on your system.
 - Make sure you have the necessary input files (`metadata_ukb_d_sampled.tsv`, `search_ukb_d.txt`, `hapmap3/hapmap3_snps.csv` and `regions_query.tsv`) in the `data` directory.
 
 ### Running the Script
@@ -63,9 +63,9 @@ After running the script, you should see output indicating the progress of each 
 - **Missing Files**
   - Verify that the input files (`metadata_ukb_d_sampled.tsv`, `search_ukb_d.txt`, `hapmap3/hapmap3_snps.csv` and `regions_query.tsv`) are present in the `data` directory.
 
-- **Gwasstudio Not Installed**
-  - Ensure that Gwasstudio is installed and accessible from your command line.
+- **GWASStudio Not Installed**
+  - Ensure that GWASStudio is installed and accessible from your command line.
 
 ## Conclusion
 
-The `cli_test.sh` script provides a convenient way to test the core functionalities of Gwasstudio. By automating the ingestion, querying, and export processes, it helps ensure that the tool works as expected and identifies any potential issues.
+The `cli_test.sh` script provides a convenient way to test the core functionalities of GWASStudio. By automating the ingestion, querying, and export processes, it helps ensure that the tool works as expected and identifies any potential issues.
