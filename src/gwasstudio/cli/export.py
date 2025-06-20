@@ -162,7 +162,11 @@ def export(
             obj = EnhancedDataProfile(uri=mongo_uri)
             objs = query_mongo_obj(search_topics, obj)
         df = dataframe_from_mongo_objs(output_fields, objs)
-        trait_id_list = list(df["data_id"])
+
+        if "notes.source_id" in df.columns:
+            trait_id_list = list(df["notes.source_id"])
+        else:
+            trait_id_list = list(df["data_id"])
 
         # write metadata query result
         path = Path(output_prefix)
