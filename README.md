@@ -59,3 +59,9 @@ gwasstudio --version
 ## Usage
 
 Please refer to this [documentation](https://github.com/ht-diva/gwasstudio/tree/modify_readme/docs) for learning how to use it.
+
+## Citation
+
+Example files are derived from:
+
+The variant call format provides efficient and robust storage of GWAS summary statistics. Matthew Lyon, Shea J Andrews, Ben Elsworth, Tom R Gaunt, Gibran Hemani, Edoardo Marcora. bioRxiv 2020.05.29.115824; doi: https://doi.org/10.1101/2020.05.29.115824

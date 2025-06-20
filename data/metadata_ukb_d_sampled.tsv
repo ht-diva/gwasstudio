@@ -1,10 +1,10 @@
 project	study	category	file_path	notes_sex	notes_source_id	build	population	total_samples	total_cases	total_controls	trait_desc
-UKB	d	GWAS	./ukb-d_sampled/ukb-d-XVIII_MISCFINDINGS.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-XVIII_MISCFINDINGS	GRCh37	European	361194	97602	263592	Symptoms, signs and abnormal clinical and laboratory findings, not elsewhere classified
-UKB	d	GWAS	./ukb-d_sampled/ukb-d-XII_SKIN_SUBCUTAN.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-XII_SKIN_SUBCUTAN	GRCh37	European	361194	27074	334120	Diseases of the skin and subcutaneous tissue
-UKB	d	GWAS	./ukb-d_sampled/ukb-d-XV_PREGNANCY_BIRTH.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-XV_PREGNANCY_BIRTH	GRCh37	European	361194	11959	349235	Pregnancy, childbirth and the puerperium
-UKB	d	GWAS	./ukb-d_sampled/ukb-d-X_RESPIRATORY.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-X_RESPIRATORY	GRCh37	European	361194	25381	335813	Diseases of the respiratory system
-UKB	d	GWAS	./ukb-d_sampled/ukb-d-Z01.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-Z01	GRCh37	European	361194	1370	359824	Diagnoses - main ICD10: Z01 Other special examinations and investigations of persons without complaint or reported diagnosis
-UKB	d	GWAS	./ukb-d_sampled/ukb-d-XVII_MALFORMAT_ABNORMAL.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-XVII_MALFORMAT_ABNORMAL	GRCh37	European	361194	2121	359073	Congenital malformations, deformations and chromosomal abnormalities
-UKB	d	GWAS	./ukb-d_sampled/ukb-d-XIII_MUSCULOSKELET.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-XIII_MUSCULOSKELET	GRCh37	European	361194	77099	284095	Diseases of the musculoskeletal system and connective tissue
-UKB	d	GWAS	./ukb-d_sampled/ukb-d-Z42.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-Z42	GRCh37	European	361194	1963	359231	Diagnoses - main ICD10: Z42 Follow-up care involving plastic surgery
-UKB	d	GWAS	./ukb-d_sampled/ukb-d-XI_DIGESTIVE.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-XI_DIGESTIVE	GRCh37	European	361194	115893	245301	Diseases of the digestive system
+opengwas	ukb-d	GWAS	./ukb-d_sampled/ukb-d-XVIII_MISCFINDINGS.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-XVIII_MISCFINDINGS	GRCh37	European	361194	97602	263592	Symptoms, signs and abnormal clinical and laboratory findings, not elsewhere classified
+opengwas	ukb-d	GWAS	./ukb-d_sampled/ukb-d-XII_SKIN_SUBCUTAN.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-XII_SKIN_SUBCUTAN	GRCh37	European	361194	27074	334120	Diseases of the skin and subcutaneous tissue
+opengwas	ukb-d	GWAS	./ukb-d_sampled/ukb-d-XV_PREGNANCY_BIRTH.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-XV_PREGNANCY_BIRTH	GRCh37	European	361194	11959	349235	Pregnancy, childbirth and the puerperium
+opengwas	ukb-d	GWAS	./ukb-d_sampled/ukb-d-X_RESPIRATORY.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-X_RESPIRATORY	GRCh37	European	361194	25381	335813	Diseases of the respiratory system
+opengwas	ukb-d	GWAS	./ukb-d_sampled/ukb-d-Z01.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-Z01	GRCh37	European	361194	1370	359824	Diagnoses - main ICD10: Z01 Other special examinations and investigations of persons without complaint or reported diagnosis
+opengwas	ukb-d	GWAS	./ukb-d_sampled/ukb-d-XVII_MALFORMAT_ABNORMAL.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-XVII_MALFORMAT_ABNORMAL	GRCh37	European	361194	2121	359073	Congenital malformations, deformations and chromosomal abnormalities
+opengwas	ukb-d	GWAS	./ukb-d_sampled/ukb-d-XIII_MUSCULOSKELET.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-XIII_MUSCULOSKELET	GRCh37	European	361194	77099	284095	Diseases of the musculoskeletal system and connective tissue
+opengwas	ukb-d	GWAS	./ukb-d_sampled/ukb-d-Z42.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-Z42	GRCh37	European	361194	1963	359231	Diagnoses - main ICD10: Z42 Follow-up care involving plastic surgery
+opengwas	ukb-d	GWAS	./ukb-d_sampled/ukb-d-XI_DIGESTIVE.gwaslab.tsv.sampled.gz	Males and Females	ukb-d-XI_DIGESTIVE	GRCh37	European	361194	115893	245301	Diseases of the digestive system
