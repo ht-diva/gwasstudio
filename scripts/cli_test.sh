@@ -7,6 +7,12 @@ else
   cd "./data"
 fi
 
+# Check if gwasstudio command is available
+if ! command -v gwasstudio &> /dev/null; then
+  echo "gwasstudio command not found. Activate the conda env. Exiting."
+  exit 1
+fi
+
 # Define the data and test directory variables
 GWASSTUDIO_DATA_DIR=$(gwasstudio info | grep "data dir:" | awk -F': ' '{print $2}')
 TEST_DIR="../scripts/test_results/cli"
