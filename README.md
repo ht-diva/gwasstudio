@@ -58,7 +58,7 @@ gwasstudio --version
 
 ## Usage
 
-For detailed instructions on how to use this tool, please refer to the [documentation](docs/README.md) and check the [cli_test](scripts/README.md) script for a practical guide by examples.
+For detailed instructions on how to use this tool, please refer to the [documentation](docs/README.md) and check the [cli_test](scripts/) script for a practical guide by examples.
 
 ## Citation
 
