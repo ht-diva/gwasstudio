@@ -7,16 +7,15 @@
 
 ## Overview
 
-GWASStudio is a comprehensive command-line interface (CLI) tool that serves as summary statistics store manager.
-GWASStudio is a streamlined infrastructure for cross-dataset exploration of genomic summary statistics, enabling efficient management, querying, and analysis of large-scale GWAS and QTL data.
+GWASStudio is a powerful CLI tool designed for efficient storage, retrieval, and querying of genomic summary statistics. It offers a high-performance infrastructure for handling and analyzing large-scale GWAS and QTL datasets, enabling seamless cross-dataset exploration.
 
 ## Core Purpose
 
-GWASStudio provides a unified interface across the SCDH infrastructure, handling the ingestion, storage, querying and export of genomic data using high performance technologies.
+GWASStudio provides a unified interface across the [SCDH](https://github.com/ht-diva/cdh_in_a_box) infrastructure, handling the ingestion, storage, querying and export of genomic data using high-performance technologies.
 
-## Key Components
+## Key Functionalities
 
-GWASStudio consists of several core functionalities:
+GWASStudio consists of several key functionalities:
 
 ### 1. Data Ingestion
 - **Data Ingestion**: Imports summary statistics data and its metadata associated.
@@ -32,9 +31,9 @@ GWASStudio consists of several core functionalities:
 
 GWASStudio leverages several advanced technologies:
 
-1. **TileDB**: A high-performance array storage engine that enables efficient storage and retrieval of genomic data.
-2. **MongoDB**: Used for storing and querying metadata associated with genomic datasets.
-3. **Dask** (optional): Provides distributed computing capabilities for processing large datasets.
+1. **TileDB Embedded**: A high-performance array storage engine that enables efficient storage and retrieval of genomic data.
+2. **MongoDB**: A flexible, scalable NoSQL database used for storing and querying metadata associated with genomic datasets.
+3. **Dask**: Provides distributed computing capabilities for processing large datasets.
 4. **Python Ecosystem**: Built on Python with libraries like Click/Cloup for CLI interfaces, Pandas for data manipulation, and various genomics-specific tools.
 
 ## Installation
