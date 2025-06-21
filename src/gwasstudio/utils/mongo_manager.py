@@ -22,7 +22,9 @@ def manage_mongo(ctx):
     Raises:
         Exception: If an error occurs during the MongoDB server management.
     """
-    embedded_mongo = (get_mongo_deployment(ctx) == "embedded") and (get_mongo_uri(ctx) is None)
+    embedded_mongo = (get_mongo_deployment(ctx) == "embedded") and (
+        (get_mongo_uri(ctx) is None) or ("localhost:27018" in get_mongo_uri(ctx))
+    )
     logger.debug(f"Embedded MongoDB: {embedded_mongo}")
     mdb = MongoDBManager()
     if embedded_mongo:
