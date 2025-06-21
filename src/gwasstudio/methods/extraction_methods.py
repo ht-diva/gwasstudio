@@ -3,6 +3,8 @@ import pandas as pd
 from gwasstudio import logger
 from gwasstudio.utils import write_table, get_log_p_value_from_z, _build_snpid
 
+TILEDB_DIMS = ["CHR", "TRAITID", "POS"]
+
 
 def _extract_snp_list(
     tiledb_unified,
@@ -26,7 +28,7 @@ def _extract_snp_list(
         unique_positions = list(set(positions))
 
         tiledb_iterator_query_df = (
-            tiledb_unified.query(dims=["CHR", "TRAITID", "POS"], attrs=attributes, return_arrow=True)
+            tiledb_unified.query(dims=TILEDB_DIMS, attrs=attributes, return_arrow=True)
             .df[chromosome, trait, unique_positions]
             .to_pandas()
         )
@@ -60,7 +62,7 @@ def _extract_all_stats(
     attributes = attr.split(",")
     tiledb_query_df = (
         tiledb_unified.query(
-            dims=["CHR", "TRAITID", "POS"],
+            dims=TILEDB_DIMS,
             attrs=attributes,
             return_arrow=True,
         )
@@ -103,7 +105,7 @@ def _extract_regions(
 
         # Query TileDB and convert directly to Pandas DataFrame
         tiledb_query_df = (
-            tiledb_unified.query(attrs=attributes, dims=["CHR", "POS", "TRAITID"], return_arrow=True)
+            tiledb_unified.query(attrs=attributes, dims=TILEDB_DIMS, return_arrow=True)
             .df[chr, trait, min_pos:max_pos]
             .to_pandas()
         )
