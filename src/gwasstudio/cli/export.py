@@ -25,7 +25,7 @@ def _process_function_tasks(
     function_name,
     tiledb_unified,
     trait_id_list,
-    output_prefix,
+    output_prefix_dict,
     batch_size,
     bed_region=None,
     attr=None,
@@ -50,7 +50,7 @@ def _process_function_tasks(
         delayed(function_name)(
             tiledb_unified,
             trait,
-            output_prefix,
+            output_prefix_dict.get(trait),
             bed_region,
             attr,
             snp_list,
@@ -163,10 +163,13 @@ def export(
             objs = query_mongo_obj(search_topics, obj)
         df = dataframe_from_mongo_objs(output_fields, objs)
 
-        if "notes.source_id" in df.columns:
-            trait_id_list = list(df["notes.source_id"])
-        else:
-            trait_id_list = list(df["data_id"])
+        trait_id_list = list(df["data_id"])
+
+        # Create output prefix dictionary
+        key_column = "data_id"
+        value_column = "output_prefix"
+        df[value_column] = f"{output_prefix}_" + df.get("notes.source_id", df[key_column])
+        output_prefix_dict = df.set_index(key_column)[value_column].to_dict()
 
         # write metadata query result
         path = Path(output_prefix)
@@ -188,7 +191,7 @@ def export(
                         pvalue_sig=pvalue_sig,
                         pvalue_limit=pvalue_limit,
                         phenovar=phenovar,
-                        output_prefix=output_prefix,
+                        output_prefix_dict=output_prefix_dict,
                         batch_size=batch_size,
                     )
                 elif snp_list_file:
@@ -198,7 +201,7 @@ def export(
                         trait_id_list=trait_id_list,
                         attr=attr,
                         snp_list_file=snp_list_file,
-                        output_prefix=output_prefix,
+                        output_prefix_dict=output_prefix_dict,
                         batch_size=batch_size,
                     )
                 elif get_regions:
@@ -212,7 +215,7 @@ def export(
                         trait_id_list=trait_id_list,
                         maf=maf,
                         attr=attr,
-                        output_prefix=output_prefix,
+                        output_prefix_dict=output_prefix_dict,
                         batch_size=batch_size,
                     )
                 else:
@@ -220,7 +223,7 @@ def export(
                         _extract_all_stats,
                         tiledb_unified=tiledb_unified,
                         trait_id_list=trait_id_list,
-                        output_prefix=output_prefix,
+                        output_prefix_dict=output_prefix_dict,
                         attr=attr,
                         batch_size=batch_size,
                     )

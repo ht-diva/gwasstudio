@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
 from gwasstudio import logger
+from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
 from gwasstudio.utils import write_table, get_log_p_value_from_z
 
 
@@ -43,14 +43,14 @@ def _locus_breaker(
     # Filter rows based on the p_limit threshold
     tiledb_results_pd = tiledb_results_pd[tiledb_results_pd["MLOG10P"] > pvalue_limit]
     tiledb_results_pd.loc[:, "SNPID"] = (
-    tiledb_results_pd["CHR"].astype(str)
-    + ":"
-    + tiledb_results_pd["POS"].astype(str)
-    + ":"
-    + tiledb_results_pd["EA"]
-    + ":"
-    + tiledb_results_pd["NEA"]
-)
+        tiledb_results_pd["CHR"].astype(str)
+        + ":"
+        + tiledb_results_pd["POS"].astype(str)
+        + ":"
+        + tiledb_results_pd["EA"]
+        + ":"
+        + tiledb_results_pd["NEA"]
+    )
     original_data = tiledb_results_pd.copy()
 
     # If no rows remain after filtering, return an empty DataFrame
@@ -141,11 +141,11 @@ def _process_locusbreaker(
     results_lb_segments, results_lb_intervals = _locus_breaker(
         subset_SNPs_pd, hole_size=hole_size, pvalue_sig=pvalue_sig, pvalue_limit=pvalue_limit, phenovar=phenovar
     )
-    if(results_lb_segments.empty and results_lb_intervals.empty):
+    if results_lb_segments.empty and results_lb_intervals.empty:
         logger.info("No significant loci found.")
         return
     logger.info(f"Saving locus-breaker output in {output_prefix} segments and intervals")
     kwargs = {"index": False}
 
-    write_table(results_lb_segments, f"{output_prefix}_{trait}_segments", logger, file_format="csv", **kwargs)
-    write_table(results_lb_intervals, f"{output_prefix}_{trait}_intervals", logger, file_format="csv", **kwargs)
+    write_table(results_lb_segments, f"{output_prefix}_segments", logger, file_format="csv", **kwargs)
+    write_table(results_lb_intervals, f"{output_prefix}_intervals", logger, file_format="csv", **kwargs)

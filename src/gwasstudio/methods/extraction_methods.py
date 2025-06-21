@@ -1,6 +1,7 @@
 import pandas as pd
-from gwasstudio.utils import write_table, get_log_p_value_from_z, _build_snpid
+
 from gwasstudio import logger
+from gwasstudio.utils import write_table, get_log_p_value_from_z, _build_snpid
 
 
 def _extract_snp_list(
@@ -39,7 +40,7 @@ def _extract_snp_list(
         tiledb_iterator_query_df = _build_snpid(attributes, tiledb_iterator_query_df)
 
         kwargs = {"header": False, "index": False, "mode": "a"}
-        write_table(tiledb_iterator_query_df, f"{output_prefix}_{trait}", logger, file_format="csv", **kwargs)
+        write_table(tiledb_iterator_query_df, f"{output_prefix}", logger, file_format="csv", **kwargs)
 
 
 def _extract_all_stats(
@@ -74,7 +75,7 @@ def _extract_all_stats(
 
     tiledb_query_df = _build_snpid(attributes, tiledb_query_df)
     kwargs = {"index": False}
-    write_table(tiledb_query_df, f"{output_prefix}_{trait}", logger, file_format="parquet", **kwargs)
+    write_table(tiledb_query_df, f"{output_prefix}", logger, file_format="parquet", **kwargs)
 
 
 def _extract_regions(
@@ -115,4 +116,4 @@ def _extract_regions(
     concatenated_df = _build_snpid(attributes, concatenated_df)
     # Write to Parquet
     kwargs = {"index": False}
-    write_table(concatenated_df, f"{output_prefix}_{trait}", logger, file_format="parquet", **kwargs)
+    write_table(concatenated_df, f"{output_prefix}", logger, file_format="parquet", **kwargs)
