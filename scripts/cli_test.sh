@@ -46,6 +46,9 @@ run_command "Querying data by trait description..." "gwasstudio --stdout --mongo
 # Export data
 run_command "Exporting data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_ukb_d.txt --output-prefix ${TEST_DIR}/ukb_d_export --uri ${TEST_DIR}/destination"
 
+# Export data with a different file format
+run_command "Exporting data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_ukb_d.txt --output-prefix ${TEST_DIR}/ukb_d_export --output-format parquet --uri ${TEST_DIR}/destination"
+
 # Regions filtering
 run_command "Regions filtering..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_ukb_d.txt --output-prefix ${TEST_DIR}/ukb_d_regions_filtering --uri ${TEST_DIR}/destination --get-regions regions_query.tsv"
 

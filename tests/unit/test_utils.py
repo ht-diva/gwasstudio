@@ -88,6 +88,13 @@ class TestWriteTable(unittest.TestCase):
             self.assertTrue(output_path.with_suffix(".parquet").exists())
             self.logger.info.assert_called_with(f"Saving DataFrame to {output_path.with_suffix('.parquet')}")
 
+    def test_write_csv_gz(self):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            output_path = Path(tmpdirname) / "test_output"
+            write_table(self.df, str(output_path), self.logger, file_format="csv.gz")
+            self.assertTrue(output_path.with_suffix(".csv.gz").exists())
+            self.logger.info.assert_called_with(f"Saving DataFrame to {output_path.with_suffix('.csv.gz')}")
+
     def test_write_csv(self):
         with tempfile.TemporaryDirectory() as tmpdirname:
             output_path = Path(tmpdirname) / "test_output"
