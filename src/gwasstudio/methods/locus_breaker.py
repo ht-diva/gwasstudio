@@ -119,6 +119,7 @@ def _process_locusbreaker(
     tiledb_unified,
     trait,
     output_prefix,
+    output_format,
     bed_region=None,
     attr=None,
     snp_list=None,

@@ -241,7 +241,7 @@ def write_table(
     df: pd.DataFrame,
     where: str,
     logger: object,
-    compression: str = "snappy",
+    compression: bool = True,
     file_format: str = "parquet",
     log_msg: str = "none",
     **kwargs,
@@ -255,16 +255,16 @@ def write_table(
     :param logger: The logger object used for logging messages.
     :param df: The pandas DataFrame to be saved.
     :param where: Destination file path, without extension, where the file should be saved.
-    :param compression: Compression type for parquet files. Default is "snappy".
-    :param file_format: File format to save the data, either "parquet" or "csv". Default is "parquet".
+    :param compression: Compression flag indicating whether to compress the file.
+    :param file_format: File format to save the data, either "parquet", "csv.gz", or "csv". Default is "parquet".
     :param log_msg: Custom log message. If "none", a default message will be logged. Default is "none".
     :param kwargs: Any additional keyword arguments to be passed to the underlying `to_parquet` or
         `to_csv` pandas methods.
     :return: None
     """
     # Check if format is valid
-    if file_format not in ["parquet", "csv"]:
-        raise ValueError("Format must be either 'parquet' or 'csv'")
+    if file_format not in ["parquet", "csv.gz", "csv"]:
+        raise ValueError("Format must be either 'parquet', 'csv.gz', or 'csv'")
 
     # Set the output filename based on the provided format and extension
     file_extension = "." + file_format
@@ -275,9 +275,16 @@ def write_table(
     msg = log_msg if log_msg != "none" else f"Saving DataFrame to {output_path}"
     logger.info(msg)
 
+    if df.empty:
+        logger.warning(f"DataFrame is empty while writing to {output_path}")
+
     if file_format == "parquet":
-        df.to_parquet(output_path, compression=compression, **kwargs)
-    elif file_format == "csv":
+        compression_to_use = "snappy" if compression else None
+        df.to_parquet(output_path, compression=compression_to_use, **kwargs)
+    elif file_format == "csv.gz":
+        compression_to_use = {"method": "gzip", "compresslevel": 1, "mtime": 1} if compression else None
+        df.to_csv(output_path, compression=compression_to_use, **kwargs)
+    else:
         df.to_csv(output_path, **kwargs)
 
 

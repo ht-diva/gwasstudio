@@ -26,6 +26,7 @@ def _process_function_tasks(
     tiledb_unified,
     trait_id_list,
     output_prefix_dict,
+    output_format,
     batch_size,
     bed_region=None,
     attr=None,
@@ -51,6 +52,7 @@ def _process_function_tasks(
             tiledb_unified,
             trait,
             output_prefix_dict.get(trait),
+            output_format,
             bed_region,
             attr,
             snp_list,
@@ -81,6 +83,9 @@ Export summary statistics from TileDB datasets with various filtering options.
     "TileDB options",
     cloup.option("--uri", required=True, default=None, help="TileDB dataset URI"),
     cloup.option("--output-prefix", default="out", help="Prefix to be used for naming the output files"),
+    cloup.option(
+        "--output-format", type=click.Choice(["parquet", "csv.gz", "csv"]), default="csv.gz", help="Output file format"
+    ),
     cloup.option("--search-file", required=True, default=None, help="The search file used for querying metadata"),
     cloup.option(
         "--attr", required=True, default="BETA,SE,EAF", help="string delimited by comma with the attributes to export"
@@ -137,6 +142,7 @@ def export(
     search_file,
     attr,
     output_prefix,
+    output_format,
     pvalue_sig,
     pvalue_limit,
     hole_size,
@@ -192,6 +198,7 @@ def export(
                         pvalue_limit=pvalue_limit,
                         phenovar=phenovar,
                         output_prefix_dict=output_prefix_dict,
+                        output_format=output_format,
                         batch_size=batch_size,
                     )
                 elif snp_list_file:
@@ -202,6 +209,7 @@ def export(
                         attr=attr,
                         snp_list_file=snp_list_file,
                         output_prefix_dict=output_prefix_dict,
+                        output_format=output_format,
                         batch_size=batch_size,
                     )
                 elif get_regions:
@@ -216,6 +224,7 @@ def export(
                         maf=maf,
                         attr=attr,
                         output_prefix_dict=output_prefix_dict,
+                        output_format=output_format,
                         batch_size=batch_size,
                     )
                 else:
@@ -224,6 +233,7 @@ def export(
                         tiledb_unified=tiledb_unified,
                         trait_id_list=trait_id_list,
                         output_prefix_dict=output_prefix_dict,
+                        output_format=output_format,
                         attr=attr,
                         batch_size=batch_size,
                     )

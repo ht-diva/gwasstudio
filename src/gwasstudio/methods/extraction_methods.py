@@ -10,6 +10,7 @@ def _extract_snp_list(
     tiledb_unified,
     trait,
     output_prefix,
+    output_format,
     bed_region=None,
     attr=None,
     snp_list=None,
@@ -42,13 +43,14 @@ def _extract_snp_list(
         tiledb_iterator_query_df = _build_snpid(attributes, tiledb_iterator_query_df)
 
         kwargs = {"header": False, "index": False, "mode": "a"}
-        write_table(tiledb_iterator_query_df, f"{output_prefix}", logger, file_format="csv", **kwargs)
+        write_table(tiledb_iterator_query_df, f"{output_prefix}", logger, file_format=output_format, **kwargs)
 
 
 def _extract_all_stats(
     tiledb_unified,
     trait,
     output_prefix,
+    output_format,
     bed_region=None,
     attr=None,
     snp_list=None,
@@ -77,13 +79,14 @@ def _extract_all_stats(
 
     tiledb_query_df = _build_snpid(attributes, tiledb_query_df)
     kwargs = {"index": False}
-    write_table(tiledb_query_df, f"{output_prefix}", logger, file_format="parquet", **kwargs)
+    write_table(tiledb_query_df, f"{output_prefix}", logger, file_format=output_format, **kwargs)
 
 
 def _extract_regions(
     tiledb_unified,
     trait,
     output_prefix,
+    output_format,
     bed_region=None,
     attr=None,
     snp_list=None,
@@ -118,4 +121,4 @@ def _extract_regions(
     concatenated_df = _build_snpid(attributes, concatenated_df)
     # Write to Parquet
     kwargs = {"index": False}
-    write_table(concatenated_df, f"{output_prefix}", logger, file_format="parquet", **kwargs)
+    write_table(concatenated_df, f"{output_prefix}", logger, file_format=output_format, **kwargs)
