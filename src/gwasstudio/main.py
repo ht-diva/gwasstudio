@@ -167,7 +167,7 @@ def cli_init(
         "sm.dedup_coords": "true",
     }
 
-    batch_sizes = {"gateway": minimum_workers, "slurm": maximum_workers - minimum_workers, "local": local_workers}
+    batch_sizes = {"gateway": minimum_workers, "slurm": maximum_workers * 3, "local": local_workers}
     ctx.obj["dask"] = {
         "deployment": dask_deployment,
         "batch_size": batch_sizes.get(dask_deployment, None),

@@ -39,6 +39,22 @@ def check_file_exists(input_file: str, logger: object) -> bool:
         return False
 
 
+def divide_and_round(number: int, divider: int = 3) -> int:
+    """
+    Divides a given number by a specified divider and rounds the result to the nearest integer.
+    Ensures the result is not less than 1.
+
+    Args:
+        number (int): The number to be divided.
+        divider (int, optional): The divider. Defaults to 3.
+
+    Returns:
+        int: The rounded result, guaranteed to be at least 1.
+    """
+    result = round(number / divider)
+    return max(result, 1)
+
+
 def find_item(obj: Dict, key: str) -> Any:
     """
     Recursively search for a specific key in a dictionary.

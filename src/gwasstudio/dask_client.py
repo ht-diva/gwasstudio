@@ -6,6 +6,7 @@ from dask_gateway import Gateway
 from dask_jobqueue import SLURMCluster as Cluster
 
 from gwasstudio import logger
+from gwasstudio.utils import divide_and_round
 from gwasstudio.utils.cfg import get_dask_config
 
 dask_deployment_types = ["local", "gateway", "slurm"]
@@ -63,8 +64,9 @@ class DaskCluster:
                 raise ValueError("Address must be provided for gateway deployment")
 
         elif deployment == "slurm":
-            cluster = Cluster(memory=_mem_dist, cores=_cpu_dist, processes=1, walltime=_walltime)
-            cluster.scale(_min_dist)
+            processes = divide_and_round(_cpu_dist)
+            cluster = Cluster(memory=_mem_dist, cores=_cpu_dist, processes=processes, walltime=_walltime)
+            cluster.adapt(minimum=_min_dist, maximum=_max_dist)  # Auto-scale between minimum and maximum workers
             logger.info(
                 f"Dask SLURM cluster: starting from {_min_dist} to {_max_dist} workers, {_mem_dist} of memory and {_cpu_dist} cpus per worker"
             )
