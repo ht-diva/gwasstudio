@@ -65,7 +65,7 @@ class MongoMixin:
             self.ensure_is_mapped("save")
             with self.mec:
                 self.mdb_obj.save(**kwargs)
-            logger.error("{} updated, as it was not a unique ID".format(self.unique_key))
+            logger.warning("{} updated, as it was not a unique ID".format(self.unique_key))
 
     def view(self):
         """
