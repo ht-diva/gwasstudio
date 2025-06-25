@@ -46,7 +46,7 @@ def _process_function_tasks(
             snp_list = snp_list[snp_list["CHR"].str.isnumeric()]
         return snp_list
 
-    snp_list = delayed(get_snp_list)(snp_list_file)
+    snp_list = delayed(get_snp_list)(snp_list_file) if snp_list_file else None
     tasks = [
         delayed(function_name)(
             tiledb_unified,
