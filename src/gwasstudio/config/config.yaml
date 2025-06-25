@@ -44,3 +44,8 @@ data_category:
 hashing:
   algorithm: "sha256"
   length: 10
+
+# TileDB configuration
+# https://cloud.tiledb.com/academy/structure/arrays/tutorials/basics/configuration/index.html
+tiledb_sm_config:
+  "sm.dedup_coords": 'true'

@@ -224,7 +224,8 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict, ingest_pval: bool) -
     hg = Hashing()
     df["TRAITID"] = hg.compute_hash(fpath=file_path)
     # Store the processed data in TileDB
-    ctx = tiledb.Ctx(cfg)
+    print(cfg)
+    ctx = tiledb.Ctx(tiledb.Config(cfg))
     tiledb.from_pandas(
         uri=uri,
         dataframe=df,
