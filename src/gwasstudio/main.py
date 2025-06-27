@@ -164,7 +164,6 @@ def cli_init(
         "vfs.s3.scheme": aws_scheme,
         "vfs.s3.region": aws_region,
         "vfs.s3.verify_ssl": aws_verify_ssl,
-        "sm.dedup_coords": "true",
     }
 
     batch_sizes = {"gateway": minimum_workers, "slurm": maximum_workers * 3, "local": local_workers}

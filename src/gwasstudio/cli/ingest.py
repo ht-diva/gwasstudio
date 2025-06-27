@@ -7,7 +7,13 @@ from dask import delayed, compute
 from gwasstudio import logger
 from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
 from gwasstudio.utils import create_tiledb_schema, parse_uri, process_and_ingest, check_file_exists
-from gwasstudio.utils.cfg import get_tiledb_config, get_dask_batch_size, get_dask_deployment, get_mongo_uri
+from gwasstudio.utils.cfg import (
+    get_tiledb_config,
+    get_tiledb_sm_config,
+    get_dask_batch_size,
+    get_dask_deployment,
+    get_mongo_uri,
+)
 from gwasstudio.utils.metadata import load_metadata, ingest_metadata
 from gwasstudio.utils.mongo_manager import manage_mongo
 from gwasstudio.utils.s3 import does_uri_path_exist
@@ -159,6 +165,7 @@ def ingest_to_fs(ctx, input_file_list, uri, pvalue):
         uri (str): Destination path where to store the tiledb dataset in the local file system.
         pvalue (bool): Indicate whether to ingest the p-value from the summary statistics instead of calculating it.
     """
+    cfg = get_tiledb_sm_config()
     _, __, path = parse_uri(uri)
     if not Path(path).exists():
         logger.info("Creating TileDB schema")
@@ -176,7 +183,7 @@ def ingest_to_fs(ctx, input_file_list, uri, pvalue):
                 logger.warning(f"Skipping files: {skipped_files}")
             # Create a list of delayed tasks
             tasks = [
-                delayed(process_and_ingest)(file_path, uri, {}, pvalue)
+                delayed(process_and_ingest)(file_path, uri, cfg, pvalue)
                 for file_path in batch_files
                 if batch_files[file_path]
             ]
