@@ -13,7 +13,6 @@ from typing import Any, Dict
 import numpy as np
 import pandas as pd
 import tiledb
-from scipy import stats
 
 from gwasstudio.utils.hashing import Hashing
 
@@ -263,11 +262,10 @@ def write_table(
     **kwargs,
 ):
     """
-    Writes the given DataFrame to a specified location on disk in the desired format. Two file
-    formats are supported: "parquet" and "csv". The function handles file compression for
+    Writes the given DataFrame to a specified location on disk in the desired format. Three file
+    formats are supported: "parquet", "csv.gz" and "csv". The function handles file compression for
     "parquet" format. Logs a custom or default message indicating the status.
 
-    :param engine:
     :param logger: The logger object used for logging messages.
     :param df: The pandas DataFrame to be saved.
     :param where: Destination file path, without extension, where the file should be saved.
@@ -302,33 +300,3 @@ def write_table(
         df.to_csv(output_path, compression=compression_to_use, **kwargs)
     else:
         df.to_csv(output_path, **kwargs)
-
-
-def get_log_p_value_from_z(z_score: float) -> float:
-    """
-    Calculate the p-value from a z-score.
-
-    Args:
-        z_score (float): The z-score value.
-
-    Returns:
-        float: The p-value corresponding to the z-score.
-    """
-    # Use the cumulative distribution function (CDF) for the normal distribution
-    p_value = 2 * (1 - stats.norm.cdf(abs(z_score)))
-    log10_p = np.float32(-np.log10(p_value))
-    return log10_p
-
-
-def _build_snpid(attributes, tiledb_query_df):
-    if "SNPID" in attributes:
-        tiledb_query_df["SNPID"] = (
-            tiledb_query_df["CHR"].astype(str)
-            + ":"
-            + tiledb_query_df["POS"].astype(str)
-            + ":"
-            + tiledb_query_df["EA"]
-            + ":"
-            + tiledb_query_df["NEA"]
-        )
-    return tiledb_query_df

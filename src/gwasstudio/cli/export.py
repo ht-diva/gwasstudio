@@ -8,7 +8,7 @@ from dask import delayed, compute
 
 from gwasstudio import logger
 from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
-from gwasstudio.methods.extraction_methods import _extract_all_stats, _extract_regions, _extract_snp_list
+from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions, extract_snp_list
 from gwasstudio.methods.locus_breaker import _process_locusbreaker
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table
@@ -21,22 +21,7 @@ from gwasstudio.utils.metadata import (
 from gwasstudio.utils.mongo_manager import manage_mongo
 
 
-def _process_function_tasks(
-    function_name,
-    tiledb_unified,
-    trait_id_list,
-    output_prefix_dict,
-    output_format,
-    batch_size,
-    bed_region=None,
-    attr=None,
-    snp_list_file=None,
-    maf=None,
-    hole_size=None,
-    pvalue_sig=None,
-    pvalue_limit=None,
-    phenovar=None,
-):
+def _process_function_tasks(tiledb_array, trait_id_list, attr, batch_size, output_prefix_dict, output_format, **kwargs):
     """This function schedules and executes generic delayed tasks for various export processes"""
 
     def get_snp_list(snp_list_file):
@@ -46,22 +31,15 @@ def _process_function_tasks(
             snp_list = snp_list[snp_list["CHR"].str.isnumeric()]
         return snp_list
 
-    snp_list = delayed(get_snp_list)(snp_list_file) if snp_list_file else None
+    function_name = kwargs.pop("function_name", None)
+    snp_list_file = kwargs.pop("snp_list_file", None)
+
+    kwargs["attributes"] = attr.split(",") if attr else None
+    if snp_list_file:
+        kwargs["snp_list"] = delayed(get_snp_list)(snp_list_file)
+
     tasks = [
-        delayed(function_name)(
-            tiledb_unified,
-            trait,
-            output_prefix_dict.get(trait),
-            output_format,
-            bed_region,
-            attr,
-            snp_list,
-            maf,
-            hole_size,
-            pvalue_sig,
-            pvalue_limit,
-            phenovar,
-        )
+        delayed(function_name)(tiledb_array, trait, output_prefix_dict.get(trait), output_format, **kwargs)
         for trait in trait_id_list
     ]
     for i in range(0, len(tasks), batch_size):
@@ -160,7 +138,7 @@ def export(
         exit(1)
 
     # Open TileDB dataset
-    with tiledb.open(uri, mode="r", config=cfg) as tiledb_unified:
+    with tiledb.open(uri, mode="r", config=cfg) as tiledb_array:
         logger.info("TileDB dataset loaded")
         search_topics, output_fields = load_search_topics(search_file)
         with manage_mongo(ctx):
@@ -187,56 +165,36 @@ def export(
         if get_dask_deployment(ctx) in dask_deployment_types:
             batch_size = get_dask_batch_size(ctx)
             with manage_daskcluster(ctx):
+                args = [tiledb_array, trait_id_list, attr, batch_size, output_prefix_dict, output_format]
                 if locusbreaker:
-                    _process_function_tasks(
-                        function_name=_process_locusbreaker,
-                        tiledb_unified=tiledb_unified,
-                        trait_id_list=trait_id_list,
-                        maf=maf,
-                        hole_size=hole_size,
-                        pvalue_sig=pvalue_sig,
-                        pvalue_limit=pvalue_limit,
-                        phenovar=phenovar,
-                        output_prefix_dict=output_prefix_dict,
-                        output_format=output_format,
-                        batch_size=batch_size,
-                    )
+                    kwargs = {
+                        "function_name": _process_locusbreaker,
+                        "maf": maf,
+                        "hole_size": hole_size,
+                        "pvalue_sig": pvalue_sig,
+                        "pvalue_limit": pvalue_limit,
+                        "phenovar": phenovar,
+                    }
+                    _process_function_tasks(*args, **kwargs)
+
                 elif snp_list_file:
-                    _process_function_tasks(
-                        function_name=_extract_snp_list,
-                        tiledb_unified=tiledb_unified,
-                        trait_id_list=trait_id_list,
-                        attr=attr,
-                        snp_list_file=snp_list_file,
-                        output_prefix_dict=output_prefix_dict,
-                        output_format=output_format,
-                        batch_size=batch_size,
-                    )
+                    kwargs = {
+                        "function_name": extract_snp_list,
+                        "snp_list_file": snp_list_file,
+                    }
+                    _process_function_tasks(*args, **kwargs)
+
                 elif get_regions:
                     bed_region = pd.read_csv(get_regions, sep="\t", header=None)
                     bed_region.columns = ["CHR", "START", "END"]
                     bed_region["CHR"] = bed_region["CHR"].astype(int)
-                    _process_function_tasks(
-                        _extract_regions,
-                        tiledb_unified=tiledb_unified,
-                        bed_region=bed_region.groupby("CHR"),
-                        trait_id_list=trait_id_list,
-                        maf=maf,
-                        attr=attr,
-                        output_prefix_dict=output_prefix_dict,
-                        output_format=output_format,
-                        batch_size=batch_size,
-                    )
+                    kwargs = {"function_name": extract_regions, "bed_region": bed_region.groupby("CHR")}
+                    _process_function_tasks(*args, **kwargs)
+
                 else:
-                    _process_function_tasks(
-                        _extract_all_stats,
-                        tiledb_unified=tiledb_unified,
-                        trait_id_list=trait_id_list,
-                        output_prefix_dict=output_prefix_dict,
-                        output_format=output_format,
-                        attr=attr,
-                        batch_size=batch_size,
-                    )
+                    kwargs = {"function_name": extract_full_stats}
+                    _process_function_tasks(*args, **kwargs)
+
         else:
             logger.error(f"A valid dask deployment type needed: {dask_deployment_types}")
             exit(1)

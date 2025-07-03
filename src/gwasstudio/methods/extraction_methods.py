@@ -1,103 +1,104 @@
 import pandas as pd
 
 from gwasstudio import logger
-from gwasstudio.utils import write_table, get_log_p_value_from_z, _build_snpid
+from gwasstudio.methods.dataframe import process_dataframe
+from gwasstudio.utils import write_table
 
 TILEDB_DIMS = ["CHR", "TRAITID", "POS"]
 
 
-def _extract_snp_list(
-    tiledb_unified,
-    trait,
-    output_prefix,
-    output_format,
-    bed_region=None,
-    attr=None,
-    snp_list=None,
-    maf=None,
-    hole_size=None,
-    pvalue_sig=None,
-    pvalue_limit=None,
-    phenovar=None,
-):
+def extract_snp_list(
+    tiledb_array,
+    trait: str,
+    output_prefix: str,
+    output_format: str,
+    attributes: list[str] = None,
+    snp_list: pd.DataFrame = None,
+) -> None:
+    """
+    Process data filtering by a list of SNPs.
+
+    Args:
+        tiledb_array: The TileDB array to query.
+        trait (str): The trait to filter by.
+        output_prefix (str): The prefix for the output file.
+        output_format (str): The format for the output file.
+        attributes (list[str], optional): A list of attributes to include in the output. Defaults to None.
+        snp_list (pd.DataFrame, optional): A DataFrame containing the list of SNPs to filter by. Defaults to None.
+
+    Returns:
+        None
+    """
     """Process data filtering by a list of SNPs."""
     chromosomes_dict = snp_list.groupby("CHR")["POS"].apply(list).to_dict()
     # parallelize by n_workers traits at a time with dask the query on tiledb
-    attributes = attr.split(",")
+
     for chrom, positions in chromosomes_dict.items():
         chromosome = int(chrom)
         unique_positions = list(set(positions))
 
         tiledb_iterator_query_df = (
-            tiledb_unified.query(dims=TILEDB_DIMS, attrs=attributes, return_arrow=True)
+            tiledb_array.query(dims=TILEDB_DIMS, attrs=attributes, return_arrow=True)
             .df[chromosome, trait, unique_positions]
             .to_pandas()
         )
 
-        if "MLOG10P" not in tiledb_iterator_query_df.columns:
-            tiledb_iterator_query_df["MLOG10P"] = (
-                (1 - tiledb_iterator_query_df["BETA"] / tiledb_iterator_query_df["SE"])
-                .abs()
-                .apply(lambda x: get_log_p_value_from_z(x))
-            )
-        tiledb_iterator_query_df = _build_snpid(attributes, tiledb_iterator_query_df)
+        tiledb_iterator_query_df = process_dataframe(tiledb_iterator_query_df, attributes)
 
         kwargs = {"header": False, "index": False, "mode": "a"}
         write_table(tiledb_iterator_query_df, f"{output_prefix}", logger, file_format=output_format, **kwargs)
 
 
-def _extract_all_stats(
-    tiledb_unified,
-    trait,
-    output_prefix,
-    output_format,
-    bed_region=None,
-    attr=None,
-    snp_list=None,
-    maf=None,
-    hole_size=None,
-    pvalue_sig=None,
-    pvalue_limit=None,
-    phenovar=None,
-):
-    """Export all summary statistics."""
-    attributes = attr.split(",")
-    tiledb_query_df = (
-        tiledb_unified.query(
-            dims=TILEDB_DIMS,
-            attrs=attributes,
-            return_arrow=True,
-        )
-        .df[:, trait, :]
-        .to_pandas()
-    )
+def extract_full_stats(
+    tiledb_array,
+    trait: str,
+    output_prefix: str,
+    output_format: str,
+    attributes: list[str] = None,
+) -> None:
+    """
+    Export full summary statistics.
 
-    if "MLOG10P" not in tiledb_query_df.columns:
-        tiledb_query_df["MLOG10P"] = (
-            (tiledb_query_df["BETA"] / tiledb_query_df["SE"]).abs().apply(get_log_p_value_from_z)
-        )
+    Args:
+        tiledb_array: The TileDB array to query.
+        trait (str): The trait to filter by.
+        output_prefix (str): The prefix for the output file.
+        output_format (str): The format for the output file.
+        attributes (list[str], optional): A list of attributes to include in the output. Defaults to None.
 
-    tiledb_query_df = _build_snpid(attributes, tiledb_query_df)
+    Returns:
+        None
+    """
+    tiledb_query_df = tiledb_array.query(dims=TILEDB_DIMS, attrs=attributes).df[:, trait, :]
+
+    tiledb_query_df = process_dataframe(tiledb_query_df, attributes)
+
     kwargs = {"index": False}
     write_table(tiledb_query_df, f"{output_prefix}", logger, file_format=output_format, **kwargs)
 
 
-def _extract_regions(
-    tiledb_unified,
-    trait,
-    output_prefix,
-    output_format,
-    bed_region=None,
-    attr=None,
-    snp_list=None,
-    maf=None,
-    hole_size=None,
-    pvalue_sig=None,
-    pvalue_limit=None,
-    phenovar=None,
-):
-    """Process data filtering by genomic regions and output as concatenated DataFrame in Parquet format."""
-    attributes = attr.split(",")
+def extract_regions(
+    tiledb_array,
+    trait: str,
+    output_prefix: str,
+    output_format: str,
+    bed_region: pd.DataFrame = None,
+    attributes: list[str] = None,
+) -> None:
+    """
+    Process data filtering by genomic regions and output as concatenated DataFrame in Parquet format.
+
+    Args:
+        tiledb_array: The TileDB array to query.
+        trait (str): The trait to filter by.
+        output_prefix (str): The prefix for the output file.
+        output_format (str): The format for the output file.
+        bed_region (pd.DataFrame, optional): A DataFrame containing the genomic regions to filter by. Defaults to None.
+        attributes (list[str], optional): A list of attributes to include in the output. Defaults to None.
+
+    Returns:
+        None
+    """
     dataframes = []
     for chr, group in bed_region:
         # Get all (start, end) tuples for this chromosome
@@ -108,7 +109,7 @@ def _extract_regions(
 
         # Query TileDB and convert directly to Pandas DataFrame
         tiledb_query_df = (
-            tiledb_unified.query(attrs=attributes, dims=TILEDB_DIMS, return_arrow=True)
+            tiledb_array.query(attrs=attributes, dims=TILEDB_DIMS, return_arrow=True)
             .df[chr, trait, min_pos:max_pos]
             .to_pandas()
         )
@@ -117,8 +118,9 @@ def _extract_regions(
 
     # Concatenate all DataFrames
     concatenated_df = pd.concat(dataframes, ignore_index=True)
-    # Add SNPID column
-    concatenated_df = _build_snpid(attributes, concatenated_df)
-    # Write to Parquet
+
+    concatenated_df = process_dataframe(concatenated_df, attributes)
+
+    # Write output
     kwargs = {"index": False}
     write_table(concatenated_df, f"{output_prefix}", logger, file_format=output_format, **kwargs)
