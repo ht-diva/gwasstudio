@@ -1,5 +1,7 @@
 from typing import Dict
 
+from gwasstudio import logger
+from gwasstudio.config_manager import ConfigurationManager
 from gwasstudio.utils.vault import get_config_from_vault
 
 
@@ -19,12 +21,56 @@ def get_mongo_uri(ctx: object) -> str:
 
 
 def get_tiledb_config(ctx: object) -> Dict[str, str]:
-    """Retrieve TileDB configuration from Vault or command line options."""
+    """
+    Retrieve the combined TileDB configuration from VFS and SM configurations.
 
-    vault_options = ctx.obj.get("vault")
-    tiledb_cfg = get_config_from_vault("tiledb", vault_options)
+    Args:
+        ctx (object): The context object containing configuration options.
 
-    return tiledb_cfg or ctx.obj.get("tiledb")
+    Returns:
+        Dict[str, str]: The combined TileDB configuration.
+    """
+    try:
+        vfs_config = get_tiledb_vfs_config(ctx)
+        sm_config = get_tiledb_sm_config()
+        return vfs_config | sm_config
+    except Exception as e:
+        logger.error(f"Failed to retrieve TileDB configuration: {e}")
+        return {}
+
+
+def get_tiledb_vfs_config(ctx: object) -> Dict[str, str]:
+    """
+    Retrieve TileDB VFS configuration from Vault or command line options.
+
+    Args:
+        ctx (object): The context object containing configuration options.
+
+    Returns:
+        Dict[str, str]: The TileDB VFS configuration.
+    """
+    try:
+        vault_options = ctx.obj.get("vault")
+        tiledb_cfg = get_config_from_vault("tiledb", vault_options)
+        return tiledb_cfg or ctx.obj.get("tiledb", {})
+    except Exception as e:
+        logger.error(f"Failed to retrieve TileDB VFS configuration: {e}")
+        return {}
+
+
+def get_tiledb_sm_config() -> Dict[str, str]:
+    """
+    Retrieve TileDB SM configuration from the configuration file.
+
+    Returns:
+        Dict[str, str]: The TileDB SM configuration.
+    """
+    try:
+        cm = ConfigurationManager()
+        return cm.tiledb_sm_config
+    except Exception as e:
+        logger.error(f"Failed to retrieve TileDB SM configuration: {e}")
+        return {}
 
 
 def get_dask_config(ctx: object):

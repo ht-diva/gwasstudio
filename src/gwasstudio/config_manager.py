@@ -64,6 +64,8 @@ class ConfigurationManager(metaclass=SingletonConfigurationManager):
         self._hash_algorithm = c.get("hashing", {"algorithm": "sha256"}).get("algorithm")
         self._hash_length = c.get("hashing", {"length": 10}).get("length")
 
+        self._tiledb_sm_config = c.get("tiledb_sm_config", {})
+
     @property
     def get_mdbc_db(self):
         return self.mdbc_db
@@ -91,3 +93,7 @@ class ConfigurationManager(metaclass=SingletonConfigurationManager):
     @property
     def hash_length(self):
         return self._hash_length
+
+    @property
+    def tiledb_sm_config(self):
+        return self._tiledb_sm_config
