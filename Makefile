@@ -79,12 +79,21 @@ tag:
 	git tag v${VERSION}
 
 test:
-	@echo "Testing"
+	@echo "Unit Testing"
 	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
 	pytest --cov=src/gwasstudio/ tests
+
+end_to_end_test:
+	@echo "End-to-End Testing"
+	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+        echo "Activating conda environment: ${ENV_NAME}"; \
+		$(CONDA_ACTIVATE) ${ENV_NAME}; \
+	fi; \
+	cd scripts && ./cli_test.sh
+
 
 uninstall:
 	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \

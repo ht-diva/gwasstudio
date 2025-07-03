@@ -35,27 +35,27 @@ run_command() {
 }
 
 # Ingest data
-run_command "Ingesting data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} ingest --file-path metadata_ukb_d_sampled.tsv --uri ${TEST_DIR}/destination"
+run_command "Ingesting data..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} ingest --file-path metadata_ukb_d_sampled.tsv --uri ${TEST_DIR}/destination"
 
 # Query data
-run_command "Querying data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_ukb_d.txt --output-prefix ${TEST_DIR}/ukb_d_query"
+run_command "Querying data..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_ukb_d.txt --output-prefix ${TEST_DIR}/ukb_d_query"
 
 # Query data by trait description
-run_command "Querying data by trait description..." "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_ukb_d_filter_by_trait_desc.txt --output-prefix ${TEST_DIR}/ukb_d_query_by_trait_desc"
+run_command "Querying data by trait description..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_ukb_d_filter_by_trait_desc.txt --output-prefix ${TEST_DIR}/ukb_d_query_by_trait_desc"
 
 # Export data
-run_command "Exporting data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_ukb_d.txt --output-prefix ${TEST_DIR}/ukb_d_export --uri ${TEST_DIR}/destination"
+run_command "Exporting data..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_ukb_d.txt --output-prefix ${TEST_DIR}/ukb_d_export --uri ${TEST_DIR}/destination"
 
 # Export data with a different file format
-run_command "Exporting data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_ukb_d.txt --output-prefix ${TEST_DIR}/ukb_d_export --output-format parquet --uri ${TEST_DIR}/destination"
+run_command "Exporting data..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_ukb_d.txt --output-prefix ${TEST_DIR}/ukb_d_export --output-format parquet --uri ${TEST_DIR}/destination"
 
 # Regions filtering
-run_command "Regions filtering..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_ukb_d.txt --output-prefix ${TEST_DIR}/ukb_d_regions_filtering --uri ${TEST_DIR}/destination --get-regions regions_query.tsv"
+run_command "Regions filtering..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_ukb_d.txt --output-prefix ${TEST_DIR}/ukb_d_regions_filtering --uri ${TEST_DIR}/destination --get-regions regions_query.tsv"
 
 # Hapmap3 SNPs filtering
-run_command "SNPs filtering..." "gwasstudio --stdout --local-workers 4 --mongo-uri ${MDB_URI} export --search-file search_ukb_d.txt --output-prefix ${TEST_DIR}/ukb_d_snps_filtering --uri ${TEST_DIR}/destination --snp-list-file hapmap3/hapmap3_snps.csv"
+run_command "SNPs filtering..." "time gwasstudio --stdout --local-workers 4 --mongo-uri ${MDB_URI} export --search-file search_ukb_d.txt --output-prefix ${TEST_DIR}/ukb_d_snps_filtering --uri ${TEST_DIR}/destination --snp-list-file hapmap3/hapmap3_snps.csv"
 
 # Locusbreaker
-run_command "Locusbreaker..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_ukb_d.txt --output-prefix ${TEST_DIR}/ukb_d_locusbreaker --uri ${TEST_DIR}/destination --locusbreaker"
+run_command "Locusbreaker..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_ukb_d.txt --output-prefix ${TEST_DIR}/ukb_d_locusbreaker --uri ${TEST_DIR}/destination --locusbreaker"
 
 echo "Results are available in ${TEST_DIR}"
