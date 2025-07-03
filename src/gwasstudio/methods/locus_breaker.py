@@ -3,7 +3,8 @@ import pandas as pd
 
 from gwasstudio import logger
 from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
-from gwasstudio.utils import write_table, get_log_p_value_from_z
+from gwasstudio.methods.dataframe import process_dataframe
+from gwasstudio.utils import write_table
 
 
 def _locus_breaker(
@@ -120,9 +121,7 @@ def _process_locusbreaker(
     trait,
     output_prefix,
     output_format,
-    bed_region=None,
-    attr=None,
-    snp_list=None,
+    attributes=None,
     maf=None,
     hole_size=None,
     pvalue_sig=None,
@@ -134,10 +133,8 @@ def _process_locusbreaker(
     subset_SNPs_pd = tiledb_unified.query().df[:, trait, :]
 
     subset_SNPs_pd = subset_SNPs_pd[(subset_SNPs_pd["EAF"] >= maf) & (subset_SNPs_pd["EAF"] <= (1 - maf))]
-    if "MLOG10P" not in subset_SNPs_pd.columns:
-        subset_SNPs_pd["MLOG10P"] = (
-            (subset_SNPs_pd["BETA"] / subset_SNPs_pd["SE"]).abs().apply(lambda x: get_log_p_value_from_z(x))
-        )
+
+    subset_SNPs_pd = process_dataframe(subset_SNPs_pd, attributes)
 
     results_lb_segments, results_lb_intervals = _locus_breaker(
         subset_SNPs_pd, hole_size=hole_size, pvalue_sig=pvalue_sig, pvalue_limit=pvalue_limit, phenovar=phenovar
