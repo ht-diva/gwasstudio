@@ -66,7 +66,10 @@ Export summary statistics from TileDB datasets with various filtering options.
     ),
     cloup.option("--search-file", required=True, default=None, help="The search file used for querying metadata"),
     cloup.option(
-        "--attr", required=True, default="BETA,SE,EAF", help="string delimited by comma with the attributes to export"
+        "--attr",
+        required=True,
+        default="BETA,SE,EAF,MLOG10P",
+        help="string delimited by comma with the attributes to export",
     ),
 )
 @cloup.option_group(
