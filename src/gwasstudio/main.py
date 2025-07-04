@@ -70,13 +70,12 @@ def configure_logging(stdout, verbosity, _logger):
     ),
 )
 @cloup.option_group(
-    "Dask remote cluster options - SLurm HPC or a Dask gateway setup",
-    cloup.option("--minimum-workers", default=10, help="Minimum amount of running workers"),
-    cloup.option("--walltime", default="72:00:00", help="Walltime for each worker"),
-    cloup.option("--maximum-workers", default=100, help="Maximum amount of running workers"),
-    cloup.option("--memory-workers", default="12GB", help="Memory amount per worker"),
-    cloup.option("--cpu-workers", help="CPU numbers per worker", default=1),
+    "Dask remote cluster options - Slurm HPC or a Dask gateway setup",
     cloup.option("--address", default=None, help="Dask gateway address"),
+    cloup.option("--num-workers", default=10, help="Maximum amount of running workers"),
+    cloup.option("--memory-workers", default="36GiB", help="Memory amount per worker"),
+    cloup.option("--cpu-workers", help="CPU numbers per worker", default=9),
+    cloup.option("--walltime", default="36:00:00", help="Walltime for each worker"),
 )
 @cloup.option_group(
     "Dask local cluster options",
@@ -124,8 +123,7 @@ def cli_init(
     aws_verify_ssl,
     dask_deployment,
     walltime,
-    minimum_workers,
-    maximum_workers,
+    num_workers,
     memory_workers,
     local_workers,
     local_threads,
@@ -166,12 +164,11 @@ def cli_init(
         "vfs.s3.verify_ssl": aws_verify_ssl,
     }
 
-    batch_sizes = {"gateway": minimum_workers, "slurm": maximum_workers * 3, "local": local_workers}
+    batch_sizes = {"gateway": num_workers, "slurm": num_workers * 3, "local": local_workers}
     ctx.obj["dask"] = {
         "deployment": dask_deployment,
         "batch_size": batch_sizes.get(dask_deployment, None),
-        "minimum_workers": minimum_workers,
-        "maximum_workers": maximum_workers,
+        "num_workers": num_workers,
         "memory_workers": memory_workers,
         "cpu_workers": cpu_workers,
         "address": address,
