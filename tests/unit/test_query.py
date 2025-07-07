@@ -14,10 +14,11 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
             project="project1",
             study="study1",
             data_id="data_id1",
+            tags=["tag1", "tag2"],
             trait='{"desc": "descriptionA"}',
             total='{"samples": "10"}',
             notes="{}",
-            population=Ancestry.EUROPEAN,
+            population=[str(Ancestry.EUROPEAN)],
             references=[],
             build=Build.GRCH37,
         )
@@ -29,7 +30,7 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
             data_id="data_id2",
             trait='{"desc": "descriptionB", "tissue": "blood"}',
             total='{"samples": "20"}',
-            population=Ancestry.ICELANDIC,
+            population=[Ancestry.ICELANDIC.value],
             references=[],
             build=Build.GRCH38,
         )
@@ -41,7 +42,7 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
             data_id="data_id3",
             trait='{"desc": "descriptionA"}',
             total='{"samples": "30"}',
-            population=Ancestry.EUROPEAN,
+            population=[str(Ancestry.EUROPEAN)],
             references=[],
             build=Build.GRCH37,
         )
@@ -84,7 +85,7 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
         self.assertEqual(self.profile1.view(), profile[0])
 
     def test_query_by_population(self):
-        profiles = EnhancedDataProfile(mec=self.mec).query(population=Ancestry.ICELANDIC)
+        profiles = EnhancedDataProfile(mec=self.mec).query(population=Ancestry.ICELANDIC.value)
         self.assertEqual(len(profiles), 1)
         self.assertIn(self.profile2.view(), profiles)
 
@@ -93,3 +94,8 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
         self.assertEqual(len(profiles), 2)
         self.assertIn(self.profile1.view(), profiles)
         self.assertIn(self.profile3.view(), profiles)
+
+    def test_query_by_tags(self):
+        profiles = EnhancedDataProfile(mec=self.mec).query(tags="tag1")
+        self.assertEqual(len(profiles), 1)
+        self.assertIn(self.profile1.view(), profiles)

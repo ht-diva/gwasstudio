@@ -44,9 +44,9 @@ class TestDataProfile(unittest.TestCase):
             "category": "pQTL",
             "tags": ["tag1", "tag2"],
             "total": '{"samples": "10", "total_cases": "5"}',
-            "population": "NR",
+            "population": ["NR"],
             "build": "GRCh38",
-            "notes": '{"note1": "value1", "note2": "value2"}',
+            "notes": '{"note1": ["value1", "value2"], "note2": "value3"}',
         }
 
         obj = EnhancedDataProfile(mec=self.mec, **kwargs)
@@ -68,6 +68,6 @@ class TestDataProfile(unittest.TestCase):
         self.assertEqual(from_mongo.category.value, kwargs.get("category"))
         self.assertEqual(from_mongo.tags, kwargs.get("tags"))
         self.assertEqual(from_mongo.total, JSON_results.get("total"))
-        self.assertEqual(from_mongo.population.value, kwargs.get("population"))
+        self.assertEqual(from_mongo.population, kwargs.get("population"))
         self.assertEqual(from_mongo.build.value, kwargs.get("build"))
         self.assertEqual(from_mongo.notes, JSON_results.get("notes"))

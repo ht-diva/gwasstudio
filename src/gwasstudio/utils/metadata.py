@@ -1,7 +1,7 @@
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, Hashable
+from typing import Any, Dict, Hashable, List
 
 import pandas as pd
 from ruamel.yaml import YAML
@@ -10,8 +10,9 @@ from gwasstudio import logger
 from gwasstudio.mongo.models import EnhancedDataProfile, DataProfile
 from gwasstudio.utils import lower_and_replace
 from gwasstudio.utils.hashing import Hashing
+from gwasstudio.utils.table_data_types import DTYPES
 
-metadata_dtypes = {"project": "category", "study": "category", "file_path": "string[pyarrow]", "category": "category"}
+metadata_dtypes = DTYPES["input_table"]
 
 
 def load_search_topics(search_file: str) -> Any | None:
@@ -62,34 +63,102 @@ def load_search_topics(search_file: str) -> Any | None:
     return process_search_topics(search_topics)
 
 
-def query_mongo_obj(search_topics: Dict[str, Any], mob: EnhancedDataProfile, case_sensitive: bool = False) -> list:
+# def query_mongo_obj(search_topics: Dict[str, Any], mob: EnhancedDataProfile, case_sensitive: bool = False) -> list:
+#     """
+#     Process search topics and query the object to find matching results.
+#
+#     Args:
+#         search_topics (dict): Search topics dictionary.
+#         case_sensitive (bool): Enable case-sensitive search
+#         mob: Mongo Object to be queried.
+#
+#     Returns:
+#         list: List of matched objects.
+#     """
+#     objs = []
+#     keys_to_process = tuple(
+#         DataProfile.json_dict_fields()
+#     )  # ["trait", "notes", "total"]  # Add more keys as needed  key in tuple(DataProfile.listfield_names()):
+#     logger.debug(search_topics)
+#
+#     # query_dict = {**search_topics}
+#     query_dict = {}
+#     for key, value in search_topics.items():
+#         if key in keys_to_process:
+#             for search_dict in value:
+#                 # query_dict = {**query_dict, **{key: search_dict}}
+#                 query_dict = {key: search_dict}
+#
+#         else:
+#             query_dict = {key: value}
+#         logger.debug(query_dict)
+#         query_results = mob.query(case_sensitive, **query_dict)
+#         objs.append(query_results)
+#
+#     results = {}
+#     for lst in objs:
+#         for d in lst:
+#             results[str(d["_id"])] = d
+#
+#     common_keys = set([str(d["_id"]) for d in objs[0]])
+#
+#     for lst in objs[1:]:
+#         _ck = set()
+#         for d in lst:
+#             _ck.add(str(d["_id"]))
+#
+#         common_keys = common_keys.intersection(_ck)
+#
+#     results = [v for k, v in results.items() if k in common_keys]
+#
+#     return results
+
+
+def query_mongo_obj(
+    search_criteria: Dict[str, Any], data_profile: EnhancedDataProfile, case_sensitive: bool = False
+) -> List[Dict[str, Any]]:
     """
-    Process search topics and query the object to find matching results.
+    Query the data profile object to find matching results based on search criteria.
 
     Args:
-        search_topics (dict): Search topics dictionary.
-        case_sensitive (bool): Enable case-sensitive search
-        mob: Mongo Object to be queried.
+        search_criteria (Dict[str, Any]): Dictionary containing search criteria.
+        data_profile (EnhancedDataProfile): Data profile object to be queried.
+        case_sensitive (bool): Flag to enable case-sensitive search. Default is False.
 
     Returns:
-        list: List of matched objects.
+        List[Dict[str, Any]]: List of matched data profile entries.
     """
-    objs = []
-    if "trait" in search_topics:
-        for trait_search_dict in search_topics["trait"]:
-            query_dict = {**search_topics, **{"trait": trait_search_dict}}
-            logger.debug(query_dict)
-            query_results = mob.query(case_sensitive, **query_dict)
-            # Add matching results to objs list
-            objs.extend(obj for obj in query_results if obj not in objs)
+    matched_entries = []
+    keys_to_search = tuple(DataProfile.json_dict_fields())
 
-    else:
-        logger.debug(search_topics)
-        query_results = mob.query(**search_topics)
+    logger.debug(search_criteria)
 
-        # Add matching results to objs list
-        objs.extend(obj for obj in query_results if obj not in objs)
-    return objs
+    for key, value in search_criteria.items():
+        query_dict = {}
+        if key in keys_to_search:
+            search_dict = {}
+            for item in value:
+                search_dict.update(item)
+            query_dict[key] = search_dict
+        else:
+            query_dict[key] = value
+
+        logger.debug(query_dict)
+        query_results = data_profile.query(case_sensitive, **query_dict)
+        matched_entries.append(query_results)
+
+    results_dict = {}
+    for entry_list in matched_entries:
+        for entry in entry_list:
+            results_dict[str(entry["_id"])] = entry
+
+    common_ids = set(str(entry["_id"]) for entry in matched_entries[0])
+    for entry_list in matched_entries[1:]:
+        common_ids.intersection_update(str(entry["_id"]) for entry in entry_list)
+
+    final_results = [entry for entry_id, entry in results_dict.items() if entry_id in common_ids]
+
+    return final_results
 
 
 def dataframe_from_mongo_objs(fields: list, objs: list) -> pd.DataFrame:
@@ -153,6 +222,14 @@ def load_metadata(file_path: Path, delimiter: str = "\t") -> pd.DataFrame:
 
 def process_row(row: pd.Series) -> Dict[Hashable, Any]:
     """Process a row of data to create a metadata dictionary."""
+
+    # Custom JSON encoder
+    class CustomEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, type(pd.NA)):
+                return None
+            return super().default(obj)
+
     project_key = lower_and_replace(row["project"])
     study_key = lower_and_replace(row["study"])
 
@@ -164,11 +241,20 @@ def process_row(row: pd.Series) -> Dict[Hashable, Any]:
         if "_" in key and key.startswith(tuple(DataProfile.json_dict_fields())):
             k, subk = key.split("_", 1)
             metadata.setdefault(k, {})[subk] = value
+        elif key in tuple(DataProfile.listfield_names()):
+            if "," in value:
+                parts = value.split(",")
+                items = [part.strip() for part in parts]
+            else:
+                items = [value.strip()]
+            # items = value.split(",")
+            metadata.setdefault(key, []).extend(items)
+            # metadata[key] = [value]
         else:
             metadata[key] = value
 
     return {
-        _key: json.dumps(_value) if _key in DataProfile.json_dict_fields() else _value
+        _key: json.dumps(_value, cls=CustomEncoder) if _key in DataProfile.json_dict_fields() else _value
         for _key, _value in metadata.items()
     }
 
@@ -180,7 +266,7 @@ def ingest_metadata(df: pd.DataFrame, mongo_uri: str = None) -> None:
         for _, row in df.iterrows():
             yield process_row(row)
 
-    logger.info("Ingesting metadata into MongoDB")
+    logger.info("Starting metadata ingestion")
     rows = len(df.axes[0])
     processed_rows = 0
     logger.info(f"{rows} documents to ingest")
