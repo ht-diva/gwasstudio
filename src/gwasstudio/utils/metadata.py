@@ -63,57 +63,6 @@ def load_search_topics(search_file: str) -> Any | None:
     return process_search_topics(search_topics)
 
 
-# def query_mongo_obj(search_topics: Dict[str, Any], mob: EnhancedDataProfile, case_sensitive: bool = False) -> list:
-#     """
-#     Process search topics and query the object to find matching results.
-#
-#     Args:
-#         search_topics (dict): Search topics dictionary.
-#         case_sensitive (bool): Enable case-sensitive search
-#         mob: Mongo Object to be queried.
-#
-#     Returns:
-#         list: List of matched objects.
-#     """
-#     objs = []
-#     keys_to_process = tuple(
-#         DataProfile.json_dict_fields()
-#     )  # ["trait", "notes", "total"]  # Add more keys as needed  key in tuple(DataProfile.listfield_names()):
-#     logger.debug(search_topics)
-#
-#     # query_dict = {**search_topics}
-#     query_dict = {}
-#     for key, value in search_topics.items():
-#         if key in keys_to_process:
-#             for search_dict in value:
-#                 # query_dict = {**query_dict, **{key: search_dict}}
-#                 query_dict = {key: search_dict}
-#
-#         else:
-#             query_dict = {key: value}
-#         logger.debug(query_dict)
-#         query_results = mob.query(case_sensitive, **query_dict)
-#         objs.append(query_results)
-#
-#     results = {}
-#     for lst in objs:
-#         for d in lst:
-#             results[str(d["_id"])] = d
-#
-#     common_keys = set([str(d["_id"]) for d in objs[0]])
-#
-#     for lst in objs[1:]:
-#         _ck = set()
-#         for d in lst:
-#             _ck.add(str(d["_id"]))
-#
-#         common_keys = common_keys.intersection(_ck)
-#
-#     results = [v for k, v in results.items() if k in common_keys]
-#
-#     return results
-
-
 def query_mongo_obj(
     search_criteria: Dict[str, Any], data_profile: EnhancedDataProfile, case_sensitive: bool = False
 ) -> List[Dict[str, Any]]:
@@ -185,7 +134,8 @@ def dataframe_from_mongo_objs(fields: list, objs: list) -> pd.DataFrame:
     json_dict_fields = set(DataProfile.json_dict_fields())
 
     for field in fields:
-        main_key, *rest = field.split(".", 1)
+        field = field.replace(".", "_")  # replace '.' with '_' (if any) to match data types
+        main_key, *rest = field.split("_", 1)
         sub_key = rest[0] if rest else None
 
         for obj in objs:
