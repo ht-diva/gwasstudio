@@ -133,29 +133,31 @@ def query_mongo_obj(
 
     logger.debug(search_criteria)
 
+    # Iterate over search criteria
     for key, value in search_criteria.items():
-        query_dict = {}
+        # Create query dictionary and execute data profile query
         if key in keys_to_search:
-            search_dict = {}
+            query_results = []
             for item in value:
-                search_dict.update(item)
-            query_dict[key] = search_dict
+                query_dict = {key: item}
+                logger.debug(query_dict)
+                query_results.extend(data_profile.query(case_sensitive, **query_dict))
+            matched_entries.append(query_results)
         else:
-            query_dict[key] = value
+            query_dict = {key: value}
+            logger.debug(query_dict)
+            query_results = data_profile.query(case_sensitive, **query_dict)
+            matched_entries.append(query_results)
 
-        logger.debug(query_dict)
-        query_results = data_profile.query(case_sensitive, **query_dict)
-        matched_entries.append(query_results)
+    # Create a dictionary of matched entries with their IDs as keys
+    results_dict = {str(entry["_id"]): entry for entry_list in matched_entries for entry in entry_list}
 
-    results_dict = {}
-    for entry_list in matched_entries:
-        for entry in entry_list:
-            results_dict[str(entry["_id"])] = entry
-
+    # Find common IDs among matched entries
     common_ids = set(str(entry["_id"]) for entry in matched_entries[0])
     for entry_list in matched_entries[1:]:
         common_ids.intersection_update(str(entry["_id"]) for entry in entry_list)
 
+    # Filter final results by common IDs
     final_results = [entry for entry_id, entry in results_dict.items() if entry_id in common_ids]
 
     return final_results
