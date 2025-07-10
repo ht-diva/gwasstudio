@@ -1,29 +1,54 @@
+from typing import Tuple, Any
+
 import pandas as pd
-from tiledb import TileDBError
+import tiledb
 
 from gwasstudio import logger
 from gwasstudio.methods.dataframe import process_dataframe
 from gwasstudio.utils import write_table
+from gwasstudio.utils.tdb_schema import AttributeName as an, DimensionName as dn
 
-TILEDB_DIMS = ("CHR", "TRAITID", "POS")
+TILEDB_DIMS = dn.get_dimension_names()
 
 
-def tiledb_array_query(tiledb_array, dims=TILEDB_DIMS, attrs=()):
+def tiledb_array_query(
+    tiledb_array: tiledb.Array, dims: Tuple[str] = TILEDB_DIMS, attrs: Tuple[str, ...] = ()
+) -> tuple[tuple[str], Any]:
+    """
+    Query a TileDB array with specified dimensions and attributes.
+
+    Args:
+        tiledb_array (tiledb.Array): The TileDB array to query.
+        dims (List[str], optional): The dimensions to query. Defaults to TILEDB_DIMS.
+        attrs (Tuple[str, ...], optional): The attributes to query. Defaults to an empty tuple.
+
+    Returns:
+        Tuple[List[str], tiledb.Query]: A tuple containing the list of attributes and the query object.
+
+    Raises:
+        ValueError: If any attribute in attrs is not found in the TileDB array.
+    """
+    # Validate attributes
+    valid_attrs = an.get_attribute_names()
+    for attr in attrs:
+        if attr not in valid_attrs:
+            raise ValueError(f"Attribute {attr} not found")
     try:
         query = tiledb_array.query(dims=dims, attrs=attrs)
-    except TileDBError as e:
+    except tiledb.TileDBError as e:
         logger.debug(e)
-        attrs = [attr for attr in attrs if attr != "MLOG10P"]
+        attrs = tuple(attr for attr in attrs if attr != an.MLOG10P.name)
         query = tiledb_array.query(dims=dims, attrs=attrs)
+
     return attrs, query
 
 
 def extract_snp_list(
-    tiledb_array,
+    tiledb_array: tiledb.Array,
     trait: str,
     output_prefix: str,
     output_format: str,
-    attributes: list[str] = None,
+    attributes: Tuple[str] = None,
     snp_list: pd.DataFrame = None,
 ) -> None:
     """
@@ -56,11 +81,11 @@ def extract_snp_list(
 
 
 def extract_full_stats(
-    tiledb_array,
+    tiledb_array: tiledb.Array,
     trait: str,
     output_prefix: str,
     output_format: str,
-    attributes: list[str] = None,
+    attributes: Tuple[str] = None,
 ) -> None:
     """
     Export full summary statistics.
@@ -85,12 +110,12 @@ def extract_full_stats(
 
 
 def extract_regions(
-    tiledb_array,
+    tiledb_array: tiledb.Array,
     trait: str,
     output_prefix: str,
     output_format: str,
     bed_region: pd.DataFrame = None,
-    attributes: list[str] = None,
+    attributes: Tuple[str] = None,
 ) -> None:
     """
     Process data filtering by genomic regions and output as concatenated DataFrame in Parquet format.

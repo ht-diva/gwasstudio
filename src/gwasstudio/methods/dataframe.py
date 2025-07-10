@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -48,7 +50,7 @@ def _build_snpid(df: pd.DataFrame) -> pd.Series:
     return snpid_series
 
 
-def process_dataframe(df: pd.DataFrame, attributes: list[str], drop_tid: bool = True) -> pd.DataFrame:
+def process_dataframe(df: pd.DataFrame, attributes: Tuple[str], drop_tid: bool = True) -> pd.DataFrame:
     """
     Process the DataFrame by calculating MLOG10P and building SNIPID.
 

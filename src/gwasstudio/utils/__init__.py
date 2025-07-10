@@ -103,80 +103,6 @@ def parse_uri(uri: str) -> tuple[str, str, str]:
         raise ValueError(f"Invalid URI: {uri}") from e
 
 
-# Define the TileDB array schema with SNP, gene, and population dimensions
-def create_tiledb_schema(uri: str, cfg: dict, ingest_pval: bool) -> None:
-    """
-    Create an empty schema for TileDB.
-
-    Args:
-        uri (str): The path where the TileDB will be stored.
-        cfg (dict): A configuration dictionary to use for connecting to S3.
-    """
-    chrom_domain = (1, 24)
-    pos_domain = (1, 250000000)
-    dom = tiledb.Domain(
-        tiledb.Dim(
-            name="CHR",
-            domain=chrom_domain,
-            dtype=np.uint8,
-            var=False,
-            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-        ),
-        tiledb.Dim(name="TRAITID", dtype="ascii", var=False, filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)])),
-        tiledb.Dim(
-            name="POS",
-            domain=pos_domain,
-            dtype=np.uint32,
-            var=False,
-            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-        ),
-    )
-    attr = [
-        tiledb.Attr(
-            name="BETA",
-            dtype=np.float32,
-            var=False,
-            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-        ),
-        tiledb.Attr(
-            name="SE",
-            dtype=np.float32,
-            var=False,
-            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-        ),
-        tiledb.Attr(
-            name="EAF",
-            dtype=np.float32,
-            var=False,
-            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-        ),
-        tiledb.Attr(
-            name="EA",
-            dtype=str,
-            var=False,
-            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-        ),
-        tiledb.Attr(
-            name="NEA",
-            dtype=str,
-            var=False,
-            filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-        ),
-    ]
-    if ingest_pval:
-        attr.append(
-            tiledb.Attr(
-                name="MLOG10P",
-                dtype=np.float32,
-                var=False,
-                filters=tiledb.FilterList([tiledb.ZstdFilter(level=5)]),
-            )
-        )
-    schema = tiledb.ArraySchema(domain=dom, sparse=True, allows_duplicates=True, attrs=attr)
-    ctx = tiledb.Ctx(cfg)
-    tiledb.Array.create(uri, schema, ctx=ctx)
-
-
 def process_and_ingest(file_path: str, uri: str, cfg: dict, ingest_pval: bool) -> None:
     """
     Process a single file and ingest it in a TileDB
@@ -215,25 +141,6 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict, ingest_pval: bool) -
         mode="append",
         ctx=ctx,
     )
-
-
-"""
-def process_write_chunk(chunk, SNP_list, file_stream):
-    SNP_list_polars = pl.DataFrame(SNP_list)
-    chunk_polars = pl.DataFrame(chunk)
-    SNP_list_polars = SNP_list_polars.with_columns([pl.col("POS").cast(pl.UInt32)])
-    chunk_polars = chunk_polars.with_columns(
-        pl.col("SNPID").str.split_exact(":", 4)
-        .struct.rename_fields(["chr",'pos','EA','NEA'])
-        .alias("fields")
-    ).unnest('fields')
-
-    # Perform the join operation with Polars
-    subset_SNPs_merge = chunk_polars.join(SNP_list_polars, on=["CHR", "POS", "NEA", "EA"], how="inner")
-    subset_SNPs_merge = subset_SNPs_merge.select('CHR','POS','TRAITID','SNPID','BETA','SE')
-    # Append the merged chunk to CSV
-    subset_SNPs_merge.write_csv(file_stream)
-"""
 
 
 def write_table(
