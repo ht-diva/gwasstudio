@@ -1,10 +1,21 @@
 import pandas as pd
+from tiledb import TileDBError
 
 from gwasstudio import logger
 from gwasstudio.methods.dataframe import process_dataframe
 from gwasstudio.utils import write_table
 
-TILEDB_DIMS = ["CHR", "TRAITID", "POS"]
+TILEDB_DIMS = ("CHR", "TRAITID", "POS")
+
+
+def tiledb_array_query(tiledb_array, dims=TILEDB_DIMS, attrs=()):
+    try:
+        query = tiledb_array.query(dims=dims, attrs=attrs)
+    except TileDBError as e:
+        logger.debug(e)
+        attrs = [attr for attr in attrs if attr != "MLOG10P"]
+        query = tiledb_array.query(dims=dims, attrs=attrs)
+    return attrs, query
 
 
 def extract_snp_list(
@@ -31,18 +42,13 @@ def extract_snp_list(
     """
     """Process data filtering by a list of SNPs."""
     chromosomes_dict = snp_list.groupby("CHR")["POS"].apply(list).to_dict()
-    # parallelize by n_workers traits at a time with dask the query on tiledb
 
+    attributes, tiledb_query = tiledb_array_query(tiledb_array, attrs=attributes)
     for chrom, positions in chromosomes_dict.items():
         chromosome = int(chrom)
         unique_positions = list(set(positions))
 
-        tiledb_iterator_query_df = (
-            tiledb_array.query(dims=TILEDB_DIMS, attrs=attributes, return_arrow=True)
-            .df[chromosome, trait, unique_positions]
-            .to_pandas()
-        )
-
+        tiledb_iterator_query_df = tiledb_query.df[chromosome, trait, unique_positions]
         tiledb_iterator_query_df = process_dataframe(tiledb_iterator_query_df, attributes)
 
         kwargs = {"header": False, "index": False, "mode": "a"}
@@ -69,7 +75,8 @@ def extract_full_stats(
     Returns:
         None
     """
-    tiledb_query_df = tiledb_array.query(dims=TILEDB_DIMS, attrs=attributes).df[:, trait, :]
+    attributes, tiledb_query = tiledb_array_query(tiledb_array, attrs=attributes)
+    tiledb_query_df = tiledb_query.df[:, trait, :]
 
     tiledb_query_df = process_dataframe(tiledb_query_df, attributes)
 
@@ -108,11 +115,8 @@ def extract_regions(
         max_pos = max(group["END"])
 
         # Query TileDB and convert directly to Pandas DataFrame
-        tiledb_query_df = (
-            tiledb_array.query(attrs=attributes, dims=TILEDB_DIMS, return_arrow=True)
-            .df[chr, trait, min_pos:max_pos]
-            .to_pandas()
-        )
+        attributes, tiledb_query = tiledb_array_query(tiledb_array, attrs=attributes)
+        tiledb_query_df = tiledb_query.df[chr, trait, min_pos:max_pos]
 
         dataframes.append(tiledb_query_df)
 
