@@ -155,7 +155,7 @@ def export(
         # Create output prefix dictionary
         key_column = "data_id"
         value_column = "output_prefix"
-        df[value_column] = f"{output_prefix}_" + df.get("notes.source_id", df[key_column])
+        df[value_column] = f"{output_prefix}_" + df.get("notes_source_id", df[key_column])
         output_prefix_dict = df.set_index(key_column)[value_column].to_dict()
 
         # write metadata query result
