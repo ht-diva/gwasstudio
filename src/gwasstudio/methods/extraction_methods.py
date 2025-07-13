@@ -6,13 +6,13 @@ import tiledb
 from gwasstudio import logger
 from gwasstudio.methods.dataframe import process_dataframe
 from gwasstudio.utils import write_table
-from gwasstudio.utils.tdb_schema import AttributeName as an, DimensionName as dn
+from gwasstudio.utils.tdb_schema import AttributeEnum as an, DimensionEnum as dn
 
-TILEDB_DIMS = dn.get_dimension_names()
+TILEDB_DIMS = dn.get_names()
 
 
 def tiledb_array_query(
-    tiledb_array: tiledb.Array, dims: Tuple[str] = TILEDB_DIMS, attrs: Tuple[str, ...] = ()
+    tiledb_array: tiledb.Array, dims: Tuple[str] = TILEDB_DIMS, attrs: Tuple[str] = ()
 ) -> tuple[tuple[str], Any]:
     """
     Query a TileDB array with specified dimensions and attributes.
@@ -29,7 +29,7 @@ def tiledb_array_query(
         ValueError: If any attribute in attrs is not found in the TileDB array.
     """
     # Validate attributes
-    valid_attrs = an.get_attribute_names()
+    valid_attrs = an.get_names()
     for attr in attrs:
         if attr not in valid_attrs:
             raise ValueError(f"Attribute {attr} not found")

@@ -1,18 +1,15 @@
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, Hashable, List
+from typing import Any, Dict, List, Hashable
 
 import pandas as pd
 from ruamel.yaml import YAML
 
 from gwasstudio import logger
 from gwasstudio.mongo.models import EnhancedDataProfile, DataProfile
-from gwasstudio.utils import lower_and_replace
-from gwasstudio.utils.hashing import Hashing
-from gwasstudio.utils.table_data_types import DTYPES
-
-metadata_dtypes = DTYPES["input_table"]
+from gwasstudio.utils import lower_and_replace, Hashing
+from gwasstudio.utils.enums import MetadataEnum
 
 
 def load_search_topics(search_file: str) -> Any | None:
@@ -147,7 +144,7 @@ def dataframe_from_mongo_objs(fields: list, objs: list) -> pd.DataFrame:
 
     df = pd.DataFrame.from_dict(results)
     # specify the data type for each column
-    data_types = metadata_dtypes
+    data_types = MetadataEnum.get_all_dtypes_dict()
 
     df = df.astype({col: dtype for col, dtype in data_types.items() if col in df}, errors="ignore")
     return df
@@ -159,7 +156,7 @@ def load_metadata(file_path: Path, delimiter: str = "\t") -> pd.DataFrame:
         return pd.read_csv(
             file_path,
             sep=delimiter,
-            dtype=metadata_dtypes,
+            dtype=MetadataEnum.get_all_dtypes_dict(),
         )
     except FileNotFoundError:
         logger.error("File not found. Please check the file path.")

@@ -4,7 +4,7 @@ import unittest
 
 import tiledb
 
-from gwasstudio.utils.tdb_schema import TileDBSchemaCreator, DimensionName
+from gwasstudio.utils.tdb_schema import TileDBSchemaCreator, DimensionEnum
 
 
 class TestTileDBSchemaCreator(unittest.TestCase):
@@ -30,9 +30,9 @@ class TestTileDBSchemaCreator(unittest.TestCase):
 
             # Check dimensions
             self.assertEqual(schema.domain.ndim, 3)
-            self.assertEqual(schema.domain.dim(0).name, DimensionName.DIM1.value)
-            self.assertEqual(schema.domain.dim(1).name, DimensionName.DIM2.value)
-            self.assertEqual(schema.domain.dim(2).name, DimensionName.DIM3.value)
+            self.assertEqual(schema.domain.dim(0).name, DimensionEnum.DIM1.value)
+            self.assertEqual(schema.domain.dim(1).name, DimensionEnum.DIM2.value)
+            self.assertEqual(schema.domain.dim(2).name, DimensionEnum.DIM3.value)
 
             # Check attributes
             self.assertEqual(len(schema.attr_names), 6)
@@ -44,5 +44,5 @@ class TestTileDBSchemaCreator(unittest.TestCase):
             self.assertEqual(schema.attr(5).name, "MLOG10P")
 
     def test_get_dimension_names(self):
-        expected_names = (DimensionName.DIM1.value, DimensionName.DIM2.value, DimensionName.DIM3.value)
-        self.assertEqual(DimensionName.get_dimension_names(), expected_names)
+        expected_names = (DimensionEnum.DIM1.value, DimensionEnum.DIM2.value, DimensionEnum.DIM3.value)
+        self.assertEqual(DimensionEnum.get_names(), expected_names)

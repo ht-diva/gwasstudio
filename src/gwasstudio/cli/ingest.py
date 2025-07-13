@@ -14,6 +14,7 @@ from gwasstudio.utils.cfg import (
     get_dask_deployment,
     get_mongo_uri,
 )
+from gwasstudio.utils.enums import MetadataEnum
 from gwasstudio.utils.metadata import load_metadata, ingest_metadata
 from gwasstudio.utils.mongo_manager import manage_mongo
 from gwasstudio.utils.s3 import does_uri_path_exist
@@ -81,7 +82,7 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
         raise ValueError("URI is required")
 
     df = load_metadata(Path(file_path), delimiter)
-    required_columns = ["project", "study", "file_path", "category"]
+    required_columns = MetadataEnum.required_fields()
     missing_cols = set(required_columns) - set(df.columns)
     if missing_cols:
         raise ValueError(f"Missing column(s) in the input file: {', '.join(missing_cols)}")

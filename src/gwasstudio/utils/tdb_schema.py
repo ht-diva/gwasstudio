@@ -1,43 +1,24 @@
-from enum import Enum
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List
 
-import numpy as np
 import tiledb
 
-
-class AttributeName(Enum):
-    BETA = "BETA"
-    SE = "SE"
-    EAF = "EAF"
-    EA = "EA"
-    NEA = "NEA"
-    MLOG10P = "MLOG10P"
-
-    @classmethod
-    def get_attribute_names(cls) -> Tuple[str, ...]:
-        """
-        Return a tuple with the attribute names.
-
-        Returns:
-            Tuple[str, ...]: A tuple containing the attribute names.
-        """
-        return tuple(member.value for member in cls)
+from gwasstudio.utils.datatypes import DataType
+from gwasstudio.utils.enums import BaseEnum
 
 
-class DimensionName(Enum):
-    DIM1 = "CHR"
-    DIM2 = "TRAITID"
-    DIM3 = "POS"
+class AttributeEnum(BaseEnum):
+    BETA = ("BETA", DataType.FLOAT32_NP)
+    SE = ("SE", DataType.FLOAT32_NP)
+    EAF = ("EAF", DataType.FLOAT32_NP)
+    EA = ("EA", DataType.STRING)
+    NEA = ("NEA", DataType.STRING)
+    MLOG10P = ("MLOG10P", DataType.FLOAT32_NP)
 
-    @classmethod
-    def get_dimension_names(cls) -> Tuple[str, ...]:
-        """
-        Return a tuple with the dimension names.
 
-        Returns:
-            Tuple[str, ...]: A tuple containing the dimension names.
-        """
-        return tuple(member.value for member in cls)
+class DimensionEnum(BaseEnum):
+    DIM1 = ("CHR", DataType.UINT8_NP)
+    DIM2 = ("TRAITID", DataType.ASCII)
+    DIM3 = ("POS", DataType.UINT32_NP)
 
 
 class TileDBSchemaCreator:
@@ -45,7 +26,14 @@ class TileDBSchemaCreator:
     CHROM_DOMAIN = (1, 24)
     POS_DOMAIN = (1, 250000000)
 
-    def __init__(self, uri: str, cfg: Dict[str, Any], ingest_pval: bool):
+    def __init__(
+        self,
+        uri: str,
+        cfg: Dict[str, Any],
+        ingest_pval: bool,
+        attribute_enum: BaseEnum = AttributeEnum,
+        dimension_enum: BaseEnum = DimensionEnum,
+    ):
         """
         Initialize the TileDBSchemaCreator with the given parameters.
 
@@ -57,6 +45,8 @@ class TileDBSchemaCreator:
         self.uri = uri
         self.cfg = cfg
         self.ingest_pval = ingest_pval
+        self.attribute_enum = attribute_enum
+        self.dimension_enum = dimension_enum
 
     def _create_dimensions(self) -> tiledb.Domain:
         """
@@ -67,20 +57,20 @@ class TileDBSchemaCreator:
         """
         return tiledb.Domain(
             tiledb.Dim(
-                name=DimensionName.DIM1.value,
+                name=self.dimension_enum.DIM1.get_value(),
                 domain=self.CHROM_DOMAIN,
-                dtype=np.uint8,
+                dtype=self.dimension_enum.DIM1.get_dtype(),
                 filters=self.DEFAULT_FILTER,
             ),
             tiledb.Dim(
-                name=DimensionName.DIM2.value,
-                dtype="ascii",
+                name=self.dimension_enum.DIM2.get_value(),
+                dtype=self.dimension_enum.DIM2.get_dtype(),
                 filters=self.DEFAULT_FILTER,
             ),
             tiledb.Dim(
-                name=DimensionName.DIM3.value,
+                name=self.dimension_enum.DIM3.get_value(),
                 domain=self.POS_DOMAIN,
-                dtype=np.uint32,
+                dtype=self.dimension_enum.DIM3.get_dtype(),
                 filters=self.DEFAULT_FILTER,
             ),
         )
@@ -92,42 +82,24 @@ class TileDBSchemaCreator:
         Returns:
             List[tiledb.Attr]: The list of attributes.
         """
+        attributes_list = [
+            self.attribute_enum.BETA,
+            self.attribute_enum.SE,
+            self.attribute_enum.EAF,
+            self.attribute_enum.EA,
+            self.attribute_enum.NEA,
+        ]
+        if self.ingest_pval:
+            attributes_list.append(self.attribute_enum.MLOG10P)
+
         attributes = [
             tiledb.Attr(
-                name=AttributeName.BETA.value,
-                dtype=np.float32,
+                name=attr.get_value(),
+                dtype=attr.get_dtype(),
                 filters=self.DEFAULT_FILTER,
-            ),
-            tiledb.Attr(
-                name=AttributeName.SE.value,
-                dtype=np.float32,
-                filters=self.DEFAULT_FILTER,
-            ),
-            tiledb.Attr(
-                name=AttributeName.EAF.value,
-                dtype=np.float32,
-                filters=self.DEFAULT_FILTER,
-            ),
-            tiledb.Attr(
-                name=AttributeName.EA.value,
-                dtype=str,
-                filters=self.DEFAULT_FILTER,
-            ),
-            tiledb.Attr(
-                name=AttributeName.NEA.value,
-                dtype=str,
-                filters=self.DEFAULT_FILTER,
-            ),
-        ]
-
-        if self.ingest_pval:
-            attributes.append(
-                tiledb.Attr(
-                    name=AttributeName.MLOG10P.value,
-                    dtype=np.float32,
-                    filters=self.DEFAULT_FILTER,
-                )
             )
+            for attr in attributes_list
+        ]
 
         return attributes
 
