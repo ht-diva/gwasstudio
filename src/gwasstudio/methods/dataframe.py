@@ -64,10 +64,10 @@ def process_dataframe(df: pd.DataFrame, attributes: Tuple[str], drop_tid: bool =
     """
     # Apply the function to the column in a vectorized manner
     if "MLOG10P" not in df.columns:
-        df["MLOG10P"] = _get_log_p_value_from_z(df["BETA"] / df["SE"]).astype(np.float32)
+        df.loc[:, "MLOG10P"] = _get_log_p_value_from_z(df["BETA"] / df["SE"]).astype(np.float32)
 
     if "SNIPID" in attributes:
-        df["SNIPID"] = _build_snpid(df[["CHR", "POS", "EA", "NEA"]])
+        df.loc[:, "SNIPID"] = _build_snpid(df[["CHR", "POS", "EA", "NEA"]])
 
     if drop_tid and "TRAITID" in df.columns:
         return df.drop(columns=["TRAITID"])
