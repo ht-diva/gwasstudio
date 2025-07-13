@@ -1,0 +1,29 @@
+project	study	category	file_path	notes_consortium	notes_sex	notes_source_id	build	population	total_samples	total_cases	total_controls	trait_desc
+opengwas	bbj-a	GWAS	./dataset/bbj-a-1.gwaslab.tsv.sampled.gz		Combined	bbj-a-1	GRCh37	East Asian	158284			Body mass index
+opengwas	bbj-a	GWAS	./dataset/bbj-a-2.gwaslab.tsv.sampled.gz		Males	bbj-a-2	GRCh37	East Asian	85894			Body mass index
+opengwas	bbj-a	GWAS	./dataset/bbj-a-3.gwaslab.tsv.sampled.gz		Females	bbj-a-3	GRCh37	East Asian	72390			Body mass index
+opengwas	ebi-a	GWAS	./dataset/ebi-a-GCST004904.gwaslab.tsv.sampled.gz			ebi-a-GCST004904	GRCh37	East Asian	158284			Body mass index
+opengwas	ebi-a	GWAS	./dataset/ebi-a-GCST004770.gwaslab.tsv.sampled.gz			ebi-a-GCST004770	GRCh37	Mixed	8327			Lean body mass
+opengwas	ieu-a	GWAS	./dataset/ieu-a-1089.gwaslab.tsv.sampled.gz	UK Biobank	Combined	ieu-a-1089	GRCh37	European	120286			Body mass index
+opengwas	ieu-a	GWAS	./dataset/ieu-a-2.gwaslab.tsv.sampled.gz	GIANT	Combined	ieu-a-2	GRCh37	Mixed	338224			Body mass index
+opengwas	ieu-a	GWAS	./dataset/ieu-a-785.gwaslab.tsv.sampled.gz	GIANT	Males	ieu-a-785	GRCh37	European	152893			Body mass index
+opengwas	ieu-a	GWAS	./dataset/ieu-a-85.gwaslab.tsv.sampled.gz	GIANT	Combined	ieu-a-85	GRCh37	European	16068	7962	8106	Extreme body mass index
+opengwas	ieu-a	GWAS	./dataset/ieu-a-974.gwaslab.tsv.sampled.gz	GIANT	Females	ieu-a-974	GRCh37	European	171977			Body mass index
+opengwas	ieu-b	GWAS	./dataset/ieu-b-40.gwaslab.tsv.sampled.gz	GIANT	Combined	ieu-b-40	GRCh37	European	681275			body mass index
+opengwas	ieu-b	GWAS	./dataset/ieu-b-5117.gwaslab.tsv.sampled.gz	GIANT	Females	ieu-b-5117	GRCh37	European	246511			Adult BMI females
+opengwas	ukb-a	GWAS	./dataset/ukb-a-248.gwaslab.tsv.sampled.gz	Neale Lab	Combined	ukb-a-248	GRCh37	European	336107			Body mass index (BMI)
+opengwas	ukb-a	GWAS	./dataset/ukb-a-264.gwaslab.tsv.sampled.gz	Neale Lab	Combined	ukb-a-264	GRCh37	European	336107			Body fat percentage
+opengwas	ukb-b	GWAS	./dataset/ukb-b-19953.gwaslab.tsv.sampled.gz	MRC-IEU	Combined	ukb-b-19953	GRCh37	European	454137			Whole body fat mass
+opengwas	ukb-b	GWAS	./dataset/ukb-b-2303.gwaslab.tsv.sampled.gz	MRC-IEU	Combined	ukb-b-2303	GRCh37	European	454884			Body mass index (BMI)
+opengwas	ukb-e	GWAS	./dataset/ukb-e-21001_AFR.gwaslab.tsv.sampled.gz		Combined	ukb-e-21001_AFR	GRCh37	African American or Afro-Caribbean	6545	6545		Body mass index (BMI)
+opengwas	ukb-e	GWAS	./dataset/ukb-e-21001_CSA.gwaslab.tsv.sampled.gz		Combined	ukb-e-21001_CSA	GRCh37	South Asian	8646	8646		Body mass index (BMI)
+opengwas	ukb-e	GWAS	./dataset/ukb-e-23104_AFR.gwaslab.tsv.sampled.gz		Combined	ukb-e-23104_AFR	GRCh37	African American or Afro-Caribbean	6458	6458		Body mass index (BMI)
+opengwas	ukb-e	GWAS	./dataset/ukb-e-23104_CSA.gwaslab.tsv.sampled.gz		Combined	ukb-e-23104_CSA	GRCh37	South Asian	8658	8658		Body mass index (BMI)
+opengwas	ukb-d	GWAS	./dataset/ukb-d-XVIII_MISCFINDINGS.gwaslab.tsv.sampled.gz		Combined	ukb-d-XVIII_MISCFINDINGS	GRCh38	European	361194	97602	263592	Symptoms, signs and abnormal clinical and laboratory findings, not elsewhere classified
+opengwas	ukb-d	GWAS	./dataset/ukb-d-XII_SKIN_SUBCUTAN.gwaslab.tsv.sampled.gz		Combined	ukb-d-XII_SKIN_SUBCUTAN	GRCh38	European	361194	27074	334120	Diseases of the skin and subcutaneous tissue
+opengwas	ukb-d	GWAS	./dataset/ukb-d-XV_PREGNANCY_BIRTH.gwaslab.tsv.sampled.gz		Combined	ukb-d-XV_PREGNANCY_BIRTH	GRCh38	European	361194	11959	349235	Pregnancy, childbirth and the puerperium
+opengwas	ukb-d	GWAS	./dataset/ukb-d-Z01.gwaslab.tsv.sampled.gz		Combined	ukb-d-Z01	GRCh38	European	361194	1370	359824	Diagnoses - main ICD10: Z01 Other special examinations and investigations of persons without complaint or reported diagnosis
+opengwas	eqtl-a	eQTL	./dataset/eqtl-a-ENSG00000228923.gwaslab.tsv.sampled.gz		Combined	eqtl-a-ENSG00000228923	GRCh37	European	4169			ENSG00000228923
+opengwas	eqtl-a	eQTL	./dataset/eqtl-a-ENSG00000255833.gwaslab.tsv.sampled.gz		Combined	eqtl-a-ENSG00000255833	GRCh37	European	31684			ENSG00000255833
+opengwas	prot-a	pQTL	./dataset/prot-a-2375.gwaslab.tsv.sampled.gz		Combined	prot-a-2375	GRCh37	European	3301			Prolactin
+opengwas	prot-a	pQTL	./dataset/prot-a-2325.gwaslab.tsv.sampled.gz		Combined	prot-a-2325	GRCh37	European	3301			Beta-endorphin

@@ -1,8 +1,8 @@
-# GWASStudio CLI Test Script
+# GWASStudio Functional Test Scripts
 
 ## Overview
 
-The `cli_test.sh` script is designed to automate the testing of the GWASStudio CLI tool. It performs a series of operations including data ingestion, querying, and exporting, ensuring that the core functionalities of GWASStudio work as expected.
+The `test_0*.sh` scripts are designed to automate the testing of the GWASStudio CLI tool. They perform a series of operations including data ingestion, querying, and exporting, ensuring that the core functionalities of GWASStudio work as expected.
 
 ## Purpose
 
@@ -41,14 +41,13 @@ The script performs the following steps:
 ### Prerequisites
 
 - Ensure that GWASStudio is installed and properly configured on your system.
-- Make sure you have the necessary input files (`metadata_ukb_d_sampled.tsv`, `search_ukb_d.txt`, `hapmap3/hapmap3_snps.csv` and `regions_query.tsv`) in the `data` directory.
 
 ### Running the Script
 
 * **Run the Script**
    ```bash
    cd scripts
-   ./cli_test.sh
+   ./test_00.sh
    ```
 
 ## Example Output
@@ -58,14 +57,14 @@ After running the script, you should see output indicating the progress of each 
 ## Troubleshooting
 
 - **Permission Issues**
-  - If you encounter permission issues, ensure that the script has executable permissions (`chmod +x scripts/cli_test.sh`).
+  - If you encounter permission issues, ensure that the script has executable permissions (`chmod +x scripts/test_0*.sh`).
 
 - **Missing Files**
-  - Verify that the input files (`metadata_ukb_d_sampled.tsv`, `search_ukb_d.txt`, `hapmap3/hapmap3_snps.csv` and `regions_query.tsv`) are present in the `data` directory.
+  - Verify that the input files (`metadata_table.tsv`, `search_example_0*.yml`, `hapmap3/hapmap3_snps.csv` and `regions_query.tsv`) are present in the `data` directory.
 
 - **GWASStudio Not Installed**
   - Ensure that GWASStudio is installed and accessible from your command line.
 
 ## Conclusion
 
-The `cli_test.sh` script provides a convenient way to test the core functionalities of GWASStudio. By automating the ingestion, querying, and export processes, it helps ensure that the tool works as expected and identifies any potential issues.
+The `test_0*.sh` scripts provide a convenient way to test the core functionalities of GWASStudio. By automating the ingestion, querying, and export processes, it helps ensure that the tool works as expected and identifies any potential issues.
