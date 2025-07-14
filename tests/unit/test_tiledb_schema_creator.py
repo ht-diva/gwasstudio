@@ -9,7 +9,7 @@ from gwasstudio.utils.tdb_schema import TileDBSchemaCreator, DimensionEnum
 
 class TestTileDBSchemaCreator(unittest.TestCase):
     def setUp(self):
-        self.uri = tempfile.TemporaryDirectory(delete=False).name
+        self.uri = tempfile.mkdtemp()
         self.cfg = {"vfs.s3.region": "us-west-2"}
         self.ingest_pval = True
         self.creator = TileDBSchemaCreator(self.uri, self.cfg, self.ingest_pval)
