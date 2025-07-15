@@ -1,0 +1,20 @@
+project: opengwas
+study: ukb-d
+category: GWAS
+
+trait:
+  - desc: skin and subcutaneous tissue
+  - desc: Z01
+  - desc: pregnancy
+
+
+output:
+  - build
+  - population
+  - notes_consortium
+  - notes_sex
+  - notes_source_id
+  - total_samples
+  - total_cases
+  - total_controls
+  - trait_desc

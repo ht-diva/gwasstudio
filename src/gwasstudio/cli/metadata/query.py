@@ -7,11 +7,7 @@ from gwasstudio import logger
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table
 from gwasstudio.utils.cfg import get_mongo_uri
-from gwasstudio.utils.metadata import (
-    load_search_topics,
-    query_mongo_obj,
-    dataframe_from_mongo_objs,
-)
+from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataframe_from_mongo_objs
 from gwasstudio.utils.mongo_manager import manage_mongo
 
 help_doc = """

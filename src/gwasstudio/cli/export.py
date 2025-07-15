@@ -13,11 +13,7 @@ from gwasstudio.methods.locus_breaker import _process_locusbreaker
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table
 from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
-from gwasstudio.utils.metadata import (
-    load_search_topics,
-    query_mongo_obj,
-    dataframe_from_mongo_objs,
-)
+from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataframe_from_mongo_objs
 from gwasstudio.utils.mongo_manager import manage_mongo
 
 
@@ -155,7 +151,7 @@ def export(
         # Create output prefix dictionary
         key_column = "data_id"
         value_column = "output_prefix"
-        df[value_column] = f"{output_prefix}_" + df.get("notes.source_id", df[key_column])
+        df[value_column] = f"{output_prefix}_" + df.get("notes_source_id", df[key_column])
         output_prefix_dict = df.set_index(key_column)[value_column].to_dict()
 
         # write metadata query result

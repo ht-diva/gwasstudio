@@ -6,7 +6,7 @@ from dask import delayed, compute
 
 from gwasstudio import logger
 from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
-from gwasstudio.utils import create_tiledb_schema, parse_uri, process_and_ingest, check_file_exists
+from gwasstudio.utils import parse_uri, process_and_ingest, check_file_exists
 from gwasstudio.utils.cfg import (
     get_tiledb_config,
     get_tiledb_sm_config,
@@ -14,9 +14,11 @@ from gwasstudio.utils.cfg import (
     get_dask_deployment,
     get_mongo_uri,
 )
+from gwasstudio.utils.enums import MetadataEnum
 from gwasstudio.utils.metadata import load_metadata, ingest_metadata
 from gwasstudio.utils.mongo_manager import manage_mongo
 from gwasstudio.utils.s3 import does_uri_path_exist
+from gwasstudio.utils.tdb_schema import TileDBSchemaCreator
 
 help_doc = """
 Ingest data in a TileDB-unified dataset.
@@ -80,7 +82,7 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
         raise ValueError("URI is required")
 
     df = load_metadata(Path(file_path), delimiter)
-    required_columns = ["project", "study", "file_path", "category"]
+    required_columns = MetadataEnum.required_fields()
     missing_cols = set(required_columns) - set(df.columns)
     if missing_cols:
         raise ValueError(f"Missing column(s) in the input file: {', '.join(missing_cols)}")
@@ -122,7 +124,7 @@ def ingest_to_s3(ctx, input_file_list, uri, pvalue):
 
     if not does_uri_path_exist(uri, cfg):
         logger.info("Creating TileDB schema")
-        create_tiledb_schema(uri, cfg, pvalue)
+        TileDBSchemaCreator(uri, cfg, pvalue).create_schema()
 
     if get_dask_deployment(ctx) in dask_deployment_types:
         batch_size = get_dask_batch_size(ctx)
@@ -169,7 +171,7 @@ def ingest_to_fs(ctx, input_file_list, uri, pvalue):
     _, __, path = parse_uri(uri)
     if not Path(path).exists():
         logger.info("Creating TileDB schema")
-        create_tiledb_schema(uri, {}, pvalue)
+        TileDBSchemaCreator(uri, {}, pvalue).create_schema()
 
     if get_dask_deployment(ctx) in dask_deployment_types:
         batch_size = get_dask_batch_size(ctx)

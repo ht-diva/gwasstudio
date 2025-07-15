@@ -78,7 +78,7 @@ pre-commit: dependencies_dev
 tag:
 	git tag v${VERSION}
 
-test:
+unit_test:
 	@echo "Unit Testing"
 	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
@@ -86,13 +86,33 @@ test:
 	fi; \
 	pytest --cov=src/gwasstudio/ tests
 
-end_to_end_test:
-	@echo "End-to-End Testing"
+functional_test_00:
+	@echo "Functional test 00"
 	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
-	cd scripts && ./cli_test.sh
+	cd scripts && ./test_00.sh
+
+functional_test_01:
+	@echo "Functional test 01"
+	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+        echo "Activating conda environment: ${ENV_NAME}"; \
+		$(CONDA_ACTIVATE) ${ENV_NAME}; \
+	fi; \
+	cd scripts && ./test_01.sh
+
+functional_test_02:
+	@echo "Functional test 02"
+	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+        echo "Activating conda environment: ${ENV_NAME}"; \
+		$(CONDA_ACTIVATE) ${ENV_NAME}; \
+	fi; \
+	cd scripts && ./test_02.sh
+
+test: unit_test functional_test_00
+	@echo "End-to-End tests"
+
 
 
 uninstall:

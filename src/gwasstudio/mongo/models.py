@@ -67,7 +67,7 @@ class DataProfile(Metadata):
     data_id = StringField(max_length=250, unique_with=["project", "study"], required=True)
     trait = JSONField()
     total = JSONField()
-    population = EnumField(Ancestry)
+    population = ListField(StringField(max_length=250))
     references = ListField(ReferenceField(Publication))
     build = EnumField(Build)
     notes = JSONField()
@@ -84,6 +84,13 @@ class DataProfile(Metadata):
         """
         return tuple(field.name for field in DataProfile._fields.values() if isinstance(field, JSONField))
 
+    @staticmethod
+    def listfield_names() -> tuple:
+        """
+        Returns a tuple of field names in this metadata class that store ListField objects.
+        """
+        return tuple(field.name for field in DataProfile._fields.values() if isinstance(field, ListField))
+
 
 class EnhancedDataProfile(MongoMixin):
     def __init__(self, **kwargs):
@@ -99,7 +106,7 @@ class EnhancedDataProfile(MongoMixin):
             category=kwargs.get("category"),
             tags=kwargs.get("tags", []),
             total=kwargs.get("total", None),
-            population=kwargs.get("population", "NR"),
+            population=kwargs.get("population", []),
             references=kwargs.get("references", []),
             build=kwargs.get("build", None),
             notes=kwargs.get("notes", None),
