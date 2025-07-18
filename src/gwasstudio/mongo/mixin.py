@@ -121,6 +121,7 @@ class MongoMixin:
                         )
                 else:
                     query_args = queries[0]
+                    logger.debug(query_args)
                     docs = self.klass.objects(query_args).as_pymongo()
                 logger.debug("found {} documents".format(len(docs)))
 

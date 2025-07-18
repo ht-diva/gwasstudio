@@ -55,8 +55,13 @@ def load_search_topics(search_file: str) -> Any | None:
     search_topics = None
     if search_file and Path(search_file).exists():
         yaml = YAML(typ="safe")
-        with open(search_file, "r") as file:
-            search_topics = yaml.load(file)
+        try:
+            with open(search_file, "r") as file:
+                search_topics = yaml.load(file)
+        except Exception as e:
+            msg = f"Error loading YAML file: {e}"
+            logger.error(msg)
+            exit(msg)
     return process_search_topics(search_topics)
 
 
