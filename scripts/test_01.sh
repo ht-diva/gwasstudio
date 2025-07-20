@@ -19,6 +19,9 @@ TEST_DIR="../../scripts/tests/01"
 MDB_URI="mongodb://localhost:27018/test_01"
 TILEDB_DIR="${TEST_DIR}/tiledB"
 
+# Clone example files sumbmodule if it is not already cloned
+git submodule update --init --recursive
+
 # Clean up existing mongodata and test directories
 echo "Cleaning up existing test directories..."
 rm -rf "${TEST_DIR}"

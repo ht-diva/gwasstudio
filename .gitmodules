@@ -1,0 +1,3 @@
+[submodule "data/dataset"]
+	path = data/dataset
+	url = https://github.com/ht-diva/gwasstudio_example_data.git
