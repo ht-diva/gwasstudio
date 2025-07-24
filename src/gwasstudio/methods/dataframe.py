@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Set
 
 import numpy as np
 import pandas as pd
@@ -21,8 +21,7 @@ def _get_log_p_value_from_z(z_score: np.ndarray) -> np.ndarray:
     """
     # Use the cumulative distribution function (CDF) for the normal distribution
     p_values = 2 * (1 - stats.norm.cdf(np.abs(z_score)))
-    log10_p_values = -np.log10(p_values)
-    return log10_p_values
+    return -np.log10(p_values)
 
 
 def _build_snpid(df: pd.DataFrame) -> pd.Series:
@@ -42,12 +41,25 @@ def _build_snpid(df: pd.DataFrame) -> pd.Series:
         KeyError: If any of the required columns ('CHR', 'POS', 'EA', 'NEA') are missing from the DataFrame.
     """
     required_columns = {"CHR", "POS", "EA", "NEA"}
-    missing_columns = required_columns - set(df.columns)
-    if missing_columns:
-        raise KeyError(f"Missing required columns in DataFrame: {', '.join(missing_columns)}")
-
+    _check_required_columns(required_columns, df)
     snpid_series = df["CHR"].astype(str) + ":" + df["POS"].astype(str) + ":" + df["EA"] + ":" + df["NEA"]
     return snpid_series
+
+
+def _check_required_columns(required_columns: Set[str], df: pd.DataFrame) -> None:
+    """
+    Check if the required columns are present in the DataFrame.
+
+    Args:
+        required_columns (Set[str]): A set of required column names.
+        df (pd.DataFrame): The DataFrame to check.
+
+    Raises:
+        KeyError: If any required columns are missing from the DataFrame.
+    """
+    missing_columns = required_columns - set(df.columns)
+    if missing_columns:
+        raise KeyError(f"Missing required columns in DataFrame: {', '.join(sorted(missing_columns))}")
 
 
 def process_dataframe(df: pd.DataFrame, attributes: Tuple[str], drop_tid: bool = True) -> pd.DataFrame:
@@ -62,14 +74,15 @@ def process_dataframe(df: pd.DataFrame, attributes: Tuple[str], drop_tid: bool =
     Returns:
         pd.DataFrame: The processed DataFrame with the 'MLOG10P' column added, optionally the 'SNIPID' column, and optionally without the 'TRAITID' column.
     """
+
     # Apply the function to the column in a vectorized manner
     if "MLOG10P" not in df.columns:
         df.loc[:, "MLOG10P"] = _get_log_p_value_from_z(df["BETA"] / df["SE"]).astype(np.float32)
 
     if "SNIPID" in attributes:
-        df.loc[:, "SNIPID"] = _build_snpid(df[["CHR", "POS", "EA", "NEA"]])
+        df.loc[:, "SNIPID"] = _build_snpid(df)
 
     if drop_tid and "TRAITID" in df.columns:
-        return df.drop(columns=["TRAITID"])
+        df.drop(columns=["TRAITID"], inplace=True)
 
     return df
