@@ -3,7 +3,6 @@ opengwas	bbj-a	GWAS	./dataset/bbj-a-1.gwaslab.tsv.sampled.gz		Combined	bbj-a-1	G
 opengwas	bbj-a	GWAS	./dataset/bbj-a-2.gwaslab.tsv.sampled.gz		Males	bbj-a-2	GRCh37	East Asian	85894			Body mass index
 opengwas	bbj-a	GWAS	./dataset/bbj-a-3.gwaslab.tsv.sampled.gz		Females	bbj-a-3	GRCh37	East Asian	72390			Body mass index
 opengwas	ebi-a	GWAS	./dataset/ebi-a-GCST004904.gwaslab.tsv.sampled.gz			ebi-a-GCST004904	GRCh37	East Asian	158284			Body mass index
-opengwas	ebi-a	GWAS	./dataset/ebi-a-GCST004770.gwaslab.tsv.sampled.gz			ebi-a-GCST004770	GRCh37	Mixed	8327			Lean body mass
 opengwas	ieu-a	GWAS	./dataset/ieu-a-1089.gwaslab.tsv.sampled.gz	UK Biobank	Combined	ieu-a-1089	GRCh37	European	120286			Body mass index
 opengwas	ieu-a	GWAS	./dataset/ieu-a-2.gwaslab.tsv.sampled.gz	GIANT	Combined	ieu-a-2	GRCh37	Mixed	338224			Body mass index
 opengwas	ieu-a	GWAS	./dataset/ieu-a-785.gwaslab.tsv.sampled.gz	GIANT	Males	ieu-a-785	GRCh37	European	152893			Body mass index

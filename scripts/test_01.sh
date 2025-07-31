@@ -15,7 +15,7 @@ fi
 
 # Define the data and test directory variables
 GWASSTUDIO_DATA_DIR=$(gwasstudio info | grep "data dir:" | awk -F': ' '{print $2}')
-TEST_DIR="../../scripts/tests/01"
+TEST_DIR="../scripts/tests/01"
 MDB_URI="mongodb://localhost:27018/test_01"
 TILEDB_DIR="${TEST_DIR}/tiledB"
 
@@ -47,6 +47,9 @@ run_command "Querying data..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} 
 
 # Query data by trait description
 run_command "Querying data by trait description..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_04.yml --output-prefix ${TEST_DIR}/example_query_by_trait_desc"
+
+# Query data by data_ids - it is a precision query, only 2 results expected
+run_command "Querying data by data_ids..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_06.yml --output-prefix ${TEST_DIR}/example_query_by_trait_desc"
 
 # Export data
 run_command "Exporting data..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_export --uri ${TILEDB_DIR}"

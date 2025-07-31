@@ -15,7 +15,7 @@ fi
 
 # Define the data and test directory variables
 GWASSTUDIO_DATA_DIR=$(gwasstudio info | grep "data dir:" | awk -F': ' '{print $2}')
-TEST_DIR="../../scripts/tests/00"
+TEST_DIR="../scripts/tests/00"
 MDB_URI="mongodb://localhost:27018/test_00"
 TILEDB_DIR="${TEST_DIR}/tiledB"
 
