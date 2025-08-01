@@ -1,0 +1,6 @@
+project,study,category,data_id,build,population,notes_consortium,notes_sex,notes_source_id,total_samples,total_cases,total_controls,trait_desc
+opengwas,ieu-a,GWAS,9345f466a2,GRCh37,['Mixed'],GIANT,Combined,ieu-a-2,338224,,,Body mass index
+opengwas,ieu-a,GWAS,8911a276d6,GRCh37,['European'],GIANT,Males,ieu-a-785,152893,,,Body mass index
+opengwas,ieu-a,GWAS,8a61fd1240,GRCh37,['European'],GIANT,Combined,ieu-a-85,16068,7962.0,8106.0,Extreme body mass index
+opengwas,ieu-a,GWAS,d43e3983cd,GRCh37,['European'],GIANT,Females,ieu-a-974,171977,,,Body mass index
+opengwas,ieu-b,GWAS,5626f7d056,GRCh37,['European'],GIANT,Combined,ieu-b-40,681275,,,body mass index
