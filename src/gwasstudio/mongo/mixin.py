@@ -93,37 +93,45 @@ class MongoMixin:
         exact_op, contains_op = operators["case_sensitive" if case_sensitive else "case_insensitive"]
 
         docs = []
-        if len(kwargs) > 0:
-            jds = {field: kwargs.pop(field, {}) for field in self.klass.json_dict_fields() if field in kwargs.keys()}
+        if not kwargs:
+            return []
 
-            query_fields_exact = {f"{key}__{exact_op}": value for key, value in kwargs.items()}
-            queries = [Q(**query_fields_exact)]
+        jds = {field: kwargs.pop(field, {}) for field in self.klass.json_dict_fields() if field in kwargs}
 
-            with self.mec:
-                if jds:
-                    for jdk, jdv in jds.items():
-                        query_fields_contains = {f"{jdk}__{contains_op}.{key}": value for key, value in jdv.items()}
+        # Compose queries from data_ids list, if any.
+        queries = [Q(**{f"data_id__{exact_op}": value}) for value in kwargs.pop("data_ids", [])]
 
-                        for key, value in query_fields_contains.items():
-                            query_field_contains = key.split(".")[0]
-                            queries.append(Q(**{query_field_contains: value}))
+        # Compose queries from regular key value pairs in the yaml file.
+        query_fields_exact = {f"{key}__{exact_op}": value for key, value in kwargs.items()}
+        if query_fields_exact:
+            queries.append(Q(**query_fields_exact))
+        logger.debug(queries)
 
-                        # Use & operator to combine all the queries with AND logic
-                        # query_args = reduce(lambda x, y: x & y, queries)
-                        query_args = Q()
-                        for q in queries:
-                            query_args = query_args & q
-                        logger.debug(query_args)
-                        docs.extend(
-                            qr
-                            for qr in self.klass.objects(query_args).as_pymongo()
-                            if value.casefold() in find_item(json.loads(qr[jdk]), key.split(".").pop()).casefold()
-                        )
-                else:
-                    query_args = queries[0]
+        with self.mec:
+            if len(jds.keys()) > 0:
+                for jdk, jdv in jds.items():
+                    query_fields_contains = {f"{jdk}__{contains_op}.{key}": value for key, value in jdv.items()}
+
+                    for key, value in query_fields_contains.items():
+                        query_field_contains = key.split(".")[0]
+                        queries.append(Q(**{query_field_contains: value}))
+
+                    # Use & operator to combine all the queries with AND logic
+                    # query_args = reduce(lambda x, y: x & y, queries)
+                    query_args = Q()
+                    for q in queries:
+                        query_args = query_args & q
                     logger.debug(query_args)
-                    docs = self.klass.objects(query_args).as_pymongo()
-                logger.debug("found {} documents".format(len(docs)))
+                    docs.extend(
+                        qr
+                        for qr in self.klass.objects(query_args).as_pymongo()
+                        if value.casefold() in find_item(json.loads(qr[jdk]), key.split(".").pop()).casefold()
+                    )
+            else:
+                for query_arg in queries:
+                    logger.debug(query_arg)
+                    docs.extend(qr for qr in self.klass.objects(query_arg).as_pymongo())
+            logger.debug(f"found {len(docs)} documents")
 
         return docs
 

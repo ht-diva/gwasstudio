@@ -113,6 +113,28 @@ functional_test_02:
 test: unit_test functional_test_00
 	@echo "End-to-End tests"
 
+test-integration: test-integration-setup test-integration-exec #test-integration-stop## Run integration tests
+
+test-integration-setup: ## Start Docker services for integration tests
+	docker compose -f dev/docker-compose-integration.yml up -d
+	sleep 5
+
+test-integration-exec: ## Run integration tests (excluding provision)
+	@echo "Integration test 03"
+	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+        echo "Activating conda environment: ${ENV_NAME}"; \
+		$(CONDA_ACTIVATE) ${ENV_NAME}; \
+	fi; \
+	cd scripts && ./test_03.sh
+
+test-integration-stop:
+	docker compose -f dev/docker-compose-integration.yml rm -f -s -v minio
+	docker compose -f dev/docker-compose-integration.yml rm -f -s -v mongodb
+	docker compose -f dev/docker-compose-integration.yml rm -f -s -v vault
+	docker compose -f dev/docker-compose-integration.yml rm -f -s -v vault-init
+	docker network rm -f internal_net
+	docker volume rm dev_minio_data dev_mongodb_data dev_vault_data
+
 
 
 uninstall:
