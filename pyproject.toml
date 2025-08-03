@@ -28,7 +28,9 @@ dependencies = [
     "platformdirs (>=4.3.8,<5.0.0)",
     "bokeh (>=3.7.3,<4.0.0)",
     "scipy (>=1.15.3,<2.0.0)",
-    "dash-bio (>=1.0.2,<2.0.0)",
+    "dash-bio (==1.0.1)",
+    "dash (==3.1.1)",
+    "plotly (==6.1.0)",
 ]
 
 [project.scripts]
