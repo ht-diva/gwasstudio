@@ -1,0 +1,3 @@
+project,study,category,data_id,build,population,notes_consortium,notes_sex,notes_source_id,total_samples,total_cases,total_controls,trait_desc
+opengwas,ieu-b,GWAS,89f31189b3,GRCh37,['European'],GIANT,Females,ieu-b-5117,246511,,,Adult BMI females
+opengwas,ukb-b,GWAS,a9497f792c,GRCh37,['European'],MRC-IEU,Combined,ukb-b-2303,454884,,,Body mass index (BMI)

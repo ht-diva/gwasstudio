@@ -1,0 +1,24 @@
+project,study,category,data_id,build,population,notes_consortium,notes_sex,notes_source_id,total_samples,total_cases,total_controls,trait_desc
+opengwas,bbj-a,GWAS,92df1d8ed4,GRCh37,['East Asian'],,Combined,bbj-a-1,158284,,,Body mass index
+opengwas,bbj-a,GWAS,45755df18d,GRCh37,['East Asian'],,Males,bbj-a-2,85894,,,Body mass index
+opengwas,bbj-a,GWAS,d4a398afe7,GRCh37,['East Asian'],,Females,bbj-a-3,72390,,,Body mass index
+opengwas,ebi-a,GWAS,4e047a2aff,GRCh37,['East Asian'],,,ebi-a-GCST004904,158284,,,Body mass index
+opengwas,ieu-a,GWAS,fcdc6e9e75,GRCh37,['European'],UK Biobank,Combined,ieu-a-1089,120286,,,Body mass index
+opengwas,ieu-a,GWAS,9345f466a2,GRCh37,['Mixed'],GIANT,Combined,ieu-a-2,338224,,,Body mass index
+opengwas,ieu-a,GWAS,8911a276d6,GRCh37,['European'],GIANT,Males,ieu-a-785,152893,,,Body mass index
+opengwas,ieu-a,GWAS,8a61fd1240,GRCh37,['European'],GIANT,Combined,ieu-a-85,16068,7962.0,8106.0,Extreme body mass index
+opengwas,ieu-a,GWAS,d43e3983cd,GRCh37,['European'],GIANT,Females,ieu-a-974,171977,,,Body mass index
+opengwas,ieu-b,GWAS,5626f7d056,GRCh37,['European'],GIANT,Combined,ieu-b-40,681275,,,body mass index
+opengwas,ieu-b,GWAS,89f31189b3,GRCh37,['European'],GIANT,Females,ieu-b-5117,246511,,,Adult BMI females
+opengwas,ukb-a,GWAS,e69866be25,GRCh37,['European'],Neale Lab,Combined,ukb-a-248,336107,,,Body mass index (BMI)
+opengwas,ukb-a,GWAS,c29c626f94,GRCh37,['European'],Neale Lab,Combined,ukb-a-264,336107,,,Body fat percentage
+opengwas,ukb-b,GWAS,be0fa663d4,GRCh37,['European'],MRC-IEU,Combined,ukb-b-19953,454137,,,Whole body fat mass
+opengwas,ukb-b,GWAS,a9497f792c,GRCh37,['European'],MRC-IEU,Combined,ukb-b-2303,454884,,,Body mass index (BMI)
+opengwas,ukb-e,GWAS,ea708dfd8b,GRCh37,['African American or Afro-Caribbean'],,Combined,ukb-e-21001_AFR,6545,6545.0,,Body mass index (BMI)
+opengwas,ukb-e,GWAS,e9ea240d0e,GRCh37,['South Asian'],,Combined,ukb-e-21001_CSA,8646,8646.0,,Body mass index (BMI)
+opengwas,ukb-e,GWAS,d5cf224253,GRCh37,['African American or Afro-Caribbean'],,Combined,ukb-e-23104_AFR,6458,6458.0,,Body mass index (BMI)
+opengwas,ukb-e,GWAS,521cded1f7,GRCh37,['South Asian'],,Combined,ukb-e-23104_CSA,8658,8658.0,,Body mass index (BMI)
+opengwas,ukb-d,GWAS,1b7d38093c,GRCh38,['European'],,Combined,ukb-d-XVIII_MISCFINDINGS,361194,97602.0,263592.0,"Symptoms, signs and abnormal clinical and laboratory findings, not elsewhere classified"
+opengwas,ukb-d,GWAS,93785777bd,GRCh38,['European'],,Combined,ukb-d-XII_SKIN_SUBCUTAN,361194,27074.0,334120.0,Diseases of the skin and subcutaneous tissue
+opengwas,ukb-d,GWAS,845c521c74,GRCh38,['European'],,Combined,ukb-d-XV_PREGNANCY_BIRTH,361194,11959.0,349235.0,"Pregnancy, childbirth and the puerperium"
+opengwas,ukb-d,GWAS,d521224bd3,GRCh38,['European'],,Combined,ukb-d-Z01,361194,1370.0,359824.0,Diagnoses - main ICD10: Z01 Other special examinations and investigations of persons without complaint or reported diagnosis

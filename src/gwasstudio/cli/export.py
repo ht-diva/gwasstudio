@@ -69,7 +69,7 @@ def _process_function_tasks(tiledb_array, trait_id_list, attr, batch_size, outpu
         kwargs["snp_list"] = delayed(get_snp_list)(snp_list_file)
 
     tasks = [
-        delayed(function_name)(tiledb_array, trait, output_prefix_dict.get(trait), output_format, plot_out, **kwargs)
+        delayed(function_name)(tiledb_array, trait, output_prefix_dict.get(trait), output_format, **kwargs)
         for trait in trait_id_list
     ]
     for i in range(0, len(tasks), batch_size):
@@ -122,6 +122,15 @@ Export summary statistics from TileDB datasets with various filtering options.
     ),
 )
 @cloup.option_group(
+    "Option to plot results",
+    cloup.option(
+        "--plot-out",
+        default=False,
+        is_flag=True,
+        help="Boolean to plot results. If enabled, the output will be plotted as a Manhattan plot.",
+    ),
+)
+@cloup.option_group(
     "Regions filtering options",
     cloup.option(
         "--get-regions",
@@ -163,7 +172,7 @@ def export(
     snp_list_file,
     locusbreaker,
     get_regions,
-    plot_out=False
+    plot_out
 ):
     """Export summary statistics based on selected options."""
     cfg = get_tiledb_config(ctx)
@@ -172,10 +181,10 @@ def export(
         
     search_topics, output_fields = load_search_topics(search_file)
     if plot_out:
-        plot_config = get_plot_config(ctx)
-        if not plot_config:
-            logger.error("Plotting configuration is required for plotting output.")
-            exit(1)
+        #plot_config = get_plot_config(ctx)
+        #if not plot_config:
+            #logger.error("Plotting configuration is required for plotting output.")
+            #exit(1)
         if "data_id" not in search_topics:
             logger.error("Plotting option is enabled but no data_id is provided in the search file.")
             exit(1)
@@ -218,14 +227,14 @@ def export(
                         "hole_size": hole_size,
                         "pvalue_sig": pvalue_sig,
                         "pvalue_limit": pvalue_limit,
-                        "phenovar": phenovar,
+                        "phenovar": phenovar
                     }
                     _process_function_tasks(*args, **kwargs)
 
                 elif snp_list_file:
                     kwargs = {
                         "function_name": extract_snp_list,
-                        "snp_list_file": snp_list_file,
+                        "snp_list_file": snp_list_file
                     }
                     _process_function_tasks(*args, **kwargs)
 
