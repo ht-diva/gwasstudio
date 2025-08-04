@@ -49,11 +49,3 @@ hashing:
 # https://cloud.tiledb.com/academy/structure/arrays/tutorials/basics/configuration/index.html
 tiledb_sm_config:
   "sm.dedup_coords": 'true'
-
-plot_config:
-  # Plot size in inches
-  chrom: 'CHROM'
-  pos: 'POS'
-  pval: 'LOG10P'
-  color_thr: 'red'
-  annotation: 'CHR'
