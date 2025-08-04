@@ -39,7 +39,7 @@ class BaseEnum(Enum):
 
     @classmethod
     def get_all_dtypes_dict(cls) -> dict:
-        return {member.get_value: member.get_dtype() for member in cls}
+        return {member.get_value(): member.get_dtype() for member in cls}
 
 
 class MetadataEnum(BaseEnum):
@@ -47,8 +47,11 @@ class MetadataEnum(BaseEnum):
     STUDY = ("study", DataType.CATEGORY)
     FILE_PATH = ("file_path", DataType.STRING_PA)
     CATEGORY = ("category", DataType.CATEGORY)
+    DATA_ID = ("data_id", DataType.STRING_PA)
     BUILD = ("build", DataType.CATEGORY)
     CONSORTIUM = ("notes_consortium", DataType.STRING_PA)
+    SEX = ("notes_sex", DataType.CATEGORY)
+    SOURCE_ID = ("notes_source_id", DataType.STRING_PA)
     SAMPLES = ("total_samples", DataType.UINT64_PA)
     CASES = ("total_cases", DataType.UINT64_PA)
     CONTROLS = ("total_controls", DataType.UINT64_PA)
@@ -56,9 +59,15 @@ class MetadataEnum(BaseEnum):
 
     @classmethod
     def required_fields(cls):
+        """It returns a list of required fields for ingestion"""
         return [
-            cls.PROJECT.value,
-            cls.STUDY.value,
-            cls.FILE_PATH.value,
-            cls.CATEGORY.value,
+            cls.PROJECT.get_value(),
+            cls.STUDY.get_value(),
+            cls.FILE_PATH.get_value(),
+            cls.CATEGORY.get_value(),
         ]
+
+    @classmethod
+    def get_source_id_field(cls):
+        """It returns the metadata field name that store source ids"""
+        return cls.SOURCE_ID.get_value()
