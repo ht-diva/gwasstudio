@@ -50,3 +50,4 @@ cover/
 .ruff_cache/
 
 wip/
+scripts/tests
