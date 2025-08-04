@@ -129,6 +129,16 @@ Export summary statistics from TileDB datasets with various filtering options.
         is_flag=True,
         help="Boolean to plot results. If enabled, the output will be plotted as a Manhattan plot.",
     ),
+    cloup.option(
+        "--color-thr",
+        default="red",
+        help= "Color for the points passing the threshold line in the plot (default: red)",
+    ),
+    cloup.option(
+        "--s-value",
+        default=5,
+        help= "Value for the suggestive p-value line in the plot (default: 5)",
+    )
 )
 @cloup.option_group(
     "Regions filtering options",
@@ -172,7 +182,9 @@ def export(
     snp_list_file,
     locusbreaker,
     get_regions,
-    plot_out
+    plot_out,
+    color_thr,
+    s_value
 ):
     """Export summary statistics based on selected options."""
     cfg = get_tiledb_config(ctx)
@@ -185,10 +197,10 @@ def export(
         #if not plot_config:
             #logger.error("Plotting configuration is required for plotting output.")
             #exit(1)
-        if "data_id" not in search_topics:
-            logger.error("Plotting option is enabled but no data_id is provided in the search file.")
+        if "data_ids" not in search_topics:
+            logger.error("Plotting option is enabled but no data_ids is provided in the search file.")
             exit(1)
-        if len(search_topics["data_id"]) > 20:
+        if len(search_topics["data_ids"]) > 20:
             logger.error("Plotting option is enabled but too many data_ids are provided in the search file. Please limit to 20 data_ids.")
             exit(1)
            
@@ -234,7 +246,10 @@ def export(
                 elif snp_list_file:
                     kwargs = {
                         "function_name": extract_snp_list,
-                        "snp_list_file": snp_list_file
+                        "snp_list_file": snp_list_file,
+                        "plot_out": plot_out,
+                        "color_thr": color_thr,
+                        "s_value": s_value,
                     }
                     _process_function_tasks(*args, **kwargs)
 
@@ -242,11 +257,20 @@ def export(
                     bed_region = pd.read_csv(get_regions, sep="\t", header=None)
                     bed_region.columns = ["CHR", "START", "END"]
                     bed_region["CHR"] = bed_region["CHR"].astype(int)
-                    kwargs = {"function_name": extract_regions, "bed_region": bed_region.groupby("CHR")}
+                    kwargs = {
+                        "function_name": extract_regions, 
+                        "bed_region": bed_region.groupby("CHR"),
+                        "plot_out": plot_out,
+                        "color_thr": color_thr,
+                        "s_value": s_value,}
                     _process_function_tasks(*args, **kwargs)
 
                 else:
-                    kwargs = {"function_name": extract_full_stats}
+                    kwargs = {
+                        "function_name": extract_full_stats,
+                        "plot_out": plot_out,
+                        "color_thr": color_thr,
+                        "s_value": s_value,}
                     _process_function_tasks(*args, **kwargs)
 
         else:

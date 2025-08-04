@@ -6,7 +6,6 @@ import tiledb
 from gwasstudio import logger
 from gwasstudio.methods.dataframe import process_dataframe
 from gwasstudio.methods.manhattan_plot import _plot_manhattan
-from gwasstudio.utils.cfg import get_plot_config
 
 from gwasstudio.utils import write_table
 from gwasstudio.utils.tdb_schema import AttributeEnum as an, DimensionEnum as dn
@@ -53,7 +52,7 @@ def extract_snp_list(
     output_format: str,
     attributes: Tuple[str] = None,
     snp_list: pd.DataFrame = None,
-    plot: bool = True,
+    plot_out: bool = False,
 ) -> None:
     """
     Process data filtering by a list of SNPs.
@@ -82,11 +81,11 @@ def extract_snp_list(
         tiledb_iterator_query_df = process_dataframe(tiledb_iterator_query_df, attributes)
         # Plot the dataframe
         title_plot = f"{trait} - {chromosome}:{min(unique_positions)}-{max(unique_positions)}"
-        if plot:
+        if plot_out:
             _plot_manhattan(
                 locus = tiledb_iterator_query_df,
                 title_plot=title_plot,
-                out=f"{trait}_{output_prefix}_{chromosome}"
+                out=f"{output_prefix}"
             )
        
 
@@ -101,7 +100,7 @@ def extract_full_stats(
     output_prefix: str,
     output_format: str,
     attributes: Tuple[str] = None,
-    plot: bool = True,
+    plot_out: bool = False,
 ) -> None:
     """
     Export full summary statistics.
@@ -121,12 +120,12 @@ def extract_full_stats(
     tiledb_query_df = tiledb_query.df[:, trait, :]
 
     tiledb_query_df = process_dataframe(tiledb_query_df, attributes)
-    if plot:
+    if plot_out:
         # Plot the dataframe
         _plot_manhattan(
             locus = tiledb_query_df,
             title_plot=trait,
-            out=f"{trait}"
+            out=f"{output_prefix}"
             )
     kwargs = {"index": False}
     write_table(tiledb_query_df, f"{output_prefix}", logger, file_format=output_format, **kwargs)
@@ -139,7 +138,7 @@ def extract_regions(
     output_format: str,
     bed_region: pd.DataFrame = None,
     attributes: Tuple[str] = None,
-    plot: bool = True,
+    plot_out: bool = False,
 ) -> None:
     """
     Process data filtering by genomic regions and output as concatenated DataFrame in Parquet format.
@@ -159,6 +158,7 @@ def extract_regions(
     dataframes = []
     for chr, group in bed_region:
         # Get all (start, end) tuples for this chromosome
+        
         min_pos = min(group["START"])
         if min_pos < 0:
             min_pos = 1
@@ -167,13 +167,17 @@ def extract_regions(
         # Query TileDB and convert directly to Pandas DataFrame
         attributes, tiledb_query = tiledb_array_query(tiledb_array, attrs=attributes)
         tiledb_query_df = tiledb_query.df[chr, trait, min_pos:max_pos]
+        if tiledb_query_df.empty:
+            logger.warning(f"Skipping empty region for chromosome {chr}.")
+            continue
+        
         title_plot = f"{trait} - {chr}:{min(tiledb_query_df["POS"])}-{max(tiledb_query_df["POS"])}"
-        if plot:
+        if plot_out:
             # Plot the dataframe
             _plot_manhattan(
             locus = tiledb_query_df,
             title_plot=title_plot,
-            out=f"{trait}"
+            out=f"{output_prefix}_{title_plot}"
             )
         dataframes.append(tiledb_query_df)
 
