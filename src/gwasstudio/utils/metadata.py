@@ -1,5 +1,4 @@
 import json
-from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Hashable
 
@@ -132,27 +131,25 @@ def dataframe_from_mongo_objs(fields: list, objs: list) -> pd.DataFrame:
     if not objs:
         return pd.DataFrame(columns=fields)
 
-    results = defaultdict(list)
     json_dict_fields = set(DataProfile.json_dict_fields())
+    data_types = MetadataEnum.get_all_dtypes_dict()
 
+    results = {}
     for field in fields:
         field = field.replace(".", "_")  # replace '.' with '_' (if any) to match data types
         main_key, *rest = field.split("_", 1)
         sub_key = rest[0] if rest else None
 
+        values = []
         for obj in objs:
             if main_key in json_dict_fields and sub_key:
                 json_dict = json.loads(obj.get(main_key, "{}"))
-                results[field].append(json_dict.get(sub_key))
+                values.append(json_dict.get(sub_key))
             else:
-                results[field].append(obj.get(field))
+                values.append(obj.get(field))
+        results[field] = pd.Series(values, dtype=data_types.get(field, "object"))
 
-    df = pd.DataFrame.from_dict(results)
-    # specify the data type for each column
-    data_types = MetadataEnum.get_all_dtypes_dict()
-
-    df = df.astype({col: dtype for col, dtype in data_types.items() if col in df}, errors="ignore")
-    return df
+    return pd.DataFrame(data=results)
 
 
 def load_metadata(file_path: Path, delimiter: str = "\t") -> pd.DataFrame:

@@ -13,8 +13,39 @@ from gwasstudio.methods.locus_breaker import _process_locusbreaker
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table
 from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
+from gwasstudio.utils.enums import MetadataEnum
 from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataframe_from_mongo_objs
 from gwasstudio.utils.mongo_manager import manage_mongo
+
+
+def create_output_prefix_dict(df: pd.DataFrame, output_prefix: str, source_id_column: str) -> dict:
+    """
+    Generates a dictionary mapping data IDs to output prefixes based on column values.
+
+    Parameters:
+        df (pd.DataFrame): Input DataFrame containing the required columns.
+        output_prefix (str): Prefix to prepend to output filenames.
+        source_id_column (str): Column name containing source id
+
+    Returns:
+        dict: Dictionary with 'data_id' as keys and corresponding output prefixes as values.
+    """
+    logger.debug("Creating output prefix dictionary")
+    key_column = "data_id"
+    value_column = "output_prefix"
+
+    # Determine the column to use for prefixing
+    column_to_get = source_id_column if source_id_column in df.columns else key_column
+    logger.debug(f"Selected column for prefixing: {column_to_get}")
+
+    # Construct the output prefix column with fallback
+    df[value_column] = f"{output_prefix}_" + df[column_to_get].fillna(df[key_column]).astype(str)
+
+    # Create dictionary mapping data IDs to prefixes
+    output_prefix_dict = df.set_index(key_column)[value_column].to_dict()
+    logger.debug("Output prefix dictionary created")
+
+    return output_prefix_dict
 
 
 def _process_function_tasks(tiledb_array, trait_id_list, attr, batch_size, output_prefix_dict, output_format, **kwargs):
@@ -148,17 +179,16 @@ def export(
 
         trait_id_list = list(df["data_id"])
 
-        # Create output prefix dictionary
-        key_column = "data_id"
-        value_column = "output_prefix"
-        df[value_column] = f"{output_prefix}_" + df.get("notes_source_id", df[key_column])
-        output_prefix_dict = df.set_index(key_column)[value_column].to_dict()
+        # Create an output prefix dictionary to generate output filenames
+        source_id_column = MetadataEnum.get_source_id_field()
+        output_prefix_dict = create_output_prefix_dict(df, output_prefix, source_id_column=source_id_column)
 
         # write metadata query result
         path = Path(output_prefix)
         output_path = path.with_suffix("").with_name(path.stem + "_meta")
         kwargs = {"index": False}
-        write_table(df, str(output_path), logger, file_format="csv", **kwargs)
+        log_msg = f"{len(objs)} results found. Writing to {output_path}.csv"
+        write_table(df, str(output_path), logger, file_format="csv", log_msg=log_msg, **kwargs)
 
         # Process according to selected options
         if get_dask_deployment(ctx) in dask_deployment_types:
