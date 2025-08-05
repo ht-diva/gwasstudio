@@ -17,7 +17,7 @@ fi
 GWASSTUDIO_DATA_DIR=$(gwasstudio info | grep "data dir:" | awk -F': ' '{print $2}')
 TEST_DIR="../scripts/tests/01"
 MDB_URI="mongodb://localhost:27018/test_01"
-TILEDB_DIR="${TEST_DIR}/tiledB"
+TILEDB_DIR="${TEST_DIR}/tileDB"
 
 # Clone example files sumbmodule if it is not already cloned
 git submodule update --init --recursive
@@ -27,7 +27,7 @@ echo "Cleaning up existing test directories..."
 rm -rf "${TEST_DIR}"
 
 # Create the test directory structure
-mkdir -p "${TEST_DIR}"
+mkdir -p "${TILEDB_DIR}"
 
 # Function to run a command with a description
 run_command() {
@@ -52,7 +52,7 @@ run_command "Querying data by trait description..." "time gwasstudio --stdout --
 run_command "Querying data by data_ids..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_06.yml --output-prefix ${TEST_DIR}/example_query_by_trait_desc"
 
 # Export data
-run_command "Exporting data..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_06.yml --output-prefix ${TEST_DIR}/example_export --uri ${TILEDB_DIR} --plot-out" 
+run_command "Exporting data..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_06.yml --output-prefix ${TEST_DIR}/example_export --uri ${TILEDB_DIR} --plot-out"
 
 # Export data with a different file format
 run_command "Exporting data..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_export --output-format parquet --uri ${TILEDB_DIR}"

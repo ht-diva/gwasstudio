@@ -41,7 +41,7 @@ Ingest data in a TileDB-unified dataset.
     cloup.option(
         "--uri",
         default=None,
-        help="Destination path where to store the tiledb dataset. The prefix must be s3:// or file://",
+        help="Destination path where to store the tiledb dataset. The prefix can be s3:// or file://",
     ),
     cloup.option(
         "--ingestion-type",
@@ -87,22 +87,26 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
     if missing_cols:
         raise ValueError(f"Missing column(s) in the input file: {', '.join(missing_cols)}")
 
+    logger.info("Starting data ingestion: {} file to process".format(len(df["file_path"].tolist())))
+
     if ingestion_type in ["metadata", "both"]:
         with manage_mongo(ctx):
             mongo_uri = get_mongo_uri(ctx)
             ingest_metadata(df, mongo_uri)
 
     if ingestion_type in ["data", "both"]:
-        input_file_list = df["file_path"].tolist()
-        logger.info("Starting data ingestion: {} file to process".format(len(input_file_list)))
-
         scheme, netloc, path = parse_uri(uri)
         with manage_daskcluster(ctx):
-            if scheme == "s3":
-                ingest_to_s3(ctx, input_file_list, uri, pvalue)
-            else:
-                # Assuming file system ingestion if not S3
-                ingest_to_fs(ctx, input_file_list, uri, pvalue)
+            grouped = df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
+            for name, group in grouped:
+                logger.info(f"Processing the group {"_".join(name)}")
+                input_file_list = group["file_path"].tolist()
+                tiledb_uri = str(Path(uri) / "_".join(name))
+                if scheme == "s3":
+                    ingest_to_s3(ctx, input_file_list, tiledb_uri, pvalue)
+                else:
+                    # Assuming file system ingestion if not S3
+                    ingest_to_fs(ctx, input_file_list, tiledb_uri, pvalue)
 
         logger.info("Ingestion done")
 

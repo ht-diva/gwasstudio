@@ -71,3 +71,8 @@ class MetadataEnum(BaseEnum):
     def get_source_id_field(cls):
         """It returns the metadata field name that store source ids"""
         return cls.SOURCE_ID.get_value()
+
+    @classmethod
+    def get_tiledb_grouping_fields(cls):
+        """It returns a list of fields to be used for grouping in TileDB"""
+        return [cls.PROJECT.get_value(), cls.STUDY.get_value()]
