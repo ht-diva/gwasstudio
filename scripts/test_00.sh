@@ -17,7 +17,7 @@ fi
 GWASSTUDIO_DATA_DIR=$(gwasstudio info | grep "data dir:" | awk -F': ' '{print $2}')
 TEST_DIR="../scripts/tests/00"
 MDB_URI="mongodb://localhost:27018/test_00"
-TILEDB_DIR="${TEST_DIR}/tiledB"
+TILEDB_DIR="${TEST_DIR}/tileDB"
 
 # Clone example files sumbmodule if it is not already cloned
 git submodule update --init --recursive
@@ -43,15 +43,24 @@ run_command() {
 run_command "Ingesting data..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} ingest --ingestion-type metadata --file-path metadata_table.tsv --uri ${TILEDB_DIR}"
 
 # Query data
-run_command "Querying data..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_query_01"
+run_command "Querying data... 23 results expected" "time gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_query_01"
 
 # Query data
-run_command "Querying data..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_02.yml --output-prefix ${TEST_DIR}/example_query_02"
+run_command "Querying data... 6 results expected" "time gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_02.yml --output-prefix ${TEST_DIR}/example_query_02"
 
 # Query data
-run_command "Querying data..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_03.yml --output-prefix ${TEST_DIR}/example_query_03"
+run_command "Querying data... 5 results expected" "time gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_03.yml --output-prefix ${TEST_DIR}/example_query_03"
 
 # Query data by trait description
-run_command "Querying data..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_04.yml --output-prefix ${TEST_DIR}/example_query_04"
+run_command "Querying data... 7 results expected" "time gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_04.yml --output-prefix ${TEST_DIR}/example_query_04"
+
+# Query data
+run_command "Querying data... 3 results expected" "time gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_05.yml --output-prefix ${TEST_DIR}/example_query_05"
+
+# Query data
+run_command "Querying data... 2 results expected" "time gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_06.yml --output-prefix ${TEST_DIR}/example_query_06"
+
+# Query data
+run_command "Querying data... 0 results expected" "time gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_07.yml --output-prefix ${TEST_DIR}/example_query_07"
 
 echo "Results are available in ${TEST_DIR}"

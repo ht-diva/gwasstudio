@@ -1,0 +1,15 @@
+category: pQTL
+trait:
+  - desc: Body Mass Index
+
+
+output:
+  - build
+  - population
+  - notes_consortium
+  - notes_sex
+  - notes_source_id
+  - total_samples
+  - total_cases
+  - total_controls
+  - trait_desc
