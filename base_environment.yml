@@ -10,3 +10,4 @@ dependencies:
   - make
   - mongodb
   - mongo-tools
+  - dash-bio
