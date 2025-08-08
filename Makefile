@@ -46,6 +46,13 @@ dependencies_dev:
 	fi; \
 	poetry install --only dev --no-root
 
+dependencies_extras:
+	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+        echo "Activating conda environment: ${ENV_NAME}"; \
+		$(CONDA_ACTIVATE) ${ENV_NAME}; \
+	fi; \
+	poetry install --without dev --no-root --extras plot
+
 deploy:
 	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
