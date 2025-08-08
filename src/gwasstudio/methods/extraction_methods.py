@@ -174,7 +174,7 @@ def extract_regions(
             logger.warning(f"Skipping empty region for chromosome {chr}.")
             continue
 
-        title_plot = f"{trait} - {chr}:{min(tiledb_query_df["POS"])}-{max(tiledb_query_df["POS"])}"
+        title_plot = f"{trait} - {chr}:{min(tiledb_query_df['POS'])}-{max(tiledb_query_df['POS'])}"
         if plot_out:
             # Plot the dataframe
             _plot_manhattan(
