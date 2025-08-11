@@ -155,11 +155,7 @@ def dataframe_from_mongo_objs(fields: list, objs: list) -> pd.DataFrame:
 def load_metadata(file_path: Path, delimiter: str = "\t") -> pd.DataFrame:
     """Load metadata from a file in tabular format."""
     try:
-        return pd.read_csv(
-            file_path,
-            sep=delimiter,
-            dtype=MetadataEnum.get_all_dtypes_dict(),
-        )
+        return pd.read_csv(file_path, sep=delimiter, dtype=MetadataEnum.get_all_dtypes_dict(), dtype_backend="pyarrow")
     except FileNotFoundError:
         logger.error("File not found. Please check the file path.")
         raise ValueError("File not found")

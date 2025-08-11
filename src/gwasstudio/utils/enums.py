@@ -55,7 +55,13 @@ class MetadataEnum(BaseEnum):
     SAMPLES = ("total_samples", DataType.UINT64_PA)
     CASES = ("total_cases", DataType.UINT64_PA)
     CONTROLS = ("total_controls", DataType.UINT64_PA)
+    HEALTHCARE_TAXONOMY = ("trait_code", DataType.STRING_PA)
     DESCRIPTION = ("trait_desc", DataType.STRING_PA)
+    GENE_IDS = ("trait_gene_ids", DataType.STRING_PA)
+    PROTEIN_IDS = ("trait_protein_ids", DataType.STRING_PA)
+    SOMALOGIC_ID = ("trait_seqid", DataType.STRING_PA)
+    TISSUE = ("trait_tissue", DataType.CATEGORY)
+    UNIT = ("trait_unit", DataType.STRING_PA)
 
     @classmethod
     def required_fields(cls):
