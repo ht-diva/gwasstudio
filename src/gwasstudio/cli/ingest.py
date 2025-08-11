@@ -99,7 +99,7 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
         with manage_daskcluster(ctx):
             grouped = df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
             for name, group in grouped:
-                logger.info(f"Processing the group {"_".join(name)}")
+                logger.info(f"Processing the group {'_'.join(name)}")
                 input_file_list = group["file_path"].tolist()
                 tiledb_uri = str(Path(uri) / "_".join(name))
                 if scheme == "s3":
