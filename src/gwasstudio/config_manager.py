@@ -102,7 +102,3 @@ class ConfigurationManager(metaclass=SingletonConfigurationManager):
     @property
     def tiledb_sm_config(self):
         return self._tiledb_sm_config
-
-    @property
-    def plot_config(self):
-        return self._plot_config
