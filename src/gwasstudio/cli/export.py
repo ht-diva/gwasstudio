@@ -230,7 +230,7 @@ def export(
         batch_size = get_dask_batch_size(ctx)
         grouped = df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
         for name, group in grouped:
-            logger.info(f"Processing the group {"_".join(name)}")
+            logger.info(f"Processing the group {'_'.join(name)}")
             trait_id_list = list(group["data_id"])
 
             tiledb_uri = str(Path(uri) / "_".join(name))
