@@ -53,6 +53,7 @@ pytest = "^8.3.4"
 pytest-cov = "^6.0.0"
 pytest-randomly = "^3.16.0"
 deptry = "^0.23.0"
+pandas-stubs = "^2.3.0.250703"
 
 [tool.ruff]
 line-length = 120

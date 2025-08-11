@@ -17,7 +17,7 @@ fi
 GWASSTUDIO_DATA_DIR=$(gwasstudio info | grep "data dir:" | awk -F': ' '{print $2}')
 TEST_DIR="../scripts/tests/02"
 MDB_URI="mongodb://localhost:27018/test_02"
-TILEDB_DIR="${TEST_DIR}/tiledB"
+TILEDB_DIR="${TEST_DIR}/tileDB"
 
 # Clone example files sumbmodule if it is not already cloned
 git submodule update --init --recursive
@@ -27,7 +27,7 @@ echo "Cleaning up existing test directories..."
 rm -rf "${TEST_DIR}"
 
 # Create the test directory structure
-mkdir -p "${TEST_DIR}"
+mkdir -p "${TILEDB_DIR}"
 
 # Function to run a command with a description
 run_command() {

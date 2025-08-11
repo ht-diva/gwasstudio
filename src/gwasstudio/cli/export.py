@@ -8,16 +8,13 @@ from dask import delayed, compute
 
 from gwasstudio import logger
 from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
-from gwasstudio.methods.extraction_methods import extract_full_stats, \
-    extract_regions, extract_snp_list
+from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions, extract_snp_list
 from gwasstudio.methods.locus_breaker import _process_locusbreaker
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table
-from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, \
-    get_dask_batch_size, get_dask_deployment
+from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
 from gwasstudio.utils.enums import MetadataEnum
-from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, \
-    dataframe_from_mongo_objs
+from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataframe_from_mongo_objs
 from gwasstudio.utils.mongo_manager import manage_mongo
 
 
@@ -54,12 +51,12 @@ def create_output_prefix_dict(df: pd.DataFrame, output_prefix: str, source_id_co
 def _process_function_tasks(tiledb_array, trait_id_list, attr, batch_size, output_prefix_dict, output_format, **kwargs):
     """This function schedules and executes generic delayed tasks for various export processes"""
 
-    def get_snp_list(snp_list_file):
-        snp_list = None
-        if snp_list_file:
-            snp_list = pd.read_csv(snp_list_file, usecols=["CHR", "POS"], dtype={"CHR": str, "POS": int})
-            snp_list = snp_list[snp_list["CHR"].str.isnumeric()]
-        return snp_list
+    def get_snp_list(input_filepath: str | None) -> pd.DataFrame | None:
+        if not input_filepath:
+            return None
+
+        snp_list = pd.read_csv(input_filepath, usecols=["CHR", "POS"], dtype={"CHR": str, "POS": int})
+        return snp_list[snp_list["CHR"].str.isnumeric()]
 
     function_name = kwargs.pop("function_name", None)
     snp_list_file = kwargs.pop("snp_list_file", None)
@@ -81,16 +78,16 @@ def _process_function_tasks(tiledb_array, trait_id_list, attr, batch_size, outpu
         logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)
 
 
-help_doc = """
+HELP_DOC = """
 Export summary statistics from TileDB datasets with various filtering options.
 """
 
 
-@cloup.command("export", no_args_is_help=True, help=help_doc)
+@cloup.command("export", no_args_is_help=True, help=HELP_DOC)
 @cloup.option_group(
     "TileDB options",
-    cloup.option("--uri", required=True, default=None, help="TileDB dataset URI"),
-    cloup.option("--output-prefix", default="out", help="Prefix to be used for naming the output files"),
+    cloup.option("--uri", required=True, default=None, help="Destination path where tiledb datasets are stored"),
+    cloup.option("--output-prefix", default="out", help="Prefix to be used for naming output files"),
     cloup.option(
         "--output-format", type=click.Choice(["parquet", "csv.gz", "csv"]), default="csv.gz", help="Output file format"
     ),
@@ -132,13 +129,13 @@ Export summary statistics from TileDB datasets with various filtering options.
     cloup.option(
         "--color-thr",
         default="red",
-        help= "Color for the points passing the threshold line in the plot (default: red)",
+        help="Color for the points passing the threshold line in the plot (default: red)",
     ),
     cloup.option(
         "--s-value",
         default=5,
-        help= "Value for the suggestive p-value line in the plot (default: 5)",
-    )
+        help="Value for the suggestive p-value line in the plot (default: 5)",
+    ),
 )
 @cloup.option_group(
     "Regions filtering options",
@@ -167,71 +164,82 @@ Export summary statistics from TileDB datasets with various filtering options.
 )
 @click.pass_context
 def export(
-    ctx,
-    uri,
-    search_file,
-    attr,
-    output_prefix,
-    output_format,
-    pvalue_sig,
-    pvalue_limit,
-    hole_size,
-    phenovar,
-    nest,
-    maf,
-    snp_list_file,
-    locusbreaker,
-    get_regions,
-    plot_out,
-    color_thr,
-    s_value
-):
+    ctx: click.Context,
+    uri: str,
+    search_file: str,
+    attr: str,
+    output_prefix: str,
+    output_format: str,
+    pvalue_sig: float,
+    pvalue_limit: float,
+    hole_size: int,
+    phenovar: bool,
+    nest: bool,
+    maf: float,
+    snp_list_file: str | None,
+    locusbreaker: bool,
+    get_regions: str | None,
+    plot_out: bool,
+    color_thr: str,
+    s_value: int,
+) -> None:
     """Export summary statistics based on selected options."""
     cfg = get_tiledb_config(ctx)
     if not check_file_exists(search_file, logger):
         exit(1)
-        
+
     search_topics, output_fields = load_search_topics(search_file)
     if plot_out:
-        #plot_config = get_plot_config(ctx)
-        #if not plot_config:
-            #logger.error("Plotting configuration is required for plotting output.")
-            #exit(1)
+        # plot_config = get_plot_config(ctx)
+        # if not plot_config:
+        # logger.error("Plotting configuration is required for plotting output.")
+        # exit(1)
         if "data_ids" not in search_topics:
             logger.error("Plotting option is enabled but no data_ids is provided in the search file.")
             exit(1)
         if len(search_topics["data_ids"]) > 20:
-            logger.error("Plotting option is enabled but too many data_ids are provided in the search file. Please limit to 20 data_ids.")
+            logger.error(
+                "Plotting option is enabled but too many data_ids are provided in the search file. Please limit to 20 data_ids."
+            )
             exit(1)
-           
+    # Query MongoDB
+    with manage_mongo(ctx):
+        mongo_uri = get_mongo_uri(ctx)
+        obj = EnhancedDataProfile(uri=mongo_uri)
+        objs = query_mongo_obj(search_topics, obj)
 
-    # Open TileDB dataset
-    with tiledb.open(uri, mode="r", config=cfg) as tiledb_array:
-        logger.info("TileDB dataset loaded")
-        with manage_mongo(ctx):
-            mongo_uri = get_mongo_uri(ctx)
-            obj = EnhancedDataProfile(uri=mongo_uri)
-            objs = query_mongo_obj(search_topics, obj)
-        df = dataframe_from_mongo_objs(output_fields, objs)
+    df = dataframe_from_mongo_objs(output_fields, objs)
 
-        trait_id_list = list(df["data_id"])
+    # Write metadata query result
+    path = Path(output_prefix)
+    output_path = path.with_suffix("").with_name(path.stem + "_meta")
+    kwargs = {"index": False}
+    log_msg = f"{len(objs)} results found. Writing to {output_path}.csv"
+    write_table(df, str(output_path), logger, file_format="csv", log_msg=log_msg, **kwargs)
 
-        # Create an output prefix dictionary to generate output filenames
-        source_id_column = MetadataEnum.get_source_id_field()
-        output_prefix_dict = create_output_prefix_dict(df, output_prefix, source_id_column=source_id_column)
+    # Create an output prefix dictionary to generate output filenames
+    source_id_column = MetadataEnum.get_source_id_field()
+    output_prefix_dict = create_output_prefix_dict(df, output_prefix, source_id_column=source_id_column)
 
-        # write metadata query result
-        path = Path(output_prefix)
-        output_path = path.with_suffix("").with_name(path.stem + "_meta")
-        kwargs = {"index": False}
-        log_msg = f"{len(objs)} results found. Writing to {output_path}.csv"
-        write_table(df, str(output_path), logger, file_format="csv", log_msg=log_msg, **kwargs)
+    # Process according to selected options
+    if get_dask_deployment(ctx) not in dask_deployment_types:
+        logger.error(f"A valid dask deployment type must be set from: {dask_deployment_types}")
+        raise SystemExit(1)
 
-        # Process according to selected options
-        if get_dask_deployment(ctx) in dask_deployment_types:
-            batch_size = get_dask_batch_size(ctx)
-            with manage_daskcluster(ctx):
+    with manage_daskcluster(ctx):
+        batch_size = get_dask_batch_size(ctx)
+        grouped = df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
+        for name, group in grouped:
+            logger.info(f"Processing the group {'_'.join(name)}")
+            trait_id_list = list(group["data_id"])
+
+            tiledb_uri = str(Path(uri) / "_".join(name))
+
+            # Open TileDB dataset
+            with tiledb.open(tiledb_uri, mode="r", config=cfg) as tiledb_array:
+                logger.info("TileDB dataset loaded")
                 args = [tiledb_array, trait_id_list, attr, batch_size, output_prefix_dict, output_format]
+
                 if locusbreaker:
                     kwargs = {
                         "function_name": _process_locusbreaker,
@@ -239,7 +247,7 @@ def export(
                         "hole_size": hole_size,
                         "pvalue_sig": pvalue_sig,
                         "pvalue_limit": pvalue_limit,
-                        "phenovar": phenovar
+                        "phenovar": phenovar,
                     }
                     _process_function_tasks(*args, **kwargs)
 
@@ -258,11 +266,12 @@ def export(
                     bed_region.columns = ["CHR", "START", "END"]
                     bed_region["CHR"] = bed_region["CHR"].astype(int)
                     kwargs = {
-                        "function_name": extract_regions, 
+                        "function_name": extract_regions,
                         "bed_region": bed_region.groupby("CHR"),
                         "plot_out": plot_out,
                         "color_thr": color_thr,
-                        "s_value": s_value,}
+                        "s_value": s_value,
+                    }
                     _process_function_tasks(*args, **kwargs)
 
                 else:
@@ -270,9 +279,6 @@ def export(
                         "function_name": extract_full_stats,
                         "plot_out": plot_out,
                         "color_thr": color_thr,
-                        "s_value": s_value,}
+                        "s_value": s_value,
+                    }
                     _process_function_tasks(*args, **kwargs)
-
-        else:
-            logger.error(f"A valid dask deployment type needed: {dask_deployment_types}")
-            exit(1)

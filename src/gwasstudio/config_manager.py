@@ -64,7 +64,10 @@ class ConfigurationManager(metaclass=SingletonConfigurationManager):
         self._hash_algorithm = c.get("hashing", {"algorithm": "sha256"}).get("algorithm")
         self._hash_length = c.get("hashing", {"length": 10}).get("length")
 
-        self._plot_config = c.get("plot_config", {"color_thr": "red", "chrm": "CHR", "bp": "BP", "p": "MLOG10P", "annotation": "STUDY_ID", "logp":False})
+        self._plot_config = c.get(
+            "plot_config",
+            {"color_thr": "red", "chrm": "CHR", "bp": "BP", "p": "MLOG10P", "annotation": "STUDY_ID", "logp": False},
+        )
 
         self._tiledb_sm_config = c.get("tiledb_sm_config", {})
 

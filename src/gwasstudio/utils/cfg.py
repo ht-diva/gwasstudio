@@ -85,6 +85,7 @@ def get_dask_batch_size(ctx: object) -> int:
 def get_dask_deployment(ctx: object) -> str:
     return get_dask_config(ctx).get("deployment")
 
+
 def get_plot_config(ctx: object):
     try:
         cm = ConfigurationManager()
