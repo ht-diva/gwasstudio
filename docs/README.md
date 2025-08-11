@@ -12,8 +12,9 @@
   - [2.2 Command](#22-command)
   - [2.3 Output](#23-output)
     - [2.3.1 SNP, region, all selection](#231-snp-region-all-selection)
-    - [2.3.2 Locusbreaker](#232-locusbreaker)
-    - [2.3.1 Metadata](#231-metadata)
+    - [2.3.2](#232)
+    - [2.3.3 Locusbreaker](#233-locusbreaker)
+    - [2.3.4 Metadata](#234-metadata)
 - [3. Meta-query](#3-meta-query)
   - [3.1 Input](#31-input)
   - [3.2 Command](#32-command)
@@ -234,6 +235,7 @@ The export is done using the command ```gwasstudio export```. The following type
 | `--snp-list-file` | A list of SNPs stored in a file with column CHR POS tab separated. |
 | `--get-regions` | Bed file with regions to filter with column CHR POS tab separated. |
 | `--export-all` | Export the entire summary statistics data |
+| `--plot-out` | Export an html file with a locuszoom plot of the results|
 | `--locusbreaker` | It run the locusbreaker program to divide a summary statistics in independent genomic regions according to their p-value  |
 | `--pvalue-sig` | Maximum log10 p-value threshold within the window |
 | `--pvalue-limit` | Log10 p-value threshold for loci borders  |
@@ -259,11 +261,14 @@ After your export command has finished to run you will have different results de
 
 When you choose the ```--snp-list-file``` or the ```--get-regions``` ```--export-all``` options you will get as results a file in parquet format for each trait you interrogated with the SNPs or the reigions or the entire summary statistics information.
 
-### 2.3.2 Locusbreaker
+### 2.3.2
+When you choose the ```--plot-out``` options you will get as results a series of files in html format for each trait/region you interrogated describing a Manhattan plot. Together with this option you can decide a color to define a p-value threshold ```--color-thr```
+
+### 2.3.3 Locusbreaker
 
 When you decide to  run ```--locusbreaker``` you will get 2 files, a segment file and an interval file for each trait interrogated. The segment file contains for each independent genomic region selected the SNPs with the highest MLOG10P value. The interval file instead contains also the information about all the SNPs present in the region.
 
-### 2.3.1 Metadata
+### 2.3.4 Metadata
 
 After you run each of the options above you will always get a metadata file with information about the traits. An example of metadata is shown below:
 

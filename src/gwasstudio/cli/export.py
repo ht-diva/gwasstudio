@@ -8,13 +8,16 @@ from dask import delayed, compute
 
 from gwasstudio import logger
 from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
-from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions, extract_snp_list
+from gwasstudio.methods.extraction_methods import extract_full_stats, \
+    extract_regions, extract_snp_list
 from gwasstudio.methods.locus_breaker import _process_locusbreaker
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table
-from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
+from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, \
+    get_dask_batch_size, get_dask_deployment
 from gwasstudio.utils.enums import MetadataEnum
-from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataframe_from_mongo_objs
+from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, \
+    dataframe_from_mongo_objs
 from gwasstudio.utils.mongo_manager import manage_mongo
 
 
@@ -119,6 +122,25 @@ Export summary statistics from TileDB datasets with various filtering options.
     ),
 )
 @cloup.option_group(
+    "Option to plot results",
+    cloup.option(
+        "--plot-out",
+        default=False,
+        is_flag=True,
+        help="Boolean to plot results. If enabled, the output will be plotted as a Manhattan plot.",
+    ),
+    cloup.option(
+        "--color-thr",
+        default="red",
+        help= "Color for the points passing the threshold line in the plot (default: red)",
+    ),
+    cloup.option(
+        "--s-value",
+        default=5,
+        help= "Value for the suggestive p-value line in the plot (default: 5)",
+    )
+)
+@cloup.option_group(
     "Regions filtering options",
     cloup.option(
         "--get-regions",
@@ -160,17 +182,32 @@ def export(
     snp_list_file,
     locusbreaker,
     get_regions,
+    plot_out,
+    color_thr,
+    s_value
 ):
     """Export summary statistics based on selected options."""
     cfg = get_tiledb_config(ctx)
-
     if not check_file_exists(search_file, logger):
         exit(1)
+        
+    search_topics, output_fields = load_search_topics(search_file)
+    if plot_out:
+        #plot_config = get_plot_config(ctx)
+        #if not plot_config:
+            #logger.error("Plotting configuration is required for plotting output.")
+            #exit(1)
+        if "data_ids" not in search_topics:
+            logger.error("Plotting option is enabled but no data_ids is provided in the search file.")
+            exit(1)
+        if len(search_topics["data_ids"]) > 20:
+            logger.error("Plotting option is enabled but too many data_ids are provided in the search file. Please limit to 20 data_ids.")
+            exit(1)
+           
 
     # Open TileDB dataset
     with tiledb.open(uri, mode="r", config=cfg) as tiledb_array:
         logger.info("TileDB dataset loaded")
-        search_topics, output_fields = load_search_topics(search_file)
         with manage_mongo(ctx):
             mongo_uri = get_mongo_uri(ctx)
             obj = EnhancedDataProfile(uri=mongo_uri)
@@ -202,7 +239,7 @@ def export(
                         "hole_size": hole_size,
                         "pvalue_sig": pvalue_sig,
                         "pvalue_limit": pvalue_limit,
-                        "phenovar": phenovar,
+                        "phenovar": phenovar
                     }
                     _process_function_tasks(*args, **kwargs)
 
@@ -210,6 +247,9 @@ def export(
                     kwargs = {
                         "function_name": extract_snp_list,
                         "snp_list_file": snp_list_file,
+                        "plot_out": plot_out,
+                        "color_thr": color_thr,
+                        "s_value": s_value,
                     }
                     _process_function_tasks(*args, **kwargs)
 
@@ -217,11 +257,20 @@ def export(
                     bed_region = pd.read_csv(get_regions, sep="\t", header=None)
                     bed_region.columns = ["CHR", "START", "END"]
                     bed_region["CHR"] = bed_region["CHR"].astype(int)
-                    kwargs = {"function_name": extract_regions, "bed_region": bed_region.groupby("CHR")}
+                    kwargs = {
+                        "function_name": extract_regions, 
+                        "bed_region": bed_region.groupby("CHR"),
+                        "plot_out": plot_out,
+                        "color_thr": color_thr,
+                        "s_value": s_value,}
                     _process_function_tasks(*args, **kwargs)
 
                 else:
-                    kwargs = {"function_name": extract_full_stats}
+                    kwargs = {
+                        "function_name": extract_full_stats,
+                        "plot_out": plot_out,
+                        "color_thr": color_thr,
+                        "s_value": s_value,}
                     _process_function_tasks(*args, **kwargs)
 
         else:
