@@ -4,10 +4,7 @@ import click
 import cloup
 
 from gwasstudio import __appname__, __version__, context_settings, log_file, logger
-from gwasstudio.cli.export import export
-from gwasstudio.cli.info import info
-from gwasstudio.cli.ingest import ingest
-from gwasstudio.cli.metadata.query import meta_query
+from gwasstudio.cli import list_projects, info, ingest, export, query_metadata
 from gwasstudio.utils.mongo_manager import mongo_deployment_types
 
 
@@ -183,7 +180,8 @@ def main():
     cli_init.add_command(info)
     cli_init.add_command(export)
     cli_init.add_command(ingest)
-    cli_init.add_command(meta_query)
+    cli_init.add_command(query_metadata)
+    cli_init.add_command(list_projects)
 
     cli_init(obj={})
 

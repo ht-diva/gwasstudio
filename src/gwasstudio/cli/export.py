@@ -86,7 +86,7 @@ Export summary statistics from TileDB datasets with various filtering options.
 @cloup.command("export", no_args_is_help=True, help=HELP_DOC)
 @cloup.option_group(
     "TileDB options",
-    cloup.option("--uri", required=True, default=None, help="Destination path where tiledb datasets are stored"),
+    cloup.option("--uri", required=True, default=None, help="Destination path for TileDB datasets"),
     cloup.option("--output-prefix", default="out", help="Prefix to be used for naming output files"),
     cloup.option(
         "--output-format", type=click.Choice(["parquet", "csv.gz", "csv"]), default="csv.gz", help="Output file format"

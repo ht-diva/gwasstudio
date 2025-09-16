@@ -11,7 +11,7 @@ from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataf
 from gwasstudio.utils.mongo_manager import manage_mongo
 
 help_doc = """
-query metadata records from MongoDB
+Query metadata records from MongoDB
 """
 
 
@@ -20,7 +20,7 @@ query metadata records from MongoDB
 @cloup.option("--output-prefix", default="out", help="Prefix to be used for naming the output files")
 @cloup.option("--case-sensitive", default=False, is_flag=True, help="Enable case sensitive search")
 @click.pass_context
-def meta_query(ctx, search_file, output_prefix, case_sensitive):
+def query_metadata(ctx, search_file, output_prefix, case_sensitive):
     """
     Queries metadata records from MongoDB based on the search topics specified in the provided template file.
 
