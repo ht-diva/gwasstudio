@@ -5,6 +5,7 @@ channels:
 dependencies:
   - mamba
   - pip  # pip must be mentioned explicitly, or conda-lock will fail
+  - poetry-core=2.1.*
   - poetry=2.*
   - make
   - mongodb
