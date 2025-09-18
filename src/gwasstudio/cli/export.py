@@ -1,9 +1,9 @@
-import math
 from pathlib import Path
 from typing import Callable
 
 import click
 import cloup
+import math
 import pandas as pd
 import tiledb
 from dask import delayed, compute
@@ -117,11 +117,11 @@ def _process_function_tasks(
         for trait in trait_id_list
     ]
 
+    total_batches = math.ceil(len(tasks) / batch_size)
     # Execute in batches (keeps the Dask graph small).
     for i in range(0, len(tasks), batch_size):
         batch_no = i // batch_size + 1
-        total_batches = math.ceil(len(tasks) / batch_size)
-        logger.info(f"Processing batch {batch_no}/{total_batches} ({batch_size} items)")
+        logger.info(f"Running batch {batch_no}/{total_batches} ({batch_size} items)")
         compute(*tasks[i : i + batch_size])
         logger.info(f"Batch {batch_no} completed.", flush=True)
 

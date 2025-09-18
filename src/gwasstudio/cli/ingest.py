@@ -2,6 +2,7 @@ from pathlib import Path
 
 import click
 import cloup
+import math
 from dask import delayed, compute
 
 from gwasstudio import logger
@@ -17,6 +18,7 @@ from gwasstudio.utils.cfg import (
 from gwasstudio.utils.enums import MetadataEnum
 from gwasstudio.utils.metadata import load_metadata, ingest_metadata
 from gwasstudio.utils.mongo_manager import manage_mongo
+from gwasstudio.utils.path_joiner import join_path
 from gwasstudio.utils.s3 import does_uri_path_exist
 from gwasstudio.utils.tdb_schema import TileDBSchemaCreator
 
@@ -99,9 +101,11 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
         with manage_daskcluster(ctx):
             grouped = df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
             for name, group in grouped:
-                logger.info(f"Processing the group {'_'.join(name)}")
+                group_name = "_".join(name)
+                logger.info(f"Processing the group {group_name}")
                 input_file_list = group["file_path"].tolist()
-                tiledb_uri = str(Path(uri) / "_".join(name))
+                tiledb_uri = join_path(uri, group_name)
+                logger.debug(f"tiledb_uri: {tiledb_uri}")
                 if scheme == "s3":
                     ingest_to_s3(ctx, input_file_list, tiledb_uri, pvalue)
                 else:
@@ -134,7 +138,9 @@ def ingest_to_s3(ctx, input_file_list, uri, pvalue):
         batch_size = get_dask_batch_size(ctx)
         for i in range(0, len(input_file_list), batch_size):
             batch_files = {file_path: Path(file_path).exists() for file_path in input_file_list[i : i + batch_size]}
-            logger.info(f"Processing a batch of {len(batch_files)} items for batch {i // batch_size + 1}")
+            total_batches = math.ceil(len(input_file_list) / batch_size)
+            batch_no = i // batch_size + 1
+            logger.info(f"Running batch {batch_no}/{total_batches} ({batch_size} items)")
 
             # Log skipped files
             skipped_files = [file_path for file_path, exists in batch_files.items() if not exists]
@@ -148,7 +154,7 @@ def ingest_to_s3(ctx, input_file_list, uri, pvalue):
             ]
             # Submit tasks and wait for completion
             compute(*tasks)
-            logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)
+            logger.info(f"Batch {batch_no} completed.", flush=True)
     else:
         for file_path in input_file_list:
             if Path(file_path).exists():
@@ -181,7 +187,9 @@ def ingest_to_fs(ctx, input_file_list, uri, pvalue):
         batch_size = get_dask_batch_size(ctx)
         for i in range(0, len(input_file_list), batch_size):
             batch_files = {file_path: Path(file_path).exists() for file_path in input_file_list[i : i + batch_size]}
-            logger.info(f"Processing a batch of {len(batch_files)} items for batch {i // batch_size + 1}")
+            total_batches = math.ceil(len(input_file_list) / batch_size)
+            batch_no = i // batch_size + 1
+            logger.info(f"Running batch {batch_no}/{total_batches} ({batch_size} items)")
 
             # Log skipped files
             skipped_files = [file_path for file_path, exists in batch_files.items() if not exists]
@@ -195,7 +203,7 @@ def ingest_to_fs(ctx, input_file_list, uri, pvalue):
             ]
             # Submit tasks and wait for completion
             compute(*tasks)
-            logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)
+            logger.info(f"Batch {batch_no} completed.", flush=True)
     else:
         for file_path in input_file_list:
             if Path(file_path).exists():
