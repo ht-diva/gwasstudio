@@ -1,7 +1,9 @@
 from pathlib import Path
+from typing import Callable
 
 import click
 import cloup
+import math
 import pandas as pd
 import tiledb
 from dask import delayed, compute
@@ -16,6 +18,7 @@ from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batc
 from gwasstudio.utils.enums import MetadataEnum
 from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataframe_from_mongo_objs
 from gwasstudio.utils.mongo_manager import manage_mongo
+from gwasstudio.utils.path_joiner import join_path
 
 
 def create_output_prefix_dict(df: pd.DataFrame, output_prefix: str, source_id_column: str) -> dict:
@@ -48,34 +51,79 @@ def create_output_prefix_dict(df: pd.DataFrame, output_prefix: str, source_id_co
     return output_prefix_dict
 
 
-def _process_function_tasks(tiledb_array, trait_id_list, attr, batch_size, output_prefix_dict, output_format, **kwargs):
-    """This function schedules and executes generic delayed tasks for various export processes"""
+def _process_function_tasks(
+    tiledb_uri: str,
+    tiledb_cfg: dict[str, str],
+    trait_id_list: list[str],
+    attr: str,
+    batch_size: int,
+    output_prefix_dict: dict[str, str],
+    output_format: str,
+    *,
+    function_name: Callable,
+    snp_list_file: str | None = None,
+    **kwargs,
+) -> None:
+    """
+    Schedule and execute delayed export tasks.
 
-    def get_snp_list(input_filepath: str | None) -> pd.DataFrame | None:
-        if not input_filepath:
+    Parameters
+    ----------
+    tiledb_uri : str
+        URI of the TileDB array (e.g. ``s3://my-bucket/dataset``).
+        The array is opened *inside* each worker, never serialized.
+    function_name : Callable
+        One of the extraction functions (``extract_full_stats``, …).
+    """
+
+    # Helper: read SNP list lazily
+    def _read_snp_list(fp: str) -> pd.DataFrame | None:
+        if not fp:
             return None
+        df = pd.read_csv(fp, usecols=["CHR", "POS"], dtype={"CHR": str, "POS": int})
+        return df[df["CHR"].str.isnumeric()]
 
-        snp_list = pd.read_csv(input_filepath, usecols=["CHR", "POS"], dtype={"CHR": str, "POS": int})
-        return snp_list[snp_list["CHR"].str.isnumeric()]
+    # Wrapper that opens the array locally and forwards the call.
+    @delayed
+    def _run_extraction(
+        uri: str,
+        cfg: dict[str, str],
+        trait: str,
+        out_prefix: str | None,
+        fmt: str,
+        **inner_kwargs,
+    ) -> None:
+        """Open the TileDB array on the worker and invoke ``function_name``."""
+        # Open a *read‑only* handle on the worker.
+        with tiledb.open(uri, mode="r", config=cfg) as arr:
+            # ``function_name`` expects the opened array as its first argument.
+            return function_name(arr, trait, out_prefix, fmt, **inner_kwargs)
 
-    function_name = kwargs.pop("function_name", None)
-    snp_list_file = kwargs.pop("snp_list_file", None)
-
+    # Prepare kwargs for the downstream extraction routine.
     kwargs["attributes"] = attr.split(",") if attr else None
     if snp_list_file:
-        kwargs["snp_list"] = delayed(get_snp_list)(snp_list_file)
+        kwargs["snp_list"] = delayed(_read_snp_list)(snp_list_file)
 
-    tasks = [
-        delayed(function_name)(tiledb_array, trait, output_prefix_dict.get(trait), output_format, **kwargs)
+    # Build the delayed tasks – each task receives the URI, not the object.
+    tasks: list[delayed] = [
+        _run_extraction(
+            tiledb_uri,
+            tiledb_cfg,
+            trait,
+            output_prefix_dict.get(trait),
+            output_format,
+            **kwargs,
+        )
         for trait in trait_id_list
     ]
+
+    total_batches = math.ceil(len(tasks) / batch_size)
+    # Execute in batches (keeps the Dask graph small).
     for i in range(0, len(tasks), batch_size):
-        logger.info(f"Processing a batch of {batch_size} items for batch {i // batch_size + 1}")
-        # Create a list of delayed tasks
-        # Submit tasks and wait for completion
-        batch = tasks[i : i + batch_size]
-        compute(*batch)
-        logger.info(f"Batch {i // batch_size + 1} completed.", flush=True)
+        batch_no = i // batch_size + 1
+        logger.info(f"Running batch {batch_no}/{total_batches} ({batch_size} items)")
+        compute(*tasks[i : i + batch_size])
+        logger.info(f"Batch {batch_no} completed.", flush=True)
 
 
 HELP_DOC = """
@@ -230,55 +278,65 @@ def export(
         batch_size = get_dask_batch_size(ctx)
         grouped = df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
         for name, group in grouped:
-            logger.info(f"Processing the group {'_'.join(name)}")
-            trait_id_list = list(group["data_id"])
+            group_name = "_".join(name)
+            logger.info(f"Processing the group {group_name}")
+            trait_ids = list(group["data_id"])
+            tiledb_uri = join_path(uri, group_name)
+            logger.debug(f"tiledb_uri: {tiledb_uri}")
 
-            tiledb_uri = str(Path(uri) / "_".join(name))
+            # Common argument list
+            common_args = [
+                tiledb_uri,  # <-- URI, not an opened array
+                cfg,
+                trait_ids,
+                attr,
+                batch_size,
+                output_prefix_dict,
+                output_format,
+            ]
 
-            # Open TileDB dataset
-            with tiledb.open(tiledb_uri, mode="r", config=cfg) as tiledb_array:
-                logger.info("TileDB dataset loaded")
-                args = [tiledb_array, trait_id_list, attr, batch_size, output_prefix_dict, output_format]
-
-                if locusbreaker:
-                    kwargs = {
-                        "function_name": _process_locusbreaker,
-                        "maf": maf,
-                        "hole_size": hole_size,
-                        "pvalue_sig": pvalue_sig,
-                        "pvalue_limit": pvalue_limit,
-                        "phenovar": phenovar,
-                    }
-                    _process_function_tasks(*args, **kwargs)
-
-                elif snp_list_file:
-                    kwargs = {
-                        "function_name": extract_snp_list,
-                        "snp_list_file": snp_list_file,
-                        "plot_out": plot_out,
-                        "color_thr": color_thr,
-                        "s_value": s_value,
-                    }
-                    _process_function_tasks(*args, **kwargs)
-
-                elif get_regions:
-                    bed_region = pd.read_csv(get_regions, sep="\t", header=None)
-                    bed_region.columns = ["CHR", "START", "END"]
+            # Dispatch the appropriate extraction routine
+            match (locusbreaker, snp_list_file, get_regions):
+                case (True, _, _):
+                    _process_function_tasks(
+                        *common_args,
+                        function_name=_process_locusbreaker,
+                        maf=maf,
+                        hole_size=hole_size,
+                        pvalue_sig=pvalue_sig,
+                        pvalue_limit=pvalue_limit,
+                        phenovar=phenovar,
+                    )
+                case (_, str() as snp_fp, _):
+                    _process_function_tasks(
+                        *common_args,
+                        function_name=extract_snp_list,
+                        snp_list_file=snp_fp,
+                        plot_out=plot_out,
+                        color_thr=color_thr,
+                        s_value=s_value,
+                    )
+                case (_, _, str() as bed_fp):
+                    bed_region = pd.read_csv(
+                        bed_fp,
+                        sep="\t",
+                        header=None,
+                        names=["CHR", "START", "END"],
+                    )
                     bed_region["CHR"] = bed_region["CHR"].astype(int)
-                    kwargs = {
-                        "function_name": extract_regions,
-                        "bed_region": bed_region.groupby("CHR"),
-                        "plot_out": plot_out,
-                        "color_thr": color_thr,
-                        "s_value": s_value,
-                    }
-                    _process_function_tasks(*args, **kwargs)
-
-                else:
-                    kwargs = {
-                        "function_name": extract_full_stats,
-                        "plot_out": plot_out,
-                        "color_thr": color_thr,
-                        "s_value": s_value,
-                    }
-                    _process_function_tasks(*args, **kwargs)
+                    _process_function_tasks(
+                        *common_args,
+                        function_name=extract_regions,
+                        bed_region=bed_region.groupby("CHR"),
+                        plot_out=plot_out,
+                        color_thr=color_thr,
+                        s_value=s_value,
+                    )
+                case _:
+                    _process_function_tasks(
+                        *common_args,
+                        function_name=extract_full_stats,
+                        plot_out=plot_out,
+                        color_thr=color_thr,
+                        s_value=s_value,
+                    )
