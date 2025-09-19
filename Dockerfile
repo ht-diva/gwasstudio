@@ -76,6 +76,8 @@ RUN pip install --no-cache-dir /opt/dist/*.whl
 
 # Define the appuser if not defined
 RUN groupadd -r appgroup && \
-     useradd -r -g appgroup -d $HOME -m appuser
+    useradd -r -g appgroup -d $HOME -m appuser && \
+    groupadd -g 450 slurm && \
+    useradd -u 450 -g 450 -d /cm/local/apps/slurm -m -s /bin/bash slurm
 
 USER appuser:appgroup
