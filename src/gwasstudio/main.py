@@ -70,12 +70,17 @@ def configure_logging(stdout, verbosity, _logger):
     "Dask cluster options",
     cloup.option("--address", default=None, help="Dask gateway address (only for remote cluster config)"),
     cloup.option("--cores-per-worker", default=2, help="CPU cores per worker"),
+    cloup.option("--job-script-prologue", default=[], help="Commands to add to script before launching worker."),
     cloup.option(
         "--interface", default=None, help="Specify the high-performance network interface if available (e.g. ib0)"
     ),
+    cloup.option(
+        "--local-directory", default=None, help="Fast local directory for Dask workers. Usually /scratch or $TMPDIR"
+    ),
     cloup.option("--memory-per-worker", default="4GiB", help="Memory per worker (e.g. 36GiB)"),
-    cloup.option("--workers", default=2, help="Number of Dask workers to start"),
+    cloup.option("--python", default=None, help="Python executable used to launch Dask workers."),
     cloup.option("--walltime", default="12:00:00", help="Walltime for each worker (only for remote cluster config)"),
+    cloup.option("--workers", default=2, help="Number of Dask workers to start"),
 )
 @cloup.option_group(
     "MongoDB options",
@@ -122,6 +127,9 @@ def cli_init(
     memory_per_worker,
     interface,
     walltime,
+    job_script_prologue,
+    python,
+    local_directory,
     mongo_uri,
     mongo_deployment,
     verbosity,
@@ -170,6 +178,9 @@ def cli_init(
         "interface": interface,
         "address": address,
         "walltime": walltime,
+        "job_script_prologue": job_script_prologue,
+        "python": python,
+        "local_directory": local_directory,
     }
 
 

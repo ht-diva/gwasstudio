@@ -47,11 +47,11 @@ ENV PYTHONFAULTHANDLER=1 \
   LC_ALL="C"
 
 # Copy to cache them in docker layer
-COPY src /opt/src/
-COPY README.md /opt/src
-COPY pyproject.toml /opt/src
+COPY src/ /opt/src/
+COPY README.md /opt
+COPY pyproject.toml /opt
 
-WORKDIR /opt/src
+WORKDIR /opt
 
 RUN poetry build
 
@@ -70,12 +70,14 @@ ENV PYTHONFAULTHANDLER=1 \
   LC_ALL="C" \
   HOME=/home/userapp
 
-COPY --from=builder /opt/src/dist /opt/dist
+COPY --from=builder /opt/dist /opt/dist
 
 RUN pip install --no-cache-dir /opt/dist/*.whl
 
 # Define the appuser if not defined
 RUN groupadd -r appgroup && \
-     useradd -r -g appgroup -d $HOME -m appuser
+    useradd -r -g appgroup -d $HOME -m appuser && \
+    groupadd -g 450 slurm && \
+    useradd -u 450 -g 450 -d /cm/local/apps/slurm -m -s /bin/bash slurm
 
 USER appuser:appgroup
