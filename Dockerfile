@@ -47,11 +47,11 @@ ENV PYTHONFAULTHANDLER=1 \
   LC_ALL="C"
 
 # Copy to cache them in docker layer
-COPY src /opt/src/
-COPY README.md /opt/src
-COPY pyproject.toml /opt/src
+COPY src/ /opt/src/
+COPY README.md /opt
+COPY pyproject.toml /opt
 
-WORKDIR /opt/src
+WORKDIR /opt
 
 RUN poetry build
 
@@ -70,7 +70,7 @@ ENV PYTHONFAULTHANDLER=1 \
   LC_ALL="C" \
   HOME=/home/userapp
 
-COPY --from=builder /opt/src/dist /opt/dist
+COPY --from=builder /opt/dist /opt/dist
 
 RUN pip install --no-cache-dir /opt/dist/*.whl
 
