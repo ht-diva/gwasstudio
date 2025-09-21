@@ -37,8 +37,8 @@ plot = [
 ]
 
 
-[project.scripts]
-gwasstudio = 'gwasstudio.main:main'
+[tool.poetry.scripts]
+gwasstudio = { reference = "src/bin/gwasstudio", type = "file" }
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

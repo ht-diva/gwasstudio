@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+"""Thin wrapper that calls the real entry point."""
+
+# Import the actual function that implements the CLI
+from gwasstudio.main import main
+
+if __name__ == "__main__":
+    main()
