@@ -30,13 +30,17 @@ def manage_daskcluster(ctx):
 # config in $HOME/.config/dask/jobqueue.yaml
 class DaskCluster:
     def __init__(self, deployment=None, **kwargs):
+        """
+        Minimal Dask cluster initializer – only three configuration knobs are used:
+        * ``workers`` – total number of workers to launch
+        * ``cores_per_worker`` – CPU cores allocated per worker
+        * ``memory_per_worker`` – memory allocated per worker (string accepted by Dask)
+        """
         _address = kwargs.get("address")
-        _cores = kwargs.get("cpu_workers")
-        _workers = kwargs.get("num_workers")
-        _mem = kwargs.get("memory_workers")
-        _workers_local = kwargs.get("local_workers")
-        _threads_local = kwargs.get("local_threads")
-        _threads_memory = kwargs.get("local_memory")
+        _cores = kwargs.get("cores_per_worker")
+        _workers = kwargs.get("workers")
+        _mem = kwargs.get("memory_per_worker")
+        _interface = kwargs.get("interface")
         _walltime = kwargs.get("walltime")
 
         if deployment == "gateway":
@@ -63,7 +67,7 @@ class DaskCluster:
         elif deployment == "slurm":
             # https://jobqueue.dask.org/en/latest/clusters-configuration-setup.html#processes
             processes = self.divide_and_round(_cores, divider=3)  # one process per three cores
-            cluster = Cluster(memory=_mem, cores=_cores, processes=processes, walltime=_walltime)
+            cluster = Cluster(interface=_interface, memory=_mem, cores=_cores, processes=processes, walltime=_walltime)
             cluster.scale(_workers)
             logger.info(
                 f"Dask SLURM cluster: starting {_workers} workers, with {_mem} of memory and {_cores} cpus per worker"
@@ -73,14 +77,14 @@ class DaskCluster:
 
         elif deployment == "local":
             cluster = LocalCluster(
-                n_workers=_workers_local,
-                threads_per_worker=_threads_local,
-                memory_limit=_threads_memory,
+                n_workers=_workers,
+                threads_per_worker=_cores,
+                memory_limit=_mem,
             )
             self.client = Client(cluster)
             self.type_cluster = type(cluster)
             logger.info(
-                f"Dask local cluster: starting {_workers_local} workers, with {_threads_memory} of memory and {_threads_local} cpus per worker"
+                f"Dask local cluster: starting {_workers} workers, with {_mem} of memory and {_cores} cpus per worker"
             )
 
         else:

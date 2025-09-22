@@ -55,7 +55,7 @@ def configure_logging(stdout, verbosity, _logger):
     "Deployment options",
     cloup.option(
         "--dask-deployment",
-        type=click.Choice(["local", "gateway", "slurm", "none"]),
+        type=click.Choice(["local", "gateway", "slurm"]),
         default="local",
         help="Specify the deployment environment for the Dask cluster",
     ),
@@ -67,18 +67,15 @@ def configure_logging(stdout, verbosity, _logger):
     ),
 )
 @cloup.option_group(
-    "Dask remote cluster options - Slurm HPC or a Dask gateway setup",
-    cloup.option("--address", default=None, help="Dask gateway address"),
-    cloup.option("--num-workers", default=10, help="Maximum amount of running workers"),
-    cloup.option("--memory-workers", default="36GiB", help="Memory amount per worker"),
-    cloup.option("--cpu-workers", help="CPU numbers per worker", default=9),
-    cloup.option("--walltime", default="36:00:00", help="Walltime for each worker"),
-)
-@cloup.option_group(
-    "Dask local cluster options",
-    cloup.option("--local-workers", default=2, help="Number of workers for local cluster"),
-    cloup.option("--local-threads", default=2, help="Threads per worker for local cluster"),
-    cloup.option("--local-memory", default="4GB", help="Memory per worker for local cluster"),
+    "Dask cluster options",
+    cloup.option("--address", default=None, help="Dask gateway address (only for remote cluster config)"),
+    cloup.option("--cores-per-worker", default=2, help="CPU cores per worker"),
+    cloup.option(
+        "--interface", default=None, help="Specify the high-performance network interface if available (e.g. ib0)"
+    ),
+    cloup.option("--memory-per-worker", default="4GiB", help="Memory per worker (e.g. 36GiB)"),
+    cloup.option("--workers", default=2, help="Number of Dask workers to start"),
+    cloup.option("--walltime", default="12:00:00", help="Walltime for each worker (only for remote cluster config)"),
 )
 @cloup.option_group(
     "MongoDB options",
@@ -90,7 +87,7 @@ def configure_logging(stdout, verbosity, _logger):
     cloup.option("--aws-secret-access-key", default="None", help="S3 access key"),
     cloup.option(
         "--aws-endpoint-override",
-        default="https://storage.fht.org:9021",
+        default=None,
         help="S3 endpoint where to connect",
     ),
     cloup.option("--aws-use-virtual-addressing", default="false", help="S3 use virtual address option"),
@@ -119,14 +116,12 @@ def cli_init(
     aws_region,
     aws_verify_ssl,
     dask_deployment,
-    walltime,
-    num_workers,
-    memory_workers,
-    local_workers,
-    local_threads,
-    local_memory,
-    cpu_workers,
     address,
+    workers,
+    cores_per_worker,
+    memory_per_worker,
+    interface,
+    walltime,
     mongo_uri,
     mongo_deployment,
     verbosity,
@@ -161,17 +156,19 @@ def cli_init(
         "vfs.s3.verify_ssl": aws_verify_ssl,
     }
 
-    batch_sizes = {"gateway": num_workers, "slurm": num_workers * 3, "local": local_workers}
+    batch_sizes = {
+        "gateway": workers * cores_per_worker,
+        "slurm": workers * cores_per_worker,
+        "local": workers * cores_per_worker,
+    }
     ctx.obj["dask"] = {
         "deployment": dask_deployment,
         "batch_size": batch_sizes.get(dask_deployment, None),
-        "num_workers": num_workers,
-        "memory_workers": memory_workers,
-        "cpu_workers": cpu_workers,
+        "workers": workers,
+        "cores_per_worker": cores_per_worker,
+        "memory_per_worker": memory_per_worker,
+        "interface": interface,
         "address": address,
-        "local_workers": local_workers,
-        "local_threads": local_threads,
-        "local_memory": local_memory,
         "walltime": walltime,
     }
 
