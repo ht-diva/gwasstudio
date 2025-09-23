@@ -76,6 +76,7 @@ def configure_logging(stdout, verbosity, _logger):
     cloup.option("--memory-per-worker", default="4GiB", help="Memory per worker (e.g. 36GiB)"),
     cloup.option("--workers", default=2, help="Number of Dask workers to start"),
     cloup.option("--walltime", default="12:00:00", help="Walltime for each worker (only for remote cluster config)"),
+    cloup.option("--job-script-prologue", default=[], help="Commands to add to script before launching worker."),
 )
 @cloup.option_group(
     "MongoDB options",
@@ -122,6 +123,7 @@ def cli_init(
     memory_per_worker,
     interface,
     walltime,
+    job_script_prologue,
     mongo_uri,
     mongo_deployment,
     verbosity,
@@ -170,6 +172,7 @@ def cli_init(
         "interface": interface,
         "address": address,
         "walltime": walltime,
+        "job_script_prologue": job_script_prologue,
     }
 
 

@@ -42,6 +42,7 @@ class DaskCluster:
         _mem = kwargs.get("memory_per_worker")
         _interface = kwargs.get("interface")
         _walltime = kwargs.get("walltime")
+        _job_script_prologue = kwargs.get("job_script_prologue", [])
 
         if deployment == "gateway":
             if _address:
@@ -67,7 +68,14 @@ class DaskCluster:
         elif deployment == "slurm":
             # https://jobqueue.dask.org/en/latest/clusters-configuration-setup.html#processes
             processes = self.divide_and_round(_cores, divider=3)  # one process per three cores
-            cluster = Cluster(interface=_interface, memory=_mem, cores=_cores, processes=processes, walltime=_walltime)
+            cluster = Cluster(
+                interface=_interface,
+                memory=_mem,
+                cores=_cores,
+                processes=processes,
+                walltime=_walltime,
+                job_script_prologue=_job_script_prologue,
+            )
             cluster.scale(_workers)
             logger.info(
                 f"Dask SLURM cluster: starting {_workers} workers, with {_mem} of memory and {_cores} cpus per worker"
