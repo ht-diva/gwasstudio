@@ -77,6 +77,7 @@ def configure_logging(stdout, verbosity, _logger):
     cloup.option("--workers", default=2, help="Number of Dask workers to start"),
     cloup.option("--walltime", default="12:00:00", help="Walltime for each worker (only for remote cluster config)"),
     cloup.option("--job-script-prologue", default=[], help="Commands to add to script before launching worker."),
+    cloup.option("--python", default=None, help="Python executable used to launch Dask workers."),
 )
 @cloup.option_group(
     "MongoDB options",
@@ -124,6 +125,7 @@ def cli_init(
     interface,
     walltime,
     job_script_prologue,
+    python,
     mongo_uri,
     mongo_deployment,
     verbosity,
@@ -173,6 +175,7 @@ def cli_init(
         "address": address,
         "walltime": walltime,
         "job_script_prologue": job_script_prologue,
+        "python": python,
     }
 
 

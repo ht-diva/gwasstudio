@@ -45,6 +45,7 @@ class DaskCluster:
         _job_script_prologue = kwargs.get("job_script_prologue", [])
         if isinstance(_job_script_prologue, str):
             _job_script_prologue = [line.strip() for line in _job_script_prologue.split(",")]
+        _python = kwargs.get("python")
 
         if deployment == "gateway":
             if _address:
@@ -77,6 +78,7 @@ class DaskCluster:
                 processes=processes,
                 walltime=_walltime,
                 job_script_prologue=_job_script_prologue,
+                python=_python,
             )
             logger.debug(cluster.job_script())
             cluster.scale(_workers)
