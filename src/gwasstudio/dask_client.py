@@ -43,6 +43,8 @@ class DaskCluster:
         _interface = kwargs.get("interface")
         _walltime = kwargs.get("walltime")
         _job_script_prologue = kwargs.get("job_script_prologue", [])
+        if isinstance(_job_script_prologue, str):
+            _job_script_prologue = [line.strip() for line in _job_script_prologue.split(",")]
 
         if deployment == "gateway":
             if _address:
