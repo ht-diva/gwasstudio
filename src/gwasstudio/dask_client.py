@@ -78,6 +78,7 @@ class DaskCluster:
                 walltime=_walltime,
                 job_script_prologue=_job_script_prologue,
             )
+            logger.debug(cluster.job_script())
             cluster.scale(_workers)
             logger.info(
                 f"Dask SLURM cluster: starting {_workers} workers, with {_mem} of memory and {_cores} cpus per worker"
