@@ -37,6 +37,7 @@ class DaskCluster:
         * ``memory_per_worker`` – memory allocated per worker (string accepted by Dask)
         """
         _address = kwargs.get("address")
+        _image = kwargs.get("image")
         _cores = kwargs.get("cores_per_worker")
         _workers = kwargs.get("workers")
         _mem = kwargs.get("memory_per_worker")
@@ -55,6 +56,7 @@ class DaskCluster:
                 options.worker_cores = _cores  # Cores per worker
                 options.worker_memory = _mem  # Memory per worker
                 options.worker_walltime = _walltime  # Time limit for each worker
+                options.image = _image  # Worker image
 
                 # Create a cluster
                 cluster = gateway.new_cluster(options)
