@@ -14,10 +14,10 @@ gwasstudio export [OPTIONS]
 
 **Options:**
 
-- `--uri TEXT`: Destination path for TileDB datasets (required).
-- `--output-prefix TEXT`: Prefix to be used for naming output files (default: `out`).
+- `--uri TEXT`: URI of the TileDB dataset.
+- `--output-prefix TEXT`: Prefix for naming output files (default: `out`).
 - `--output-format [parquet|csv.gz|csv]`: Output file format (default: `csv.gz`).
-- `--search-file TEXT`: The search file used for querying metadata (required).
+- `--search-file TEXT`: Input file for querying metadata (required).
 - `--attr TEXT`: String delimited by comma with the attributes to export (default: `BETA,SE,EAF,MLOG10P`).
 
 

@@ -169,6 +169,16 @@ salloc --partition=cpu-interactive --nodes=1 --ntasks-per-node=2 --mem-per-cpu=2
 
 ---
 
+#### Full stats
+
+The `export` command, when used without any filtering options, will export the full set of summary statistics.
+
+```
+gwasstudio export --search-file query_ex01.txt
+```
+
+---
+
 #### Filtering options
 
 Exports can also be performed with different filtering options.
