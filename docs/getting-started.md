@@ -26,9 +26,9 @@ To authenticate automatically, please save your token in the following file:
 
 ```
 ${HOME}/.vault-token
-``` 
+```
 
-**NOTE**: 
+**NOTE**:
 
 - The vault token is **personal and confidential**. **Do not** share it with other users
 - If `${HOME}/.vault-token` is missing, you will be prompted to manually paste the token during commmand execution
@@ -44,7 +44,7 @@ GWASStudio has three main commands for users:
 
 ---
 
-### **1. `list`** 
+### **1. `list`**
 
 The `list` command is used to display all summary statistics available on MongoDB, based on your access permissions (see [vault token](#vault-token)) as category → project → study.
 
@@ -64,14 +64,14 @@ Category: GWAS
 
 ---
 
-### **2. `meta-query`** 
+### **2. `meta-query`**
 
-The `meta-query` command retrieves [metadata](#metadata) of interest using a [query file](#query-file). It can be used to verify the availability and characteristics of the data to [export](#3-export). 
+The `meta-query` command retrieves [metadata](#metadata) of interest using a [query file](#query-file). It can be used to verify the availability and characteristics of the data to [export](#3-export).
 
 ##### Meta-query example
 
 ```
-gwasstudio meta-query --search-file query_ex01.txt --output-prefix output_query_ex01 
+gwasstudio meta-query --search-file query_ex01.txt --output-prefix output_query_ex01
 ```
 
 The output is a [metadata](#metadata) table named [output_query_ex01.csv](#meta-query-output-example) with records filtered by the query file [query_ex01.txt](#query-file-example).
@@ -133,7 +133,7 @@ output:
 
 This query file searches within the `ukb-d` study for all trait descriptions containing `Z42` or `pregnancy`, and returns a table with the columns specified in section `output:`.
 
-**NOTES**: 
+**NOTES**:
 
 - Filtering values can include partial matches  (e.g. trait descriptions containing `Z42` or `pregnancy`)
 - Filtering values are processed by lowercasing and replacing special characters before being used to query the database
@@ -151,15 +151,15 @@ This query file searches within the `ukb-d` study for all trait descriptions con
 
 ---
 
-### **3. `export`** 
+### **3. `export`**
 
-The `export` command is used to extract records of summary statistics (and associated metadata) from TileDB as speficied in the query file. 
+The `export` command is used to extract records of summary statistics (and associated metadata) from TileDB as speficied in the query file.
 
 ---
 
 #### Enter compute node
 
-The `export` command is a computanionally intensive operation. Therefore, it must be executed from a **compute node**.
+The `export` command is a computationally intensive operation. Therefore, it must be executed from a **compute node**.
 
 To enter a compute node, run the following command:
 
