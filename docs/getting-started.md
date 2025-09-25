@@ -88,7 +88,7 @@ Metadata records may contain the following fields:
 | Metadata field | Description | Possible values |
 | --- | --- | --- |
 | `category` | The type of summary statistics | GWAS, pQTL, eQTL |
-| `project` | Project to which the data belongs | opengwas, pqtl, ... |
+| `project` | Project to which the data belongs | opengwas, pqtl, genesandhealth, ... |
 | `study` | The study under which the summary statistics fall | ukb-a, ukb-b,  ukb-d, ... |
 | `data_id` | Unique ID for a summary statistics record | e.g. 89f31189b3 |
 | `build` | Genome build | GRCh37, GRCh38 |
