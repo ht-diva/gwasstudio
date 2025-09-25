@@ -1,0 +1,41 @@
+
+site_name: GWASStudio documentation
+site_url: https://ht-diva.github.io/gwasstudio
+# Repository information
+repo_name: GWASStudio docs
+repo_url: https://github.com/ht-diva/gwasstudio
+
+# Theme settings
+theme:
+  name: material
+  features:
+    - content.code.copy
+  palette:
+    - scheme: default  # Light mode
+      primary: indigo  # or deep blue, teal
+      accent: purple   # or green, purple
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate    # Dark mode
+      primary: indigo
+      accent: orange
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: 'Roboto Mono'
+
+nav:
+  - 'Menu':
+    - 'Welcome': index.md
+    - 'Installation': installation.md
+    - 'Configuration': configuration.md
+    - 'Commands': commands.md
+    - 'Getting Started': getting-started.md
+
+# Plugins
+plugins:
+  - search
+  - git-revision-date

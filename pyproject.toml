@@ -55,6 +55,11 @@ pytest-randomly = "^3.16.0"
 deptry = "^0.23.0"
 pandas-stubs = "^2.3.0.250703"
 
+
+[tool.poetry.group.docs.dependencies]
+mkdocs-material = "^9.6.20"
+mkdocs-git-revision-date-plugin = "^0.3.2"
+
 [tool.ruff]
 line-length = 120
 
