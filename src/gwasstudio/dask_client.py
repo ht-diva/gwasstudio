@@ -50,7 +50,7 @@ class DaskCluster:
 
         if deployment == "gateway":
             if _address:
-                gateway = Gateway(address=_address, auth="kerberos")
+                gateway = Gateway(address=_address)
                 options = gateway.cluster_options()
                 options.worker_cores = _cores  # Cores per worker
                 options.worker_memory = _mem  # Memory per worker
