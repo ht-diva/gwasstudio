@@ -87,12 +87,12 @@ Metadata records may contain the following fields:
 
 | Metadata field | Description | Possible values |
 | --- | --- | --- |
-| `category` | The type of summary statistics | GWAS, pQTL |
-| `project` | Project to which the data belongs | opengwas, pqtl |
-| `study` | The study under which the summary statistics fall | ukb-a, ukb-b,  ukb-d, believe, meta_chris_interval |
+| `category` | The type of summary statistics | GWAS, pQTL, eQTL |
+| `project` | Project to which the data belongs | opengwas, pqtl, ... |
+| `study` | The study under which the summary statistics fall | ukb-a, ukb-b,  ukb-d, ... |
 | `data_id` | Unique ID for a summary statistics record | e.g. 89f31189b3 |
 | `build` | Genome build | GRCh37, GRCh38 |
-| `population` | The ancestry of the population used for the study | see ancestry [here](../src/gwasstudio/config/config.yaml) |
+| `population` | The ancestry of the population used for the study | see ancestry [here](https://github.com/ht-diva/gwasstudio/blob/main/src/gwasstudio/config/config.yaml) |
 | `total.samples` | Total sample size | nr. |
 | `total.cases` | Total amount of cases | nr. |
 | `total.controls` | Total amount of controls | nr. |
@@ -177,7 +177,7 @@ Exports can also be performed with different filtering options.
 
 ##### Region filtering
 
-Command example to export data by filtering regions provided in [`regions_query.tsv`](../data/regions_query.tsv):
+Command example to export data by filtering regions provided in [`regions_query.tsv`](https://github.com/ht-diva/gwasstudio/blob/main/data/regions_query.tsv):
 
 ```
 gwasstudio export --search-file query_ex01.txt --get-regions regions_query.tsv
@@ -187,7 +187,7 @@ gwasstudio export --search-file query_ex01.txt --get-regions regions_query.tsv
 
 ##### SNP filtering
 
-Command example to export data by filtering SNPIDs listed in [`hapmap3_snps.csv`](../data/hapmap3/hapmap3_snps.csv):
+Command example to export data by filtering SNPIDs listed in [`hapmap3_snps.csv`](https://github.com/ht-diva/gwasstudio/blob/main/data/hapmap3/hapmap3_snps.csv):
 
 ```
 gwasstudio export --search-file query_ex01.txt --snp-list-file hapmap3_snps.csv
