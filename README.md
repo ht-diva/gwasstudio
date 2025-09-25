@@ -38,26 +38,11 @@ GWASStudio leverages several advanced technologies:
 
 ## Installation
 
-To get started with GWASStudio, follow these installation steps:
-```bash
-# Clone the repository
-git clone https://github.com/ht-diva/gwasstudio
-cd gwasstudio
-
-# Create a virtual environment (recommended)
-conda env create --file base_environment.yml
-conda activate gwasstudio
-
-# Install the package
-make install
-
-# Verify installation
-gwasstudio --version
-```
+For detailed installation instructions, please refer to the documentation at [https://ht-diva.github.io/gwasstudio/](https://ht-diva.github.io/gwasstudio/)
 
 ## Usage
 
-For detailed instructions on how to use this tool, please refer to the [documentation](docs/README.md) and check the [cli_test](scripts/) script for a practical guide by examples.
+For detailed instructions on how to use this tool, please refer to the [documentation](https://ht-diva.github.io/gwasstudio/) and check the [cli_test](scripts/) script for a practical guide by examples.
 
 ## Citation
 
