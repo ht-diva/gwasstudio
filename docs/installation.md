@@ -57,7 +57,7 @@ This installs the program globally within your conda environment, making it avai
 
 ### **2. Manual Installation (Without `make`)**
 
-If you prefer not to use `make`, you can install **Omnia** manually. This method gives you more control over each step.
+If you prefer not to use `make`, you can install **GWASStudio** manually. This method gives you more control over each step.
 
 #### **Prerequisites**
 - Ensure you have [`conda`](https://docs.conda.io/en/latest/) or [`miniconda`](https://docs.conda.io/en/latest/miniconda.html) installed.
