@@ -588,6 +588,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#full-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      Full stats
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#filtering-options" class="md-nav__link">
     <span class="md-ellipsis">
       Filtering options
@@ -828,6 +837,15 @@
   <a href="#enter-compute-node" class="md-nav__link">
     <span class="md-ellipsis">
       Enter compute node
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#full-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      Full stats
     </span>
   </a>
   
@@ -1130,6 +1148,11 @@ output:
 <p>The <code>export</code> command is a computationally intensive operation. Therefore, it must be executed from a <strong>compute node</strong>.</p>
 <p>To enter a compute node, run the following command:</p>
 <pre><code>salloc --partition=cpu-interactive --nodes=1 --ntasks-per-node=2 --mem-per-cpu=2048M --time=12:00:00
+</code></pre>
+<hr />
+<h4 id="full-stats">Full stats</h4>
+<p>The <code>export</code> command, when used without any filtering options, will export the full set of summary statistics.</p>
+<pre><code>gwasstudio export --search-file query_ex01.txt
 </code></pre>
 <hr />
 <h4 id="filtering-options">Filtering options</h4>
