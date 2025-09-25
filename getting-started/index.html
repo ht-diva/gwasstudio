@@ -966,17 +966,17 @@ Metadata records may contain the following fields:</p>
 <tr>
 <td><code>category</code></td>
 <td>The type of summary statistics</td>
-<td>GWAS, pQTL</td>
+<td>GWAS, pQTL, eQTL</td>
 </tr>
 <tr>
 <td><code>project</code></td>
 <td>Project to which the data belongs</td>
-<td>opengwas, pqtl</td>
+<td>opengwas, pqtl, genesandhealth, ...</td>
 </tr>
 <tr>
 <td><code>study</code></td>
 <td>The study under which the summary statistics fall</td>
-<td>ukb-a, ukb-b,  ukb-d, believe, meta_chris_interval</td>
+<td>ukb-a, ukb-b,  ukb-d, ...</td>
 </tr>
 <tr>
 <td><code>data_id</code></td>
@@ -991,7 +991,7 @@ Metadata records may contain the following fields:</p>
 <tr>
 <td><code>population</code></td>
 <td>The ancestry of the population used for the study</td>
-<td>see ancestry <a href="../src/gwasstudio/config/config.yaml">here</a></td>
+<td>see ancestry <a href="https://github.com/ht-diva/gwasstudio/blob/main/src/gwasstudio/config/config.yaml">here</a></td>
 </tr>
 <tr>
 <td><code>total.samples</code></td>
@@ -1136,12 +1136,12 @@ output:
 <p>Exports can also be performed with different filtering options.</p>
 <hr />
 <h5 id="region-filtering">Region filtering</h5>
-<p>Command example to export data by filtering regions provided in <a href="../data/regions_query.tsv"><code>regions_query.tsv</code></a>:</p>
+<p>Command example to export data by filtering regions provided in <a href="https://github.com/ht-diva/gwasstudio/blob/main/data/regions_query.tsv"><code>regions_query.tsv</code></a>:</p>
 <pre><code>gwasstudio export --search-file query_ex01.txt --get-regions regions_query.tsv
 </code></pre>
 <hr />
 <h5 id="snp-filtering">SNP filtering</h5>
-<p>Command example to export data by filtering SNPIDs listed in <a href="../data/hapmap3/hapmap3_snps.csv"><code>hapmap3_snps.csv</code></a>:</p>
+<p>Command example to export data by filtering SNPIDs listed in <a href="https://github.com/ht-diva/gwasstudio/blob/main/data/hapmap3/hapmap3_snps.csv"><code>hapmap3_snps.csv</code></a>:</p>
 <pre><code>gwasstudio export --search-file query_ex01.txt --snp-list-file hapmap3_snps.csv
 </code></pre>
 <hr />
