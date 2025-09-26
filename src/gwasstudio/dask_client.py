@@ -59,15 +59,14 @@ class DaskCluster:
                 except Exception as e:
                     raise ValueError(f"Invalid format for --memory_per_worker: {_mem}") from e
                 
-                gateway = Gateway(address=_address)
-                options = gateway.cluster_options()
+                self.gateway = Gateway(address=_address)
+                options = self.gateway.cluster_options()
                 options.worker_cores = _cores  # Cores per worker
                 options.worker_memory = _mem  # Memory per worker
-                options.worker_walltime = _walltime  # Time limit for each worker
                 options.image = _image  # Worker image
 
                 # Create a cluster
-                cluster = gateway.new_cluster(options)
+                cluster = self.gateway.new_cluster(options)
 
                 # Scale the cluster
                 cluster.scale(_workers)  # Minimum number of workers
@@ -149,3 +148,7 @@ class DaskCluster:
         if self.client:
             logger.info("Shutting down Dask client and cluster.")
             self.client.close()  # Close the client
+
+        if hasattr(self, "gateway") and self.gateway:
+            logger.info("Closing Dask Gateway session.")
+            self.gateway.close()  # Close the Dask Gateway
