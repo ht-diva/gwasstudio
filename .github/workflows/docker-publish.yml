@@ -2,7 +2,7 @@ name: Docker
 
 on:
   push:
-    branches: [ "docker" ]
+    branches: [ "dask_gateway" ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
   pull_request:
