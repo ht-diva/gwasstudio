@@ -51,6 +51,14 @@ class DaskCluster:
 
         if deployment == "gateway":
             if _address:
+                try:
+                    if isinstance(_mem, str) and _mem.lower().endswith("gib"):
+                        _mem = float(_mem[:-3])
+                    else:
+                        _mem = float(_mem)
+                except Exception as e:
+                    raise ValueError(f"Invalid format for --memory_per_worker: {_mem}") from e
+                
                 gateway = Gateway(address=_address)
                 options = gateway.cluster_options()
                 options.worker_cores = _cores  # Cores per worker
