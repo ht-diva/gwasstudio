@@ -85,20 +85,21 @@ For a detailed explanation of all command options, see also [meta-query command]
 A metadata table is assigned to each project-study and describes key information about the available/accessible summary statistics.</br >
 Metadata records may contain the following fields:
 
-| Metadata field | Description | Possible values |
-| --- | --- | --- |
-| `category` | The type of summary statistics | GWAS, pQTL, eQTL |
-| `project` | Project to which the data belongs | opengwas, pqtl, genesandhealth, ... |
-| `study` | The study under which the summary statistics fall | ukb-a, ukb-b,  ukb-d, ... |
-| `data_id` | Unique ID for a summary statistics record | e.g. 89f31189b3 |
-| `build` | Genome build | GRCh37, GRCh38 |
-| `population` | The ancestry of the population used for the study | see ancestry [here](https://github.com/ht-diva/gwasstudio/blob/main/src/gwasstudio/config/config.yaml) |
-| `total.samples` | Total sample size | nr. |
-| `total.cases` | Total amount of cases | nr. |
-| `total.controls` | Total amount of controls | nr. |
-| `trait.desc` | A description of the trait (e.g. phenotypes or protein) associated to the summary statistics record | e.g. "Pregnancy, childbirth and the puerperium", "Alpha-1B-glycoprotein" ... |
-| `notes.sex` | The sex of the individuals that participated to the study | Males and Females, Combined |
-| `notes.source_id` | The source ID of the original summary statistics record | e.g. ukb-a-1, ukb-d-256, ... |
+| Metadata field   | Description                                                                                         | Possible values                                                              |
+|------------------|-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
+| `category`       | The type of summary statistics                                                                      | GWAS, pQTL, eQTL                                                             |
+| `project`        | Project to which the data belongs                                                                   | opengwas, pqtl, genesandhealth, ...                                          |
+| `study`          | The study under which the summary statistics fall                                                   | ukb-a, ukb-b,  ukb-d, ...                                                    |
+| `data_id`        | Unique ID for a summary statistics record                                                           | e.g. 89f31189b3                                                              |
+| `build`          | Genome build                                                                                        | GRCh37, GRCh38                                                               |
+| `population`     | Ancestry of the cohort                                                                              | see the [ancestry categories](population.md) page                            |
+| `total.samples`  | Total sample size                                                                                   | nr.                                                                          |
+| `total.cases`    | Total amount of cases                                                                               | nr.                                                                          |
+| `total.controls` | Total amount of controls                                                                            | nr.                                                                          |
+| `trait.desc`     | A description of the trait (e.g. phenotypes or protein) associated to the summary statistics record | e.g. "Pregnancy, childbirth and the puerperium", "Alpha-1B-glycoprotein" ... |
+| `notes.sex`      | The sex of the individuals that participated to the study                                           | Males and Females, Combined                                                  |
+
+For a more detailed description of the metadata fields, please refer to the [metadata records](metadata.md) page.
 
 ---
 

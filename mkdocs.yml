@@ -34,6 +34,8 @@ nav:
     - 'Configuration': configuration.md
     - 'Commands': commands.md
     - 'Getting Started': getting-started.md
+    - 'Metadata': metadata.md
+    - 'Population': population.md
 
 # Plugins
 plugins:
