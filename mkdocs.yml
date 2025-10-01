@@ -36,6 +36,7 @@ nav:
     - 'Getting Started': getting-started.md
     - 'Metadata': metadata.md
     - 'Population': population.md
+    - 'Projects' : projects.md
 
 # Plugins
 plugins:
