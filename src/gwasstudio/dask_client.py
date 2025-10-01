@@ -73,7 +73,10 @@ class DaskCluster:
                 logger.info(
                     f"Dask cluster: starting {_workers} workers, with {_mem} of memory and {_cores} cpus per worker and address {_address}"
                 )
-                self.client = Client(cluster)  # Connect to that cluster
+                self.client = cluster.get_client() # Connect to that cluster
+                logger.info("Waiting for Dask workers to become available...")
+                self.client.wait_for_workers(n_workers=_workers, timeout=60)
+                logger.info(f"Workers ready: {len(self.client.scheduler_info()['workers'])}")
                 self.type_cluster = type(cluster)
             else:
                 raise ValueError("Address must be provided for gateway deployment")
