@@ -12,6 +12,7 @@ from gwasstudio import logger
 from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
 from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions, extract_snp_list
 from gwasstudio.methods.locus_breaker import _process_locusbreaker
+from gwasstudio.methods.meta_analyse import _meta_analyse
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table
 from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
@@ -159,6 +160,10 @@ Export summary statistics from TileDB datasets with various filtering options.
     ),
 )
 @cloup.option_group(
+    "Meta-analysis options",
+    cloup.option("--meta_analyse", default=False, is_flag=True, help="Option to run locusbreaker"),
+)
+@cloup.option_group(
     "SNP ID list filtering options",
     cloup.option(
         "--snp-list-file",
@@ -230,6 +235,7 @@ def export(
     plot_out: bool,
     color_thr: str,
     s_value: int,
+    meta_analyse: bool,
 ) -> None:
     """Export summary statistics based on selected options."""
     cfg = get_tiledb_config(ctx)
@@ -296,8 +302,8 @@ def export(
             ]
 
             # Dispatch the appropriate extraction routine
-            match (locusbreaker, snp_list_file, get_regions):
-                case (True, _, _):
+            match (locusbreaker, _meta_analyse, snp_list_file, get_regions):
+                case (True, _, _, _):
                     _process_function_tasks(
                         *common_args,
                         function_name=_process_locusbreaker,
@@ -307,7 +313,7 @@ def export(
                         pvalue_limit=pvalue_limit,
                         phenovar=phenovar,
                     )
-                case (_, str() as snp_fp, _):
+                case (_, _, str() as snp_fp, _):
                     _process_function_tasks(
                         *common_args,
                         function_name=extract_snp_list,
