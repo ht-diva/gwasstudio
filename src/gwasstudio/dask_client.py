@@ -15,7 +15,7 @@ dask_deployment_types = ["local", "gateway", "slurm"]
 def manage_daskcluster(ctx):
     dask_ctx = get_dask_config(ctx)
     cluster = DaskCluster(**dask_ctx)
-    client = cluster.get_client()
+    client = cluster.get_connected_client()
     logger.debug(f"Dask client: {client}")
     logger.info(f"Dask cluster dashboard: {cluster.dashboard_link}")
     try:
@@ -73,9 +73,14 @@ class DaskCluster:
                 logger.info(
                     f"Dask cluster: starting {_workers} workers, with {_mem} of memory and {_cores} cpus per worker and address {_address}"
                 )
-                self.client = cluster.get_client() # Connect to that cluster
+                logger.info("Connecting to Dask scheduler...")
+                try:
+                    self.client = cluster.get_client() # Connect to that cluster
+                except Exception as e:
+                    logger.error("Failed to get Dask client", exc_info=True)
+                    raise
                 logger.info("Waiting for Dask workers to become available...")
-                self.client.wait_for_workers(n_workers=_workers, timeout=60)
+                self.client.wait_for_workers(n_workers=_workers, timeout=120)
                 logger.info(f"Workers ready: {len(self.client.scheduler_info()['workers'])}")
                 self.type_cluster = type(cluster)
             else:
@@ -141,7 +146,7 @@ class DaskCluster:
         result = round(number / divider)
         return max(result, 1)
 
-    def get_client(self):
+    def get_connected_client(self):
         return self.client
 
     def get_type_cluster(self):
