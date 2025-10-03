@@ -19,7 +19,7 @@ from gwasstudio.utils.enums import MetadataEnum
 from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataframe_from_mongo_objs
 from gwasstudio.utils.mongo_manager import manage_mongo
 from gwasstudio.utils.path_joiner import join_path
-
+from dask.distributed import Client
 
 def create_output_prefix_dict(df: pd.DataFrame, output_prefix: str, source_id_column: str) -> dict:
     """
@@ -62,6 +62,7 @@ def _process_function_tasks(
     *,
     function_name: Callable,
     snp_list_file: str | None = None,
+    dask_client: Client = None,
     **kwargs,
 ) -> None:
     """
@@ -95,9 +96,20 @@ def _process_function_tasks(
     ) -> None:
         """Open the TileDB array on the worker and invoke ``function_name``."""
         # Open a *read‑only* handle on the worker.
-        with tiledb.open(uri, mode="r", config=cfg) as arr:
+        #with tiledb.open(uri, mode="r", config=cfg) as arr:
             # ``function_name`` expects the opened array as its first argument.
-            return function_name(arr, trait, out_prefix, fmt, **inner_kwargs)
+        #    return function_name(arr, trait, out_prefix, fmt, **inner_kwargs)
+
+        try:
+            logger.info(f"[{trait}] Opening TileDB array on worker...")
+            with tiledb.open(uri, mode="r", config=cfg) as arr:
+                logger.info(f"[{trait}] Running extraction function...")
+                result = function_name(arr, trait, out_prefix, fmt, **inner_kwargs)
+                logger.info(f"[{trait}] Extraction completed.")
+                return result
+        except Exception as e:
+            logger.error(f"[{trait}] Extraction failed with error: {type(e).__name__}: {e}", exc_info=True)
+            raise
 
     # Prepare kwargs for the downstream extraction routine.
     kwargs["attributes"] = attr.split(",") if attr else None
@@ -119,12 +131,37 @@ def _process_function_tasks(
 
     total_batches = math.ceil(len(tasks) / batch_size)
     # Execute in batches (keeps the Dask graph small).
+    #for i in range(0, len(tasks), batch_size):
+    #    batch_no = i // batch_size + 1
+    #    logger.info(f"Running batch {batch_no}/{total_batches} ({batch_size} items)")
+    #    compute(*tasks[i : i + batch_size])
+    #    logger.info(f"Batch {batch_no} completed.", flush=True)
+
     for i in range(0, len(tasks), batch_size):
         batch_no = i // batch_size + 1
-        logger.info(f"Running batch {batch_no}/{total_batches} ({batch_size} items)")
-        compute(*tasks[i : i + batch_size])
-        logger.info(f"Batch {batch_no} completed.", flush=True)
-
+        task_batch = tasks[i : i + batch_size]
+        trait_ids_in_batch = trait_id_list[i : i + batch_size]
+        logger.info(f"Running batch {batch_no}/{total_batches} ({len(task_batch)} items)")
+        try:
+            logger.debug(f"Traits in batch {batch_no}: {trait_ids_in_batch}")
+            if isinstance(dask_client, Client):
+                dask_client.run_on_scheduler(
+                    lambda dask_scheduler: dask_scheduler.log_event("PING", f"Starting batch {batch_no}")
+                )
+            compute(*task_batch)
+            logger.info(f"Batch {batch_no} completed.", flush=True)
+            if isinstance(dask_client, Client):
+                dask_client.run_on_scheduler(
+                    lambda dask_scheduler: dask_scheduler.log_event("PING", f"Finished batch {batch_no}")
+                )
+                scheduler_info = dask_client.scheduler_info()
+                logger.debug(f"Scheduler workers: {list(scheduler_info.get('workers', {}).keys())}")
+        except Exception as e:
+            logger.error(
+                f"Batch {batch_no} failed with exception: {type(e).__name__}: {e}",
+                exc_info=True,
+            )
+            raise
 
 HELP_DOC = """
 Export summary statistics from TileDB datasets with various filtering options.
@@ -274,7 +311,7 @@ def export(
         logger.error(f"A valid dask deployment type must be set from: {dask_deployment_types}")
         raise SystemExit(1)
 
-    with manage_daskcluster(ctx):
+    with manage_daskcluster(ctx) as client:
         batch_size = get_dask_batch_size(ctx)
         grouped = df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
         for name, group in grouped:
@@ -315,6 +352,7 @@ def export(
                         plot_out=plot_out,
                         color_thr=color_thr,
                         s_value=s_value,
+                        dask_client=client,
                     )
                 case (_, _, str() as bed_fp):
                     bed_region = pd.read_csv(

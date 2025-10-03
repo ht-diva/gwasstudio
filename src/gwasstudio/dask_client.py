@@ -19,7 +19,7 @@ def manage_daskcluster(ctx):
     logger.debug(f"Dask client: {client}")
     logger.info(f"Dask cluster dashboard: {cluster.dashboard_link}")
     try:
-        yield
+        yield client
     except Exception as e:
         logger.error(f"Error occurred: {e}")
         raise
@@ -81,8 +81,22 @@ class DaskCluster:
                     raise
                 logger.info("Waiting for Dask workers to become available...")
                 self.client.wait_for_workers(n_workers=_workers, timeout=120)
-                logger.info(f"Workers ready: {len(self.client.scheduler_info()['workers'])}")
+                worker_info = self.client.scheduler_info().get("workers", {})
+                if not worker_info:
+                    logger.error("No workers connected after waiting. Cluster is likely misconfigured or failing to start.")
+                    raise RuntimeError("No workers connected")
+                else:
+                    logger.info(f"Workers ready: {len(worker_info)}")
+                
                 self.type_cluster = type(cluster)
+
+                try:
+                    self.client.run_on_scheduler(
+                        lambda dask_scheduler: dask_scheduler.log_event("HEARTBEAT", "Dask scheduler is alive")
+                    )
+                    logger.debug("Successfully sent heartbeat log event to Dask scheduler.")
+                except Exception as e:
+                    logger.warning("Could not log heartbeat event to Dask scheduler", exc_info=True)
             else:
                 raise ValueError("Address must be provided for gateway deployment")
 
