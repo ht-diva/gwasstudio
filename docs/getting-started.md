@@ -93,9 +93,9 @@ Metadata records may contain the following fields:
 | `data_id`        | Unique ID for a summary statistics record                                                           | e.g. 89f31189b3                                                              |
 | `build`          | Genome build                                                                                        | GRCh37, GRCh38                                                               |
 | `population`     | Ancestry of the cohort                                                                              | see the [ancestry categories](population.md) page                            |
-| `total.samples`  | Total sample size                                                                                   | nr.                                                                          |
-| `total.cases`    | Total amount of cases                                                                               | nr.                                                                          |
-| `total.controls` | Total amount of controls                                                                            | nr.                                                                          |
+| `total.samples`  | Total sample size                                                                                   | integer                                                                          |
+| `total.cases`    | Total amount of cases                                                                               | integer                                                                          |
+| `total.controls` | Total amount of controls                                                                            | integer                                                                          |
 | `trait.desc`     | A description of the trait (e.g. phenotypes or protein) associated to the summary statistics record | e.g. "Pregnancy, childbirth and the puerperium", "Alpha-1B-glycoprotein" ... |
 | `notes.sex`      | The sex of the individuals that participated to the study                                           | Males and Females, Combined                                                  |
 
