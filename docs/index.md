@@ -22,3 +22,7 @@ Configure access to the diverse components used by GWASStudio.
 ## [Getting Started](getting-started.md)
 
 This short overview of GWASStudio will help you get started.
+
+## [Projects](projects.md)
+
+Overview of GWASStudio projects.
