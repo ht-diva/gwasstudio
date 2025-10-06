@@ -41,7 +41,7 @@ For details on the plasma proteomics GWAS, see the [original article](https://do
 * **GWAS Method**
     * linear mixed model (BOLT-LMM)
 
-*Note*: For detailed GWAS methodology, see the the [original article](https://doi.org/10.1038/s41588-021-00978-w).
+*Note*: For detailed GWAS methodology, see the [original article](https://doi.org/10.1038/s41588-021-00978-w).
 
 ---
 
@@ -71,8 +71,8 @@ To browse FinnGen traits (including trait definition, prevalence, and longitudin
 * **Sample Size and Ancestry**
     * 500,348 individuals of primarily Finnish/European ancestry
 * **GWAS Method**
-    * regenie v2.2.4 (v3.3 used for traits not converging under v2.2.4) 
-    
+    * regenie v2.2.4 (v3.3 used for traits not converging under v2.2.4)
+
 *Note*: For detailed GWAS methodology, see the [FinnGen documentation](https://finngen.gitbook.io/documentation/methods/phewas).
 
 ---
@@ -136,7 +136,7 @@ For more information on the UK Biobank project, see [https://www.ukbiobank.ac.uk
     * `ukb-a`: filtered to ~10.5 million
     * `ukb-b`: filtered to ~10 million
     * `ukb-d`: filtered to ~13.5 million
-* **Imputation Panel** 
+* **Imputation Panel**
     * UK Biobank Imputation Release v3 (R3)
 * **Genome build**
     * GRCh38 (lifted via [GWASLab liftover method](https://cloufield.github.io/gwaslab/LiftOver/))
@@ -165,15 +165,15 @@ For more information on the UKB-PPP project, see the original [UKB-PPP article](
 
 ### **Key Metadata**
 
-* **Number of Protein Analytes**: 
+* **Number of Protein Analytes**:
     * 2,941 protein analytes (2,943 unique proteins)
 * **Protein Panel**:
     * [Olink Explore 3072 Panel](https://olinkpanel.creative-proteomics.com/table-list-of-olink-explore-3072-8-panel-combination.html)
-* **Number of Variants**: 
+* **Number of Variants**:
     * ~23.8 million imputed variants
-* **Genome build**: 
+* **Genome build**:
     * GRCh38
-* **Sample Size and Ancestry**: 
+* **Sample Size and Ancestry**:
     * `ukb-ppp_European`: 34,557 European individuals
     * `ukb-ppp_African`: 931 African individuals
     * `ukb-ppp_South_Asian`: 920 Central South Asian individuals
