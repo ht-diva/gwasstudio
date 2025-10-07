@@ -1,6 +1,9 @@
 # **Projects**
 
-Overview of public GWASStudio projects with relevant [core metadata fields](metadata.md#core-metadata-fields).
+This is an overview of the GWASStudio projects available on-premises at Human Tecnopole, along with the relevant core metadata fields (see metadata.md#core-metadata-fields).
+
+*Note*: All summary statistics were harmonized to the GWASLab format via [harmonization_pipeline](https://github.com/ht-diva/harmonization_pipeline.git).
+
 
 | **Project name** | `category` | `project` | `study`|
 | --- | --- | --- | --- |
@@ -10,7 +13,6 @@ Overview of public GWASStudio projects with relevant [core metadata fields](meta
 | [UKB](#uk-biobank-ukb) | `GWAS` |  `opengwas` | `ukb-a`, `ukb-b`, `ukb-d` |
 | [UKB-PPP](#uk-biobank-pharma-proteomics-project-ukb-ppp) | `pQTL` | `ukb-ppp_consortium` | `ukb-ppp_African`, `ukb-ppp_American`, `ukb-ppp_Combined`, `ukb-ppp_East_Asian`, `ukb-ppp_European`, `ukb-ppp_Middle_Eastern`, `ukb-ppp_South_Asian` |
 
-*Note*: All summary statistics were harmonized to the GWASLab format via [harmonization_pipeline](https://github.com/ht-diva/harmonization_pipeline.git).
 
 ---
 
