@@ -77,6 +77,18 @@ def _process_function_tasks(
         One of the extraction functions (``extract_full_stats``, …).
     """
 
+    # Check Dask client
+    if dask_client is None:
+        raise ValueError("Missing Dask client. Please pass `dask_client=client`.")
+    else:
+        logger.info(f"Dask client connected: {dask_client}")
+        try:
+            scheduler_info = dask_client.scheduler_info()
+            workers = scheduler_info.get("workers", {})
+            logger.info(f"Connected to {len(workers)} workers.")
+        except Exception as e:
+            logger.warning("Failed to fetch scheduler info", exc_info=True)
+    
     # Helper: read SNP list lazily
     def _read_snp_list(fp: str) -> pd.DataFrame | None:
         if not fp:
@@ -96,20 +108,9 @@ def _process_function_tasks(
     ) -> None:
         """Open the TileDB array on the worker and invoke ``function_name``."""
         # Open a *read‑only* handle on the worker.
-        #with tiledb.open(uri, mode="r", config=cfg) as arr:
+        with tiledb.open(uri, mode="r", config=cfg) as arr:
             # ``function_name`` expects the opened array as its first argument.
-        #    return function_name(arr, trait, out_prefix, fmt, **inner_kwargs)
-
-        try:
-            logger.info(f"[{trait}] Opening TileDB array on worker...")
-            with tiledb.open(uri, mode="r", config=cfg) as arr:
-                logger.info(f"[{trait}] Running extraction function...")
-                result = function_name(arr, trait, out_prefix, fmt, **inner_kwargs)
-                logger.info(f"[{trait}] Extraction completed.")
-                return result
-        except Exception as e:
-            logger.error(f"[{trait}] Extraction failed with error: {type(e).__name__}: {e}", exc_info=True)
-            raise
+            return function_name(arr, trait, out_prefix, fmt, **inner_kwargs)
 
     # Prepare kwargs for the downstream extraction routine.
     kwargs["attributes"] = attr.split(",") if attr else None
@@ -131,37 +132,11 @@ def _process_function_tasks(
 
     total_batches = math.ceil(len(tasks) / batch_size)
     # Execute in batches (keeps the Dask graph small).
-    #for i in range(0, len(tasks), batch_size):
-    #    batch_no = i // batch_size + 1
-    #    logger.info(f"Running batch {batch_no}/{total_batches} ({batch_size} items)")
-    #    compute(*tasks[i : i + batch_size])
-    #    logger.info(f"Batch {batch_no} completed.", flush=True)
-
     for i in range(0, len(tasks), batch_size):
         batch_no = i // batch_size + 1
-        task_batch = tasks[i : i + batch_size]
-        trait_ids_in_batch = trait_id_list[i : i + batch_size]
-        logger.info(f"Running batch {batch_no}/{total_batches} ({len(task_batch)} items)")
-        try:
-            logger.debug(f"Traits in batch {batch_no}: {trait_ids_in_batch}")
-            if isinstance(dask_client, Client):
-                dask_client.run_on_scheduler(
-                    lambda dask_scheduler: dask_scheduler.log_event("PING", f"Starting batch {batch_no}")
-                )
-            compute(*task_batch)
-            logger.info(f"Batch {batch_no} completed.", flush=True)
-            if isinstance(dask_client, Client):
-                dask_client.run_on_scheduler(
-                    lambda dask_scheduler: dask_scheduler.log_event("PING", f"Finished batch {batch_no}")
-                )
-                scheduler_info = dask_client.scheduler_info()
-                logger.debug(f"Scheduler workers: {list(scheduler_info.get('workers', {}).keys())}")
-        except Exception as e:
-            logger.error(
-                f"Batch {batch_no} failed with exception: {type(e).__name__}: {e}",
-                exc_info=True,
-            )
-            raise
+        logger.info(f"Running batch {batch_no}/{total_batches} ({batch_size} items)")
+        compute(*tasks[i : i + batch_size], scheduler=dask_client)
+        logger.info(f"Batch {batch_no} completed.", flush=True)
 
 HELP_DOC = """
 Export summary statistics from TileDB datasets with various filtering options.
@@ -343,6 +318,7 @@ def export(
                         pvalue_sig=pvalue_sig,
                         pvalue_limit=pvalue_limit,
                         phenovar=phenovar,
+                        dask_client=client,
                     )
                 case (_, str() as snp_fp, _):
                     _process_function_tasks(
@@ -369,6 +345,7 @@ def export(
                         plot_out=plot_out,
                         color_thr=color_thr,
                         s_value=s_value,
+                        dask_client=client,
                     )
                 case _:
                     _process_function_tasks(
@@ -377,4 +354,5 @@ def export(
                         plot_out=plot_out,
                         color_thr=color_thr,
                         s_value=s_value,
+                        dask_client=client,
                     )
