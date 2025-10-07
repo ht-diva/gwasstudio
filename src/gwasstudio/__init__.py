@@ -1,4 +1,5 @@
 import importlib.metadata
+import os
 from pathlib import Path
 
 from cloup import Context, HelpFormatter, HelpTheme, Style
@@ -19,9 +20,19 @@ __all__ = [
 ]
 
 __appname__ = __name__
-__version__ = importlib.metadata.version(__appname__)
 
-log_dir = Path(user_log_dir(__appname__))
+try:
+    __version__ = importlib.metadata.version(__appname__)
+except importlib.metadata.PackageNotFoundError:
+    __version__ = "unknown"
+
+# Determine a writable log directory (fallback to /tmp if $HOME is not writable)
+home_path = Path.home()
+if os.access(home_path, os.W_OK):
+    log_dir = Path(user_log_dir(__appname__))
+else:
+    log_dir = Path("/tmp") / __appname__ / "log"
+
 log_dir.mkdir(parents=True, exist_ok=True)
 log_file = log_dir / "gwasstudio.log"
 
