@@ -23,6 +23,10 @@ Configure access to the diverse components used by GWASStudio.
 
 This short overview of GWASStudio will help you get started.
 
+## [Examples](examples.md)
+
+Showcase GWASStudio's common workflows by using examples.
+
 ## [Projects](projects.md)
 
 Overview of GWASStudio projects.
