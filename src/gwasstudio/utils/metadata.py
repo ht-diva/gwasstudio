@@ -47,7 +47,9 @@ def load_search_topics(search_file: str) -> Any | None:
             if key in ("project", "study"):
                 topics[key] = lower_and_replace(value)
 
-        output_fields = ["project", "study", "category", "data_id"] + topics.pop("output", [])
+        output_fields = ["project", "study", "category", "data_id", MetadataEnum.get_source_id_field()] + topics.pop(
+            "output", []
+        )
 
         return topics, output_fields
 

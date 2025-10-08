@@ -61,7 +61,7 @@ run_command "Exporting data..." "time gwasstudio --stdout --mongo-uri ${MDB_URI}
 run_command "Regions filtering..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_regions_filtering --uri ${TILEDB_DIR} --get-regions regions_query.tsv"
 
 # Hapmap3 SNPs filtering
-run_command "SNPs filtering..." "time gwasstudio --stdout --local-workers 4 --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_snps_filtering --uri ${TILEDB_DIR} --snp-list-file hapmap3/hapmap3_snps.csv"
+run_command "SNPs filtering..." "time gwasstudio --stdout --workers 4 --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_snps_filtering --uri ${TILEDB_DIR} --snp-list-file hapmap3/hapmap3_snps.csv"
 
 # Locusbreaker
 run_command "Locusbreaker..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_locusbreaker --uri ${TILEDB_DIR} --locusbreaker"
