@@ -15,10 +15,6 @@ GWASStudio is a powerful CLI tool designed for efficient storage, retrieval, and
 
 Set up the GWASStudio CLI on your system.
 
-## [Configuration](configuration.md)
-
-Configure access to the diverse components used by GWASStudio.
-
 ## [Getting Started](getting-started.md)
 
 This short overview of GWASStudio will help you get started.
