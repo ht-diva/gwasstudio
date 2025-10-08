@@ -4,7 +4,7 @@ from pathlib import Path
 
 from cloup import Context, HelpFormatter, HelpTheme, Style
 from loguru import logger as a_logger
-from platformdirs import PlatformDirs
+from platformdirs import user_log_dir, user_config_dir, user_data_dir
 
 __all__ = [
     "__appname__",
@@ -26,38 +26,27 @@ try:
 except importlib.metadata.PackageNotFoundError:
     __version__ = "unknown"
 
-# Determine whether $HOME is writable
-# if not, use /tmp
 home_path = Path.home()
-home_writable = os.access(home_path, os.W_OK)
-
-if home_writable:
-    dirs = PlatformDirs(__appname__)
+if os.access(home_path, os.W_OK):
+    log_dir = Path(user_log_dir(__appname__))
+    config_dir = Path(user_config_dir(__appname__))
+    data_dir = Path(user_data_dir(__appname__))
 else:
-    tmp_base = Path("/tmp") / __appname__
-    dirs = PlatformDirs(
-        __appname__,
-        roaming=False,
-        ensure_exists=False
-    )
-    dirs.user_log_path = str(tmp_base / "log")
-    dirs.user_config_path = str(tmp_base / "config")
-    dirs.user_data_path = str(tmp_base / "data")
+    base_dir = Path("/tmp") / __appname__
+    log_dir = base_dir / "log"
+    config_dir = base_dir / "config"
+    data_dir = base_dir / "data"
 
-log_dir = Path(dirs.user_log_path)
 log_dir.mkdir(parents=True, exist_ok=True)
-log_file = log_dir / "gwasstudio.log"
-
-config_dir = Path(dirs.user_config_path)
 config_dir.mkdir(parents=True, exist_ok=True)
-config_filename = "config.yaml"
-
-data_dir = Path(dirs.user_data_path)
 data_dir.mkdir(parents=True, exist_ok=True)
 
+log_file = log_dir / "gwasstudio.log"
+config_filename = "config.yaml"
 mongo_db_path = data_dir / "mongo_db"
-mongo_db_path.mkdir(parents=True, exist_ok=True)
 mongo_db_logpath = log_dir / "mongod.log"
+
+mongo_db_path.mkdir(parents=True, exist_ok=True)
 
 # Check the docs for all available arguments of HelpFormatter and HelpTheme.
 formatter_settings = HelpFormatter.settings(
