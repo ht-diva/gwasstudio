@@ -678,20 +678,14 @@ study: believe
 
 output:
   - trait.desc
- ```
-
-In the YAML file, we have specified the project and study that we want to query, as well as the field that we want in
-the output.
-
-Then, we can run the query using the following command:
-
 </code></pre>
-<p>gwasstudio meta-query --search-file search_believe.yml</p>
-<pre><code>
-You’ll see a log similar to:
-
-```terminaloutput
-2025-10-08 15:59:56.294 | INFO     | Gwasstudio started
+<p>In the YAML file, we have specified the project and study that we want to query, as well as the field that we want in
+the output.</p>
+<p>Then, we can run the query using the following command:</p>
+<pre><code>gwasstudio meta-query --search-file search_believe.yml
+</code></pre>
+<p>You’ll see a log similar to:</p>
+<pre><code class="language-terminaloutput">2025-10-08 15:59:56.294 | INFO     | Gwasstudio started
 2025-10-08 15:59:56.295 | INFO     | Processing search_believe.yml
 2025-10-08 15:59:57.013 | INFO     | 7244 results found. Writing to out_meta.csv
 </code></pre>
@@ -716,17 +710,12 @@ output:
   - notes.source_id
   - trait.desc
   - total.samples
- ```
-
-In the YAML file, we have specified the project and study that we want to query, as well as some specific seqid traits.
-
-*The `trait` block limits the export to the specified `seqid` traits.*
-
-Secondly, we need a list of SNPs that we use for filtering the data.
-We can create a file named `snp_list.txt` containing the following:
-
-```text
-CHR,POS
+</code></pre>
+<p>In the YAML file, we have specified the project and study that we want to query, as well as some specific seqid traits.</p>
+<p><em>The <code>trait</code> block limits the export to the specified <code>seqid</code> traits.</em></p>
+<p>Secondly, we need a list of SNPs that we use for filtering the data.
+We can create a file named <code>snp_list.txt</code> containing the following:</p>
+<pre><code class="language-text">CHR,POS
 4,29721067
 5,157004314
 6,167099480
