@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://ht-diva.github.io/gwasstudio/configuration/">
+        <link rel="canonical" href="https://ht-diva.github.io/gwasstudio/examples/">
       
       
-        <link rel="prev" href="../examples/">
+        <link rel="prev" href="../getting-started/">
       
       
-        <link rel="next" href="../commands/">
+        <link rel="next" href="../configuration/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -22,7 +22,7 @@
     
     
       
-        <title>Configuration - GWASStudio documentation</title>
+        <title>Examples - GWASStudio documentation</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#gwasstudio-configuration" class="md-skip">
+        <a href="#examples" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Configuration
+              Examples
             
           </span>
         </div>
@@ -362,10 +362,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../examples/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Examples
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -376,6 +398,53 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#retrieving-the-full-list-of-trait-descriptions-from-a-study" class="md-nav__link">
+    <span class="md-ellipsis">
+      Retrieving the full list of trait descriptions from a study
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filtering-a-study-by-snps-on-some-traits-pqtl-study" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filtering a study by SNPs on some traits - pQTL study
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filtering-a-study-by-snps-on-some-traits-gwas-study" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filtering a study by SNPs on some traits - GWAS study
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -408,19 +477,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
         
   
   
@@ -431,7 +491,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -556,6 +615,41 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#retrieving-the-full-list-of-trait-descriptions-from-a-study" class="md-nav__link">
+    <span class="md-ellipsis">
+      Retrieving the full list of trait descriptions from a study
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filtering-a-study-by-snps-on-some-traits-pqtl-study" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filtering a study by SNPs on some traits - pQTL study
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filtering-a-study-by-snps-on-some-traits-gwas-study" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filtering a study by SNPs on some traits - GWAS study
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -573,8 +667,143 @@
   
 
 
-<h1 id="gwasstudio-configuration"><strong>GWASStudio: Configuration</strong></h1>
-<p>How to configure access to the diverse components used by GWASStudio.</p>
+<h1 id="examples"><strong>Examples</strong></h1>
+<p>The following examples assume you have already set up the GWASStudio CLI.</p>
+<h2 id="retrieving-the-full-list-of-trait-descriptions-from-a-study"><strong>Retrieving the full list of trait descriptions from a study</strong></h2>
+<p>In this example, we retrieve every trait descriptions from a specific project/study.
+The chosen study is "believe", which belongs to the "pqtl" project.</p>
+<p>First, let's create a query file named <code>search_believe.yml</code> containing the following:</p>
+<pre><code class="language-yaml">project: pqtl
+study: believe
+
+output:
+  - trait.desc
+ ```
+
+In the YAML file, we have specified the project and study that we want to query, as well as the field that we want in
+the output.
+
+Then, we can run the query using the following command:
+
+</code></pre>
+<p>gwasstudio meta-query --search-file search_believe.yml</p>
+<pre><code>
+You’ll see a log similar to:
+
+```terminaloutput
+2025-10-08 15:59:56.294 | INFO     | Gwasstudio started
+2025-10-08 15:59:56.295 | INFO     | Processing search_believe.yml
+2025-10-08 15:59:57.013 | INFO     | 7244 results found. Writing to out_meta.csv
+</code></pre>
+<p>The command reads the YAML file, queries the metadata database, and writes the results to <code>out_meta.csv</code> in the current
+directory.
+Use <code>--output-prefix &lt;prefix&gt;</code> to change the output file’s prefix.</p>
+<h2 id="filtering-a-study-by-snps-on-some-traits-pqtl-study"><strong>Filtering a study by SNPs on some traits - pQTL study</strong></h2>
+<p>This example shows how to filter a study by a list of SNPs and retrieve the corresponding summary statistics.</p>
+<p>The chosen study is "believe", which belongs to the "pqtl" project.</p>
+<p>First, let's create a query file named <code>search_believe.yml</code> containing the following:</p>
+<pre><code class="language-yaml">project: pqtl
+study: believe
+
+trait:
+  - seqid: 10000-28
+  - seqid: 7059-14
+  - seqid: 9995-6
+
+output:
+  - build
+  - notes.sex
+  - notes.source_id
+  - trait.desc
+  - total.samples
+ ```
+
+In the YAML file, we have specified the project and study that we want to query, as well as some specific seqid traits.
+
+*The `trait` block limits the export to the specified `seqid` traits.*
+
+Secondly, we need a list of SNPs that we use for filtering the data.
+We can create a file named `snp_list.txt` containing the following:
+
+```text
+CHR,POS
+4,29721067
+5,157004314
+6,167099480
+7,31837152
+7,140838327
+8,131244697
+10,25816112
+11,11521474
+12,70397835
+21,43962980
+</code></pre>
+<p>Then, we can run the <code>export</code> using the following command:</p>
+<pre><code>gwasstudio export --search-file search_believe.yml --snp-list-file snp_list.txt
+</code></pre>
+<p>Sample log output:</p>
+<pre><code class="language-terminaloutput">2025-10-08 17:05:50.707 | INFO     | Gwasstudio started
+2025-10-08 17:05:50.737 | INFO     | Processing search_believe.yml
+2025-10-08 17:05:51.488 | INFO     | 3 results found. Writing to out_meta.csv
+2025-10-08 17:05:53.877 | INFO     | Dask local cluster: starting 2 workers, with 4GiB of memory and 2 cpus per worker
+2025-10-08 17:05:53.877 | INFO     | Dask cluster dashboard: http://127.0.0.1:8787/status
+2025-10-08 17:05:53.889 | INFO     | Processing the group pqtl_believe
+2025-10-08 17:05:53.890 | INFO     | Running batch 1/1 (4 items)
+2025-10-08 17:06:55.436 | INFO     | Batch 1 completed.
+2025-10-08 17:06:55.437 | INFO     | Shutting down Dask client and cluster.
+</code></pre>
+<p>The resulting summary‑statistics tables are written to the current directory.
+Again, you can change the output file prefix with <code>--output-prefix</code> <prefix>.</p>
+<h2 id="filtering-a-study-by-snps-on-some-traits-gwas-study"><strong>Filtering a study by SNPs on some traits - GWAS study</strong></h2>
+<p>This example shows how to filter a study by a list of SNPs and retrieve the corresponding summary statistics.</p>
+<p>The chosen study is "ukb-d", which belongs to the "opengwas" project.</p>
+<p>First, let's create a query file named <code>search_ukb.yml</code> containing the following:</p>
+<pre><code class="language-yaml">project: opengwas
+study: ukb-d
+
+trait:
+  - desc: heart failure
+
+output:
+  - build
+  - notes.sex
+  - notes.source_id
+  - total.samples
+  - total.cases
+  - total.controls
+  - trait.desc
+</code></pre>
+<p>By default, GWASStudio performs a case-insensitive substring search of the trait description.
+This query matches four traits that contain 'heart failure' anywhere in the description.</p>
+<p>Secondly, we need a list of SNPs that we use for filtering the data.
+We can create a file named <code>snp_list.txt</code> containing the following:</p>
+<pre><code class="language-text">CHR,POS
+4,29721067
+5,157004314
+6,167099480
+7,31837152
+7,140838327
+8,131244697
+10,25816112
+11,11521474
+12,70397835
+21,43962980
+</code></pre>
+<p>Then, we can run the <code>export</code> using the following command:</p>
+<pre><code>gwasstudio export --search-file search_ukb.yml --snp-list-file snp_list.txt
+</code></pre>
+<p>Log snippet:</p>
+<pre><code class="language-terminaloutput">2025-10-08 18:35:36.884 | INFO     | Gwasstudio started
+2025-10-08 18:35:36.925 | INFO     | Processing search_ukb.yml
+2025-10-08 18:35:37.378 | INFO     | 4 results found. Writing to out_meta.csv
+2025-10-08 18:35:40.466 | INFO     | Dask local cluster: starting 2 workers, with 4GiB of memory and 2 cpus per worker
+2025-10-08 18:35:40.467 | INFO     | Dask cluster dashboard: http://127.0.0.1:8787/status
+2025-10-08 18:35:40.532 | INFO     | Processing the group opengwas_ukb-d
+2025-10-08 18:35:40.534 | INFO     | Running batch 1/1 (4 items)
+2025-10-08 18:36:04.388 | INFO     | Batch 1 completed.
+2025-10-08 18:36:04.389 | INFO     | Shutting down Dask client and cluster.
+</code></pre>
+<p>Results are written to the current directory; use <code>--output‑prefix</code> to customise the filename.</p>
 
 
 
@@ -595,7 +824,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-09-23
+    2025-10-08
   </span>
 
     
