@@ -15,7 +15,7 @@ study: believe
 
 output:
   - trait.desc
- ```
+```
 
 In the YAML file, we have specified the project and study that we want to query, as well as the field that we want in
 the output.
@@ -61,7 +61,7 @@ output:
   - notes.source_id
   - trait.desc
   - total.samples
- ```
+```
 
 In the YAML file, we have specified the project and study that we want to query, as well as some specific seqid traits.
 
