@@ -1,10 +1,10 @@
 import importlib.metadata
-import os
+import tempfile
 from pathlib import Path
 
 from cloup import Context, HelpFormatter, HelpTheme, Style
 from loguru import logger as a_logger
-from platformdirs import user_log_dir, user_config_dir, user_data_dir
+from platformdirs import user_config_dir, user_data_dir, user_log_dir
 
 __all__ = [
     "__appname__",
@@ -27,12 +27,15 @@ except importlib.metadata.PackageNotFoundError:
     __version__ = "unknown"
 
 home_path = Path.home()
-if os.access(home_path, os.W_OK):
+home_writable = home_path.exists() and home_path.is_dir() and home_path.stat().st_mode & 0o200
+
+if home_writable:
     log_dir = Path(user_log_dir(__appname__))
     config_dir = Path(user_config_dir(__appname__))
-    data_dir = Path(user_data_dir(__appname__))
+    data_dir = Path(user_data_dir(__appname__)) / "data"
 else:
-    base_dir = Path("/tmp") / __appname__
+    tmp_root = Path(tempfile.gettempdir())
+    base_dir = tmp_root / f"{__appname__}_tmp"
     log_dir = base_dir / "log"
     config_dir = base_dir / "config"
     data_dir = base_dir / "data"

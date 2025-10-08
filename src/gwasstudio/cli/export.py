@@ -79,15 +79,7 @@ def _process_function_tasks(
 
     # Check Dask client
     if dask_client is None:
-        raise ValueError("Missing Dask client. Please pass `dask_client=client`.")
-    else:
-        logger.info(f"Dask client connected: {dask_client}")
-        try:
-            scheduler_info = dask_client.scheduler_info()
-            workers = scheduler_info.get("workers", {})
-            logger.info(f"Connected to {len(workers)} workers.")
-        except Exception as e:
-            logger.warning("Failed to fetch scheduler info", exc_info=True)
+        raise ValueError("Missing Dask client")
     
     # Helper: read SNP list lazily
     def _read_snp_list(fp: str) -> pd.DataFrame | None:
