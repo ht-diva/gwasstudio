@@ -31,9 +31,11 @@ nav:
   - 'Menu':
     - 'Welcome': index.md
     - 'Installation': installation.md
+    - 'Getting Started': getting-started.md
+    - 'Examples': examples.md
+    - 'Documentation': documentation
     - 'Configuration': configuration.md
     - 'Commands': commands.md
-    - 'Getting Started': getting-started.md
     - 'Metadata': metadata.md
     - 'Population': population.md
     - 'Projects' : projects.md
