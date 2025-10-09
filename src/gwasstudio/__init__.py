@@ -26,12 +26,14 @@ try:
 except importlib.metadata.PackageNotFoundError:
     __version__ = "unknown"
 
+default_log_dir = Path(user_log_dir(__appname__))
 try:
-    test_file = Path(user_log_dir(__appname__)) / "test.txt"
-    test_file.touch()
+    default_log_dir.mkdir(parents=True, exist_ok=True)
+    test_file = default_log_dir / ".write_test"
+    test_file.write_text("test")
     test_file.unlink()
     dir_writable = True
-except PermissionError:
+except Exception:
     dir_writable = False
 
 if dir_writable:
