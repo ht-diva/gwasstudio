@@ -69,6 +69,7 @@ def configure_logging(stdout, verbosity, _logger):
 @cloup.option_group(
     "Dask cluster options",
     cloup.option("--address", default=None, help="Dask gateway address (only for remote cluster config)"),
+    cloup.option("--image", default=None, help="Dask gateway image"),
     cloup.option("--cores-per-worker", default=2, help="CPU cores per worker"),
     cloup.option("--job-script-prologue", default=[], help="Commands to add to script before launching worker."),
     cloup.option(
@@ -122,6 +123,7 @@ def cli_init(
     aws_verify_ssl,
     dask_deployment,
     address,
+    image,
     workers,
     cores_per_worker,
     memory_per_worker,
@@ -177,6 +179,7 @@ def cli_init(
         "memory_per_worker": memory_per_worker,
         "interface": interface,
         "address": address,
+        "image": image,
         "walltime": walltime,
         "job_script_prologue": job_script_prologue,
         "python": python,

@@ -19,6 +19,7 @@ from gwasstudio.utils.enums import MetadataEnum
 from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataframe_from_mongo_objs
 from gwasstudio.utils.mongo_manager import manage_mongo
 from gwasstudio.utils.path_joiner import join_path
+from dask.distributed import Client
 
 
 def create_output_prefix_dict(df: pd.DataFrame, output_prefix: str, source_id_column: str) -> dict:
@@ -62,6 +63,7 @@ def _process_function_tasks(
     *,
     function_name: Callable,
     snp_list_file: str | None = None,
+    dask_client: Client = None,
     **kwargs,
 ) -> None:
     """
@@ -75,6 +77,10 @@ def _process_function_tasks(
     function_name : Callable
         One of the extraction functions (``extract_full_stats``, …).
     """
+
+    # Check Dask client
+    if dask_client is None:
+        raise ValueError("Missing Dask client")
 
     # Helper: read SNP list lazily
     def _read_snp_list(fp: str) -> pd.DataFrame | None:
@@ -122,7 +128,7 @@ def _process_function_tasks(
     for i in range(0, len(tasks), batch_size):
         batch_no = i // batch_size + 1
         logger.info(f"Running batch {batch_no}/{total_batches} ({batch_size} items)")
-        compute(*tasks[i : i + batch_size])
+        compute(*tasks[i : i + batch_size], scheduler=dask_client)
         logger.info(f"Batch {batch_no} completed.", flush=True)
 
 
@@ -274,7 +280,7 @@ def export(
         logger.error(f"A valid dask deployment type must be set from: {dask_deployment_types}")
         raise SystemExit(1)
 
-    with manage_daskcluster(ctx):
+    with manage_daskcluster(ctx) as client:
         batch_size = get_dask_batch_size(ctx)
         grouped = df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
         for name, group in grouped:
@@ -306,6 +312,7 @@ def export(
                         pvalue_sig=pvalue_sig,
                         pvalue_limit=pvalue_limit,
                         phenovar=phenovar,
+                        dask_client=client,
                     )
                 case (_, str() as snp_fp, _):
                     _process_function_tasks(
@@ -315,6 +322,7 @@ def export(
                         plot_out=plot_out,
                         color_thr=color_thr,
                         s_value=s_value,
+                        dask_client=client,
                     )
                 case (_, _, str() as bed_fp):
                     bed_region = pd.read_csv(
@@ -331,6 +339,7 @@ def export(
                         plot_out=plot_out,
                         color_thr=color_thr,
                         s_value=s_value,
+                        dask_client=client,
                     )
                 case _:
                     _process_function_tasks(
@@ -339,4 +348,5 @@ def export(
                         plot_out=plot_out,
                         color_thr=color_thr,
                         s_value=s_value,
+                        dask_client=client,
                     )
