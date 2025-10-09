@@ -58,7 +58,7 @@ class DaskCluster:
                         _mem = float(_mem)
                 except Exception as e:
                     raise ValueError(f"Invalid format for --memory_per_worker: {_mem}") from e
-                
+
                 self.gateway = Gateway(address=_address)
                 options = self.gateway.cluster_options()
                 options.worker_cores = _cores  # Cores per worker

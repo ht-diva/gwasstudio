@@ -21,6 +21,7 @@ from gwasstudio.utils.mongo_manager import manage_mongo
 from gwasstudio.utils.path_joiner import join_path
 from dask.distributed import Client
 
+
 def create_output_prefix_dict(df: pd.DataFrame, output_prefix: str, source_id_column: str) -> dict:
     """
     Generates a dictionary mapping data IDs to output prefixes based on column values.
@@ -80,7 +81,7 @@ def _process_function_tasks(
     # Check Dask client
     if dask_client is None:
         raise ValueError("Missing Dask client")
-    
+
     # Helper: read SNP list lazily
     def _read_snp_list(fp: str) -> pd.DataFrame | None:
         if not fp:
@@ -129,6 +130,7 @@ def _process_function_tasks(
         logger.info(f"Running batch {batch_no}/{total_batches} ({batch_size} items)")
         compute(*tasks[i : i + batch_size], scheduler=dask_client)
         logger.info(f"Batch {batch_no} completed.", flush=True)
+
 
 HELP_DOC = """
 Export summary statistics from TileDB datasets with various filtering options.
