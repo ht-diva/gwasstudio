@@ -7,6 +7,7 @@ from ruamel.yaml import YAML
 
 from gwasstudio.utils import generate_random_word
 from gwasstudio.utils import lower_and_replace
+from gwasstudio.utils.enums import MetadataEnum
 from gwasstudio.utils.hashing import Hashing
 from gwasstudio.utils.metadata import load_search_topics, load_metadata, process_row
 
@@ -54,7 +55,10 @@ class TestLoadSearchTopics(unittest.TestCase):
             topics,
             {"project": "test_project", "study": "test_study", "category": "Test Category", "data_id": "Test Data ID"},
         )
-        self.assertEqual(output_fields, ["project", "study", "category", "data_id", "field1", "field2"])
+        self.assertEqual(
+            output_fields,
+            ["project", "study", "category", "data_id", MetadataEnum.get_source_id_field(), "field1", "field2"],
+        )
 
         # Remove the temporary file
         Path(self.test_file).unlink()
