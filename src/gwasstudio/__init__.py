@@ -26,10 +26,15 @@ try:
 except importlib.metadata.PackageNotFoundError:
     __version__ = "unknown"
 
-home_path = Path.home()
-home_writable = home_path.exists() and home_path.is_dir() and home_path.stat().st_mode & 0o200
+try:
+    test_file = Path(user_log_dir(__appname__)) / "test.txt"
+    test_file.touch()
+    test_file.unlink()
+    dir_writable = True
+except PermissionError:
+    dir_writable = False
 
-if home_writable:
+if dir_writable:
     log_dir = Path(user_log_dir(__appname__))
     config_dir = Path(user_config_dir(__appname__))
     data_dir = Path(user_data_dir(__appname__)) / "data"
