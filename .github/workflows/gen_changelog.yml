@@ -30,3 +30,7 @@ jobs:
         with:
           config: pyproject.toml
           args: -vv --latest --no-exec --github-repo ${{ github.repository }}
+        env:
+          OUTPUT: docs/changelog.md
+      - name: Print the changelog
+        run: cat "${{ steps.git-cliff.outputs.changelog }}"
