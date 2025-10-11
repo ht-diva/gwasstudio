@@ -23,7 +23,7 @@ jobs:
           sudo apt-get install -y curl
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          brew install typos
+          brew install typos-cli
       - name: Generate a changelog
         uses: orhun/git-cliff-action@v4
         id: git-cliff
