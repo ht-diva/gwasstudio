@@ -125,6 +125,54 @@ def _process_function_tasks(
         compute(*tasks[i : i + batch_size])
         logger.info(f"Batch {batch_no} completed.", flush=True)
 
+    def _coloc(
+        uri: str,
+        cfg: dict[str, str],
+        pval:float,
+        maf:float,
+        n: int,
+        prop_cases:float
+        out_prefix: str | None,
+        fmt: str,
+        **inner_kwargs,
+    ):
+    """ Caluclate Approximate Bayes Factor (Wakefield, 2009, Genet Epidemiol.).
+        Based on code from coloc: https://github.com/chr1swallace/coloc
+    Args:
+        pval (float): GWAS p-value
+        maf (float): Minor allele freq
+        n (int): Sample size
+        prop_cases (float or None): number of cases, if left blank will assume
+            quantitative trait
+    Returns:
+        natural log(ABF)
+    """
+    # Assert/set types
+    pval = float(pval)
+    maf = float(maf)
+    n = int(n)
+    prop_cases = float(prop_cases) if prop_cases else None
+
+    # Estimate variance for quant trait
+    if prop_cases is None:
+        sd_prior = 0.15
+        v = 1 / (2 * n * maf * (1 - maf))
+    # Estimate var for cc study
+    else:
+        sd_prior = 0.2
+        v = 1 / (2 * n * maf * (1 - maf) * prop_cases * (1 - prop_cases))
+
+    # Calculate Z-score
+    z = np.absolute(norm.ppf(pval / 2))
+
+    # Calc shrinkage factor: ratio of the prior variance to the total variance
+    r = sd_prior**2 / (sd_prior**2 + v)
+
+    # Approximate BF - ln scale to compare in log natural scale with LR diff
+    lABF = 0.5 * (np.log(1 - r) + (r * z**2))
+
+    return lABF
+
 
 HELP_DOC = """
 Export summary statistics from TileDB datasets with various filtering options.
