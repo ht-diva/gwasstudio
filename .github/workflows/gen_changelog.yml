@@ -1,0 +1,32 @@
+name: Generate Changelog
+
+on:
+  push:
+    branches: [ "cliff" ]
+    tags:
+      - "v*.*.*"
+
+jobs:
+  generate-changelog:
+    name: Generate changelog
+    runs-on: ubuntu-24.04
+    outputs:
+      release_body: ${{ steps.git-cliff.outputs.content }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install typos
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          brew install typos
+      - name: Generate a changelog
+        uses: orhun/git-cliff-action@v4
+        id: git-cliff
+        with:
+          config: pyproject.toml
+          args: -vv --latest --no-exec --github-repo ${{ github.repository }}
