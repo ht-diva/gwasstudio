@@ -42,4 +42,4 @@ jobs:
           set +e
           git add docs/changelog.md
           git commit -m "Update changelog"
-          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git cliff
+          git push https://${{ secrets.PAT }}@github.com/${GITHUB_REPOSITORY}.git cliff
