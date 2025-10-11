@@ -29,8 +29,17 @@ jobs:
         id: git-cliff
         with:
           config: pyproject.toml
-          args: -vv --latest --no-exec --github-repo ${{ github.repository }}
+          args: -vv --no-exec --github-repo ${{ github.repository }}
         env:
           OUTPUT: docs/changelog.md
       - name: Print the changelog
         run: cat "${{ steps.git-cliff.outputs.changelog }}"
+      - name: Commit
+        run: |
+          git checkout <branch>
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          set +e
+          git add docs/changelog.md
+          git commit -m "Update changelog"
+          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git cliff
