@@ -37,9 +37,11 @@ jobs:
       - name: Commit
         run: |
           git checkout cliff
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           set +e
           git add docs/changelog.md
           git commit -m "Update changelog"
-          git push https://${{ secrets.PAT }}@github.com/${GITHUB_REPOSITORY}.git cliff
+          git push origin cliff
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
