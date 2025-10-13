@@ -34,14 +34,14 @@ jobs:
           OUTPUT: docs/changelog.md
       - name: Print the changelog
         run: cat "${{ steps.git-cliff.outputs.changelog }}"
-      - name: Commit
-        run: |
-          git checkout cliff
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          set +e
-          git add docs/changelog.md
-          git commit -m "Update changelog"
-          git push origin cliff
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Commit
+#        run: |
+#          git checkout cliff
+#          git config --global user.name "github-actions[bot]"
+#          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+#          set +e
+#          git add docs/changelog.md
+#          git commit -m "Update changelog"
+#          git push origin cliff
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
