@@ -1,0 +1,728 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+[Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.8.3] - 2025-10-13
+
+### 🐛 Bug Fixes
+
+- Adjiust site_url
+- Add a field to the output_fields list used in the load_search_topics function, close #88
+- Add the missing field to the metadata_utils unit test, close #94
+
+### 💼 Other
+
+- Change auth to simple
+- Add image as option
+- Make docker image
+- Format mem
+- Remove time & close gateway
+- Update cluster connection & wait
+- Add error handling for client connection
+- Debug connection loss
+- Explicitly pass client
+- Writable log_dir
+- Writable all dirs
+- Writable all dirs debug
+- Writable all dirs update
+- Prepare PR
+
+### 🚜 Refactor
+
+- Do some linting
+
+### 📚 Documentation
+
+- Update README
+- Add main page and details about installation
+- Add getting started info
+- Typo
+- Unused
+- Fix url
+- Minor
+- Minor updates for export
+- Add the following tables to the docs:
+- Add projects page & ukb/-ppp info
+- Add decode, finngen, g&h info
+- Improve the introduction
+- Add the examples section
+- Add a changelog to the documentation
+
+### 🎨 Styling
+
+- Update changelog template
+- Linting
+
+### ⚙️ Miscellaneous Tasks
+
+- Update pre-commit tools
+- Fix typos package name
+- Add output
+- Commit the changelog to the repo
+- Update generate changelog action
+- Comment out the changelog commit, as it isn't working at the moment
+
+## [2.8.2] - 2025-09-25
+
+### 🚀 Features
+
+- Set a default for the uri
+
+### 💼 Other
+
+- Bump version
+
+## [2.8.1] - 2025-09-24
+
+### 🚀 Features
+
+- Adjust the paths in the dockerfile so that it behaves like the conda setup, add several Dask options for SLURMCluster.
+
+### 💼 Other
+
+- Bump version
+
+## [2.8.0] - 2025-09-22
+
+### 🚀 Features
+
+- Simplify Dask configuration
+
+### 💼 Other
+
+- Bump version
+
+## [2.7.0] - 2025-09-18
+
+### 🐛 Bug Fixes
+
+- Avoid sending live TileDB objects across the network; add utility for joining filesystem paths and S3 URIs
+- Better logger message about the batches
+
+### 💼 Other
+
+- Bump version
+
+### 🧪 Testing
+
+- Add unit tests for the list CLI module helpers
+
+## [2.6.0] - 2025-09-16
+
+### 🚀 Features
+
+- Add the list projects command and expose cli commands through __init__.py
+
+### 🐛 Bug Fixes
+
+- Poetry-core 2.2.0 from conda-forge is broken
+
+### 💼 Other
+
+- Bump version
+
+## [2.5.0] - 2025-08-11
+
+### 🚀 Features
+
+- TileDB datasets grouping
+
+### 🐛 Bug Fixes
+
+- F-string syntax error
+
+### 💼 Other
+
+- Bump version
+
+### ⚡ Performance
+
+- Add new metadata enums and set pyarrow as backend
+
+### ⚙️ Miscellaneous Tasks
+
+- Add pandas-stubs dependency
+- Remove unused stuff
+
+## [2.4.0] - 2025-08-11
+
+### 🚀 Features
+
+- Update Mongo query composition
+- Add output prefix dictionary generator
+
+### 🐛 Bug Fixes
+
+- Catch yaml loading error
+
+### 💼 Other
+
+- Bump version
+- Copying from lzv
+
+### 🚜 Refactor
+
+- Add missing column check and simplify dataframe processing
+
+### ⚙️ Miscellaneous Tasks
+
+- Add example files module
+
+## [2.3.1] - 2025-07-17
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump version
+
+## [2.3.0] - 2025-07-15
+
+### 🚀 Features
+
+- Update data model, queries and ingestion.
+- *(extraction_methods.py)* Refactor tiledb_array_query to handle errors by adjusting attributes.
+- *(tdb_schema)* Implement TileDB schema creator
+
+### 🐛 Bug Fixes
+
+- Replace separator in the output fields to match column data types
+
+### 💼 Other
+
+- Update dataframe column access to use `.loc`
+- Make it compatible with py3.11
+
+### 🚜 Refactor
+
+- Update metadata query function for better performance
+- Rename notes.source_id to notes_source_id in export
+- Refactor TileDBSchemaCreator to use BaseEnum
+-  refactor: Update test scripts for improved testing coverage
+
+      - Adding tests for data ingestion without pvalue
+      - Ensuring correct query results when using the 'search_example_01.yml' file and 'search_example_04.yml' file
+      - Verifying export functionality with different file formats and settings
+
+## [2.2.1] - 2025-07-04
+
+### 💼 Other
+
+- Bump version
+
+### 🚜 Refactor
+
+- Update Dask cluster deployment options for SLURM and gateway setups
+
+## [2.2.0] - 2025-07-03
+
+### 🚀 Features
+
+- *(cli/export)* Enhance export command with several improvements
+-  feat(cli/ingest.py): Implement TileDB SM configuration support in ingest
+
+   This commit adds support for using the TileDB SM configuration when ingesting datasets from the command line interface (CLI). The change includes retrieving the SM configuration from the configuration file and passing it to the `process_and_ingest` function. Additionally, minor adjustments were made to import statements to reflect this new functionality.
+
+### 🐛 Bug Fixes
+
+-  fix(cli/export.py): Update attribute export options in export.py
+
+   Updated the default attribute export options for the '--attr' argument in `src/gwasstudio/cli/export.py`. The default attribute string now includes "MLOG10P" as well as the original "BETA,SE,EAF".
+
+   GWASStudio now ingests and exports the MLOG10P attribute using default options.
+
+### 🧪 Testing
+
+-  test: Add End-to-End Test Script for CLI
+
+     This commit introduces an end-to-end test script (cli_test.sh) to the existing suite of tests. The script runs through the complete pipeline, including ingesting data, querying data, filtering by traits and regions, exporting data in different formats, and performing Locusbreaker analysis. This is aimed at ensuring the correctness and consistency of the command-line interface (CLI) functionality.
+
+### ⚙️ Miscellaneous Tasks
+
+- Remove a print statement
+- Bump version
+
+## [2.1.0] - 2025-06-26
+
+### 🚀 Features
+
+-  feat(hashing): Refactor compute_hash function to improve flexibility
+
+   If a file path is provided, the function computes the hash based on both filename and file content.
+   Previous behavior: Function only accepted a file path as input and returned the SHA-256 hash based on that file's content.
+
+   This refactoring fixes #64
+
+### 🐛 Bug Fixes
+
+-  fix: Fix get_snp_list call for None case
+   The function now handles the case when snp_list_file is None by not calling get_snp_list, preventing a potential error.
+
+### 🚜 Refactor
+
+- *(mongo)* Update logger message for non-unique ID (warning instead of error)
+- Adapt Dask SLURM cluster for auto-scaling and improved performance
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump version
+
+## [2.0.0] - 2025-06-23
+
+### 🚀 Features
+
+- Remove PyArrow dependency in _process_regions and refactor related functions
+- Embedded MongoDBManager with customizable port and timeout
+- Add Gwasstudio CLI Test Script and related files
+-  feat(CLI): Add output format option to export command
+
+   This commit introduces an option for specifying the output file format when using the export command in the CLI. The available formats are parquet, csv.gz, and csv.
+
+   Note that the 'compression' parameter has been deprecated and replaced with a boolean flag to indicate whether the file should be compressed or not. Also, the default value for the file format is now 'csv.gz'.
+
+   Previously, the output format was hardcoded as csv, which made it inconvenient if users wanted to export their data in a different format. With this change, users have the flexibility to choose the format that best suits their needs.
+
+   Footer: No breaking changes or issues are closed with this commit.
+
+### 🐛 Bug Fixes
+
+- Fix missing argument
+- Update mongo manager to use default port 27018
+- Reenable Dask functionality in export.py
+- Switch to delayed() method for reading snp list file
+-  fix: Fix MongoDB URI handling for embedded and localhost configurations
+   The script was not properly checking if the MongoDB URI provided in the configuration was localhost or not when using an embedded MongoDB server. This commit corrects the issue by adding a condition to check if the URI contains "localhost:27018".
+
+### 💼 Other
+
+- Modifications to improve space
+- Adapt the export to new schema
+- Add option to print the snps and pvalue
+- Add scipy library
+- Update `ingest.py` to include `pvalue` as a flag in the CLI options and add documentation for the new flag
+- Linting and fix tiledb_iterator_query_df used before assignment
+- Rename the boolean argument to clearly state the action
+- Change order of traits column and locusbreaker
+- Add Dask to export
+- Add function for SNPID and change to write_table
+- Review copilot: Moving sno list function outside dask. Modifying description of function
+- Changing output_file in output_prefix
+- Re-arranging functions in files
+- Ruff re-formatting
+- Resolving warning and empty regions error
+- Modifying the README
+- Adding table of contents
+- Adding output
+- Small edits
+- Resolving review comments
+- Move trait_id list calculation to handle both notes and data_id cases
+- Update README.md
+- Bump version
+
+### 🚜 Refactor
+
+- Refactor export functions for output prefix handling
+- *(extraction_methods)* Introduce TileDB dimensions constants for consistent query usage
+
+### 📚 Documentation
+
+- Update README
+
+### 🧪 Testing
+
+- Add test for writing CSV with GZip compression
+
+### ⚙️ Miscellaneous Tasks
+
+- *(build_decode_dictionary.py)* Remove obsolete script
+- Update gitignore
+- Simplify cli_test.sh script by introducing a run_command function
+- Update README and example files
+- Check if the gwasstudio command is available
+
+## [1.0.0] - 2025-05-28
+
+### 🚀 Features
+
+- Add Bokeh dependency and refactor Dask cluster management
+
+### 🐛 Bug Fixes
+
+- Fixing locusbreaker
+- Fix test
+
+### 💼 Other
+
+- Makefile updates:
+
+* Added create-env target to create the conda environment if it doesn't exist.
+* Simplified the if statements for activating the conda environment.
+* Removed the mongo_docker_run, mongo_docker_stop, and m1_env targets.
+* Updated the TARGETS variable to include create-env.
+* Added ENV_NAME and CONDA_ACTIVATE variables for better readability and maintainability.
+- Remove the project_list property and its associated methods from the ConfigurationManager class.
+- Linting
+- Changing region function
+- Changing functions of regions
+- Adding sampled files for testing
+- Provide an embedded mongodb setup, fix #46
+- Add an option to shorten hashes
+- Use a shorter version of the hash
+- Reformat the hashing function and set the default algorithm and hash length in the configuration file.
+- Enable dask ingestion
+- Set by default local Dask deployment
+- Merge the two ingest actions into one
+- Add an option to choose between metadata ingestion, data ingestion, or both
+- Assume file system ingestion if scheme it is not S3
+- Update Makefile
+- Add search and metadata support files
+- Update Getting started section in the README
+- Update authors and bump version
+- Update docker environment
+
+## [0.9.5] - 2025-04-14
+
+### 💼 Other
+
+- Update metadata processing and ingestion logic
+
+- Improve `ingest_metadata` to use a generator for processing rows, reducing memory usage.
+- Add logging for the number of documents processed during ingestion.
+
+## [0.9.4] - 2025-04-10
+
+### 🐛 Bug Fixes
+
+- Fix NoneType error; refactoring
+- Fix choice
+- Fix the save function to update records properly
+- Fix search files
+
+### 💼 Other
+
+- Improve wording
+- Refactor export functionality and add file existence check
+
+- Refactored the `export` command in `src/gwasstudio/cli/export.py` to use a prefix for output files instead of a single output file.
+- Added a `check_file_exists` function in `src/gwasstudio/utils/__init__.py` to check if a file exists and log the appropriate message.
+- Updated the import statements in `src/gwasstudio/cli/export.py` to include the new `check_file_exists` function and `get_mongo_uri` function.
+- Updated the `export` function to use the new `check_file_exists` function, the `output_prefix` instead of `output_file` and `get_mongo_uri` function to retrieve mongodb details.
+- Bumped code version.
+- Refactor data export and metadata query functionality
+
+- Refactored the `export` command in `src/gwasstudio/cli/export.py` to use the `write_table` function for writing DataFrames to disk.
+- Updated the `meta_query` command in `src/gwasstudio/cli/metadata/query.py` to use the `write_table` function for writing query results.
+- Removed the deprecated `df_to_csv` function from `src/gwasstudio/utils/metadata.py`.
+- Added unit tests for the `write_table` function in `tests/unit/test_utils.py`.
+- Updated the `write_table` function in `src/gwasstudio/utils/__init__.py` to include a logger parameter and handle custom log messages.
+- Bumped code version
+
+## [0.9.2] - 2025-04-04
+
+### 💼 Other
+
+- Bump version
+- Write metadata query result during export
+- Update pre-commit config
+- Update README
+- Add Vault mount point option and update Vault integration
+
+## [0.9.1] - 2025-03-19
+
+### 💼 Other
+
+- Refactor Dask deployment options, update cluster creation and client setup in dask_client.py, ingest.py and main.py
+- Remove comments
+- Remove other comments
+- Add metadata to export
+- Adding searchfile example
+- Data.id does not exist in the DB, data_id will be added to the result by default
+- Remove duplicated options
+- Make the options consistent
+- Pyarrow is needed
+- Rename `format` to `file_format` to avoid shadowing the built-in Python function and other fixes
+- Refactor config handling and reorganize code structure
+
+- Rename cfg to tiledb in context object for clarity
+- Create new utils/cfg.py module for centralized configuration management
+- Move metadata utilities from cli/metadata/utils.py to utils/metadata.py
+- Enhance Dask deployment checks with specific deployment types
+- Update import statements across codebase to reflect new structure
+
+### 🚜 Refactor
+
+- Refactor export.py
+
+## [0.9.0] - 2025-03-14
+
+### 💼 Other
+
+- Reformat metadata util functions
+- Implement functions to retrieve configuration data from HashCorp vault
+- Bump version
+
+### 🚜 Refactor
+
+- Refactor the meta-query
+
+## [0.8.2] - 2025-03-12
+
+### 🐛 Bug Fixes
+
+- Fix missing dependency; add deptry package to check for issues with dependencies
+
+## [0.8.1] - 2025-03-12
+
+### 💼 Other
+
+- Add better logging options
+- Add Dask client option
+- Some linting
+- Resolve comments
+- Follow the same convention for the CLI options
+- Bump version
+
+## [0.8.0] - 2025-03-09
+
+### 🐛 Bug Fixes
+
+- Fix arch, make docker image lighter
+
+### 💼 Other
+
+- Build multi platform docker image
+- Update conda lock files
+- Slim down the docker image
+- Make hadolint happy
+- Update python to version 3.12
+- Update test action
+- Update base environment
+- Update the base environment
+- Fit the test action
+
+## [0.7.0] - 2025-03-03
+
+### 🐛 Bug Fixes
+
+- Fix test
+
+### 💼 Other
+
+- Add notes as field to store generic content; improve JSON support for storing JSON-formatted data within MongoDB
+- Modifying LB
+- Modifying locusbreaker and adding S and NEFF
+- Answer review gmauro
+- Linting, reformatting and fixing an import
+- Make a lighter image
+- Add arm64 build
+- Create the s3 bucket if if it does not exists
+- Add make
+- Try ubuntu-arm runner
+- Bump version
+
+## [0.6.8] - 2025-02-25
+
+### 🐛 Bug Fixes
+
+- Fix variable name
+
+## [0.6.7] - 2025-02-25
+
+### 🐛 Bug Fixes
+
+- Fix SSL check
+
+## [0.6.6] - 2025-02-25
+
+### 💼 Other
+
+- Add s3 credentials
+- Bump version
+
+## [0.6.5] - 2025-02-24
+
+### 💼 Other
+
+- Typo
+- Add type hint
+- Bump version
+
+## [0.6.4] - 2025-02-24
+
+### 🐛 Bug Fixes
+
+- Fix parse_uri
+
+### 💼 Other
+
+- Bump version
+
+## [0.6.3] - 2025-02-24
+
+### 💼 Other
+
+- Create tiledb schema
+- Bump version
+
+## [0.6.2] - 2025-02-23
+
+### 💼 Other
+
+- Enable ingestion to fs
+
+## [0.6.1] - 2025-02-23
+
+### 💼 Other
+
+- Add mongodb uri as a cli option
+- Meta_query use mongodb uri option
+- Bump version
+
+## [0.6.0] - 2025-02-19
+
+### 💼 Other
+
+- Update meta_ingest command to ingest metadata from a JSON array
+- Add whole GWAS output option
+- Linting
+- Reformat meta_query cli file
+- Add study to the unique_key
+- Update metadata ingest and query to handle input from table file
+- Improve meta-query logic fixing multi-key queries for trait, add case-sensitive option for the search
+- Bump version
+
+### 🚜 Refactor
+
+- Refactor meta_query to handle trait dictionaries with more elements
+
+## [0.5.1] - 2025-01-15
+
+### 🐛 Bug Fixes
+
+- Fix print
+- Fix mlog10p function
+- Fix ge, le filtering functions and add min
+- Fix few parameters
+- Fix few parameters and add option for using an external list of SNPs
+- Fix function name
+- Fix few parameters to make the pipeline work
+- Fix for ImportError: cannot import name '_manylinux' from 'packaging'
+- Fix connection manager
+- Fix env
+- Fix export version2
+- Fix import
+- Fix multiple errors, some code was only commented
+- Fix imports
+
+### 💼 Other
+
+- Add filter on pvalue
+- Add mlog10p_more_than filter and fix mlog10p values
+- Relax scipy version
+- Add the mlog10p maximum value for each sample
+- Add samples option
+- Proper output format
+- Add ingestion and s3 configuration
+- Adding s3 configuration also for export and query functions
+- Add locus breaker
+- Remove unwanted files
+- Use Ruff as linter and formatter
+- Memory_budget_mb has been deprecated
+- Remove unwanteed accessory file
+- Add hapmap3 list of SNPs
+- Put main.py back in its place
+- Remove cache files
+- Linting
+- Minor linting fixes
+- Simplify s3 configuration
+- Stops @bruno-ariano from continuing to move the main around
+- Checkout the repository
+- Remove python 3.12
+- Use miniconda env
+- Typo
+- Simplify environment.yml
+- Update python build system
+- Downgrade
+- Disable base
+- Not ignore bash profile files
+- Add pybedtools dependency
+- Downgrade numpy as required by tiledbvcf
+- Add dask dependency
+- Update actions/checkout version
+- Add mongodb models and some test units
+- Update github action
+- Update actions version
+- Still fix for ImportError: cannot import name '_manylinux' from 'packaging'
+- Add is_connected unit test
+- Add hash utils
+- Add compute_sha256 test
+- Remove poetry.lock
+- Update conda-locks
+- Update dependencies
+- Update README
+- Use unique key to retrieve objects
+- Add metadata ingest stub
+- Add click command
+- Save EnhancedDataProfile object
+- Move config inside the app, fix connection manager and add a unit test, optimize imports
+- Improve conda environment
+- Bump version
+- Add view command
+- Add command into main
+- Add meta-view command
+- Add meta-query command
+- Get total_samples from the dataset
+- Put the correct attribute
+- Add query test
+- Update metadata cli
+- Branch for ingestin of tiledb_unified
+- Adjusting for sha
+- Complete ingestion edits
+- Modify export
+- Adding export
+- Adding polars to snp selection
+- Include polars dependency
+- Add pandas dependency
+- Slight changes in the ingestions
+- Slightly adjust parameters
+- Update dependencies; remove pybedtools, add boto
+- Remove EA, NEA attributes
+- Update ingest with different path for s3 and files
+- Remove functions as they are under utils
+- Restore tests
+- Add pyarrow dependency
+- Remove EA, NEA attributes from schema also
+- Catch NotUniqueError
+- Update project name
+- Update meta-ingest
+- Provide an option to use as input the checksum list
+- Do not exit for the moment
+- Relax the string length constraint on the trait_desc argument
+- Use Singleton pattern for the configuration manager
+- Add an example of search template
+- Use src layouts and improve Docker support
+- Update conda environment
+- Implement meta_query traversing dictionary keys
+
+### 🧪 Testing
+
+- Test ruff
+- Test ruff 2
+
+## [0.2.0] - 2023-10-15
+
+### 🐛 Bug Fixes
+
+- Fix the exporter
+
+### 💼 Other
+
+- First commit
+- Add github workflow
+- Update README
+- Remove pip install poetry
+- Change image
+- Update shell
+- Remove mongomock
+- Change to debian image
+- Set locale
+- Add info and query commands
