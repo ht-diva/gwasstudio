@@ -1,6 +1,6 @@
 APPNAME=$(shell grep -m 1 name pyproject.toml|cut -f2 -d'"')
 TARGETS=build clean create-env dependencies deploy editable_install install test uninstall
-VERSION=$(shell grep version pyproject.toml|cut -f2 -d'"')
+VERSION=$(shell grep -m 1 version pyproject.toml|cut -f2 -d'"')
 ENV_NAME=${APPNAME}
 CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
 
