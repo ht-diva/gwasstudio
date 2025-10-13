@@ -15,11 +15,11 @@ dask_deployment_types = ["local", "gateway", "slurm"]
 def manage_daskcluster(ctx):
     dask_ctx = get_dask_config(ctx)
     cluster = DaskCluster(**dask_ctx)
-    client = cluster.get_client()
+    client = cluster.get_connected_client()
     logger.debug(f"Dask client: {client}")
     logger.info(f"Dask cluster dashboard: {cluster.dashboard_link}")
     try:
-        yield
+        yield client
     except Exception as e:
         logger.error(f"Error occurred: {e}")
         raise
@@ -37,6 +37,7 @@ class DaskCluster:
         * ``memory_per_worker`` – memory allocated per worker (string accepted by Dask)
         """
         _address = kwargs.get("address")
+        _image = kwargs.get("image")
         _cores = kwargs.get("cores_per_worker")
         _workers = kwargs.get("workers")
         _mem = kwargs.get("memory_per_worker")
@@ -50,21 +51,37 @@ class DaskCluster:
 
         if deployment == "gateway":
             if _address:
-                gateway = Gateway(address=_address, auth="kerberos")
-                options = gateway.cluster_options()
+                try:
+                    if isinstance(_mem, str) and _mem.lower().endswith("gib"):
+                        _mem = float(_mem[:-3])
+                    else:
+                        _mem = float(_mem)
+                except Exception as e:
+                    raise ValueError(f"Invalid format for --memory_per_worker: {_mem}") from e
+
+                self.gateway = Gateway(address=_address)
+                options = self.gateway.cluster_options()
                 options.worker_cores = _cores  # Cores per worker
                 options.worker_memory = _mem  # Memory per worker
-                options.worker_walltime = _walltime  # Time limit for each worker
+                options.image = _image  # Worker image
 
                 # Create a cluster
-                cluster = gateway.new_cluster(options)
+                cluster = self.gateway.new_cluster(options)
 
                 # Scale the cluster
                 cluster.scale(_workers)  # Minimum number of workers
                 logger.info(
                     f"Dask cluster: starting {_workers} workers, with {_mem} of memory and {_cores} cpus per worker and address {_address}"
                 )
-                self.client = Client(cluster)  # Connect to that cluster
+
+                logger.info("Connecting to Dask scheduler...")
+                self.client = cluster.get_client()
+                logger.info("Waiting for Dask workers to become available...")
+                self.client.wait_for_workers(n_workers=_workers, timeout=120)
+                worker_info = self.client.scheduler_info().get("workers", {})
+                if not worker_info:
+                    raise RuntimeError("No workers connected")
+                logger.info(f"Workers ready: {len(worker_info)}")
                 self.type_cluster = type(cluster)
             else:
                 raise ValueError("Address must be provided for gateway deployment")
@@ -129,7 +146,7 @@ class DaskCluster:
         result = round(number / divider)
         return max(result, 1)
 
-    def get_client(self):
+    def get_connected_client(self):
         return self.client
 
     def get_type_cluster(self):
@@ -139,3 +156,7 @@ class DaskCluster:
         if self.client:
             logger.info("Shutting down Dask client and cluster.")
             self.client.close()  # Close the client
+
+        if hasattr(self, "gateway") and self.gateway:
+            logger.info("Closing Dask Gateway session.")
+            self.gateway.close()  # Close the Dask Gateway
