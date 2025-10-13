@@ -1,0 +1,47 @@
+name: Generate Changelog
+
+on:
+  push:
+    branches: [ "cliff" ]
+    tags:
+      - "v*.*.*"
+
+jobs:
+  generate-changelog:
+    name: Generate changelog
+    runs-on: ubuntu-24.04
+    outputs:
+      release_body: ${{ steps.git-cliff.outputs.content }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install typos
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          brew install typos-cli
+      - name: Generate a changelog
+        uses: orhun/git-cliff-action@v4
+        id: git-cliff
+        with:
+          config: pyproject.toml
+          args: -vv --no-exec --github-repo ${{ github.repository }}
+        env:
+          OUTPUT: docs/changelog.md
+      - name: Print the changelog
+        run: cat "${{ steps.git-cliff.outputs.changelog }}"
+#      - name: Commit
+#        run: |
+#          git checkout cliff
+#          git config --global user.name "github-actions[bot]"
+#          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+#          set +e
+#          git add docs/changelog.md
+#          git commit -m "Update changelog"
+#          git push origin cliff
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

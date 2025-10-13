@@ -39,6 +39,7 @@ nav:
     - 'Metadata': metadata.md
     - 'Population': population.md
     - 'Projects' : projects.md
+    - 'Changelog': changelog.md
 
 # Plugins
 plugins:
