@@ -40,9 +40,7 @@ class ConfigurationManager(metaclass=SingletonConfigurationManager):
             if not configuration_file.exists():
                 configuration_file.parent.mkdir(parents=True, exist_ok=True)
                 logger.warning(
-                    "Copying default config file from {} package " "resource to {}".format(
-                        __appname__, configuration_file
-                    )
+                    "Copying default config file from {} package resource to {}".format(__appname__, configuration_file)
                 )
                 copy_config_file_from_package(configuration_file)
                 logger.warning(f"Configuration file has default values! Update them in {configuration_file}")

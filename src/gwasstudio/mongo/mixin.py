@@ -40,7 +40,7 @@ class MongoMixin:
 
     def ensure_is_mapped(self, op=None):
         if not self.map():
-            logger.warning("Document {} does not exist on remote, " "skipping {} operation".format(self.unique_key, op))
+            logger.warning("Document {} does not exist on remote, skipping {} operation".format(self.unique_key, op))
             return False
         return True
 
