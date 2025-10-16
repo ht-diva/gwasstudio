@@ -1,3 +1,6 @@
+import subprocess
+import datetime
+
 from contextlib import contextmanager
 
 from dask.distributed import Client
@@ -69,7 +72,7 @@ class DaskCluster:
                 cluster = self.gateway.new_cluster(options)
 
                 # Scale the cluster
-                cluster.scale(_workers)  # Minimum number of workers
+                cluster.scale(_workers)
                 logger.info(
                     f"Dask cluster: starting {_workers} workers, with {_mem} of memory and {_cores} cpus per worker and address {_address}"
                 )
@@ -77,11 +80,12 @@ class DaskCluster:
                 logger.info("Connecting to Dask scheduler...")
                 self.client = cluster.get_client()
                 logger.info("Waiting for Dask workers to become available...")
-                self.client.wait_for_workers(n_workers=_workers, timeout=120)
-                worker_info = self.client.scheduler_info().get("workers", {})
-                if not worker_info:
-                    raise RuntimeError("No workers connected")
-                logger.info(f"Workers ready: {len(worker_info)}")
+                try:
+                    self.client.wait_for_workers(n_workers=_workers, timeout=120)
+                except TimeoutError:
+                    logger.error("Timeout: Dask Gateway workers did not start within 120 seconds")
+                    raise RuntimeError("Dask Gateway workers timeout. Cluster may be overloaded")
+                logger.info(f"Workers ready: {len(self.client.scheduler_info()['workers'])}")
                 self.type_cluster = type(cluster)
             else:
                 raise ValueError("Address must be provided for gateway deployment")
@@ -104,7 +108,16 @@ class DaskCluster:
             logger.info(
                 f"Dask SLURM cluster: starting {_workers} workers, with {_mem} of memory and {_cores} cpus per worker"
             )
+            
+            logger.info("Connecting to Dask scheduler...")
             self.client = Client(cluster)  # Connect to that cluster
+            logger.info("Waiting for Dask workers to become available...")
+            try:
+                self.client.wait_for_workers(n_workers=_workers, timeout=120)
+            except TimeoutError:
+                logger.error("Timeout: Dask SLURM workers did not start within 120 seconds")
+                raise RuntimeError("Dask SLURM workers timeout. Cluster may be overloaded")
+            logger.info(f"Workers ready: {len(self.client.scheduler_info()['workers'])}")
             self.type_cluster = type(cluster)
 
         elif deployment == "local":
@@ -145,6 +158,36 @@ class DaskCluster:
         """
         result = round(number / divider)
         return max(result, 1)
+    
+    @staticmethod
+    def slurm_wait_time(job_id: int, default_timeout: int = 120) -> int:
+        """
+        Estimate wait time in seconds for a SLURM job ID using `squeue`.
+        If job is PENDING, calculates and returns wait time in seconds.
+        If job is RUNNING, returns default timeout.
+
+        Args:
+            job_id (int): The SLURM job ID  
+            default_timeout (int): The fallback wait time in seconds
+        Returns:
+            int: The SLURM queueing time in seconds
+        """
+        try:
+            start_result = subprocess.run(
+                ['squeue', '--start', '-j', str(job_id), '--noheader'],
+                capture_output=True, text=True, check=True
+            )
+            start_line = start_result.stdout.strip()
+            if not start_line:
+                return default_timeout  # Job already RUNNING
+            
+            start_time = datetime.datetime.strptime( start_line.split()[-1], "%Y-%m-%dT%H:%M:%S")
+            wait_seconds = (start_time - datetime.datetime.now()).total_seconds()
+            return max(wait_seconds, 0)
+
+        except Exception as e:
+            logger.warning(f"Failed to estimate SLURM queue wait: {e}")
+            return default_timeout
 
     def get_connected_client(self):
         return self.client
