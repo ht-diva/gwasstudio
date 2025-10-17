@@ -48,4 +48,4 @@ hashing:
 # TileDB configuration
 # https://cloud.tiledb.com/academy/structure/arrays/tutorials/basics/configuration/index.html
 tiledb_sm_config:
-  "sm.dedup_coords": 'true'
+  "sm.dedup_coords": 'false'
