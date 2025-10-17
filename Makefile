@@ -19,10 +19,15 @@ build: clean dependencies
 	fi; \
 	poetry build
 
+bump-version:
+	git-cliff --bumped-version > version.txt
+	python bump-version.py
+	git-cliff --bump > docs/changelog.md
+
 clean:
 	find . -name '*.pyc' -delete
 	find . -type d -name '__pycache__' -exec rm -rf {} +
-	rm -rf dist build
+	rm -rf dist build site
 
 # Target to create the conda environment if it doesn't exist
 create-env:
