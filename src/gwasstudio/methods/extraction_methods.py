@@ -74,6 +74,7 @@ def extract_snp_list(
     chromosomes_dict = snp_list.groupby("CHR")["POS"].apply(list).to_dict()
 
     attributes, tiledb_query = tiledb_array_query(tiledb_array, attrs=attributes)
+    dataframes = []
     for chrom, positions in chromosomes_dict.items():
         chromosome = int(chrom)
         unique_positions = list(set(positions))
@@ -90,9 +91,15 @@ def extract_snp_list(
                 color_thr=color_thr,
                 s_value=s_value,
             )
+        dataframes.append(tiledb_iterator_query_df)
 
-        kwargs = {"header": False, "index": False, "mode": "a"}
-        write_table(tiledb_iterator_query_df, f"{output_prefix}", logger, file_format=output_format, **kwargs)
+    # Concatenate all DataFrames
+    concatenated_df = pd.concat(dataframes, ignore_index=True)
+
+    concatenated_df = process_dataframe(concatenated_df, attributes)
+    # Write output
+    kwargs = {"index": False}
+    write_table(concatenated_df, f"{output_prefix}", logger, file_format=output_format, **kwargs)
 
 
 def extract_full_stats(
