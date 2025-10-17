@@ -11,12 +11,17 @@ All notable changes to this project will be documented in this file.
 - SNPs filtering output with header and overwrite, close #89
 - Set the dedup_coords configuration variable to its default value
 
+### 💼 Other
+
+- Bump version
+
 ### ⚙️ Miscellaneous Tasks
 
 - Ensure that the version is filtered correctly
 - Add a Makefile target for version bumping and changelog generation, close #99
 - Set the current version
 - Add git-cliff ignore file
+- Fix bump-version target
 
 ## [2.8.3] - 2025-10-13
 

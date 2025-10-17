@@ -20,7 +20,7 @@ build: clean dependencies
 	poetry build
 
 bump-version:
-	git-cliff --bumped-version > version.txt
+	git-cliff --bumped-version | sed 's/^v//' > version.txt
 	python bump-version.py
 	git-cliff --bump > docs/changelog.md
 
