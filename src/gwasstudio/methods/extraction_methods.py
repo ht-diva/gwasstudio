@@ -81,6 +81,10 @@ def extract_snp_list(
 
         tiledb_iterator_query_df = tiledb_query.df[chromosome, trait, unique_positions]
         tiledb_iterator_query_df = process_dataframe(tiledb_iterator_query_df, attributes)
+        if tiledb_iterator_query_df.empty:
+            logger.warning(f"No SNPs found for chromosome {chromosome}.")
+            continue
+    
         # Plot the dataframe
         title_plot = f"{trait} - {chromosome}:{min(unique_positions)}-{max(unique_positions)}"
         if plot_out:
@@ -93,12 +97,17 @@ def extract_snp_list(
             )
         dataframes.append(tiledb_iterator_query_df)
 
+    # No SNPs found
+    kwargs = {"index": False}
+    if not dataframes:
+        write_table(pd.DataFrame(columns=attributes), f"{output_prefix}", logger, file_format=output_format, **kwargs)
+        return
+    
     # Concatenate all DataFrames
     concatenated_df = pd.concat(dataframes, ignore_index=True)
-
     concatenated_df = process_dataframe(concatenated_df, attributes)
+
     # Write output
-    kwargs = {"index": False}
     write_table(concatenated_df, f"{output_prefix}", logger, file_format=output_format, **kwargs)
 
 
@@ -193,10 +202,15 @@ def extract_regions(
             )
         dataframes.append(tiledb_query_df)
 
+    # No regions found
+    kwargs = {"index": False}
+    if not dataframes:
+        write_table(pd.DataFrame(columns=attributes), f"{output_prefix}", logger, file_format=output_format, **kwargs)
+        return
+    
     # Concatenate all DataFrames
     concatenated_df = pd.concat(dataframes, ignore_index=True)
-
     concatenated_df = process_dataframe(concatenated_df, attributes)
+
     # Write output
-    kwargs = {"index": False}
     write_table(concatenated_df, f"{output_prefix}", logger, file_format=output_format, **kwargs)
