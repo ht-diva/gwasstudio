@@ -1,6 +1,6 @@
 [project]
 name = "gwasstudio"
-version = "v2.8.3"
+version = "v2.8.4"
 description = ""
 authors = [
     { name = "Gianmauro Cuccuru", email = "gianmauro.cuccuru@fht.org" },
@@ -78,7 +78,7 @@ DEP003 = [
 DEP004 = [
     "mongomock",
     "tomli",
-    "tomli_w"
+    "tomli_w",
 ]
 DEP002 = [
     "pyarrow",
@@ -90,7 +90,10 @@ header = "# Changelog\n\nAll notable changes to this project will be documented 
 body = "{% if version %}## [{{ version | trim_start_matches(pat=\"v\") }}] - {{ timestamp | date(format=\"%Y-%m-%d\") }}\n{% else %}## [unreleased]\n{% endif %}{% for group, commits in commits | filter(attribute=\"merge_commit\", value=false) | unique(attribute=\"message\")| group_by(attribute=\"group\") %}\n    ### {{ group | striptags | trim | upper_first }}\n    {% for commit in commits %}\n        - {% if commit.scope %}*({{ commit.scope }})* {% endif %}{% if commit.breaking %}[**breaking**] {% endif %}{{ commit.message | upper_first }}{% endfor %}\n{% endfor %}\n\n"
 trim = true
 render_always = true
-postprocessors = []
+postprocessors = [
+    { pattern = "\\((\\w+\\s)?#([0-9]+)\\)", replace = "([#${2}](<REPO>/issues/${2}))" },
+    { pattern = ".*", replace_command = "typos --write-changes -" },
+]
 
 [tool.git-cliff.git]
 conventional_commits = true

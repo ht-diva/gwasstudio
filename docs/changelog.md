@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.8.4] - 2025-10-17
+
+### 🐛 Bug Fixes
+
+- Add wait time for Dask workers, close #90
+- SNPs filtering output with header and overwrite, close #89
+- Set the dedup_coords configuration variable to its default value
+
+### ⚙️ Miscellaneous Tasks
+
+- Ensure that the version is filtered correctly
+- Add a Makefile target for version bumping and changelog generation, close #99
+- Set the current version
+- Add git-cliff ignore file
+
 ## [2.8.3] - 2025-10-13
 
 ### 🐛 Bug Fixes
@@ -27,6 +42,7 @@ All notable changes to this project will be documented in this file.
 - Writable all dirs debug
 - Writable all dirs update
 - Prepare PR
+- Bump version
 
 ### 🚜 Refactor
 
