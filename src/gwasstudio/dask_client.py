@@ -112,11 +112,7 @@ class DaskCluster:
             logger.info("Connecting to Dask scheduler...")
             self.client = Client(cluster)  # Connect to that cluster
             logger.info("Waiting for Dask workers to become available...")
-            try:
-                self.client.wait_for_workers(n_workers=_workers, timeout=120)
-            except TimeoutError:
-                logger.error("Timeout: Dask SLURM workers did not start within 120 seconds")
-                raise RuntimeError("Dask SLURM workers timeout. Cluster may be overloaded")
+            self.client.wait_for_workers(n_workers=_workers, timeout=None) # wait indefinitely
             logger.info(f"Workers ready: {len(self.client.scheduler_info()['workers'])}")
             self.type_cluster = type(cluster)
 
