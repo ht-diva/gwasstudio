@@ -9,7 +9,7 @@ from gwasstudio.utils import write_table
 
 def _locus_breaker(
     tiledb_results_pd, pvalue_limit: float = 3.3, pvalue_sig: float = 5, hole_size: int = 250000, phenovar: bool = False
-) -> list[pd.DataFrame] | pd.DataFrame:
+) -> list[pd.DataFrame]:
     """
     Breaking genome in locus
     Returns a series of parquet files describing the loci created dynamically around significant SNPs.
@@ -54,9 +54,9 @@ def _locus_breaker(
     )
     original_data = tiledb_results_pd.copy()
 
-    # If no rows remain after filtering, return an empty DataFrame
+    # If no rows remain after filtering, return empty DataFrames
     if tiledb_results_pd.empty:
-        return pd.DataFrame(expected_schema)
+        return [pd.DataFrame(expected_schema), pd.DataFrame(expected_schema)]
 
     # Group by 'contig' (chromosome) first, then calculate regions within each chromosome
     trait_res = []
