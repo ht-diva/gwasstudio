@@ -27,6 +27,8 @@ gwasstudio export [OPTIONS]
 - `--pvalue-sig FLOAT`: Maximum log p-value threshold within the window (default: `5.0`).
 - `--pvalue-limit FLOAT`: Log p-value threshold for loci borders (default: `3.3`).
 - `--hole-size INTEGER`: Minimum pair-base distance between SNPs in different loci (default: `250000`).
+- `--maf FLOAT`: MAF filter to apply before locusbreaker (default: `0.01`).
+- `--phenovar`: Boolean to compute phenovariance (Work in progress, not fully implemented yet) (flag).
 
 **SNP ID List Filtering Options:**
 
@@ -41,8 +43,6 @@ gwasstudio export [OPTIONS]
 **Regions Filtering Options:**
 
 - `--get-regions TEXT`: Bed file with regions to filter.
-- `--maf FLOAT`: MAF filter to apply to each region (default: `0.01`).
-- `--phenovar`: Boolean to compute phenovariance (Work in progress, not fully implemented yet) (flag).
 - `--nest`: Estimate effective population size (Work in progress, not fully implemented yet) (flag).
 
 ---

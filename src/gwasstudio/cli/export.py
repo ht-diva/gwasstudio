@@ -163,6 +163,17 @@ Export summary statistics from TileDB datasets with various filtering options.
         default=250000,
         help="Minimum pair-base distance between SNPs in different loci (default: 250000)",
     ),
+    cloup.option(
+        "--maf",
+        default=0.01,
+        help="MAF filter to apply before locusbreaker",
+    ),
+    cloup.option(
+        "--phenovar",
+        default=False,
+        is_flag=True,
+        help="Boolean to compute phenovariance (Work in progress, not fully implemented yet)",
+    ),
 )
 @cloup.option_group(
     "SNP ID list filtering options",
@@ -197,17 +208,6 @@ Export summary statistics from TileDB datasets with various filtering options.
         "--get-regions",
         default=None,
         help="Bed file with regions to filter",
-    ),
-    cloup.option(
-        "--maf",
-        default=0.01,
-        help="MAF filter to apply to each region",
-    ),
-    cloup.option(
-        "--phenovar",
-        default=False,
-        is_flag=True,
-        help="Boolean to compute phenovariance (Work in progress, not fully implemented yet)",
     ),
     cloup.option(
         "--nest",
