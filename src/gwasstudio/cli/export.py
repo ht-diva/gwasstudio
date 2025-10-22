@@ -7,6 +7,7 @@ import math
 import pandas as pd
 import tiledb
 from dask import delayed, compute
+from dask.distributed import Client
 
 from gwasstudio import logger
 from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
@@ -19,7 +20,6 @@ from gwasstudio.utils.enums import MetadataEnum
 from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataframe_from_mongo_objs
 from gwasstudio.utils.mongo_manager import manage_mongo
 from gwasstudio.utils.path_joiner import join_path
-from dask.distributed import Client
 
 
 def create_output_prefix_dict(df: pd.DataFrame, output_prefix: str, source_id_column: str) -> dict:
@@ -290,6 +290,12 @@ def export(
             tiledb_uri = join_path(uri, group_name)
             logger.debug(f"tiledb_uri: {tiledb_uri}")
 
+            # Build a per‑group output‑prefix dict
+            _output_prefix_dict = {
+                key: f"{output_prefix}_{group_name}_{value[len(output_prefix) + 1 :]}"
+                for key, value in output_prefix_dict.items()
+            }
+
             # Common argument list
             common_args = [
                 tiledb_uri,  # <-- URI, not an opened array
@@ -297,7 +303,7 @@ def export(
                 trait_ids,
                 attr,
                 batch_size,
-                output_prefix_dict,
+                _output_prefix_dict,
                 output_format,
             ]
 
