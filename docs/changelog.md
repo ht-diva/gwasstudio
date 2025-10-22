@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.9.0] - 2025-10-22
+
+### 🚀 Features
+
+- Add p-value filtering
+
+### 🐛 Bug Fixes
+
+- Return empty df with non-existent region/snps, close #98
+- Always return two df in _locus_breaker
+- Wait indefinitely for slurm workers
+- Move maf and phenovar to locusbreaker options
+- Add group_name to the output filename to avoid overwriting
+
 ## [2.8.4] - 2025-10-17
 
 ### 🐛 Bug Fixes
