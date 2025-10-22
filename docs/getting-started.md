@@ -206,6 +206,16 @@ gwasstudio export --search-file query_ex01.txt --snp-list-file hapmap3_snps.csv
 
 ---
 
+##### P-value filtering
+
+Command example to export data by filtering based on a P-value threshold (in -log10 format):
+
+```
+gwasstudio export --search-file query_ex01.txt --pvalue-thr 4
+```
+
+---
+
 ##### Locusbreaker
 
 Command example to export data with locusbreaker:

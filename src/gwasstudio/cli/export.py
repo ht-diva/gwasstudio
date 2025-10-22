@@ -184,6 +184,14 @@ Export summary statistics from TileDB datasets with various filtering options.
     ),
 )
 @cloup.option_group(
+    "P-value filtering options",
+    cloup.option(
+        "--pvalue-thr",
+        default=0,
+        help="Minimum -log10(p-value) threshold to filter significant SNPs",
+    ),
+)
+@cloup.option_group(
     "Option to plot results",
     cloup.option(
         "--plot-out",
@@ -226,6 +234,7 @@ def export(
     output_format: str,
     pvalue_sig: float,
     pvalue_limit: float,
+    pvalue_thr: float,
     hole_size: int,
     phenovar: bool,
     nest: bool,
@@ -345,6 +354,7 @@ def export(
                     _process_function_tasks(
                         *common_args,
                         function_name=extract_full_stats,
+                        pvalue_thr=pvalue_thr,
                         plot_out=plot_out,
                         color_thr=color_thr,
                         s_value=s_value,

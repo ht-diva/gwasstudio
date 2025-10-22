@@ -119,6 +119,7 @@ def extract_full_stats(
     plot_out: bool,
     color_thr: str,
     s_value: int,
+    pvalue_thr: float,
     attributes: Tuple[str] = None,
 ) -> None:
     """
@@ -130,6 +131,7 @@ def extract_full_stats(
         output_prefix (str): The prefix for the output file.
         output_format (str): The format for the output file.
         attributes (list[str], optional): A list of attributes to include in the output. Defaults to None.
+        pvalue_thr: P-value threshold in -log10 format used to filter significant SNPs (default: 0, no filter)
         plot_out (bool, optional): Whether to plot the results. Defaults to True.
 
     Returns:
@@ -137,6 +139,8 @@ def extract_full_stats(
     """
     attributes, tiledb_query = tiledb_array_query(tiledb_array, attrs=attributes)
     tiledb_query_df = tiledb_query.df[:, trait, :]
+    if pvalue_thr > 0:
+        tiledb_query_df = tiledb_query_df[tiledb_query_df["MLOG10P"] > pvalue_thr]
 
     tiledb_query_df = process_dataframe(tiledb_query_df, attributes)
     if plot_out:

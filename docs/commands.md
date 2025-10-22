@@ -34,6 +34,10 @@ gwasstudio export [OPTIONS]
 
 - `--snp-list-file TEXT`: A txt file which must include CHR and POS columns.
 
+**P-value Filtering Options:**
+
+- `--pvalue-thr FLOAT`: P-value threshold in -log10 format used to filter significant SNPs (default: 0, no filter)
+
 **Plotting Options:**
 
 - `--plot-out`: Boolean to plot results. If enabled, the output will be plotted as a Manhattan plot (flag).
