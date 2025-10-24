@@ -164,6 +164,8 @@ def cli_init(
         "vfs.s3.scheme": aws_scheme,
         "vfs.s3.region": aws_region,
         "vfs.s3.verify_ssl": aws_verify_ssl,
+        "vfs.s3.connect_timeout_ms": 30000, # 30 seconds
+        "vfs.s3.request_timeout_ms": 300000, # 5 minutes
     }
 
     batch_sizes = {
