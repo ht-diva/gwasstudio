@@ -96,32 +96,72 @@ def _process_function_tasks(
         cfg: dict[str, str],
         trait: str,
         out_prefix: str | None,
-        fmt: str,
         **inner_kwargs,
-    ) -> None:
+    ) -> pd.DataFrame:
         """Open the TileDB array on the worker and invoke ``function_name``."""
         # Open a *read‑only* handle on the worker.
         with tiledb.open(uri, mode="r", config=cfg) as arr:
             # ``function_name`` expects the opened array as its first argument.
-            return function_name(arr, trait, out_prefix, fmt, **inner_kwargs)
+            return function_name(arr, trait, out_prefix, **inner_kwargs)
 
     # Prepare kwargs for the downstream extraction routine.
     kwargs["attributes"] = attr.split(",") if attr else None
     if snp_list_file:
         kwargs["snp_list"] = delayed(_read_snp_list)(snp_list_file)
 
-    # Build the delayed tasks – each task receives the URI, not the object.
-    tasks: list[delayed] = [
-        _run_extraction(
-            tiledb_uri,
-            tiledb_cfg,
-            trait,
-            output_prefix_dict.get(trait),
-            output_format,
-            **kwargs,
-        )
-        for trait in trait_id_list
-    ]
+    tasks = []
+    if function_name.__name__ == "_process_locusbreaker":
+        for trait in trait_id_list:
+            # delayed tuple (segments_df, intervals_df)
+            delayed_tuple = _run_extraction(
+                tiledb_uri,
+                tiledb_cfg,
+                trait,
+                None,
+                **kwargs,
+            )
+
+            # tiny delayed helpers to extract each element
+            @delayed
+            def _first(tup):
+                return tup[0]
+
+            @delayed
+            def _second(tup):
+                return tup[1]
+
+            segments_delayed = _first(delayed_tuple)
+            intervals_delayed = _second(delayed_tuple)
+
+            # write each DataFrame (still delayed)
+            seg_task = delayed(write_table)(
+                segments_delayed,
+                f"{output_prefix_dict.get(trait)}_segments",
+                logger,
+                output_format,
+                index=False,
+            )
+            int_task = delayed(write_table)(
+                intervals_delayed,
+                f"{output_prefix_dict.get(trait)}_intervals",
+                logger,
+                output_format,
+                index=False,
+            )
+            tasks.extend([seg_task, int_task])
+    else:
+        for trait in trait_id_list:
+            extracted_df = _run_extraction(
+                tiledb_uri,
+                tiledb_cfg,
+                trait,
+                output_prefix_dict.get(trait),
+                **kwargs,
+            )
+            result = delayed(write_table)(
+                extracted_df, output_prefix_dict.get(trait), logger, output_format, index=False
+            )
+            tasks.append(result)
 
     total_batches = math.ceil(len(tasks) / batch_size)
     # Execute in batches (keeps the Dask graph small).

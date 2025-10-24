@@ -6,7 +6,6 @@ import tiledb
 from gwasstudio import logger
 from gwasstudio.methods.dataframe import process_dataframe
 from gwasstudio.methods.manhattan_plot import _plot_manhattan
-from gwasstudio.utils import write_table
 from gwasstudio.utils.tdb_schema import AttributeEnum as an, DimensionEnum as dn
 
 TILEDB_DIMS = dn.get_names()
@@ -48,7 +47,6 @@ def extract_snp_list(
     tiledb_array: tiledb.Array,
     trait: str,
     output_prefix: str,
-    output_format: str,
     plot_out: bool,
     color_thr: str,
     s_value: int,
@@ -84,7 +82,7 @@ def extract_snp_list(
         if tiledb_iterator_query_df.empty:
             logger.warning(f"No SNPs found for chromosome {chromosome}.")
             continue
-    
+
         # Plot the dataframe
         title_plot = f"{trait} - {chromosome}:{min(unique_positions)}-{max(unique_positions)}"
         if plot_out:
@@ -98,24 +96,19 @@ def extract_snp_list(
         dataframes.append(tiledb_iterator_query_df)
 
     # No SNPs found
-    kwargs = {"index": False}
     if not dataframes:
-        write_table(pd.DataFrame(columns=attributes), f"{output_prefix}", logger, file_format=output_format, **kwargs)
-        return
-    
+        return pd.DataFrame(columns=attributes)
+
     # Concatenate all DataFrames
     concatenated_df = pd.concat(dataframes, ignore_index=True)
     concatenated_df = process_dataframe(concatenated_df, attributes)
-
-    # Write output
-    write_table(concatenated_df, f"{output_prefix}", logger, file_format=output_format, **kwargs)
+    return concatenated_df
 
 
 def extract_full_stats(
     tiledb_array: tiledb.Array,
     trait: str,
     output_prefix: str,
-    output_format: str,
     plot_out: bool,
     color_thr: str,
     s_value: int,
@@ -148,15 +141,13 @@ def extract_full_stats(
         _plot_manhattan(
             locus=tiledb_query_df, title_plot=trait, out=f"{output_prefix}", color_thr=color_thr, s_value=s_value
         )
-    kwargs = {"index": False}
-    write_table(tiledb_query_df, f"{output_prefix}", logger, file_format=output_format, **kwargs)
+    return tiledb_query_df
 
 
 def extract_regions(
     tiledb_array: tiledb.Array,
     trait: str,
     output_prefix: str,
-    output_format: str,
     plot_out: bool,
     color_thr: str,
     s_value: int,
@@ -170,7 +161,6 @@ def extract_regions(
         tiledb_array: The TileDB array to query.
         trait (str): The trait to filter by.
         output_prefix (str): The prefix for the output file.
-        output_format (str): The format for the output file.
         bed_region (pd.DataFrame, optional): A DataFrame containing the genomic regions to filter by. Defaults to None.
         attributes (list[str], optional): A list of attributes to include in the output. Defaults to None.
         plot_out (bool, optional): Whether to plot the results. Defaults to True.
@@ -207,14 +197,10 @@ def extract_regions(
         dataframes.append(tiledb_query_df)
 
     # No regions found
-    kwargs = {"index": False}
     if not dataframes:
-        write_table(pd.DataFrame(columns=attributes), f"{output_prefix}", logger, file_format=output_format, **kwargs)
-        return
-    
+        return pd.DataFrame(columns=attributes)
+
     # Concatenate all DataFrames
     concatenated_df = pd.concat(dataframes, ignore_index=True)
     concatenated_df = process_dataframe(concatenated_df, attributes)
-
-    # Write output
-    write_table(concatenated_df, f"{output_prefix}", logger, file_format=output_format, **kwargs)
+    return concatenated_df

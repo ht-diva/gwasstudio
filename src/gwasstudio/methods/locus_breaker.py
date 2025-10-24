@@ -4,7 +4,6 @@ import pandas as pd
 from gwasstudio import logger
 from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
 from gwasstudio.methods.dataframe import process_dataframe
-from gwasstudio.utils import write_table
 
 
 def _locus_breaker(
@@ -119,8 +118,7 @@ def _locus_breaker(
 def _process_locusbreaker(
     tiledb_unified,
     trait,
-    output_prefix,
-    output_format,
+    output_prefix=None,
     attributes=None,
     maf=None,
     hole_size=None,
@@ -141,9 +139,5 @@ def _process_locusbreaker(
     )
     if results_lb_segments.empty and results_lb_intervals.empty:
         logger.info("No significant loci found.")
-        return
-    logger.info(f"Saving locus-breaker output in {output_prefix} segments and intervals")
-    kwargs = {"index": False}
 
-    write_table(results_lb_segments, f"{output_prefix}_segments", logger, file_format="csv", **kwargs)
-    write_table(results_lb_intervals, f"{output_prefix}_intervals", logger, file_format="csv", **kwargs)
+    return results_lb_segments, results_lb_intervals
