@@ -174,6 +174,11 @@ Export summary statistics from TileDB datasets with various filtering options.
         is_flag=True,
         help="Boolean to compute phenovariance (Work in progress, not fully implemented yet)",
     ),
+    cloup.option(
+        "--locus-flanks",
+        default=100000,
+        help="Flanking regions (in bp) to extend each locus in both directions (default: 100000)",
+    ),
 )
 @cloup.option_group(
     "SNP ID list filtering options",
@@ -239,6 +244,7 @@ def export(
     phenovar: bool,
     nest: bool,
     maf: float,
+    locus_flanks: int,
     snp_list_file: str | None,
     locusbreaker: bool,
     get_regions: str | None,
@@ -327,6 +333,7 @@ def export(
                         pvalue_sig=pvalue_sig,
                         pvalue_limit=pvalue_limit,
                         phenovar=phenovar,
+                        locus_flanks=locus_flanks,
                         dask_client=client,
                     )
                 case (_, str() as snp_fp, _):
