@@ -11,7 +11,7 @@ from dask.distributed import Client
 
 from gwasstudio import logger
 from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
-from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions, extract_snp_list
+from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions_snps
 from gwasstudio.methods.locus_breaker import _process_locusbreaker
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table
@@ -62,7 +62,7 @@ def _process_function_tasks(
     output_format: str,
     *,
     function_name: Callable,
-    snp_list_file: str | None = None,
+    regions_snps: str | None = None,
     dask_client: Client = None,
     **kwargs,
 ) -> None:
@@ -82,12 +82,27 @@ def _process_function_tasks(
     if dask_client is None:
         raise ValueError("Missing Dask client")
 
-    # Helper: read SNP list lazily
-    def _read_snp_list(fp: str) -> pd.DataFrame | None:
+    # Helper: read BED region file or SNP list
+    def _read_to_bed(fp: str) -> pd.DataFrame | None:
         if not fp:
             return None
-        df = pd.read_csv(fp, usecols=["CHR", "POS"], dtype={"CHR": str, "POS": int})
-        return df[df["CHR"].str.isnumeric()]
+        try:
+            # Try BED format
+            df = pd.read_csv(fp, sep="\t", header=None, names=["CHR", "START", "END"])
+            df["CHR"] = df["CHR"].astype(int)
+            return df
+        except Exception:
+            pass
+        try:
+            # Try SNP list and convert to BED format
+            df = pd.read_csv(fp, usecols=["CHR", "POS"], dtype={"CHR": str, "POS": int})
+            df = df[df["CHR"].str.isnumeric()]
+            df["CHR"] = df["CHR"].astype(int)
+            df = df.rename(columns={"POS": "START"})
+            df["END"] = df["START"] + 1
+            return df[["CHR", "START", "END"]]
+        except Exception:
+            raise ValueError(f"--get_regions_snps file '{fp}' should be in BED format or a SNP list (CHR,POS)")
 
     # Wrapper that opens the array locally and forwards the call.
     @delayed
@@ -107,9 +122,9 @@ def _process_function_tasks(
 
     # Prepare kwargs for the downstream extraction routine.
     kwargs["attributes"] = attr.split(",") if attr else None
-    if snp_list_file:
-        kwargs["snp_list"] = delayed(_read_snp_list)(snp_list_file)
-
+    if regions_snps:
+        kwargs["regions_snps"] = delayed(_read_to_bed)(regions_snps)
+    
     # Build the delayed tasks – each task receives the URI, not the object.
     tasks: list[delayed] = [
         _run_extraction(
@@ -181,11 +196,17 @@ Export summary statistics from TileDB datasets with various filtering options.
     ),
 )
 @cloup.option_group(
-    "SNP ID list filtering options",
+    "Regions or SNP ID filtering options",
     cloup.option(
-        "--snp-list-file",
+        "--get-regions-snps",
         default=None,
-        help="A txt file which must include CHR and POS columns",
+        help="Bed (or CHR,POS) file with regions or SNP list to filter",
+    ),
+    cloup.option(
+        "--nest",
+        default=False,
+        is_flag=True,
+        help="Estimate effective population size (Work in progress, not fully implemented yet)",
     ),
 )
 @cloup.option_group(
@@ -215,20 +236,6 @@ Export summary statistics from TileDB datasets with various filtering options.
         help="Value for the suggestive p-value line in the plot (default: 5)",
     ),
 )
-@cloup.option_group(
-    "Regions filtering options",
-    cloup.option(
-        "--get-regions",
-        default=None,
-        help="Bed file with regions to filter",
-    ),
-    cloup.option(
-        "--nest",
-        default=False,
-        is_flag=True,
-        help="Estimate effective population size (Work in progress, not fully implemented yet)",
-    ),
-)
 @click.pass_context
 def export(
     ctx: click.Context,
@@ -245,9 +252,8 @@ def export(
     nest: bool,
     maf: float,
     locus_flanks: int,
-    snp_list_file: str | None,
     locusbreaker: bool,
-    get_regions: str | None,
+    get_regions_snps:  str | None,
     plot_out: bool,
     color_thr: str,
     s_value: int,
@@ -323,8 +329,8 @@ def export(
             ]
 
             # Dispatch the appropriate extraction routine
-            match (locusbreaker, snp_list_file, get_regions):
-                case (True, _, _):
+            match (locusbreaker, get_regions_snps):
+                case (True, _):
                     _process_function_tasks(
                         *common_args,
                         function_name=_process_locusbreaker,
@@ -336,28 +342,11 @@ def export(
                         locus_flanks=locus_flanks,
                         dask_client=client,
                     )
-                case (_, str() as snp_fp, _):
+                case (_, str() as bed_fp):
                     _process_function_tasks(
                         *common_args,
-                        function_name=extract_snp_list,
-                        snp_list_file=snp_fp,
-                        plot_out=plot_out,
-                        color_thr=color_thr,
-                        s_value=s_value,
-                        dask_client=client,
-                    )
-                case (_, _, str() as bed_fp):
-                    bed_region = pd.read_csv(
-                        bed_fp,
-                        sep="\t",
-                        header=None,
-                        names=["CHR", "START", "END"],
-                    )
-                    bed_region["CHR"] = bed_region["CHR"].astype(int)
-                    _process_function_tasks(
-                        *common_args,
-                        function_name=extract_regions,
-                        bed_region=bed_region.groupby("CHR"),
+                        function_name=extract_regions_snps,
+                        regions_snps=bed_fp,
                         plot_out=plot_out,
                         color_thr=color_thr,
                         s_value=s_value,

@@ -87,7 +87,7 @@ CHR,POS
 Then, we can run the `export` using the following command:
 
 ```
-gwasstudio export --search-file search_believe.yml --snp-list-file snp_list.txt
+gwasstudio export --search-file search_believe.yml --get-regions-snps snp_list.txt
 ```
 
 Sample log output:
@@ -156,7 +156,7 @@ CHR,POS
 Then, we can run the `export` using the following command:
 
 ```
-gwasstudio export --search-file search_ukb.yml --snp-list-file snp_list.txt
+gwasstudio export --search-file search_ukb.yml --get-regions-snps snp_list.txt
 ```
 
 Log snippet:

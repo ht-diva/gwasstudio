@@ -186,23 +186,17 @@ Exports can also be performed with different filtering options.
 
 ---
 
-##### Region filtering
+##### Region and SNP filtering
 
-Command example to export data by filtering regions provided in [`regions_query.tsv`](https://github.com/ht-diva/gwasstudio/blob/main/data/regions_query.tsv):
-
-```
-gwasstudio export --search-file query_ex01.txt --get-regions regions_query.tsv
-```
-
----
-
-##### SNP filtering
-
-Command example to export data by filtering SNPIDs listed in [`hapmap3_snps.csv`](https://github.com/ht-diva/gwasstudio/blob/main/data/hapmap3/hapmap3_snps.csv):
+Command example to export data by filtering regions and SNPIDs provided in `region_or_snp_list.tsv`:
 
 ```
-gwasstudio export --search-file query_ex01.txt --snp-list-file hapmap3_snps.csv
+gwasstudio export --search-file query_ex01.txt --get-regions-snps region_or_snp_list.tsv
 ```
+
+The list of regions and SNPs to filter should preferably be in BED format. Example: [`regions_query.tsv`](https://github.com/ht-diva/gwasstudio/blob/main/data/regions_query.tsv).
+
+Alternatively, SNPIDs can also be listed in CHR,POS format. Example: [`hapmap3_snps.csv`](https://github.com/ht-diva/gwasstudio/blob/main/data/hapmap3/hapmap3_snps.csv).
 
 ---
 

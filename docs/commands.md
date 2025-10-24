@@ -31,9 +31,10 @@ gwasstudio export [OPTIONS]
 - `--locus-flanks INTEGER`: Flanking regions (in bp) to extend each locus in both directions (default: `100000`).
 - `--phenovar`: Boolean to compute phenovariance (Work in progress, not fully implemented yet) (flag).
 
-**SNP ID List Filtering Options:**
+**Regions and SNP ID List Filtering Options:**
 
-- `--snp-list-file TEXT`: A txt file which must include CHR and POS columns.
+- `--get-regions-snps TEXT`: Bed file (or txt file with CHR and POS columns) with regions or SNPs to filter.
+- `--nest`: Estimate effective population size (Work in progress, not fully implemented yet) (flag).
 
 **P-value Filtering Options:**
 
@@ -44,11 +45,6 @@ gwasstudio export [OPTIONS]
 - `--plot-out`: Boolean to plot results. If enabled, the output will be plotted as a Manhattan plot (flag).
 - `--color-thr TEXT`: Color for the points passing the threshold line in the plot (default: `red`).
 - `--s-value INTEGER`: Value for the suggestive p-value line in the plot (default: `5`).
-
-**Regions Filtering Options:**
-
-- `--get-regions TEXT`: Bed file with regions to filter.
-- `--nest`: Estimate effective population size (Work in progress, not fully implemented yet) (flag).
 
 ---
 
