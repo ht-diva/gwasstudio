@@ -44,73 +44,6 @@ def tiledb_array_query(
     return attrs, query
 
 
-def extract_snp_list(
-    tiledb_array: tiledb.Array,
-    trait: str,
-    output_prefix: str,
-    output_format: str,
-    plot_out: bool,
-    color_thr: str,
-    s_value: int,
-    attributes: Tuple[str] = None,
-    snp_list: pd.DataFrame = None,
-) -> None:
-    """
-    Process data filtering by a list of SNPs.
-
-    Args:
-        tiledb_array: The TileDB array to query.
-        trait (str): The trait to filter by.
-        output_prefix (str): The prefix for the output file.
-        output_format (str): The format for the output file.
-        attributes (list[str], optional): A list of attributes to include in the output. Defaults to None.
-        snp_list (pd.DataFrame, optional): A DataFrame containing the list of SNPs to filter by. Defaults to None.
-        plot_out (bool, optional): Whether to plot the results. Defaults to True.
-
-    Returns:
-        None
-    """
-    """Process data filtering by a list of SNPs."""
-    chromosomes_dict = snp_list.groupby("CHR")["POS"].apply(list).to_dict()
-
-    attributes, tiledb_query = tiledb_array_query(tiledb_array, attrs=attributes)
-    dataframes = []
-    for chrom, positions in chromosomes_dict.items():
-        chromosome = int(chrom)
-        unique_positions = list(set(positions))
-
-        tiledb_iterator_query_df = tiledb_query.df[chromosome, trait, unique_positions]
-        tiledb_iterator_query_df = process_dataframe(tiledb_iterator_query_df, attributes)
-        if tiledb_iterator_query_df.empty:
-            logger.warning(f"No SNPs found for chromosome {chromosome}.")
-            continue
-    
-        # Plot the dataframe
-        title_plot = f"{trait} - {chromosome}:{min(unique_positions)}-{max(unique_positions)}"
-        if plot_out:
-            _plot_manhattan(
-                locus=tiledb_iterator_query_df,
-                title_plot=title_plot,
-                out=f"{output_prefix}",
-                color_thr=color_thr,
-                s_value=s_value,
-            )
-        dataframes.append(tiledb_iterator_query_df)
-
-    # No SNPs found
-    kwargs = {"index": False}
-    if not dataframes:
-        write_table(pd.DataFrame(columns=attributes), f"{output_prefix}", logger, file_format=output_format, **kwargs)
-        return
-    
-    # Concatenate all DataFrames
-    concatenated_df = pd.concat(dataframes, ignore_index=True)
-    concatenated_df = process_dataframe(concatenated_df, attributes)
-
-    # Write output
-    write_table(concatenated_df, f"{output_prefix}", logger, file_format=output_format, **kwargs)
-
-
 def extract_full_stats(
     tiledb_array: tiledb.Array,
     trait: str,
@@ -152,7 +85,7 @@ def extract_full_stats(
     write_table(tiledb_query_df, f"{output_prefix}", logger, file_format=output_format, **kwargs)
 
 
-def extract_regions(
+def extract_regions_snps(
     tiledb_array: tiledb.Array,
     trait: str,
     output_prefix: str,
@@ -160,41 +93,50 @@ def extract_regions(
     plot_out: bool,
     color_thr: str,
     s_value: int,
-    bed_region: pd.DataFrame = None,
+    regions_snps: pd.DataFrame = None,
     attributes: Tuple[str] = None,
 ) -> None:
     """
-    Process data filtering by genomic regions and output as concatenated DataFrame in Parquet format.
+    Process data filtering by genomic regions or a list of SNPs and output as concatenated DataFrame in Parquet format.
 
     Args:
         tiledb_array: The TileDB array to query.
         trait (str): The trait to filter by.
         output_prefix (str): The prefix for the output file.
         output_format (str): The format for the output file.
-        bed_region (pd.DataFrame, optional): A DataFrame containing the genomic regions to filter by. Defaults to None.
+        regions_snps (pd.DataFrame, optional): A DataFrame containing the genomic regions or SNPs to filter by. Defaults to None.
         attributes (list[str], optional): A list of attributes to include in the output. Defaults to None.
         plot_out (bool, optional): Whether to plot the results. Defaults to True.
 
     Returns:
         None
     """
+    snp_filter = (regions_snps["END"] == regions_snps["START"] + 1).all()
+    regions_snps = regions_snps.groupby("CHR")
+    attributes, tiledb_query = tiledb_array_query(tiledb_array, attrs=attributes)
     dataframes = []
-    for chr, group in bed_region:
-        # Get all (start, end) tuples for this chromosome
+    for chr, group in regions_snps:
+        
+        if snp_filter:
+            # Get all unique positions for this chromosome
+            unique_positions = list(set(group["START"]))
+            tiledb_query_df = tiledb_query.df[chr, trait, unique_positions]
+            title_plot = f"{trait} - {chr}:{min(unique_positions)}-{max(unique_positions)}"
+            warning_mx = f"No SNPs found for chromosome {chr}."
+        else:
+            # Get all (start, end) tuples of genomic regions for this chromosome
+            min_pos = min(group["START"])
+            if min_pos < 0:
+                min_pos = 1
+            max_pos = max(group["END"])
+            tiledb_query_df = tiledb_query.df[chr, trait, min_pos:max_pos]
+            title_plot = f"{trait} - {chr}:{min(tiledb_query_df['POS'])}-{max(tiledb_query_df['POS'])}"
+            warning_mx = f"No region found for chromosome {chr}."
 
-        min_pos = min(group["START"])
-        if min_pos < 0:
-            min_pos = 1
-        max_pos = max(group["END"])
-
-        # Query TileDB and convert directly to Pandas DataFrame
-        attributes, tiledb_query = tiledb_array_query(tiledb_array, attrs=attributes)
-        tiledb_query_df = tiledb_query.df[chr, trait, min_pos:max_pos]
         if tiledb_query_df.empty:
-            logger.warning(f"Skipping empty region for chromosome {chr}.")
+            logger.warning(warning_mx)
             continue
 
-        title_plot = f"{trait} - {chr}:{min(tiledb_query_df['POS'])}-{max(tiledb_query_df['POS'])}"
         if plot_out:
             # Plot the dataframe
             _plot_manhattan(
@@ -206,15 +148,15 @@ def extract_regions(
             )
         dataframes.append(tiledb_query_df)
 
-    # No regions found
-    kwargs = {"index": False}
+    # No regions/SNPs found
     if not dataframes:
-        write_table(pd.DataFrame(columns=attributes), f"{output_prefix}", logger, file_format=output_format, **kwargs)
+        write_table(pd.DataFrame(columns=attributes), f"{output_prefix}", logger, file_format=output_format, index=False)
         return
-    
+
     # Concatenate all DataFrames
     concatenated_df = pd.concat(dataframes, ignore_index=True)
     concatenated_df = process_dataframe(concatenated_df, attributes)
 
     # Write output
+    kwargs = {"index": False}
     write_table(concatenated_df, f"{output_prefix}", logger, file_format=output_format, **kwargs)
