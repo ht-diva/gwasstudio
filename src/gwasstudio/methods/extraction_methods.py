@@ -114,7 +114,8 @@ def extract_regions_snps(
             # Get all unique positions for this chromosome
             unique_positions = list(set(group["START"]))
             tiledb_query_df = tiledb_query.df[chr, trait, unique_positions]
-            title_plot = f"{trait} - {chr}:{min(unique_positions)}-{max(unique_positions)}"
+            if not tiledb_query_df.empty:
+                title_plot = f"{trait} - {chr}:{min(unique_positions)}-{max(unique_positions)}"
             warning_mx = f"No SNPs found for chromosome {chr}."
         else:
             # Get all (start, end) tuples of genomic regions for this chromosome
@@ -123,7 +124,8 @@ def extract_regions_snps(
                 min_pos = 1
             max_pos = max(group["END"])
             tiledb_query_df = tiledb_query.df[chr, trait, min_pos:max_pos]
-            title_plot = f"{trait} - {chr}:{min(tiledb_query_df['POS'])}-{max(tiledb_query_df['POS'])}"
+            if not tiledb_query_df.empty:
+                title_plot = f"{trait} - {chr}:{min(tiledb_query_df['POS'])}-{max(tiledb_query_df['POS'])}"
             warning_mx = f"No region found for chromosome {chr}."
 
         if tiledb_query_df.empty:
