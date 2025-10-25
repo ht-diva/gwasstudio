@@ -77,7 +77,6 @@ def _process_function_tasks(
     function_name : Callable
         One of the extraction functions (``extract_full_stats``, …).
     """
-
     # Check Dask client
     if dask_client is None:
         raise ValueError("Missing Dask client")
@@ -162,7 +161,7 @@ def _process_function_tasks(
                 intervals_delayed,
                 f"{output_prefix_dict.get(trait)}_intervals",
                 logger,
-                output_format,
+                file_format=output_format,
                 index=False,
             )
             tasks.extend([seg_task, int_task])
@@ -176,7 +175,7 @@ def _process_function_tasks(
                 **kwargs,
             )
             result = delayed(write_table)(
-                extracted_df, output_prefix_dict.get(trait), logger, output_format, index=False
+                extracted_df, output_prefix_dict.get(trait), logger, file_format=output_format, index=False
             )
             tasks.append(result)
 

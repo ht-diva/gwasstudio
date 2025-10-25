@@ -58,7 +58,7 @@ run_command "Exporting data..." "time gwasstudio --stdout --mongo-uri ${MDB_URI}
 run_command "Exporting data..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_export --output-format parquet --uri ${TILEDB_DIR}"
 
 # Regions filtering
-run_command "Regions filtering..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_regions_filtering --uri ${TILEDB_DIR} --get-regions-snps regions_query.tsv"
+run_command "Regions filtering..." "time gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_regions_filtering --output-format csv --uri ${TILEDB_DIR} --get-regions-snps regions_query.tsv"
 
 # Hapmap3 SNPs filtering
 run_command "SNPs filtering..." "time gwasstudio --stdout --workers 4 --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_snps_filtering --uri ${TILEDB_DIR} --get-regions-snps hapmap3/hapmap3_snps.csv"
