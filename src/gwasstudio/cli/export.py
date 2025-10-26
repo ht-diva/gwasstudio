@@ -55,7 +55,7 @@ def create_output_prefix_dict(df: pd.DataFrame, output_prefix: str, source_id_co
 def _process_function_tasks(
     tiledb_uri: str,
     tiledb_cfg: dict[str, str],
-    trait_id_list: list[str],
+    group: pd.DataFrame,
     attr: str,
     batch_size: int,
     output_prefix_dict: dict[str, str],
@@ -118,17 +118,37 @@ def _process_function_tasks(
             # ``function_name`` expects the opened array as its first argument.
             return function_name(arr, trait, out_prefix, **inner_kwargs)
 
+    def _run_transformation(gwas_df: pd.DataFrame, meta_df: pd.DataFrame, trait_id: str) -> pd.DataFrame:
+        #  Optional metadata broadcast – only used when ``skip_meta`` is False.
+        if isinstance(group, pd.Series):
+            return gwas_df
+
+        id_col = "data_id"
+        meta_row = meta_df.loc[meta_df[id_col] == trait_id].squeeze()
+        # meta_dict = meta_row.squeeze().to_dict()
+        meta_dict = {f"meta_{k}": v for k, v in meta_row.drop(["data_id", "output_prefix"]).to_dict().items()}
+
+        broadcast = {col: [val] * len(gwas_df) for col, val in meta_dict.items()}
+        return gwas_df.assign(**broadcast)
+
     # Prepare kwargs for the downstream extraction routine.
     kwargs["attributes"] = attr.split(",") if attr else None
 
     if regions_snps:
         kwargs["regions_snps"] = delayed(_read_to_bed)(regions_snps)
 
+    # if isinstance(group, pd.Series):
+    #     trait_id_list = group.to_list()
+    # else:
+    #     trait_id_list = group["data_id"].to_list()
+
+    trait_id_list = group["data_id"].tolist() if not isinstance(group, pd.Series) else group.tolist()
+
     # Build the delayed tasks – each task receives the URI, not the object.
     tasks = []
     if function_name.__name__ == "_process_locusbreaker":
+        # Locusbreaker returns a tuple (segments, intervals).
         for trait in trait_id_list:
-            # delayed tuple (segments_df, intervals_df)
             delayed_tuple = _run_extraction(
                 tiledb_uri,
                 tiledb_cfg,
@@ -137,28 +157,20 @@ def _process_function_tasks(
                 **kwargs,
             )
 
-            # tiny delayed helpers to extract each element
-            @delayed
-            def _first(tup):
-                return tup[0]
-
-            @delayed
-            def _second(tup):
-                return tup[1]
-
-            segments_delayed = _first(delayed_tuple)
-            intervals_delayed = _second(delayed_tuple)
+            # Extract the two DataFrames lazily.
+            seg = delayed(lambda t: t[0])(delayed_tuple)
+            intv = delayed(lambda t: t[1])(delayed_tuple)
 
             # write each DataFrame (still delayed)
             seg_task = delayed(write_table)(
-                segments_delayed,
+                seg,
                 f"{output_prefix_dict.get(trait)}_segments",
                 logger,
                 output_format,
                 index=False,
             )
             int_task = delayed(write_table)(
-                intervals_delayed,
+                intv,
                 f"{output_prefix_dict.get(trait)}_intervals",
                 logger,
                 file_format=output_format,
@@ -174,8 +186,9 @@ def _process_function_tasks(
                 output_prefix_dict.get(trait),
                 **kwargs,
             )
+            transformed_df = delayed(_run_transformation)(extracted_df, group, trait)
             result = delayed(write_table)(
-                extracted_df, output_prefix_dict.get(trait), logger, file_format=output_format, index=False
+                transformed_df, output_prefix_dict.get(trait), logger, file_format=output_format, index=False
             )
             tasks.append(result)
 
@@ -244,6 +257,12 @@ Export summary statistics from TileDB datasets with various filtering options.
         help="Bed (or CHR,POS) file with regions or SNP list to filter",
     ),
     cloup.option(
+        "--skip-meta",
+        default=False,
+        is_flag=True,
+        help="Do not add metadata columns (default: False)",
+    ),
+    cloup.option(
         "--nest",
         default=False,
         is_flag=True,
@@ -295,6 +314,7 @@ def export(
     locus_flanks: int,
     locusbreaker: bool,
     get_regions_snps: str | None,
+    skip_meta: bool,
     plot_out: bool,
     color_thr: str,
     s_value: int,
@@ -324,18 +344,18 @@ def export(
         obj = EnhancedDataProfile(uri=mongo_uri)
         objs = query_mongo_obj(search_topics, obj)
 
-    df = dataframe_from_mongo_objs(output_fields, objs)
+    meta_df = dataframe_from_mongo_objs(output_fields, objs)
 
     # Write metadata query result
     path = Path(output_prefix)
     output_path = path.with_suffix("").with_name(path.stem + "_meta")
     kwargs = {"index": False}
     log_msg = f"{len(objs)} results found. Writing to {output_path}.csv"
-    write_table(df, str(output_path), logger, file_format="csv", log_msg=log_msg, **kwargs)
+    write_table(meta_df, str(output_path), logger, file_format="csv", log_msg=log_msg, **kwargs)
 
     # Create an output prefix dictionary to generate output filenames
     source_id_column = MetadataEnum.get_source_id_field()
-    output_prefix_dict = create_output_prefix_dict(df, output_prefix, source_id_column=source_id_column)
+    output_prefix_dict = create_output_prefix_dict(meta_df, output_prefix, source_id_column=source_id_column)
 
     # Process according to selected options
     if get_dask_deployment(ctx) not in dask_deployment_types:
@@ -344,11 +364,10 @@ def export(
 
     with manage_daskcluster(ctx) as client:
         batch_size = get_dask_batch_size(ctx)
-        grouped = df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
+        grouped = meta_df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
         for name, group in grouped:
             group_name = "_".join(name)
             logger.info(f"Processing the group {group_name}")
-            trait_ids = list(group["data_id"])
             tiledb_uri = join_path(uri, group_name)
             logger.debug(f"tiledb_uri: {tiledb_uri}")
 
@@ -358,11 +377,13 @@ def export(
                 for key, value in output_prefix_dict.items()
             }
 
+            _meta_df = group if not skip_meta else group["data_id"]
+
             # Common argument list
             common_args = [
                 tiledb_uri,  # <-- URI, not an opened array
                 cfg,
-                trait_ids,
+                _meta_df,
                 attr,
                 batch_size,
                 _output_prefix_dict,
