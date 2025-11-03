@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.10.0] - 2025-11-03
+
+### 🚀 Features
+
+- Add locus-flanks option
+- Combine regions and snps filtering
+- Add metadata broadcasting and skip option
+
+### 🐛 Bug Fixes
+
+- Increase TileDB timeout, close #102
+- Handle empty dataframe
+- Restore file format
+
+### 🚜 Refactor
+
+- Dataframe output for extraction methods
+
+### 🎨 Styling
+
+- Linting
+
 ## [2.9.0] - 2025-10-22
 
 ### 🚀 Features
@@ -16,6 +38,10 @@ All notable changes to this project will be documented in this file.
 - Wait indefinitely for slurm workers
 - Move maf and phenovar to locusbreaker options
 - Add group_name to the output filename to avoid overwriting
+
+### 💼 Other
+
+- Bump version
 
 ## [2.8.4] - 2025-10-17
 
