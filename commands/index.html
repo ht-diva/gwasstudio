@@ -778,11 +778,13 @@
 <li><code>--pvalue-limit FLOAT</code>: Log p-value threshold for loci borders (default: <code>3.3</code>).</li>
 <li><code>--hole-size INTEGER</code>: Minimum pair-base distance between SNPs in different loci (default: <code>250000</code>).</li>
 <li><code>--maf FLOAT</code>: MAF filter to apply before locusbreaker (default: <code>0.01</code>).</li>
+<li><code>--locus-flanks INTEGER</code>: Flanking regions (in bp) to extend each locus in both directions (default: <code>100000</code>).</li>
 <li><code>--phenovar</code>: Boolean to compute phenovariance (Work in progress, not fully implemented yet) (flag).</li>
 </ul>
-<p><strong>SNP ID List Filtering Options:</strong></p>
+<p><strong>Regions and SNP ID List Filtering Options:</strong></p>
 <ul>
-<li><code>--snp-list-file TEXT</code>: A txt file which must include CHR and POS columns.</li>
+<li><code>--get-regions-snps TEXT</code>: Bed file (or txt file with CHR and POS columns) with regions or SNPs to filter.</li>
+<li><code>--nest</code>: Estimate effective population size (Work in progress, not fully implemented yet) (flag).</li>
 </ul>
 <p><strong>P-value Filtering Options:</strong></p>
 <ul>
@@ -793,11 +795,6 @@
 <li><code>--plot-out</code>: Boolean to plot results. If enabled, the output will be plotted as a Manhattan plot (flag).</li>
 <li><code>--color-thr TEXT</code>: Color for the points passing the threshold line in the plot (default: <code>red</code>).</li>
 <li><code>--s-value INTEGER</code>: Value for the suggestive p-value line in the plot (default: <code>5</code>).</li>
-</ul>
-<p><strong>Regions Filtering Options:</strong></p>
-<ul>
-<li><code>--get-regions TEXT</code>: Bed file with regions to filter.</li>
-<li><code>--nest</code>: Estimate effective population size (Work in progress, not fully implemented yet) (flag).</li>
 </ul>
 <hr />
 <h3 id="info"><code>info</code></h3>
@@ -858,7 +855,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-10-22
+    2025-10-24
   </span>
 
     
