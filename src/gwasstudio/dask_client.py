@@ -108,11 +108,11 @@ class DaskCluster:
             logger.info(
                 f"Dask SLURM cluster: starting {_workers} workers, with {_mem} of memory and {_cores} cpus per worker"
             )
-            
+
             logger.info("Connecting to Dask scheduler...")
             self.client = Client(cluster)  # Connect to that cluster
             logger.info("Waiting for Dask workers to become available...")
-            self.client.wait_for_workers(n_workers=_workers, timeout=None) # wait indefinitely
+            self.client.wait_for_workers(n_workers=_workers, timeout=None)  # wait indefinitely
             logger.info(f"Workers ready: {len(self.client.scheduler_info()['workers'])}")
             self.type_cluster = type(cluster)
 
@@ -154,7 +154,7 @@ class DaskCluster:
         """
         result = round(number / divider)
         return max(result, 1)
-    
+
     @staticmethod
     def slurm_wait_time(job_id: int, default_timeout: int = 120) -> int:
         """
@@ -163,21 +163,20 @@ class DaskCluster:
         If job is RUNNING, returns default timeout.
 
         Args:
-            job_id (int): The SLURM job ID  
+            job_id (int): The SLURM job ID
             default_timeout (int): The fallback wait time in seconds
         Returns:
             int: The SLURM queueing time in seconds
         """
         try:
             start_result = subprocess.run(
-                ['squeue', '--start', '-j', str(job_id), '--noheader'],
-                capture_output=True, text=True, check=True
+                ["squeue", "--start", "-j", str(job_id), "--noheader"], capture_output=True, text=True, check=True
             )
             start_line = start_result.stdout.strip()
             if not start_line:
                 return default_timeout  # Job already RUNNING
-            
-            start_time = datetime.datetime.strptime( start_line.split()[-1], "%Y-%m-%dT%H:%M:%S")
+
+            start_time = datetime.datetime.strptime(start_line.split()[-1], "%Y-%m-%dT%H:%M:%S")
             wait_seconds = (start_time - datetime.datetime.now()).total_seconds()
             return max(wait_seconds, 0)
 

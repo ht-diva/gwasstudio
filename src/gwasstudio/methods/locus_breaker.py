@@ -4,11 +4,15 @@ import pandas as pd
 from gwasstudio import logger
 from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
 from gwasstudio.methods.dataframe import process_dataframe
-from gwasstudio.utils import write_table
 
 
 def _locus_breaker(
-    tiledb_results_pd, pvalue_limit: float = 3.3, pvalue_sig: float = 5, hole_size: int = 250000, locus_flanks = 100000, phenovar: bool = False
+    tiledb_results_pd,
+    pvalue_limit: float = 3.3,
+    pvalue_sig: float = 5,
+    hole_size: int = 250000,
+    locus_flanks=100000,
+    phenovar: bool = False,
 ) -> list[pd.DataFrame]:
     """
     Breaking genome in locus
@@ -120,8 +124,7 @@ def _locus_breaker(
 def _process_locusbreaker(
     tiledb_unified,
     trait,
-    output_prefix,
-    output_format,
+    output_prefix=None,
     attributes=None,
     maf=None,
     hole_size=None,
@@ -139,13 +142,14 @@ def _process_locusbreaker(
     subset_SNPs_pd = process_dataframe(subset_SNPs_pd, attributes)
 
     results_lb_segments, results_lb_intervals = _locus_breaker(
-        subset_SNPs_pd, hole_size=hole_size, pvalue_sig=pvalue_sig, pvalue_limit=pvalue_limit, phenovar=phenovar, locus_flanks=locus_flanks
+        subset_SNPs_pd,
+        hole_size=hole_size,
+        pvalue_sig=pvalue_sig,
+        pvalue_limit=pvalue_limit,
+        phenovar=phenovar,
+        locus_flanks=locus_flanks,
     )
     if results_lb_segments.empty and results_lb_intervals.empty:
         logger.info("No significant loci found.")
-        return
-    logger.info(f"Saving locus-breaker output in {output_prefix} segments and intervals")
-    kwargs = {"index": False}
 
-    write_table(results_lb_segments, f"{output_prefix}_segments", logger, file_format="csv", **kwargs)
-    write_table(results_lb_intervals, f"{output_prefix}_intervals", logger, file_format="csv", **kwargs)
+    return results_lb_segments, results_lb_intervals
