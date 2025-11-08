@@ -13,6 +13,7 @@ from gwasstudio import logger
 from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
 from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions_snps
 from gwasstudio.methods.locus_breaker import _process_locusbreaker
+from gwasstudio.methods.meta_analysis import _meta_analysis
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table
 from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
@@ -117,6 +118,19 @@ def _process_function_tasks(
         with tiledb.open(uri, mode="r", config=cfg) as arr:
             # ``function_name`` expects the opened array as its first argument.
             return function_name(arr, trait, out_prefix, **inner_kwargs)
+    def _run_extraction_merge(
+        uri: str,
+        cfg: dict[str, str],
+        trait_list: list,
+        out_prefix: str | None,
+        **inner_kwargs,
+    ) -> pd.DataFrame:
+        """Open the TileDB array on the worker and invoke ``function_name``."""
+        # Open a *read‑only* handle on the worker.
+        with tiledb.open(uri, mode="r", config=cfg) as arr:
+            # ``function_name`` expects the opened array as its first argument.
+            return function_name(arr, trait_list, out_prefix, **inner_kwargs)
+
 
     def _run_transformation(gwas_df: pd.DataFrame, meta_df: pd.DataFrame, trait_id: str) -> pd.DataFrame:
         #  Optional metadata broadcast – only used when ``skip_meta`` is False.
@@ -137,13 +151,7 @@ def _process_function_tasks(
     if regions_snps:
         kwargs["regions_snps"] = delayed(_read_to_bed)(regions_snps)
 
-    # if isinstance(group, pd.Series):
-    #     trait_id_list = group.to_list()
-    # else:
-    #     trait_id_list = group["data_id"].to_list()
-
     trait_id_list = group["data_id"].tolist() if not isinstance(group, pd.Series) else group.tolist()
-
     # Build the delayed tasks – each task receives the URI, not the object.
     tasks = []
     if function_name.__name__ == "_process_locusbreaker":
@@ -156,7 +164,6 @@ def _process_function_tasks(
                 None,
                 **kwargs,
             )
-
             # Extract the two DataFrames lazily.
             seg = delayed(lambda t: t[0])(delayed_tuple)
             intv = delayed(lambda t: t[1])(delayed_tuple)
@@ -177,6 +184,18 @@ def _process_function_tasks(
                 index=False,
             )
             tasks.extend([seg_task, int_task])
+    elif function_name.__name__ == "_meta_analysis":
+        delayed_df = _run_extraction_merge(
+                tiledb_uri,
+                tiledb_cfg,
+                trait_id_list,
+                None,
+                **kwargs,
+            )
+        result = delayed(write_table)(
+                delayed_df, "test", logger, file_format=output_format, index=False
+            )
+        tasks.append(result)
     else:
         for trait in trait_id_list:
             extracted_df = _run_extraction(
@@ -218,9 +237,13 @@ Export summary statistics from TileDB datasets with various filtering options.
     cloup.option(
         "--attr",
         required=True,
-        default="BETA,SE,EAF,MLOG10P",
+        default="BETA,SE,EAF,MLOG10P,EA,NEA",
         help="string delimited by comma with the attributes to export",
     ),
+)
+@cloup.option_group(
+    "Meta-analysis options",
+    cloup.option("--meta-analysis", default=False, is_flag=True, help="Option to run meta-analysis")
 )
 @cloup.option_group(
     "Locusbreaker options",
@@ -313,6 +336,7 @@ def export(
     maf: float,
     locus_flanks: int,
     locusbreaker: bool,
+    meta_analysis: bool,
     get_regions_snps: str | None,
     skip_meta: bool,
     plot_out: bool,
@@ -391,8 +415,8 @@ def export(
             ]
 
             # Dispatch the appropriate extraction routine
-            match (locusbreaker, get_regions_snps):
-                case (True, _):
+            match (locusbreaker, get_regions_snps, meta_analysis):
+                case (True, _, _):
                     _process_function_tasks(
                         *common_args,
                         function_name=_process_locusbreaker,
@@ -404,7 +428,7 @@ def export(
                         locus_flanks=locus_flanks,
                         dask_client=client,
                     )
-                case (_, str() as bed_fp):
+                case (_, str() as bed_fp,_):
                     _process_function_tasks(
                         *common_args,
                         function_name=extract_regions_snps,
@@ -414,6 +438,13 @@ def export(
                         s_value=s_value,
                         dask_client=client,
                     )
+                case (_, _, True):
+                    _process_function_tasks(
+                        *common_args,
+                        function_name=_meta_analysis,
+                        dask_client=client,
+                    )
+                
                 case _:
                     _process_function_tasks(
                         *common_args,
