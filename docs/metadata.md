@@ -13,6 +13,7 @@ These records are used throughout the platform (e.g., for filtering, querying, a
 | `project`              | **Project**                 | Identifier of the project the data belongs to          | `opengwas`, `pqtl`, `genesandhealth`, …                                  |
 | `study`                | **Study**                   | Identifier of the specific study                       | `ukb-a`, `ukb-b`, `ukb-d`, …                                             |
 | `data_id`              | **Record ID**               | Unique identifier for the metadata entry               | e.g. `89f31189b3`                                                        |
+| `file_path`            | **File paths**              | The paths where the summary-statistics files are stored | e.g. `./ukb-d_sampled/ukb-d-XVIII_MISCFINDINGS.gwaslab.tsv.sampled.gz`      |
 | `build`                | **Genome build**            | Reference genome build                                 | `GRCh37`, `GRCh38`                                                       |
 | `population`           | **Broad ancestry category** | Ancestry of the cohort                                 | see the [ancestry categories](population.md) page                        |
 | `total_samples`        | **Number of samples**       | Sample size of the cohort                              | integer                                                                  |                                            | integer
