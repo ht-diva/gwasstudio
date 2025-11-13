@@ -296,6 +296,21 @@ Export summary statistics from TileDB datasets with various filtering options.
         help="Value for the suggestive p-value line in the plot (default: 5)",
     ),
 )
+@cloup.option_group(
+    "Option to query metadata before export",
+    cloup.option(
+        "--case-sensitive",
+        default=False,
+        is_flag=True,
+        help="Perform case-sensitive matching on query values (default: False).",
+    ),
+    cloup.option(
+        "--exact-match",
+        default=False,
+        is_flag=True,
+        help="Perform exact match on query values (default: False).",
+    ),
+)
 @click.pass_context
 def export(
     ctx: click.Context,
@@ -318,6 +333,8 @@ def export(
     plot_out: bool,
     color_thr: str,
     s_value: int,
+    case_sensitive: bool,
+    exact_match: bool,
 ) -> None:
     """Export summary statistics based on selected options."""
     cfg = get_tiledb_config(ctx)
@@ -342,7 +359,7 @@ def export(
     with manage_mongo(ctx):
         mongo_uri = get_mongo_uri(ctx)
         obj = EnhancedDataProfile(uri=mongo_uri)
-        objs = query_mongo_obj(search_topics, obj)
+        objs = query_mongo_obj(search_topics, obj, case_sensitive=case_sensitive, exact_match=exact_match)
 
     meta_df = dataframe_from_mongo_objs(output_fields, objs)
 

@@ -67,7 +67,7 @@ def load_search_topics(search_file: str) -> Any | None:
 
 
 def query_mongo_obj(
-    search_criteria: Dict[str, Any], data_profile: EnhancedDataProfile, case_sensitive: bool = False
+    search_criteria: Dict[str, Any], data_profile: EnhancedDataProfile, case_sensitive: bool = False, exact_match: bool = False
 ) -> List[Dict[str, Any]]:
     """
     Query the data profile object to find matching results based on search criteria.
@@ -76,6 +76,7 @@ def query_mongo_obj(
         search_criteria (Dict[str, Any]): Dictionary containing search criteria.
         data_profile (EnhancedDataProfile): Data profile object to be queried.
         case_sensitive (bool): Flag to enable case-sensitive search. Default is False.
+        exact_match (bool): Flag to enable exact match search. Default is False.
 
     Returns:
         List[Dict[str, Any]]: List of matched data profile entries.
@@ -93,12 +94,12 @@ def query_mongo_obj(
             for item in value:
                 query_dict = {key: item}
                 logger.debug(query_dict)
-                query_results.extend(data_profile.query(case_sensitive, **query_dict))
+                query_results.extend(data_profile.query(case_sensitive, exact_match, **query_dict))
             matched_entries.append(query_results)
         else:
             query_dict = {key: value}
             logger.debug(query_dict)
-            query_results = data_profile.query(case_sensitive, **query_dict)
+            query_results = data_profile.query(case_sensitive, exact_match, **query_dict)
             matched_entries.append(query_results)
 
     # Create a dictionary of matched entries with their IDs as keys
