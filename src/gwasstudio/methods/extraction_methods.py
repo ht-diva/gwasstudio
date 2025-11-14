@@ -72,7 +72,7 @@ def extract_full_stats(
     if pvalue_thr > 0:
         tiledb_query_df = tiledb_query_df[tiledb_query_df["MLOG10P"] > pvalue_thr]
 
-    tiledb_query_df = process_dataframe(tiledb_query_df, attributes)
+    tiledb_query_df = process_dataframe(tiledb_query_df)
     if plot_out:
         # Plot the dataframe
         _plot_manhattan(
@@ -149,6 +149,6 @@ def extract_regions_snps(
 
     # Concatenate all DataFrames
     concatenated_df = pd.concat(dataframes, ignore_index=True)
-    concatenated_df = process_dataframe(concatenated_df, attributes)
+    concatenated_df = process_dataframe(concatenated_df)
 
     return concatenated_df
