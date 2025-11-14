@@ -118,6 +118,7 @@ def _process_function_tasks(
         with tiledb.open(uri, mode="r", config=cfg) as arr:
             # ``function_name`` expects the opened array as its first argument.
             return function_name(arr, trait, out_prefix, **inner_kwargs)
+
     def _run_extraction_merge(
         uri: str,
         cfg: dict[str, str],
@@ -130,7 +131,6 @@ def _process_function_tasks(
         with tiledb.open(uri, mode="r", config=cfg) as arr:
             # ``function_name`` expects the opened array as its first argument.
             return function_name(arr, trait_list, out_prefix, **inner_kwargs)
-
 
     def _run_transformation(gwas_df: pd.DataFrame, meta_df: pd.DataFrame, trait_id: str) -> pd.DataFrame:
         #  Optional metadata broadcast – only used when ``skip_meta`` is False.
@@ -186,15 +186,13 @@ def _process_function_tasks(
             tasks.extend([seg_task, int_task])
     elif function_name.__name__ == "_meta_analysis":
         delayed_df = _run_extraction_merge(
-                tiledb_uri,
-                tiledb_cfg,
-                trait_id_list,
-                None,
-                **kwargs,
-            )
-        result = delayed(write_table)(
-                delayed_df, "test", logger, file_format=output_format, index=False
-            )
+            tiledb_uri,
+            tiledb_cfg,
+            trait_id_list,
+            None,
+            **kwargs,
+        )
+        result = delayed(write_table)(delayed_df, "test", logger, file_format=output_format, index=False)
         tasks.append(result)
     else:
         for trait in trait_id_list:
@@ -243,7 +241,7 @@ Export summary statistics from TileDB datasets with various filtering options.
 )
 @cloup.option_group(
     "Meta-analysis options",
-    cloup.option("--meta-analysis", default=False, is_flag=True, help="Option to run meta-analysis")
+    cloup.option("--meta-analysis", default=False, is_flag=True, help="Option to run meta-analysis"),
 )
 @cloup.option_group(
     "Locusbreaker options",
@@ -428,7 +426,7 @@ def export(
                         locus_flanks=locus_flanks,
                         dask_client=client,
                     )
-                case (_, str() as bed_fp,_):
+                case (_, str() as bed_fp, _):
                     _process_function_tasks(
                         *common_args,
                         function_name=extract_regions_snps,
@@ -444,7 +442,6 @@ def export(
                         function_name=_meta_analysis,
                         dask_client=client,
                     )
-                
                 case _:
                     _process_function_tasks(
                         *common_args,
