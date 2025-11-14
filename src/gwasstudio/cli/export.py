@@ -15,7 +15,7 @@ from gwasstudio.methods.extraction_methods import extract_full_stats, extract_re
 from gwasstudio.methods.locus_breaker import _process_locusbreaker
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table
-from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
+from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_deployment
 from gwasstudio.utils.enums import MetadataEnum
 from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataframe_from_mongo_objs
 from gwasstudio.utils.mongo_manager import manage_mongo
@@ -57,7 +57,6 @@ def _process_function_tasks(
     tiledb_cfg: dict[str, str],
     group: pd.DataFrame,
     attr: str,
-    batch_size: int,
     output_prefix_dict: dict[str, str],
     output_format: str,
     *,
@@ -192,13 +191,11 @@ def _process_function_tasks(
             )
             tasks.append(result)
 
-    total_batches = math.ceil(len(tasks) / batch_size)
-    # Execute in batches (keeps the Dask graph small).
-    for i in range(0, len(tasks), batch_size):
-        batch_no = i // batch_size + 1
-        logger.info(f"Running batch {batch_no}/{total_batches} ({batch_size} items)")
-        compute(*tasks[i : i + batch_size], scheduler=dask_client)
-        logger.info(f"Batch {batch_no} completed.", flush=True)
+    # Execute in one batch (increases performance)
+    batch_size = len(tasks)
+    logger.info(f"Running batch ({batch_size} items)")
+    compute(*tasks, scheduler=dask_client)
+    logger.info(f"Batch completed.", flush=True)   
 
 
 HELP_DOC = """
@@ -380,7 +377,6 @@ def export(
         raise SystemExit(1)
 
     with manage_daskcluster(ctx) as client:
-        batch_size = get_dask_batch_size(ctx)
         grouped = meta_df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
         for name, group in grouped:
             group_name = "_".join(name)
@@ -402,7 +398,6 @@ def export(
                 cfg,
                 _meta_df,
                 attr,
-                batch_size,
                 _output_prefix_dict,
                 output_format,
             ]
