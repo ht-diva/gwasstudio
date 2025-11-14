@@ -109,7 +109,7 @@ class MongoMixin:
         logger.debug(queries)
 
         with self.mec:
-            if len(jds.keys()) > 0: # there are JSON fields to query
+            if len(jds.keys()) > 0:  # there are JSON fields to query
                 for jdk, jdv in jds.items():
                     query_fields_contains = {f"{jdk}__{contains_op}.{key}": value for key, value in jdv.items()}
 
@@ -127,10 +127,7 @@ class MongoMixin:
                         # exact_math: exact match for all JSON fields' key-values
                         for qr in all_docs:
                             data = json.loads(qr.get(jdk, "{}"))
-                            if all(
-                                str(find_item(data, k)).strip() == str(v).strip()
-                                for k, v in jdv.items()
-                            ):
+                            if all(str(find_item(data, k)).strip() == str(v).strip() for k, v in jdv.items()):
                                 docs.append(qr)
                     else:
                         # not exact_match: substring match for JSON fields

@@ -67,7 +67,10 @@ def load_search_topics(search_file: str) -> Any | None:
 
 
 def query_mongo_obj(
-    search_criteria: Dict[str, Any], data_profile: EnhancedDataProfile, case_sensitive: bool = False, exact_match: bool = False
+    search_criteria: Dict[str, Any],
+    data_profile: EnhancedDataProfile,
+    case_sensitive: bool = False,
+    exact_match: bool = False,
 ) -> List[Dict[str, Any]]:
     """
     Query the data profile object to find matching results based on search criteria.
