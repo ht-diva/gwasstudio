@@ -57,12 +57,10 @@ def _meta_analysis(tiledb_array, trait_list, out_prefix=None, **kwargs):
     #    [merged_df['N'].values] +
     #    [merged_df[f'N_{i}'].values for i in range(1, len(trait_list)-1)]
     # )
-    print(merged_df)
-    print(merged_df.columns.values.tolist())
+
     trait_names = [merged_df["TRAITID"].iloc[0]] + [
-        merged_df[f"TRAITID{i}"].iloc[0] for i in range(1, len(trait_list) - 1)
+        merged_df[f"TRAITID_{i}"].iloc[0] for i in range(1, len(trait_list) - 1)
     ]
-    print(trait_names)
 
     # Remove variants where both studies have NaN values
     not_all_nan = ~np.all(np.isnan(effect_sizes), axis=1)
