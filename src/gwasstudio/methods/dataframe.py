@@ -1,4 +1,4 @@
-from typing import Tuple, Set
+from typing import Set
 
 import numpy as np
 import pandas as pd
@@ -62,27 +62,32 @@ def _check_required_columns(required_columns: Set[str], df: pd.DataFrame) -> Non
         raise KeyError(f"Missing required columns in DataFrame: {', '.join(sorted(missing_columns))}")
 
 
-def process_dataframe(df: pd.DataFrame, attributes: Tuple[str], drop_tid: bool = True) -> pd.DataFrame:
+def process_dataframe(df: pd.DataFrame, drop_tid: bool = True) -> pd.DataFrame:
     """
     Process the DataFrame by calculating MLOG10P and building SNIPID.
 
     Args:
         df (pd.DataFrame): The input DataFrame containing the columns 'BETA', 'SE', 'CHR', 'POS', 'EA', and 'NEA'.
-        attributes (List[str]): A list of attributes to process. If 'SNIPID' is in the list, SNPID will be built.
         drop_tid (bool, optional): Whether to drop the 'TRAITID' column from the DataFrame. Defaults to True.
 
     Returns:
         pd.DataFrame: The processed DataFrame with the 'MLOG10P' column added, optionally the 'SNIPID' column, and optionally without the 'TRAITID' column.
     """
 
-    # Apply the function to the column in a vectorized manner
     if "MLOG10P" not in df.columns:
-        df.loc[:, "MLOG10P"] = _get_log_p_value_from_z(df["BETA"] / df["SE"]).astype(np.float32)
-
-    if "SNIPID" in attributes:
-        df.loc[:, "SNIPID"] = _build_snpid(df)
+        # Direct NumPy arithmetic
+        z = df["BETA"].values / df["SE"].values
+        df.loc[:, "MLOG10P"] = _get_log_p_value_from_z(z).astype(np.float32)
 
     if drop_tid and "TRAITID" in df.columns:
         df.drop(columns=["TRAITID"], inplace=True)
+
+    # _build_snpid should also be vectorised; assign in‑place.
+    df.loc[:, "SNIPID"] = _build_snpid(df)
+
+    # Move SNIPID to the front without copying the whole frame.
+    cols = df.columns.tolist()
+    cols.insert(0, cols.pop(cols.index("SNIPID")))
+    df = df.reindex(columns=cols)
 
     return df
