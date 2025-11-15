@@ -67,7 +67,7 @@ Category: GWAS
 
 ### **2. `meta-query`**
 
-The `meta-query` command retrieves [metadata](metadata.md) of interest using a [query file](#query-file). It can be used to verify the availability and characteristics of the data to [export](#3-export).
+The `meta-query` command retrieves [metadata](metadata.md) of interest using a [query file](#query-file). It can be used to verify the availability and characteristics of the data to [export](#4-export).
 
 ##### Meta-query example
 
@@ -93,7 +93,6 @@ The query file used to retrieve (meta)data follows a structured format with two 
 ```
 project: opengwas
 study: ukb-d
-category: GWAS
 
 trait:
   - desc: Z42
