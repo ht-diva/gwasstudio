@@ -33,8 +33,6 @@ nav:
     - 'Installation': installation.md
     - 'Getting Started': getting-started.md
     - 'Examples': examples.md
-    - 'Documentation': documentation
-    - 'Configuration': configuration.md
     - 'Commands': commands.md
     - 'Metadata': metadata.md
     - 'Summary Statistics': summary-statistics.md
