@@ -64,14 +64,14 @@ def _check_required_columns(required_columns: Set[str], df: pd.DataFrame) -> Non
 
 def process_dataframe(df: pd.DataFrame, drop_tid: bool = True) -> pd.DataFrame:
     """
-    Process the DataFrame by calculating MLOG10P and building SNIPID.
+    Process the DataFrame by calculating MLOG10P and building SNPID.
 
     Args:
         df (pd.DataFrame): The input DataFrame containing the columns 'BETA', 'SE', 'CHR', 'POS', 'EA', and 'NEA'.
         drop_tid (bool, optional): Whether to drop the 'TRAITID' column from the DataFrame. Defaults to True.
 
     Returns:
-        pd.DataFrame: The processed DataFrame with the 'MLOG10P' column added, optionally the 'SNIPID' column, and optionally without the 'TRAITID' column.
+        pd.DataFrame: The processed DataFrame with the 'MLOG10P' column added, optionally the 'SNPID' column, and optionally without the 'TRAITID' column.
     """
 
     if "MLOG10P" not in df.columns:
@@ -83,11 +83,11 @@ def process_dataframe(df: pd.DataFrame, drop_tid: bool = True) -> pd.DataFrame:
         df.drop(columns=["TRAITID"], inplace=True)
 
     # _build_snpid should also be vectorised; assign in‑place.
-    df.loc[:, "SNIPID"] = _build_snpid(df)
+    df.loc[:, "SNPID"] = _build_snpid(df)
 
-    # Move SNIPID to the front without copying the whole frame.
+    # Move SNPID to the front without copying the whole frame.
     cols = df.columns.tolist()
-    cols.insert(0, cols.pop(cols.index("SNIPID")))
+    cols.insert(0, cols.pop(cols.index("SNPID")))
     df = df.reindex(columns=cols)
 
     return df
