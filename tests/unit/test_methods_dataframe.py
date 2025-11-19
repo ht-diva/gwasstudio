@@ -63,8 +63,8 @@ class TestProcessDataFrame(unittest.TestCase):
 
     def test_process_dataframe_with_snpid(self):
         processed_df = process_dataframe(self.df, drop_tid=True)
-        self.assertIn("SNIPID", processed_df.columns)
-        np.testing.assert_array_equal(processed_df["SNIPID"], ["1:1000:A:C", "2:2000:T:G"])
+        self.assertIn("SNPID", processed_df.columns)
+        np.testing.assert_array_equal(processed_df["SNPID"], ["1:1000:A:C", "2:2000:T:G"])
 
     def test_process_dataframe_drop_tid(self):
         processed_df = process_dataframe(self.df, drop_tid=True)
