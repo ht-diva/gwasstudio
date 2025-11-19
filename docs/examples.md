@@ -14,7 +14,7 @@ project: pqtl
 study: believe
 
 output:
-  - trait.desc
+  - trait_desc
 ```
 
 In the YAML file, we have specified the project and study that we want to query, as well as the field that we want in
@@ -57,10 +57,10 @@ trait:
 
 output:
   - build
-  - notes.sex
-  - notes.source_id
-  - trait.desc
-  - total.samples
+  - notes_sex
+  - notes_source_id
+  - trait_desc
+  - total_samples
 ```
 
 In the YAML file, we have specified the project and study that we want to query, as well as some specific seqid traits.
@@ -124,12 +124,12 @@ trait:
 
 output:
   - build
-  - notes.sex
-  - notes.source_id
-  - total.samples
-  - total.cases
-  - total.controls
-  - trait.desc
+  - notes_sex
+  - notes_source_id
+  - total_samples
+  - total_cases
+  - total_controls
+  - trait_desc
 ```
 
 By default, GWASStudio performs a case-insensitive substring search of the trait description.
