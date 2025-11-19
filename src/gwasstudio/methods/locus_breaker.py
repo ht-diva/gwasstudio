@@ -139,7 +139,7 @@ def _process_locusbreaker(
 
     subset_SNPs_pd = subset_SNPs_pd[(subset_SNPs_pd["EAF"] >= maf) & (subset_SNPs_pd["EAF"] <= (1 - maf))]
 
-    subset_SNPs_pd = process_dataframe(subset_SNPs_pd, attributes)
+    subset_SNPs_pd = process_dataframe(subset_SNPs_pd)
 
     results_lb_segments, results_lb_intervals = _locus_breaker(
         subset_SNPs_pd,

@@ -88,7 +88,7 @@ def _process_function_tasks(
         try:
             # Try BED format
             df = pd.read_csv(fp, sep="\t", header=None, names=["CHR", "START", "END"])
-            df["CHR"] = df["CHR"].astype(int)
+            df.loc[:, "CHR"] = df["CHR"].astype(int)
             return df
         except Exception:
             pass
@@ -96,7 +96,7 @@ def _process_function_tasks(
             # Try SNP list and convert to BED format
             df = pd.read_csv(fp, usecols=["CHR", "POS"], dtype={"CHR": str, "POS": int})
             df = df[df["CHR"].str.isnumeric()]
-            df["CHR"] = df["CHR"].astype(int)
+            df.loc[:, "CHR"] = df["CHR"].astype(int)
             df = df.rename(columns={"POS": "START"})
             df["END"] = df["START"] + 1
             return df[["CHR", "START", "END"]]
@@ -218,7 +218,7 @@ Export summary statistics from TileDB datasets with various filtering options.
     cloup.option(
         "--attr",
         required=True,
-        default="BETA,SE,EAF,MLOG10P",
+        default="BETA,SE,EAF,MLOG10P,EA,NEA",
         help="string delimited by comma with the attributes to export",
     ),
 )
