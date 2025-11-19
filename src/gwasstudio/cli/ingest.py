@@ -1,8 +1,8 @@
+import math
 from pathlib import Path
 
 import click
 import cloup
-import math
 from dask import delayed, compute
 
 from gwasstudio import logger
@@ -184,7 +184,7 @@ def ingest_to_fs(ctx, input_file_list, uri, pvalue):
         TileDBSchemaCreator(uri, {}, pvalue).create_schema()
 
     if get_dask_deployment(ctx) in dask_deployment_types:
-        batch_size = get_dask_batch_size(ctx)
+        batch_size = get_dask_batch_size(ctx, capacity_mode=True)
         for i in range(0, len(input_file_list), batch_size):
             batch_files = {file_path: Path(file_path).exists() for file_path in input_file_list[i : i + batch_size]}
             total_batches = math.ceil(len(input_file_list) / batch_size)
