@@ -101,12 +101,12 @@ trait:
 output:
   - build
   - population
-  - notes.sex
-  - notes.source_id
-  - total.samples
-  - total.cases
-  - total.controls
-  - trait.desc
+  - notes_sex
+  - notes_source_id
+  - total_samples
+  - total_cases
+  - total_controls
+  - trait_desc
 ```
 
 This query file searches within the `ukb-d` study for all trait descriptions containing `Z42` or `pregnancy`, and returns a table with the columns specified in section `output:`.
