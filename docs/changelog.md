@@ -3,6 +3,50 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.11.0] - 2025-11-20
+
+### 🚀 Features
+
+- Generate SNPID column
+
+### 🐛 Bug Fixes
+
+- Add exact match for query
+- Correct column name
+
+### 💼 Other
+
+- Make pytest happy
+- Revert "perf: export tasks in one batch"
+
+This reverts commit 4e6546b860962a845fd8d3f3459d43ed79b47572.
+
+### 📚 Documentation
+
+- Add ingestion and summary-stats
+- Fix menu links
+- Typo
+- Update README
+- Fix yaml syntax
+
+### ⚡ Performance
+
+- Export tasks in one batch
+- New config for the batch size
+
+### 🎨 Styling
+
+- Linting
+
+### 🧪 Testing
+
+- Save execution time on log files
+- Set a different batch size
+
+### ⚙️ Miscellaneous Tasks
+
+- Dealing with SettingWithCopyWarning
+
 ## [2.10.0] - 2025-11-03
 
 ### 🚀 Features
@@ -16,6 +60,10 @@ All notable changes to this project will be documented in this file.
 - Increase TileDB timeout, close #102
 - Handle empty dataframe
 - Restore file format
+
+### 💼 Other
+
+- Bump version
 
 ### 🚜 Refactor
 
