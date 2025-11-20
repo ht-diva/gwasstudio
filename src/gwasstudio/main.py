@@ -82,6 +82,7 @@ def configure_logging(stdout, verbosity, _logger):
     cloup.option("--python", default=None, help="Python executable used to launch Dask workers."),
     cloup.option("--walltime", default="12:00:00", help="Walltime for each worker (only for remote cluster config)"),
     cloup.option("--workers", default=2, help="Number of Dask workers to start"),
+    cloup.option("--batch-size", default=0, help="Number of tasks per batch (0 for no batching)"),
 )
 @cloup.option_group(
     "MongoDB options",
@@ -122,6 +123,7 @@ def cli_init(
     aws_region,
     aws_verify_ssl,
     dask_deployment,
+    batch_size,
     address,
     image,
     workers,
@@ -168,14 +170,9 @@ def cli_init(
         "vfs.s3.request_timeout_ms": 300000,  # 5 minutes
     }
 
-    batch_sizes = {
-        "gateway": workers * cores_per_worker,
-        "slurm": workers * cores_per_worker,
-        "local": workers * cores_per_worker,
-    }
     ctx.obj["dask"] = {
         "deployment": dask_deployment,
-        "batch_size": batch_sizes.get(dask_deployment, None),
+        "batch_size": batch_size,  # s.get(dask_deployment, None),
         "workers": workers,
         "cores_per_worker": cores_per_worker,
         "memory_per_worker": memory_per_worker,

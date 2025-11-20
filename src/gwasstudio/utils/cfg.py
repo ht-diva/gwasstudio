@@ -78,8 +78,12 @@ def get_dask_config(ctx: object):
     return ctx.obj.get("dask")
 
 
-def get_dask_batch_size(ctx: object) -> int:
-    return get_dask_config(ctx).get("batch_size")
+def get_dask_batch_size(ctx: object, capacity_mode: bool = False) -> int:
+    workers = get_dask_config(ctx).get("workers")
+    cores_per_worker = get_dask_config(ctx).get("cores_per_worker")
+    # When capacity_mode is True we return total worker capacity,
+    # otherwise we fall back to the configured batch size.
+    return workers * cores_per_worker if capacity_mode else get_dask_config(ctx).get("batch_size")
 
 
 def get_dask_deployment(ctx: object) -> str:

@@ -1,9 +1,9 @@
+import math
 from pathlib import Path
 from typing import Callable
 
 import click
 import cloup
-import math
 import pandas as pd
 import tiledb
 from dask import delayed, compute
@@ -192,13 +192,18 @@ def _process_function_tasks(
             )
             tasks.append(result)
 
-    total_batches = math.ceil(len(tasks) / batch_size)
-    # Execute in batches (keeps the Dask graph small).
-    for i in range(0, len(tasks), batch_size):
-        batch_no = i // batch_size + 1
-        logger.info(f"Running batch {batch_no}/{total_batches} ({batch_size} items)")
-        compute(*tasks[i : i + batch_size], scheduler=dask_client)
-        logger.info(f"Batch {batch_no} completed.", flush=True)
+    # Handle single-batch case if batch_size <= 0 or len(tasks) <= batch_size
+    if batch_size <= 0 or len(tasks) <= batch_size:
+        logger.info(f"Running all tasks in a single batch ({len(tasks)} items)")
+        compute(*tasks, scheduler=dask_client)
+        logger.info("Single batch completed.", flush=True)
+    else:
+        total_batches = math.ceil(len(tasks) / batch_size)
+        for i in range(0, len(tasks), batch_size):
+            batch_no = i // batch_size + 1
+            logger.info(f"Running batch {batch_no}/{total_batches} ({min(batch_size, len(tasks) - i)} items)")
+            compute(*tasks[i : i + batch_size], scheduler=dask_client)
+            logger.info(f"Batch {batch_no} completed.", flush=True)
 
 
 HELP_DOC = """
