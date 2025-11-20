@@ -66,8 +66,8 @@ run_command "Exporting data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} expo
 # Export data with skip-meta
 run_command "Exporting data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_06.yml --output-prefix ${TEST_DIR}/example_export_skip_meta --uri ${TILEDB_DIR} --plot-out --skip-meta"
 
-# Export data with a different file format
-run_command "Exporting data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_export --output-format parquet --uri ${TILEDB_DIR}"
+# Export data with a different file format and batch size
+run_command "Exporting data..." "gwasstudio --stdout --batch-size 4 --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_export --output-format parquet --uri ${TILEDB_DIR}"
 
 # Regions filtering
 run_command "Regions filtering..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_regions_filtering --output-format csv --uri ${TILEDB_DIR} --get-regions-snps regions_query.tsv"
