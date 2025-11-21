@@ -17,6 +17,7 @@ from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table
 from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
 from gwasstudio.utils.enums import MetadataEnum
+from gwasstudio.utils.io import read_to_bed
 from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataframe_from_mongo_objs
 from gwasstudio.utils.mongo_manager import manage_mongo
 from gwasstudio.utils.path_joiner import join_path
@@ -81,28 +82,6 @@ def _process_function_tasks(
     if dask_client is None:
         raise ValueError("Missing Dask client")
 
-    # Helper: read BED region file or SNP list
-    def _read_to_bed(fp: str) -> pd.DataFrame | None:
-        if not fp:
-            return None
-        try:
-            # Try BED format
-            df = pd.read_csv(fp, sep="\t", header=None, names=["CHR", "START", "END"])
-            df.loc[:, "CHR"] = df["CHR"].astype(int)
-            return df
-        except Exception:
-            pass
-        try:
-            # Try SNP list and convert to BED format
-            df = pd.read_csv(fp, usecols=["CHR", "POS"], dtype={"CHR": str, "POS": int})
-            df = df[df["CHR"].str.isnumeric()]
-            df.loc[:, "CHR"] = df["CHR"].astype(int)
-            df = df.rename(columns={"POS": "START"})
-            df["END"] = df["START"] + 1
-            return df[["CHR", "START", "END"]]
-        except Exception:
-            raise ValueError(f"--get_regions_snps file '{fp}' should be in BED format or a SNP list (CHR,POS)")
-
     # Wrapper that opens the array locally and forwards the call.
     @delayed
     def _run_extraction(
@@ -135,12 +114,7 @@ def _process_function_tasks(
     kwargs["attributes"] = attr.split(",") if attr else None
 
     if regions_snps:
-        kwargs["regions_snps"] = delayed(_read_to_bed)(regions_snps)
-
-    # if isinstance(group, pd.Series):
-    #     trait_id_list = group.to_list()
-    # else:
-    #     trait_id_list = group["data_id"].to_list()
+        kwargs["regions_snps"] = delayed(read_to_bed)(regions_snps)
 
     trait_id_list = group["data_id"].tolist() if not isinstance(group, pd.Series) else group.tolist()
 
