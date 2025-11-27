@@ -3,12 +3,22 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.12.1] - 2025-11-27
+
+### ⚙️ Miscellaneous Tasks
+
+- Fix release workflow
+
 ## [2.12.0] - 2025-11-27
 
 ### 🚀 Features
 
 - Enhance BED file processing
 - Enable copy_on_write mode
+
+### 💼 Other
+
+- Bump version
 
 ### 🚜 Refactor
 
