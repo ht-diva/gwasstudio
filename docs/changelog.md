@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.12.0] - 2025-11-27
+
+### 🚀 Features
+
+- Enhance BED file processing
+- Enable copy_on_write mode
+
+### 🚜 Refactor
+
+- Bed/snp list processing
+
+### 🧪 Testing
+
+- Add unit test for bed/snp list reader
+
+### ⚙️ Miscellaneous Tasks
+
+- Add release workflow
+- Update release workflow
+- Fix invalid workflow error
+
 ## [2.11.0] - 2025-11-20
 
 ### 🚀 Features
@@ -20,6 +41,7 @@ All notable changes to this project will be documented in this file.
 - Revert "perf: export tasks in one batch"
 
 This reverts commit 4e6546b860962a845fd8d3f3459d43ed79b47572.
+- Bump version
 
 ### 📚 Documentation
 
