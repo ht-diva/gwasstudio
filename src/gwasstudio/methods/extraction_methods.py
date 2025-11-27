@@ -8,6 +8,7 @@ from gwasstudio import logger
 from gwasstudio.methods.dataframe import process_dataframe
 from gwasstudio.methods.manhattan_plot import _plot_manhattan
 from gwasstudio.utils.tdb_schema import AttributeEnum as an, DimensionEnum as dn
+from gwasstudio.utils.snps import is_multiallelic
 
 TILEDB_DIMS = dn.get_names()
 
@@ -217,9 +218,18 @@ def extract_regions_leadsnps(
                 continue
 
             # Lead SNP
-            lead = region.loc[region.MLOG10P.idxmax()]
-            lead = process_dataframe(pd.DataFrame([lead])).iloc[0]
-
+            lead = region[region["MLOG10P"] == region["MLOG10P"].max()]
+            lead = process_dataframe(lead)
+            if len(lead) > 1: # if multiple lead SNPs
+                lead["is_multi"] = lead["SNPID"].apply(is_multiallelic)
+                mono = lead[lead["is_multi"] == False]
+                if len(mono) > 0:
+                    lead = mono.iloc[0] # keep first bi-allelic
+                else:
+                    lead = lead.iloc[0] # keep first multi-allelic
+            else:
+                lead = lead.iloc[0]
+            
             # Exact SNP
             exact = region[(region.POS == row.POS)]
             exact = process_dataframe(pd.DataFrame([exact.iloc[0]])).iloc[0] if not exact.empty else None
