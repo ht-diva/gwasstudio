@@ -67,7 +67,10 @@ def load_search_topics(search_file: str) -> Any | None:
 
 
 def query_mongo_obj(
-    search_criteria: Dict[str, Any], data_profile: EnhancedDataProfile, case_sensitive: bool = False
+    search_criteria: Dict[str, Any],
+    data_profile: EnhancedDataProfile,
+    case_sensitive: bool = False,
+    exact_match: bool = False,
 ) -> List[Dict[str, Any]]:
     """
     Query the data profile object to find matching results based on search criteria.
@@ -76,6 +79,7 @@ def query_mongo_obj(
         search_criteria (Dict[str, Any]): Dictionary containing search criteria.
         data_profile (EnhancedDataProfile): Data profile object to be queried.
         case_sensitive (bool): Flag to enable case-sensitive search. Default is False.
+        exact_match (bool): Flag to enable exact match search. Default is False.
 
     Returns:
         List[Dict[str, Any]]: List of matched data profile entries.
@@ -93,12 +97,12 @@ def query_mongo_obj(
             for item in value:
                 query_dict = {key: item}
                 logger.debug(query_dict)
-                query_results.extend(data_profile.query(case_sensitive, **query_dict))
+                query_results.extend(data_profile.query(case_sensitive, exact_match, **query_dict))
             matched_entries.append(query_results)
         else:
             query_dict = {key: value}
             logger.debug(query_dict)
-            query_results = data_profile.query(case_sensitive, **query_dict)
+            query_results = data_profile.query(case_sensitive, exact_match, **query_dict)
             matched_entries.append(query_results)
 
     # Create a dictionary of matched entries with their IDs as keys
@@ -169,8 +173,19 @@ def load_metadata(file_path: Path, delimiter: str = "\t") -> pd.DataFrame:
         raise ValueError("Error parsing the file")
 
 
-def process_row(row: pd.Series) -> Dict[Hashable, Any]:
-    """Process a row of data to create a metadata dictionary."""
+def process_row(row: tuple[Any]) -> dict[Hashable, Any]:
+    """
+    Process a row (namedtuple from ``DataFrame.itertuples``) to create a
+    metadata dictionary.
+
+    """
+    # ------ Normalise the namedtuple to a dict for easy iteration ------
+    row_dict = row._asdict()  # OrderedDict of field_name → value
+
+    # Helper for direct attribute access
+    def get(key: str) -> Any:
+        """Return the attribute ``key`` from the namedtuple."""
+        return getattr(row, key)
 
     # Custom JSON encoder
     class CustomEncoder(json.JSONEncoder):
@@ -179,14 +194,14 @@ def process_row(row: pd.Series) -> Dict[Hashable, Any]:
                 return None
             return super().default(obj)
 
-    project_key = lower_and_replace(row["project"])
-    study_key = lower_and_replace(row["study"])
+    project_key = lower_and_replace(get("project"))
+    study_key = lower_and_replace(get("study"))
 
     hg = Hashing()
 
-    metadata = {"project": project_key, "study": study_key, "data_id": hg.compute_hash(fpath=row["file_path"])}
+    metadata = {"project": project_key, "study": study_key, "data_id": hg.compute_hash(fpath=get("file_path"))}
 
-    for key, value in row.items():
+    for key, value in row_dict.items():
         if "_" in key and key.startswith(tuple(DataProfile.json_dict_fields())):
             k, subk = key.split("_", 1)
             metadata.setdefault(k, {})[subk] = value
@@ -196,9 +211,7 @@ def process_row(row: pd.Series) -> Dict[Hashable, Any]:
                 items = [part.strip() for part in parts]
             else:
                 items = [value.strip()]
-            # items = value.split(",")
             metadata.setdefault(key, []).extend(items)
-            # metadata[key] = [value]
         else:
             metadata[key] = value
 
@@ -211,18 +224,23 @@ def process_row(row: pd.Series) -> Dict[Hashable, Any]:
 def ingest_metadata(df: pd.DataFrame, mongo_uri: str = None) -> None:
     """Ingest data into the MongoDB collection."""
 
-    def document_generator(df):
-        for _, row in df.iterrows():
+    def _document_generator(df):
+        for row in df.itertuples(index=False):
             yield process_row(row)
 
     logger.info("Starting metadata ingestion")
     rows = len(df.axes[0])
     processed_rows = 0
     logger.info(f"{rows} documents to ingest")
-    for document in document_generator(df):
-        processed_rows += 1
-        obj = EnhancedDataProfile(uri=mongo_uri, **document)
+
+    # Helper that creates and saves a single document
+    def _save_document(doc):
+        obj = EnhancedDataProfile(uri=mongo_uri, **doc)
         obj.save()
+        return 1  # count of one processed row
+
+    for document in _document_generator(df):
+        processed_rows += _save_document(document)
 
         # Print the row counter every 100 rows
         if processed_rows % 100 == 0:

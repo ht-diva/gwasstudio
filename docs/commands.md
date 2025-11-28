@@ -46,6 +46,11 @@ gwasstudio export [OPTIONS]
 - `--color-thr TEXT`: Color for the points passing the threshold line in the plot (default: `red`).
 - `--s-value INTEGER`: Value for the suggestive p-value line in the plot (default: `5`).
 
+**Query Options:**
+
+- `--case-sensitive`: Enable case sensitive search of data to export
+- `--exact-match`: Enable exact match search of data to export
+
 ---
 
 ### `info`
@@ -107,5 +112,6 @@ gwasstudio meta-query [OPTIONS]
 - `--search-file`: The search file used for querying metadata  [required]
 - `--output-prefix`: Prefix to be used for naming the output files
 - `--case-sensitive`: Enable case sensitive search
+- `--exact-match`: Enable exact match search
 
 ---

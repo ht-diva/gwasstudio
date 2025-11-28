@@ -3,6 +3,93 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.12.2] - 2025-11-28
+
+### ⚡ Performance
+
+- Enable capacity_mode for ingest_to_s3
+- Improve metadata ingestion
+
+## [2.12.1] - 2025-11-27
+
+### 💼 Other
+
+- Bump version
+
+### ⚙️ Miscellaneous Tasks
+
+- Fix release workflow
+
+## [2.12.0] - 2025-11-27
+
+### 🚀 Features
+
+- Enhance BED file processing
+- Enable copy_on_write mode
+
+### 💼 Other
+
+- Bump version
+
+### 🚜 Refactor
+
+- Bed/snp list processing
+
+### 🧪 Testing
+
+- Add unit test for bed/snp list reader
+
+### ⚙️ Miscellaneous Tasks
+
+- Add release workflow
+- Update release workflow
+- Fix invalid workflow error
+
+## [2.11.0] - 2025-11-20
+
+### 🚀 Features
+
+- Generate SNPID column
+
+### 🐛 Bug Fixes
+
+- Add exact match for query
+- Correct column name
+
+### 💼 Other
+
+- Make pytest happy
+- Revert "perf: export tasks in one batch"
+
+This reverts commit 4e6546b860962a845fd8d3f3459d43ed79b47572.
+- Bump version
+
+### 📚 Documentation
+
+- Add ingestion and summary-stats
+- Fix menu links
+- Typo
+- Update README
+- Fix yaml syntax
+
+### ⚡ Performance
+
+- Export tasks in one batch
+- New config for the batch size
+
+### 🎨 Styling
+
+- Linting
+
+### 🧪 Testing
+
+- Save execution time on log files
+- Set a different batch size
+
+### ⚙️ Miscellaneous Tasks
+
+- Dealing with SettingWithCopyWarning
+
 ## [2.10.0] - 2025-11-03
 
 ### 🚀 Features
@@ -16,6 +103,10 @@ All notable changes to this project will be documented in this file.
 - Increase TileDB timeout, close #102
 - Handle empty dataframe
 - Restore file format
+
+### 💼 Other
+
+- Bump version
 
 ### 🚜 Refactor
 

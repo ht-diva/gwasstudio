@@ -1,9 +1,9 @@
+import math
 from pathlib import Path
 from typing import Callable
 
 import click
 import cloup
-import math
 import pandas as pd
 import tiledb
 from dask import delayed, compute
@@ -18,6 +18,7 @@ from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table
 from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
 from gwasstudio.utils.enums import MetadataEnum
+from gwasstudio.utils.io import read_to_bed
 from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataframe_from_mongo_objs
 from gwasstudio.utils.mongo_manager import manage_mongo
 from gwasstudio.utils.path_joiner import join_path
@@ -82,28 +83,6 @@ def _process_function_tasks(
     if dask_client is None:
         raise ValueError("Missing Dask client")
 
-    # Helper: read BED region file or SNP list
-    def _read_to_bed(fp: str) -> pd.DataFrame | None:
-        if not fp:
-            return None
-        try:
-            # Try BED format
-            df = pd.read_csv(fp, sep="\t", header=None, names=["CHR", "START", "END"])
-            df["CHR"] = df["CHR"].astype(int)
-            return df
-        except Exception:
-            pass
-        try:
-            # Try SNP list and convert to BED format
-            df = pd.read_csv(fp, usecols=["CHR", "POS"], dtype={"CHR": str, "POS": int})
-            df = df[df["CHR"].str.isnumeric()]
-            df["CHR"] = df["CHR"].astype(int)
-            df = df.rename(columns={"POS": "START"})
-            df["END"] = df["START"] + 1
-            return df[["CHR", "START", "END"]]
-        except Exception:
-            raise ValueError(f"--get_regions_snps file '{fp}' should be in BED format or a SNP list (CHR,POS)")
-
     # Wrapper that opens the array locally and forwards the call.
     @delayed
     def _run_extraction(
@@ -149,7 +128,7 @@ def _process_function_tasks(
     kwargs["attributes"] = attr.split(",") if attr else None
 
     if regions_snps:
-        kwargs["regions_snps"] = delayed(_read_to_bed)(regions_snps)
+        kwargs["regions_snps"] = delayed(read_to_bed)(regions_snps)
 
     trait_id_list = group["data_id"].tolist() if not isinstance(group, pd.Series) else group.tolist()
     # Build the delayed tasks – each task receives the URI, not the object.
@@ -208,13 +187,18 @@ def _process_function_tasks(
             )
             tasks.append(result)
 
-    total_batches = math.ceil(len(tasks) / batch_size)
-    # Execute in batches (keeps the Dask graph small).
-    for i in range(0, len(tasks), batch_size):
-        batch_no = i // batch_size + 1
-        logger.info(f"Running batch {batch_no}/{total_batches} ({batch_size} items)")
-        compute(*tasks[i : i + batch_size], scheduler=dask_client)
-        logger.info(f"Batch {batch_no} completed.", flush=True)
+    # Handle single-batch case if batch_size <= 0 or len(tasks) <= batch_size
+    if batch_size <= 0 or len(tasks) <= batch_size:
+        logger.info(f"Running all tasks in a single batch ({len(tasks)} items)")
+        compute(*tasks, scheduler=dask_client)
+        logger.info("Single batch completed.", flush=True)
+    else:
+        total_batches = math.ceil(len(tasks) / batch_size)
+        for i in range(0, len(tasks), batch_size):
+            batch_no = i // batch_size + 1
+            logger.info(f"Running batch {batch_no}/{total_batches} ({min(batch_size, len(tasks) - i)} items)")
+            compute(*tasks[i : i + batch_size], scheduler=dask_client)
+            logger.info(f"Batch {batch_no} completed.", flush=True)
 
 
 HELP_DOC = """
@@ -316,6 +300,21 @@ Export summary statistics from TileDB datasets with various filtering options.
         help="Value for the suggestive p-value line in the plot (default: 5)",
     )
 )
+@cloup.option_group(
+    "Option to query metadata before export",
+    cloup.option(
+        "--case-sensitive",
+        default=False,
+        is_flag=True,
+        help="Perform case-sensitive matching on query values (default: False).",
+    ),
+    cloup.option(
+        "--exact-match",
+        default=False,
+        is_flag=True,
+        help="Perform exact match on query values (default: False).",
+    ),
+)
 @click.pass_context
 def export(
     ctx: click.Context,
@@ -339,6 +338,8 @@ def export(
     plot_out: bool,
     color_thr: str,
     s_value: int,
+    case_sensitive: bool,
+    exact_match: bool,
 ) -> None:
     """Export summary statistics based on selected options."""
     cfg = get_tiledb_config(ctx)
@@ -363,7 +364,7 @@ def export(
     with manage_mongo(ctx):
         mongo_uri = get_mongo_uri(ctx)
         obj = EnhancedDataProfile(uri=mongo_uri)
-        objs = query_mongo_obj(search_topics, obj)
+        objs = query_mongo_obj(search_topics, obj, case_sensitive=case_sensitive, exact_match=exact_match)
 
     meta_df = dataframe_from_mongo_objs(output_fields, objs)
 

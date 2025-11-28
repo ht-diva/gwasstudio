@@ -40,7 +40,8 @@ GWASStudio has three main commands for users:
 
 - [list](#1-list): list available/accessible data
 - [meta-query](#2-meta-query): query metadata of interest
-- [export](#3-export): export data of interest
+- [ingest](#3-ingest): ingestion of summary-statistics files(s)
+- [export](#4-export): export data of interest
 
 ---
 
@@ -66,7 +67,7 @@ Category: GWAS
 
 ### **2. `meta-query`**
 
-The `meta-query` command retrieves [metadata](#metadata) of interest using a [query file](#query-file). It can be used to verify the availability and characteristics of the data to [export](#3-export).
+The `meta-query` command retrieves [metadata](metadata.md) of interest using a [query file](#query-file). It can be used to verify the availability and characteristics of the data to [export](#4-export).
 
 ##### Meta-query example
 
@@ -74,32 +75,9 @@ The `meta-query` command retrieves [metadata](#metadata) of interest using a [qu
 gwasstudio meta-query --search-file query_ex01.txt --output-prefix output_query_ex01
 ```
 
-The output is a [metadata](#metadata) table named [output_query_ex01.csv](#meta-query-output-example) with records filtered by the query file [query_ex01.txt](#query-file-example).
+The output is a [metadata](metadata.md) table named [output_query_ex01.csv](#meta-query-output-example) with records filtered by the query file [query_ex01.txt](#query-file-example).
 
 For a detailed explanation of all command options, see also [meta-query command](commands.md#meta-query).
-
----
-
-#### Metadata
-
-A metadata table is assigned to each project-study and describes key information about the available/accessible summary statistics.</br >
-Metadata records may contain the following fields:
-
-| Metadata field   | Description                                                                                         | Possible values                                                              |
-|------------------|-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
-| `category`       | The type of summary statistics                                                                      | GWAS, pQTL, eQTL                                                             |
-| `project`        | Project to which the data belongs                                                                   | opengwas, pqtl, genesandhealth, ...                                          |
-| `study`          | The study under which the summary statistics fall                                                   | ukb-a, ukb-b,  ukb-d, ...                                                    |
-| `data_id`        | Unique ID for a summary statistics record                                                           | e.g. 89f31189b3                                                              |
-| `build`          | Genome build                                                                                        | GRCh37, GRCh38                                                               |
-| `population`     | Ancestry of the cohort                                                                              | see the [ancestry categories](population.md) page                            |
-| `total.samples`  | Total sample size                                                                                   | integer                                                                          |
-| `total.cases`    | Total amount of cases                                                                               | integer                                                                          |
-| `total.controls` | Total amount of controls                                                                            | integer                                                                          |
-| `trait.desc`     | A description of the trait (e.g. phenotypes or protein) associated to the summary statistics record | e.g. "Pregnancy, childbirth and the puerperium", "Alpha-1B-glycoprotein" ... |
-| `notes.sex`      | The sex of the individuals that participated to the study                                           | Males and Females, Combined                                                  |
-
-For a more detailed description of the metadata fields, please refer to the [metadata records](metadata.md) page.
 
 ---
 
@@ -107,15 +85,14 @@ For a more detailed description of the metadata fields, please refer to the [met
 
 The query file used to retrieve (meta)data follows a structured format with two sections:
 
-- Filtering criteria: [metadata fields](#metadata) used to query the database, specified as `metadata field: filtering value` pairs
-- Output specification (`output:`): a list of valid [metadata fields](#metadata) to include in the output
+- Filtering criteria: [metadata fields](metadata.md) used to query the database, specified as `metadata field: filtering value` pairs
+- Output specification (`output:`): a list of valid [metadata fields](metadata.md) to include in the output
 
 ##### Query file example
 
 ```
 project: opengwas
 study: ukb-d
-category: GWAS
 
 trait:
   - desc: Z42
@@ -124,12 +101,12 @@ trait:
 output:
   - build
   - population
-  - notes.sex
-  - notes.source_id
-  - total.samples
-  - total.cases
-  - total.controls
-  - trait.desc
+  - notes_sex
+  - notes_source_id
+  - total_samples
+  - total_cases
+  - total_controls
+  - trait_desc
 ```
 
 This query file searches within the `ukb-d` study for all trait descriptions containing `Z42` or `pregnancy`, and returns a table with the columns specified in section `output:`.
@@ -152,7 +129,27 @@ This query file searches within the `ukb-d` study for all trait descriptions con
 
 ---
 
-### **3. `export`**
+### **3. `ingest`**
+
+The `ingest` command stores [harmonized summary-statistics](summary-statistics.md) files(s) into a TileDB dataset, , using the relative metadata (which includes the source file paths) and the specified destination path.
+
+For a detailed explanation of input formatting, see [Summary-statistics columns](summary-statistics.md) and [Metadata fields](metadata.md).
+
+---
+
+##### Ingest example
+
+```
+gwasstudio ingest --file-path metadata_ukb_d_sampled.tsv --uri destination
+```
+
+This command creates a folder named `destination`, containing the summary-statistics data stored in TileDB format.
+
+For a detailed explanation of all command options, see also [ingest command](commands.md#ingest).
+
+---
+
+### **4. `export`**
 
 The `export` command is used to extract records of summary statistics (and associated metadata) from TileDB as speficied in the query file.
 

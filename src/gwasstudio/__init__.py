@@ -2,9 +2,13 @@ import importlib.metadata
 import tempfile
 from pathlib import Path
 
+import pandas as pd
 from cloup import Context, HelpFormatter, HelpTheme, Style
 from loguru import logger as a_logger
 from platformdirs import user_config_dir, user_data_dir, user_log_dir
+
+# https://pandas.pydata.org/pandas-docs/stable/user_guide/copy_on_write.html#
+pd.options.mode.copy_on_write = True
 
 __all__ = [
     "__appname__",

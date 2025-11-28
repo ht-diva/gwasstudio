@@ -57,25 +57,25 @@ class TestProcessDataFrame(unittest.TestCase):
         self.df = pd.DataFrame(self.data)
 
     def test_process_dataframe_with_mlog10p(self):
-        processed_df = process_dataframe(self.df, attributes=("",), drop_tid=True)
+        processed_df = process_dataframe(self.df, drop_tid=True)
         self.assertIn("MLOG10P", processed_df.columns)
         np.testing.assert_array_almost_equal(processed_df["MLOG10P"], [1.3419861, 1.3419861])
 
     def test_process_dataframe_with_snpid(self):
-        processed_df = process_dataframe(self.df, attributes=("SNIPID",), drop_tid=True)
-        self.assertIn("SNIPID", processed_df.columns)
-        np.testing.assert_array_equal(processed_df["SNIPID"], ["1:1000:A:C", "2:2000:T:G"])
+        processed_df = process_dataframe(self.df, drop_tid=True)
+        self.assertIn("SNPID", processed_df.columns)
+        np.testing.assert_array_equal(processed_df["SNPID"], ["1:1000:A:C", "2:2000:T:G"])
 
     def test_process_dataframe_drop_tid(self):
-        processed_df = process_dataframe(self.df, attributes=("",), drop_tid=True)
+        processed_df = process_dataframe(self.df, drop_tid=True)
         self.assertNotIn("TRAITID", processed_df.columns)
 
     def test_process_dataframe_without_drop_tid(self):
-        processed_df = process_dataframe(self.df, attributes=("",), drop_tid=False)
+        processed_df = process_dataframe(self.df, drop_tid=False)
         self.assertIn("TRAITID", processed_df.columns)
 
     def test_missing_columns(self):
         df = pd.DataFrame({"BETA": [1.96], "SE": [1], "CHR": [1]})
 
         with self.assertRaises(KeyError):
-            process_dataframe(df, attributes=("SNIPID",))
+            process_dataframe(df)

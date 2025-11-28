@@ -19,8 +19,9 @@ Query metadata records from MongoDB
 @cloup.option("--search-file", required=True, help="The search file used for querying metadata")
 @cloup.option("--output-prefix", default="out", help="Prefix to be used for naming the output files")
 @cloup.option("--case-sensitive", default=False, is_flag=True, help="Enable case sensitive search")
+@cloup.option("--exact-match", default=False, is_flag=True, help="Enable exact match search")
 @click.pass_context
-def query_metadata(ctx, search_file, output_prefix, case_sensitive):
+def query_metadata(ctx, search_file, output_prefix, case_sensitive, exact_match):
     """
     Queries metadata records from MongoDB based on the search topics specified in the provided template file.
 
@@ -32,6 +33,7 @@ def query_metadata(ctx, search_file, output_prefix, case_sensitive):
         search_file (str): Path to the search template YAML file
         output_prefix (str): Path to write the query results to
         case_sensitive (bool): Enable case-sensitive search
+        exact_match (bool): Enable exact match search
 
     Returns:
         None
@@ -46,7 +48,7 @@ def query_metadata(ctx, search_file, output_prefix, case_sensitive):
     with manage_mongo(ctx):
         mongo_uri = get_mongo_uri(ctx)
         obj = EnhancedDataProfile(uri=mongo_uri)
-        objs = query_mongo_obj(search_topics, obj, case_sensitive=case_sensitive)
+        objs = query_mongo_obj(search_topics, obj, case_sensitive=case_sensitive, exact_match=exact_match)
 
     # write metadata query result
     path = Path(output_prefix)

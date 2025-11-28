@@ -78,12 +78,13 @@ class MongoMixin:
                 logger.debug(detail)
         return detail
 
-    def query(self, case_sensitive=False, **kwargs):
+    def query(self, case_sensitive=False, exact_match=False, **kwargs):
         """
         Queries the database based on the provided keyword arguments.
 
         Args:
-            case_sensitive (bool, optional): Whether the query should be case-sensitive. Defaults to True.
+            case_sensitive (bool, optional): Whether the query should be case-sensitive. Defaults to False.
+            exact_match (bool, optional): Whether the query should force exact matches for all fields (no substring matches). Defaults to False.
             **kwargs: Additional keyword arguments to filter the query results.
 
         Returns:
@@ -108,7 +109,7 @@ class MongoMixin:
         logger.debug(queries)
 
         with self.mec:
-            if len(jds.keys()) > 0:
+            if len(jds.keys()) > 0:  # there are JSON fields to query
                 for jdk, jdv in jds.items():
                     query_fields_contains = {f"{jdk}__{contains_op}.{key}": value for key, value in jdv.items()}
 
@@ -117,16 +118,28 @@ class MongoMixin:
                         queries.append(Q(**{query_field_contains: value}))
 
                     # Use & operator to combine all the queries with AND logic
-                    # query_args = reduce(lambda x, y: x & y, queries)
                     query_args = Q()
                     for q in queries:
                         query_args = query_args & q
                     logger.debug(query_args)
-                    docs.extend(
-                        qr
-                        for qr in self.klass.objects(query_args).as_pymongo()
-                        if value.casefold() in find_item(json.loads(qr[jdk]), key.split(".").pop()).casefold()
-                    )
+                    all_docs = list(self.klass.objects(query_args).as_pymongo())
+                    if exact_match:
+                        # exact_math: exact match for all JSON fields' key-values
+                        for qr in all_docs:
+                            data = json.loads(qr.get(jdk, "{}"))
+                            if all(str(find_item(data, k)).strip() == str(v).strip() for k, v in jdv.items()):
+                                docs.append(qr)
+                    else:
+                        # not exact_match: substring match for JSON fields
+                        docs.extend(
+                            qr
+                            for qr in all_docs
+                            if any(
+                                value.casefold() in find_item(json.loads(qr[jdk]), key.split(".").pop()).casefold()
+                                for key, value in jdv.items()
+                                if isinstance(value, str)
+                            )
+                        )
             else:
                 for query_arg in queries:
                     logger.debug(query_arg)

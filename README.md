@@ -11,7 +11,7 @@ GWASStudio is a powerful CLI tool designed for efficient storage, retrieval, and
 
 ## Core Purpose
 
-GWASStudio provides a unified interface across the [SCDH](https://github.com/ht-diva/cdh_in_a_box) infrastructure, handling the ingestion, storage, querying and export of genomic data using high-performance technologies.
+GWASStudio provides a unified interface across the [CDH](https://github.com/ht-diva/cdh_in_a_box) infrastructure, handling the ingestion, storage, querying and export of genomic data using high-performance technologies.
 
 ## Key Functionalities
 
