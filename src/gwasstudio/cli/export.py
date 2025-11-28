@@ -185,15 +185,14 @@ def _process_function_tasks(
             )
             tasks.extend([seg_task, int_task])
     elif function_name.__name__ == "_meta_analysis":
-        delayed_df = _run_extraction_merge(
+        df_metaanalysis = _run_extraction_merge(
             tiledb_uri,
             tiledb_cfg,
             trait_id_list,
             None,
             **kwargs,
         )
-        result = delayed(write_table)(delayed_df, "test", logger, file_format=output_format, index=False)
-        tasks.append(result)
+        result = write_table(df_metaanalysis, "meta_analysis", logger, file_format=output_format, index=False)
     else:
         for trait in trait_id_list:
             extracted_df = _run_extraction(
@@ -315,7 +314,7 @@ Export summary statistics from TileDB datasets with various filtering options.
         "--s-value",
         default=5,
         help="Value for the suggestive p-value line in the plot (default: 5)",
-    ),
+    )
 )
 @click.pass_context
 def export(

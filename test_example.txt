@@ -1,0 +1,5 @@
+project: pqtl
+study: believe
+
+output:
+  - trait.desc
