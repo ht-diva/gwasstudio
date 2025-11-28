@@ -1,5 +1,6 @@
 import json
 import unittest
+from collections import namedtuple
 from pathlib import Path
 
 import pandas as pd
@@ -117,17 +118,30 @@ class TestLoadSearchTopics(unittest.TestCase):
 
     def test_process_row(self):
         # Create a test row
-        test_row = pd.Series(
-            {
-                "project": "project1",
-                "study": "study1",
-                "file_path": self.test_dataset,
-                "category": "category1",
-                "trait_subkey1": "value1",
-                "notes_subkey2": "value2",
-                "total_subkey3": "value3",
-                "key4_subkey4": "value4",
-            }
+        MetadataRow = namedtuple(
+            "MetadataRow",
+            [
+                "project",
+                "study",
+                "file_path",
+                "category",
+                "trait_subkey1",
+                "notes_subkey2",
+                "total_subkey3",
+                "key4_subkey4",
+            ],
+        )
+
+        # Use the namedtuple instead of a pandas Series
+        test_row = MetadataRow(
+            project="project1",
+            study="study1",
+            file_path=self.test_dataset,
+            category="category1",
+            trait_subkey1="value1",
+            notes_subkey2="value2",
+            total_subkey3="value3",
+            key4_subkey4="value4",
         )
 
         # Process the row
@@ -144,15 +158,24 @@ class TestLoadSearchTopics(unittest.TestCase):
         self.assertEqual(metadata["key4_subkey4"], "value4")
 
     def test_process_row_no_nested_keys(self):
-        row = pd.Series(
-            {
-                "project": "Test Project",
-                "study": "Test Study",
-                "file_path": self.test_dataset,
-                "other_field": "other_value",
-            }
+        MetadataRow = namedtuple(
+            "MetadataRow",
+            [
+                "project",
+                "study",
+                "file_path",
+                "other_field",
+            ],
         )
-        metadata = process_row(row)
+
+        test_row = MetadataRow(
+            project="Test Project",
+            study="Test Study",
+            file_path=self.test_dataset,
+            other_field="other_value",
+        )
+
+        metadata = process_row(test_row)
 
         # Check if the nested key handling is skipped
         self.assertNotIn("json_field", metadata)
