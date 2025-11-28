@@ -3,7 +3,18 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.12.2] - 2025-11-28
+
+### ⚡ Performance
+
+- Enable capacity_mode for ingest_to_s3
+- Improve metadata ingestion
+
 ## [2.12.1] - 2025-11-27
+
+### 💼 Other
+
+- Bump version
 
 ### ⚙️ Miscellaneous Tasks
 
