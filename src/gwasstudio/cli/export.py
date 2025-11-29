@@ -1,6 +1,6 @@
 import math
 from pathlib import Path
-from typing import Callable
+from typing import Callable, List, Union
 
 import click
 import cloup
@@ -13,6 +13,7 @@ from gwasstudio import logger
 from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
 from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions_snps
 from gwasstudio.methods.locus_breaker import _process_locusbreaker
+from gwasstudio.methods.meta_analysis import _meta_analysis
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table
 from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
@@ -65,6 +66,7 @@ def _process_function_tasks(
     function_name: Callable,
     regions_snps: str | None = None,
     dask_client: Client = None,
+    output_prefix=None,
     **kwargs,
 ) -> None:
     """
@@ -83,11 +85,10 @@ def _process_function_tasks(
         raise ValueError("Missing Dask client")
 
     # Wrapper that opens the array locally and forwards the call.
-    @delayed
     def _run_extraction(
         uri: str,
         cfg: dict[str, str],
-        trait: str,
+        traits: Union[str, List[str]],
         out_prefix: str | None,
         **inner_kwargs,
     ) -> pd.DataFrame:
@@ -95,7 +96,7 @@ def _process_function_tasks(
         # Open a *read‑only* handle on the worker.
         with tiledb.open(uri, mode="r", config=cfg) as arr:
             # ``function_name`` expects the opened array as its first argument.
-            return function_name(arr, trait, out_prefix, **inner_kwargs)
+            return function_name(arr, traits, out_prefix, **inner_kwargs)
 
     def _run_transformation(gwas_df: pd.DataFrame, meta_df: pd.DataFrame, trait_id: str) -> pd.DataFrame:
         #  Optional metadata broadcast – only used when ``skip_meta`` is False.
@@ -117,20 +118,18 @@ def _process_function_tasks(
         kwargs["regions_snps"] = delayed(read_to_bed)(regions_snps)
 
     trait_id_list = group["data_id"].tolist() if not isinstance(group, pd.Series) else group.tolist()
-
     # Build the delayed tasks – each task receives the URI, not the object.
     tasks = []
     if function_name.__name__ == "_process_locusbreaker":
         # Locusbreaker returns a tuple (segments, intervals).
         for trait in trait_id_list:
-            delayed_tuple = _run_extraction(
+            delayed_tuple = delayed(_run_extraction)(
                 tiledb_uri,
                 tiledb_cfg,
                 trait,
                 None,
                 **kwargs,
             )
-
             # Extract the two DataFrames lazily.
             seg = delayed(lambda t: t[0])(delayed_tuple)
             intv = delayed(lambda t: t[1])(delayed_tuple)
@@ -151,9 +150,21 @@ def _process_function_tasks(
                 index=False,
             )
             tasks.extend([seg_task, int_task])
+    elif function_name.__name__ == "_meta_analysis":
+        df_metaanalysis = delayed(_run_extraction)(
+            tiledb_uri,
+            tiledb_cfg,
+            trait_id_list,
+            None,
+            **kwargs,
+        )
+        result = delayed(write_table)(
+            df_metaanalysis, f"{output_prefix}_meta_analysis", logger, file_format=output_format, index=False
+        )
+        tasks.append(result)
     else:
         for trait in trait_id_list:
-            extracted_df = _run_extraction(
+            extracted_df = delayed(_run_extraction)(
                 tiledb_uri,
                 tiledb_cfg,
                 trait,
@@ -175,8 +186,9 @@ def _process_function_tasks(
         total_batches = math.ceil(len(tasks) / batch_size)
         for i in range(0, len(tasks), batch_size):
             batch_no = i // batch_size + 1
+            batch = tasks[i : i + batch_size]
             logger.info(f"Running batch {batch_no}/{total_batches} ({min(batch_size, len(tasks) - i)} items)")
-            compute(*tasks[i : i + batch_size], scheduler=dask_client)
+            compute(*batch, scheduler=dask_client)
             logger.info(f"Batch {batch_no} completed.", flush=True)
 
 
@@ -200,6 +212,10 @@ Export summary statistics from TileDB datasets with various filtering options.
         default="BETA,SE,EAF,MLOG10P,EA,NEA",
         help="string delimited by comma with the attributes to export",
     ),
+)
+@cloup.option_group(
+    "Meta-analysis options",
+    cloup.option("--meta-analysis", default=False, is_flag=True, help="Option to run meta-analysis"),
 )
 @cloup.option_group(
     "Locusbreaker options",
@@ -307,6 +323,7 @@ def export(
     maf: float,
     locus_flanks: int,
     locusbreaker: bool,
+    meta_analysis: bool,
     get_regions_snps: str | None,
     skip_meta: bool,
     plot_out: bool,
@@ -387,8 +404,8 @@ def export(
             ]
 
             # Dispatch the appropriate extraction routine
-            match (locusbreaker, get_regions_snps):
-                case (True, _):
+            match (locusbreaker, get_regions_snps, meta_analysis):
+                case (True, _, _):
                     _process_function_tasks(
                         *common_args,
                         function_name=_process_locusbreaker,
@@ -400,7 +417,7 @@ def export(
                         locus_flanks=locus_flanks,
                         dask_client=client,
                     )
-                case (_, str() as bed_fp):
+                case (_, str() as bed_fp, _):
                     _process_function_tasks(
                         *common_args,
                         function_name=extract_regions_snps,
@@ -408,6 +425,13 @@ def export(
                         plot_out=plot_out,
                         color_thr=color_thr,
                         s_value=s_value,
+                        dask_client=client,
+                    )
+                case (_, _, True):
+                    _process_function_tasks(
+                        *common_args,
+                        function_name=_meta_analysis,
+                        output_prefix=output_prefix,
                         dask_client=client,
                     )
                 case _:
