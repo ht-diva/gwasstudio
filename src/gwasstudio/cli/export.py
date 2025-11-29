@@ -1,6 +1,6 @@
 import math
 from pathlib import Path
-from typing import Callable
+from typing import Callable, List, Union
 
 import click
 import cloup
@@ -66,6 +66,7 @@ def _process_function_tasks(
     function_name: Callable,
     regions_snps: str | None = None,
     dask_client: Client = None,
+    output_prefix=None,
     **kwargs,
 ) -> None:
     """
@@ -84,11 +85,10 @@ def _process_function_tasks(
         raise ValueError("Missing Dask client")
 
     # Wrapper that opens the array locally and forwards the call.
-    @delayed
     def _run_extraction(
         uri: str,
         cfg: dict[str, str],
-        trait: str,
+        traits: Union[str, List[str]],
         out_prefix: str | None,
         **inner_kwargs,
     ) -> pd.DataFrame:
@@ -96,20 +96,7 @@ def _process_function_tasks(
         # Open a *read‑only* handle on the worker.
         with tiledb.open(uri, mode="r", config=cfg) as arr:
             # ``function_name`` expects the opened array as its first argument.
-            return function_name(arr, trait, out_prefix, **inner_kwargs)
-
-    def _run_extraction_merge(
-        uri: str,
-        cfg: dict[str, str],
-        trait_list: list,
-        out_prefix: str | None,
-        **inner_kwargs,
-    ) -> pd.DataFrame:
-        """Open the TileDB array on the worker and invoke ``function_name``."""
-        # Open a *read‑only* handle on the worker.
-        with tiledb.open(uri, mode="r", config=cfg) as arr:
-            # ``function_name`` expects the opened array as its first argument.
-            return function_name(arr, trait_list, out_prefix, **inner_kwargs)
+            return function_name(arr, traits, out_prefix, **inner_kwargs)
 
     def _run_transformation(gwas_df: pd.DataFrame, meta_df: pd.DataFrame, trait_id: str) -> pd.DataFrame:
         #  Optional metadata broadcast – only used when ``skip_meta`` is False.
@@ -136,7 +123,7 @@ def _process_function_tasks(
     if function_name.__name__ == "_process_locusbreaker":
         # Locusbreaker returns a tuple (segments, intervals).
         for trait in trait_id_list:
-            delayed_tuple = _run_extraction(
+            delayed_tuple = delayed(_run_extraction)(
                 tiledb_uri,
                 tiledb_cfg,
                 trait,
@@ -164,17 +151,20 @@ def _process_function_tasks(
             )
             tasks.extend([seg_task, int_task])
     elif function_name.__name__ == "_meta_analysis":
-        df_metaanalysis = _run_extraction_merge(
+        df_metaanalysis = delayed(_run_extraction)(
             tiledb_uri,
             tiledb_cfg,
             trait_id_list,
             None,
             **kwargs,
         )
-        result = write_table(df_metaanalysis, "meta_analysis", logger, file_format=output_format, index=False)
+        result = delayed(write_table)(
+            df_metaanalysis, f"{output_prefix}_meta_analysis", logger, file_format=output_format, index=False
+        )
+        tasks.append(result)
     else:
         for trait in trait_id_list:
-            extracted_df = _run_extraction(
+            extracted_df = delayed(_run_extraction)(
                 tiledb_uri,
                 tiledb_cfg,
                 trait,
@@ -196,8 +186,9 @@ def _process_function_tasks(
         total_batches = math.ceil(len(tasks) / batch_size)
         for i in range(0, len(tasks), batch_size):
             batch_no = i // batch_size + 1
+            batch = tasks[i : i + batch_size]
             logger.info(f"Running batch {batch_no}/{total_batches} ({min(batch_size, len(tasks) - i)} items)")
-            compute(*tasks[i : i + batch_size], scheduler=dask_client)
+            compute(*batch, scheduler=dask_client)
             logger.info(f"Batch {batch_no} completed.", flush=True)
 
 
@@ -440,6 +431,7 @@ def export(
                     _process_function_tasks(
                         *common_args,
                         function_name=_meta_analysis,
+                        output_prefix=output_prefix,
                         dask_client=client,
                     )
                 case _:
