@@ -56,3 +56,34 @@ def read_to_bed(fp: str) -> pd.DataFrame | None:
     except Exception as e:
         logger.debug(f"Trying to use SNP list format: {e}")
         raise ValueError(f"--get_regions_snps file '{fp}' should be in BED format or a SNP list (CHR,POS)")
+
+
+# Helper: read trait and SNP list
+def read_trait_snps(fp: str) -> pd.DataFrame | None:
+    if not fp:
+        return None
+    try:
+        df = pd.read_csv(
+            fp,
+            sep=",",
+            header=0,
+            names=["SOURCE_ID", "CHR", "POS"],
+            usecols=range(3),
+            dtype={"SOURCE_ID": str, "CHR": str, "POS": int},
+        )
+
+        # Remove 'chr' prefix and convert X/Y to 23/24
+        df.loc[:, "CHR"] = df["CHR"].str.replace("chr", "", case=False)
+        df.loc[:, "CHR"] = df["CHR"].replace({"X": "23", "Y": "24"})
+
+        count_row_before = df.shape[0]
+        df = df[df["CHR"].str.isnumeric()]
+        row_diff = count_row_before - df.shape[0]
+        if row_diff > 0:
+            logger.warning(f"Removed {row_diff} rows with non-numeric CHR values.")
+
+        df.loc[:, "CHR"] = df["CHR"].astype(int)
+
+        return df
+    except Exception as e:
+        raise ValueError(f"--get-regions-leadsnps file '{fp}' should have the format SOURCE_ID,CHR,POS")
