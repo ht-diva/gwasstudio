@@ -4,6 +4,7 @@ import pandas as pd
 from scipy import stats
 from gwasstudio.methods.extraction_methods import tiledb_array_query
 
+
 def _meta_analysis(tiledb_array, trait_list, out_prefix=None, **kwargs):
     """
     Meta-analysis for two or more GWAS traits using inverse variance method.
@@ -11,16 +12,16 @@ def _meta_analysis(tiledb_array, trait_list, out_prefix=None, **kwargs):
     # Ensure both dataframes have the required columns
     merged_list = []
     collected_trait_names = []  # Collect names here to avoid NaN issues later
-    
+
     attributes = kwargs.get("attributes")
     attributes, tiledb_query = tiledb_array_query(tiledb_array, attrs=attributes)
-    
+
     for trait in trait_list:
         df = tiledb_query.df[:, trait, :]
-        
+
         # Create SNP identifier
         df["SNP"] = df["CHR"].astype(str) + ":" + df["POS"].astype(str) + ":" + df["EA"] + ":" + df["NEA"]
-        
+
         # Safely grab the TRAITID for this dataframe
         if not df.empty and "TRAITID" in df.columns:
             # Drop NaNs just in case, take the first valid one, or fallback to input trait
@@ -47,19 +48,17 @@ def _meta_analysis(tiledb_array, trait_list, out_prefix=None, **kwargs):
     )
 
     variant_names = merged_df["SNP"].values
-    
+
     # FIX: range() should go up to len(trait_list) to include the last study
     # Study 0 is base, Study 1 is suffix_1, Study 2 is suffix_2, etc.
     effect_sizes = np.column_stack(
-        [merged_df["BETA"].values] + 
-        [merged_df[f"BETA_{i + 1}"].values for i in range(0, len(trait_list) - 1)]
+        [merged_df["BETA"].values] + [merged_df[f"BETA_{i + 1}"].values for i in range(0, len(trait_list) - 1)]
     )
 
     standard_error = np.column_stack(
-        [merged_df["SE"].values] + 
-        [merged_df[f"SE_{i + 1}"].values for i in range(0, len(trait_list) - 1)]
+        [merged_df["SE"].values] + [merged_df[f"SE_{i + 1}"].values for i in range(0, len(trait_list) - 1)]
     )
-    
+
     # Use the robustly collected names instead of querying the merged DF (which has NaNs)
     trait_names = collected_trait_names
 
@@ -71,10 +70,10 @@ def _meta_analysis(tiledb_array, trait_list, out_prefix=None, **kwargs):
 
     # Calculate variance
     variance = standard_error**2
-    
+
     # Weight effect sizes by inverse variance
     # Note: invalid='ignore' suppresses warnings for NaN division (missing studies)
-    with np.errstate(divide='ignore', invalid='ignore'):
+    with np.errstate(divide="ignore", invalid="ignore"):
         effect_size_divided_by_variance = effect_sizes / variance
         one_divided_by_variance = 1 / variance
 
@@ -84,7 +83,7 @@ def _meta_analysis(tiledb_array, trait_list, out_prefix=None, **kwargs):
 
     # Meta-analyzed effect sizes and standard errors
     # Handle potential divide by zero if a row was theoretically all NaN (though filtered above)
-    with np.errstate(divide='ignore', invalid='ignore'):
+    with np.errstate(divide="ignore", invalid="ignore"):
         meta_analysed_effect_sizes = effect_size_divided_by_variance_total / one_divided_by_variance_total
         meta_analysed_standard_error = np.sqrt(1 / one_divided_by_variance_total)
 
@@ -103,7 +102,7 @@ def _meta_analysis(tiledb_array, trait_list, out_prefix=None, **kwargs):
 
         # Handle cases where I² is NaN or negative
         i_squared[np.isnan(i_squared)] = 0  # Often 0 if Q is close to df, or if only 1 study
-        i_squared[i_squared < 0] = 0 
+        i_squared[i_squared < 0] = 0
 
     # Calculate meta-analysis p-values
     z_scores = meta_analysed_effect_sizes / meta_analysed_standard_error

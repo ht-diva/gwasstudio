@@ -298,7 +298,7 @@ Export summary statistics from TileDB datasets with various filtering options.
         "--s-value",
         default=5,
         help="Value for the suggestive p-value line in the plot (default: 5)",
-    )
+    ),
 )
 @cloup.option_group(
     "Option to query metadata before export",
