@@ -78,4 +78,7 @@ run_command "SNPs filtering..." "gwasstudio --stdout --workers 4 --mongo-uri ${M
 # Locusbreaker
 run_command "Locusbreaker..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_locusbreaker --uri ${TILEDB_DIR} --locusbreaker"
 
+# meta analysis
+run_command "Meta analysis..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_05.yml --output-prefix ${TEST_DIR}/example_meta_analysis --uri ${TILEDB_DIR} --meta-analysis"
+
 echo "Results are available in ${TEST_DIR}"
