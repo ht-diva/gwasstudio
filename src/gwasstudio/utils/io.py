@@ -67,9 +67,9 @@ def read_trait_snps(fp: str) -> pd.DataFrame | None:
             fp,
             sep=",",
             header=0,
-            names=["SOURCE_ID", "CHR", "POS"],
-            usecols=range(3),
-            dtype={"SOURCE_ID": str, "CHR": str, "POS": int},
+            names=["SOURCE_ID", "CHR", "POS", "EA", "NEA"],
+            usecols=range(5),
+            dtype={"SOURCE_ID": str, "CHR": str, "POS": int, "EA": str, "NEA": str},
         )
 
         # Remove 'chr' prefix and convert X/Y to 23/24
@@ -84,6 +84,14 @@ def read_trait_snps(fp: str) -> pd.DataFrame | None:
 
         df.loc[:, "CHR"] = df["CHR"].astype(int)
 
+        # Check if alleles are alphabetically ordered
+        alleles_disordered = df[df["EA"] >= df["NEA"]]
+        if not alleles_disordered.empty:
+            raise ValueError(
+                "Alleles are not alphabetically ordered (EA must < NEA). "
+                f"Examples of invalid rows:\n{alleles_disordered.head()}"
+            )
+        
         return df
     except Exception as e:
-        raise ValueError(f"--get-regions-leadsnps file '{fp}' should have the format SOURCE_ID,CHR,POS")
+        raise ValueError(f"--get-regions-leadsnps file '{fp}' should have the format SOURCE_ID,CHR,POS,EA,NEA")

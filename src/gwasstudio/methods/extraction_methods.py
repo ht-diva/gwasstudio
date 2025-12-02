@@ -191,7 +191,9 @@ def extract_regions_leadsnps(
     # Unique source identifier
     trait_snps["SOURCEID_SNP"] = trait_snps["SOURCE_ID"].astype(str) + ':' + \
         trait_snps["CHR"].astype(str) + ':' + \
-        trait_snps["POS"].astype(str)
+        trait_snps["POS"].astype(str) + ':' + \
+        trait_snps["EA"].astype(str) + ':' + \
+        trait_snps["NEA"].astype(str)
 
     attributes, tiledb_query = tiledb_array_query(tiledb_array, attrs=attributes)
 
@@ -231,7 +233,7 @@ def extract_regions_leadsnps(
                 lead = lead.iloc[0]
             
             # Exact SNP
-            exact = region[(region.POS == row.POS)]
+            exact = region[(region.POS == row.POS) & (region.EA == row.EA) & (region.NEA == row.NEA)]
             exact = process_dataframe(pd.DataFrame([exact.iloc[0]])).iloc[0] if not exact.empty else None
 
             dataframes.append({

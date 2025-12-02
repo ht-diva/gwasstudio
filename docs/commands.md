@@ -37,7 +37,7 @@ gwasstudio export [OPTIONS]
 - `--nest`: Estimate effective population size (Work in progress, not fully implemented yet) (flag).
 
 **Trait-specific Lead-SNP Search Options:**
-- `--get-regions-leadsnps TEXT`: A DataFrame containing SOURCE_ID (trait), CHR and POS for lead-SNP search.
+- `--get-regions-leadsnps TEXT`: A DataFrame containing SOURCE_ID (trait), CHR, POS, EA and NEA for lead-SNP search.
 - `--region-width INTEGER`: Region width (in bp) around POS for lead-SNP search (default: 500000).
 
 **P-value Filtering Options:**

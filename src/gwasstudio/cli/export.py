@@ -256,7 +256,7 @@ Export summary statistics from TileDB datasets with various filtering options.
     cloup.option(
         "--get-regions-leadsnps",
         default=None,
-        help="A DataFrame containing SOURCE_ID (trait), CHR and POS for lead-SNP search",
+        help="A DataFrame containing SOURCE_ID (trait), CHR, POS, EA and NEA for lead-SNP search",
     ),
     cloup.option(
         "--region-width",
