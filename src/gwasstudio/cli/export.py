@@ -451,9 +451,9 @@ def export(
                         function_name=extract_regions_leadsnps,
                         trait_snps=traitsnp_fp,
                         region_width=region_width,
-                      dask_client=client,
+                        dask_client=client,
                     )
-                case (_, _, ,_ True):
+                case (_, _, _, True):
                     _process_function_tasks(
                         *common_args,
                         function_name=_meta_analysis,

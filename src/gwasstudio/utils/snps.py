@@ -16,6 +16,6 @@ def is_multiallelic(snpid: str) -> bool:
     parts = snpid.split(":")
     if len(parts) != 4:
         raise ValueError(f"Invalid SNPID format '{snpid}'. Expected 'CHR:POS:EA:NEA'.")
-    _, _, EA, NEA = parts 
+    _, _, EA, NEA = parts
 
     return len(EA) > 1 or len(NEA) > 1

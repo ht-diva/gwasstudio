@@ -91,7 +91,7 @@ def read_trait_snps(fp: str) -> pd.DataFrame | None:
                 "Alleles are not alphabetically ordered (EA must < NEA). "
                 f"Examples of invalid rows:\n{alleles_disordered.head()}"
             )
-        
+
         return df
-    except Exception as e:
+    except Exception:
         raise ValueError(f"--get-regions-leadsnps file '{fp}' should have the format SOURCE_ID,CHR,POS,EA,NEA")
