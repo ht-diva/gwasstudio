@@ -1,0 +1,91 @@
+name: publish python distribution
+
+on:
+  push:
+
+
+jobs:
+  build:
+    name: build python distribution
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.12" ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: gwasstudio
+          environment-file: base_environment_docker.yml
+          auto-update-conda: true
+          auto-activate-base: false
+          python-version: ${{ matrix.python-version }}
+
+      - name: Build package
+        shell: bash -el {0}
+        run: |
+          make build
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distribution
+          path: dist/
+
+  pypi-publish:
+    name: upload to PyPI
+    if: startsWith(github.ref, 'refs/tags/') && github.event_name != 'pull_request'
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    # Specifying a GitHub environment is optional, but strongly encouraged
+    environment:
+      name: pypi
+      url: https://pypi.org/p/gwasstudio
+
+    permissions:
+      # IMPORTANT: this permission is mandatory for Trusted Publishing
+      id-token: write
+
+    steps:
+      - name: Download the artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distribution
+          path: dist/
+
+      - name: Publish distribution to Pypi
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+
+  testpypi-publish:
+    name: Publish package distributions to TestPyPI
+    if: github.event_name != 'pull_request'
+    needs:
+      - build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/gwasstudio
+
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download the artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distribution
+          path: dist/
+
+      - name: Publish package distributions to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true

@@ -173,8 +173,19 @@ def load_metadata(file_path: Path, delimiter: str = "\t") -> pd.DataFrame:
         raise ValueError("Error parsing the file")
 
 
-def process_row(row: pd.Series) -> Dict[Hashable, Any]:
-    """Process a row of data to create a metadata dictionary."""
+def process_row(row: tuple[Any]) -> dict[Hashable, Any]:
+    """
+    Process a row (namedtuple from ``DataFrame.itertuples``) to create a
+    metadata dictionary.
+
+    """
+    # ------ Normalise the namedtuple to a dict for easy iteration ------
+    row_dict = row._asdict()  # OrderedDict of field_name → value
+
+    # Helper for direct attribute access
+    def get(key: str) -> Any:
+        """Return the attribute ``key`` from the namedtuple."""
+        return getattr(row, key)
 
     # Custom JSON encoder
     class CustomEncoder(json.JSONEncoder):
@@ -183,14 +194,14 @@ def process_row(row: pd.Series) -> Dict[Hashable, Any]:
                 return None
             return super().default(obj)
 
-    project_key = lower_and_replace(row["project"])
-    study_key = lower_and_replace(row["study"])
+    project_key = lower_and_replace(get("project"))
+    study_key = lower_and_replace(get("study"))
 
     hg = Hashing()
 
-    metadata = {"project": project_key, "study": study_key, "data_id": hg.compute_hash(fpath=row["file_path"])}
+    metadata = {"project": project_key, "study": study_key, "data_id": hg.compute_hash(fpath=get("file_path"))}
 
-    for key, value in row.items():
+    for key, value in row_dict.items():
         if "_" in key and key.startswith(tuple(DataProfile.json_dict_fields())):
             k, subk = key.split("_", 1)
             metadata.setdefault(k, {})[subk] = value
@@ -200,9 +211,7 @@ def process_row(row: pd.Series) -> Dict[Hashable, Any]:
                 items = [part.strip() for part in parts]
             else:
                 items = [value.strip()]
-            # items = value.split(",")
             metadata.setdefault(key, []).extend(items)
-            # metadata[key] = [value]
         else:
             metadata[key] = value
 
@@ -215,18 +224,23 @@ def process_row(row: pd.Series) -> Dict[Hashable, Any]:
 def ingest_metadata(df: pd.DataFrame, mongo_uri: str = None) -> None:
     """Ingest data into the MongoDB collection."""
 
-    def document_generator(df):
-        for _, row in df.iterrows():
+    def _document_generator(df):
+        for row in df.itertuples(index=False):
             yield process_row(row)
 
     logger.info("Starting metadata ingestion")
     rows = len(df.axes[0])
     processed_rows = 0
     logger.info(f"{rows} documents to ingest")
-    for document in document_generator(df):
-        processed_rows += 1
-        obj = EnhancedDataProfile(uri=mongo_uri, **document)
+
+    # Helper that creates and saves a single document
+    def _save_document(doc):
+        obj = EnhancedDataProfile(uri=mongo_uri, **doc)
         obj.save()
+        return 1  # count of one processed row
+
+    for document in _document_generator(df):
+        processed_rows += _save_document(document)
 
         # Print the row counter every 100 rows
         if processed_rows % 100 == 0:
