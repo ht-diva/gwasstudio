@@ -11,14 +11,14 @@ from dask.distributed import Client
 
 from gwasstudio import logger
 from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
-from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions_snps
+from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions_snps, extract_regions_leadsnps
 from gwasstudio.methods.locus_breaker import _process_locusbreaker
 from gwasstudio.methods.meta_analysis import _meta_analysis
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table
 from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
 from gwasstudio.utils.enums import MetadataEnum
-from gwasstudio.utils.io import read_to_bed
+from gwasstudio.utils.io import read_to_bed, read_trait_snps
 from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataframe_from_mongo_objs
 from gwasstudio.utils.mongo_manager import manage_mongo
 from gwasstudio.utils.path_joiner import join_path
@@ -65,6 +65,7 @@ def _process_function_tasks(
     *,
     function_name: Callable,
     regions_snps: str | None = None,
+    trait_snps: str | None = None,
     dask_client: Client = None,
     output_prefix=None,
     **kwargs,
@@ -116,6 +117,8 @@ def _process_function_tasks(
 
     if regions_snps:
         kwargs["regions_snps"] = delayed(read_to_bed)(regions_snps)
+    if trait_snps:
+        kwargs["trait_snps"] = delayed(read_trait_snps)(trait_snps)
 
     trait_id_list = group["data_id"].tolist() if not isinstance(group, pd.Series) else group.tolist()
     # Build the delayed tasks – each task receives the URI, not the object.
@@ -265,6 +268,19 @@ Export summary statistics from TileDB datasets with various filtering options.
     ),
 )
 @cloup.option_group(
+    "Trait-specific lead-SNP search options",
+    cloup.option(
+        "--get-regions-leadsnps",
+        default=None,
+        help="A DataFrame containing SOURCE_ID (trait), CHR, POS, EA and NEA for lead-SNP search",
+    ),
+    cloup.option(
+        "--region-width",
+        default=500000,
+        help="Region width (in bp) around POS for lead-SNP search (default: 500000)",
+    ),
+)
+@cloup.option_group(
     "P-value filtering options",
     cloup.option(
         "--pvalue-thr",
@@ -325,6 +341,8 @@ def export(
     locusbreaker: bool,
     meta_analysis: bool,
     get_regions_snps: str | None,
+    get_regions_leadsnps: str | None,
+    region_width: int,
     skip_meta: bool,
     plot_out: bool,
     color_thr: str,
@@ -404,8 +422,8 @@ def export(
             ]
 
             # Dispatch the appropriate extraction routine
-            match (locusbreaker, get_regions_snps, meta_analysis):
-                case (True, _, _):
+            match (locusbreaker, get_regions_snps, get_regions_leadsnps, meta_analysis):
+                case (True, _, _, _):
                     _process_function_tasks(
                         *common_args,
                         function_name=_process_locusbreaker,
@@ -417,7 +435,7 @@ def export(
                         locus_flanks=locus_flanks,
                         dask_client=client,
                     )
-                case (_, str() as bed_fp, _):
+                case (_, str() as bed_fp, _, _):
                     _process_function_tasks(
                         *common_args,
                         function_name=extract_regions_snps,
@@ -427,7 +445,15 @@ def export(
                         s_value=s_value,
                         dask_client=client,
                     )
-                case (_, _, True):
+                case (_, _, str() as traitsnp_fp, _):
+                    _process_function_tasks(
+                        *common_args,
+                        function_name=extract_regions_leadsnps,
+                        trait_snps=traitsnp_fp,
+                        region_width=region_width,
+                        dask_client=client,
+                    )
+                case (_, _, _, True):
                     _process_function_tasks(
                         *common_args,
                         function_name=_meta_analysis,

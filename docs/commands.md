@@ -36,6 +36,10 @@ gwasstudio export [OPTIONS]
 - `--get-regions-snps TEXT`: Bed file (or txt file with CHR and POS columns) with regions or SNPs to filter.
 - `--nest`: Estimate effective population size (Work in progress, not fully implemented yet) (flag).
 
+**Trait-specific Lead-SNP Search Options:**
+- `--get-regions-leadsnps TEXT`: A DataFrame containing SOURCE_ID (trait), CHR, POS, EA and NEA for lead-SNP search.
+- `--region-width INTEGER`: Region width (in bp) around POS for lead-SNP search (default: 500000).
+
 **P-value Filtering Options:**
 
 - `--pvalue-thr FLOAT`: P-value threshold in -log10 format used to filter significant SNPs (default: 0, no filter)

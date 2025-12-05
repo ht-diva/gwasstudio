@@ -197,6 +197,19 @@ Alternatively, SNPIDs can also be listed in CHR,POS format. Example: [`hapmap3_s
 
 ---
 
+##### Trait-specific lead-SNP search
+
+Given an input table trait_snps_list.csv (SOURCE_ID,CHR,POS,EA,NEA), the command `--get-regions-leadsnps` creates a window of given width `--region-width` and extracts from this region the statistics (MLOG10P, BETA, SE) of:
+
+1. the lead SNP, i.e. the SNPID with the most significant P-value;
+2. the exact SNP, i.e. the exact CHR:POS:EA:NEA of the input. *Note* that the input SNPs must be harmonized to alphabetically ordered alleles.
+
+```
+gwasstudio export --search-file query_trait_snps.yml --get-regions-leadsnps trait_snps_list.csv --region-width 500000
+```
+
+---
+
 ##### P-value filtering
 
 Command example to export data by filtering based on a P-value threshold (in -log10 format):
