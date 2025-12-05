@@ -3,7 +3,41 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.12.3] - 2025-12-05
+
+### 🐛 Bug Fixes
+
+- Typo
+
+### 💼 Other
+
+- Addin meta_analysis
+- Fix metaanalysis
+
+### 🚜 Refactor
+
+- Create a generic extraction helper and enable delayed functions uniformly
+
+### 🎨 Styling
+
+- Linting
+
+### 🧪 Testing
+
+- Add a meta analysis entry
+
+### ⚙️ Miscellaneous Tasks
+
+- Fix release workflow
+- Cleaning
+- More cleaning
+- Restore submodule dataset
+
 ## [2.12.2] - 2025-11-28
+
+### 💼 Other
+
+- Bump version
 
 ### ⚡ Performance
 
