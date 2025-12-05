@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.13.0] - 2025-12-05
+
+### 🚀 Features
+
+- Add get-regions-leadsnps method and doc
+- Exclude multiallelic lead SNPs
+- Add alpha-ordered alleles for exact match
+
+### 🐛 Bug Fixes
+
+- Do not use equality operator to check for truth values and some linting
+
+### 🧪 Testing
+
+- Add functional test for get-regions-leadsnps
+
 ## [2.12.3] - 2025-12-05
 
 ### 🐛 Bug Fixes
@@ -13,6 +29,7 @@ All notable changes to this project will be documented in this file.
 
 - Addin meta_analysis
 - Fix metaanalysis
+- Bump version
 
 ### 🚜 Refactor
 
