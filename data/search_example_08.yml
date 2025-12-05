@@ -1,0 +1,11 @@
+project: opengwas
+study: prot-a
+
+trait:
+  - desc: Prolactin
+
+output:
+  - build
+  - population
+  - trait_desc
+  - trait_protein_ids

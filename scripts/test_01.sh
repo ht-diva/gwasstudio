@@ -75,6 +75,9 @@ run_command "Regions filtering..." "gwasstudio --stdout --mongo-uri ${MDB_URI} e
 # Hapmap3 SNPs filtering
 run_command "SNPs filtering..." "gwasstudio --stdout --workers 4 --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_snps_filtering --uri ${TILEDB_DIR} --get-regions-snps hapmap3/hapmap3_snps.csv"
 
+# Trait-specific lead-SNP search
+run_command "Lead-SNP search..." "gwasstudio --stdout --workers 4 --mongo-uri ${MDB_URI} export --search-file search_example_08.yml --output-prefix ${TEST_DIR}/example_leadsnp_search --uri ${TILEDB_DIR} --get-regions-leadsnps opengwas_prot-a_Prolactin_snps.csv"
+
 # Locusbreaker
 run_command "Locusbreaker..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_locusbreaker --uri ${TILEDB_DIR} --locusbreaker"
 
