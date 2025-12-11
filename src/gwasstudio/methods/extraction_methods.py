@@ -118,21 +118,25 @@ def extract_regions_snps(
             tiledb_query_df = tiledb_query.df[chr, trait, unique_positions]
             if not tiledb_query_df.empty:
                 title_plot = f"{trait} - {chr}:{min(unique_positions)}-{max(unique_positions)}"
-            warning_mx = f"No SNPs found for chromosome {chr}."
+            else:
+                logger.warning(f"No SNPs found for chromosome {chr}.")
+                continue
         else:
-            # Get all (start, end) tuples of genomic regions for this chromosome
-            min_pos = min(group["START"])
-            if min_pos < 0:
-                min_pos = 1
-            max_pos = max(group["END"])
+            # Get the largest genomic region for this chromosome
+            min_pos = max(group["START"].min(), 1)
+            max_pos = group["END"].max()
             tiledb_query_df = tiledb_query.df[chr, trait, min_pos:max_pos]
             if not tiledb_query_df.empty:
                 title_plot = f"{trait} - {chr}:{min(tiledb_query_df['POS'])}-{max(tiledb_query_df['POS'])}"
-            warning_mx = f"No region found for chromosome {chr}."
+            else:
+                logger.warning(f"No regions found for chromosome {chr}.")
+                continue
 
-        if tiledb_query_df.empty:
-            logger.warning(warning_mx)
-            continue
+            # Keep positions that fall within at least one region interval
+            pos_mask = pd.Series(False, index=tiledb_query_df.index)
+            for _, row in group.iterrows():
+                pos_mask |= (tiledb_query_df["POS"] >= row["START"]) & (tiledb_query_df["POS"] <= row["END"])
+            tiledb_query_df = tiledb_query_df[pos_mask]
 
         if plot_out:
             # Plot the dataframe
