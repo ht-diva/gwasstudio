@@ -58,6 +58,16 @@ def read_to_bed(fp: str) -> pd.DataFrame | None:
         raise ValueError(f"--get_regions_snps file '{fp}' should be in BED format or a SNP list (CHR,POS)")
 
 
+# Helper: check valid allele ordering
+def _validate_alleles(EA: str, NEA: str):
+    if len(EA) == len(NEA):
+        if EA > NEA:
+            raise ValueError("SNPs must be alphabetically ordered (EA < NEA).")
+    else:
+        if len(EA) < len(NEA):
+            raise ValueError("EA must be the longer allele in indels.")
+
+
 # Helper: read trait and SNP list
 def read_trait_snps(fp: str) -> pd.DataFrame | None:
     if not fp:
@@ -67,8 +77,7 @@ def read_trait_snps(fp: str) -> pd.DataFrame | None:
             fp,
             sep=",",
             header=0,
-            names=["SOURCE_ID", "CHR", "POS", "EA", "NEA"],
-            usecols=range(5),
+            usecols=["SOURCE_ID", "CHR", "POS", "EA", "NEA"],
             dtype={"SOURCE_ID": str, "CHR": str, "POS": int, "EA": str, "NEA": str},
         )
 
@@ -84,14 +93,16 @@ def read_trait_snps(fp: str) -> pd.DataFrame | None:
 
         df.loc[:, "CHR"] = df["CHR"].astype(int)
 
-        # Check if alleles are alphabetically ordered
-        alleles_disordered = df[df["EA"] >= df["NEA"]]
-        if not alleles_disordered.empty:
-            raise ValueError(
-                "Alleles are not alphabetically ordered (EA must < NEA). "
-                f"Examples of invalid rows:\n{alleles_disordered.head()}"
-            )
-
+        # Check if alleles are valid (alphabetically ordered)
+        invalid_rows = []
+        for idx, row in df.iterrows():
+            try:
+                _validate_alleles(row["EA"], row["NEA"])
+            except ValueError:
+                invalid_rows.append(idx)
+        if invalid_rows:
+            raise ValueError("Invalid allele ordering detected."
+                             f"Examples of invalid rows:\n{df.loc[invalid_rows].head()}")
         return df
     except Exception:
         raise ValueError(f"--get-regions-leadsnps file '{fp}' should have the format SOURCE_ID,CHR,POS,EA,NEA")

@@ -27,6 +27,7 @@ from gwasstudio.utils.path_joiner import join_path
 def create_output_prefix_dict(df: pd.DataFrame, output_prefix: str, source_id_column: str) -> dict:
     """
     Generates a dictionary mapping data IDs to output prefixes based on column values.
+    If multiple link_id values exist for a data ID, they are joined with '_'.
 
     Parameters:
         df (pd.DataFrame): Input DataFrame containing the required columns.
@@ -40,16 +41,31 @@ def create_output_prefix_dict(df: pd.DataFrame, output_prefix: str, source_id_co
     key_column = "data_id"
     value_column = "output_prefix"
 
-    # Determine the column to use for prefixing
-    column_to_get = source_id_column if source_id_column in df.columns else key_column
-    logger.debug(f"Selected column for prefixing: {column_to_get}")
+    # Determine the column(s) to use for prefixing
+    has_link_id = "link_id" in df.columns
+    has_source_id = source_id_column in df.columns
 
-    # Construct the output prefix column with fallback
-    df[value_column] = f"{output_prefix}_" + df[column_to_get].fillna(df[key_column]).astype(str)
+    if has_link_id and has_source_id:
+        # Aggregate multiple link IDs per data ID, e.g. one seq ID map to multiple UniProts 
+        grouped = (df.groupby(key_column, as_index=False).agg(
+            link_id=("link_id", lambda x: "_".join(sorted(set(map(str, x))))),
+            source_id=(source_id_column, "first")))
+        grouped[value_column] = (output_prefix + "_" + grouped["link_id"] + "_" + grouped["source_id"].astype(str))
+        
+        # Create dictionary mapping data IDs and link IDs to prefixes
+        output_prefix_dict = dict(zip(grouped[key_column], grouped[value_column]))
+        logger.debug("Output prefix dictionary created with link_id")
+    else:
+        # Determine the column to use for prefixing
+        column_to_get = source_id_column if source_id_column in df.columns else key_column
+        logger.debug(f"Selected column for prefixing: {column_to_get}")
 
-    # Create dictionary mapping data IDs to prefixes
-    output_prefix_dict = df.set_index(key_column)[value_column].to_dict()
-    logger.debug("Output prefix dictionary created")
+        # Construct the output prefix column with fallback
+        df[value_column] = f"{output_prefix}_" + df[column_to_get].fillna(df[key_column]).astype(str)
+
+        # Create dictionary mapping data IDs to prefixes
+        output_prefix_dict = df.set_index(key_column)[value_column].to_dict()
+        logger.debug("Output prefix dictionary created")
 
     return output_prefix_dict
 
@@ -99,15 +115,17 @@ def _process_function_tasks(
             # ``function_name`` expects the opened array as its first argument.
             return function_name(arr, traits, out_prefix, **inner_kwargs)
 
-    def _run_transformation(gwas_df: pd.DataFrame, meta_df: pd.DataFrame, trait_id: str) -> pd.DataFrame:
+    def _run_transformation(gwas_df: pd.DataFrame, meta_df: pd.DataFrame, trait_id: str, link_ids: list | None = None) -> pd.DataFrame:
         #  Optional metadata broadcast – only used when ``skip_meta`` is False.
         if isinstance(group, pd.Series):
             return gwas_df
 
         id_col = "data_id"
-        meta_row = meta_df.loc[meta_df[id_col] == trait_id].squeeze()
+        meta_row = meta_df.loc[meta_df[id_col] == trait_id].iloc[0]
         # meta_dict = meta_row.squeeze().to_dict()
-        meta_dict = {f"meta_{k}": v for k, v in meta_row.drop(["data_id", "output_prefix"]).to_dict().items()}
+        meta_dict = {f"meta_{k}": v for k, v in meta_row.drop(["data_id", "output_prefix"], errors="ignore").to_dict().items()}
+        if trait_snps:
+            meta_dict["meta_link_id"] = "_".join(sorted(map(str, link_ids)))
 
         broadcast = {col: [val] * len(gwas_df) for col, val in meta_dict.items()}
         return gwas_df.assign(**broadcast)
@@ -118,9 +136,9 @@ def _process_function_tasks(
     if regions_snps:
         kwargs["regions_snps"] = delayed(read_to_bed)(regions_snps)
     if trait_snps:
-        kwargs["trait_snps"] = delayed(read_trait_snps)(trait_snps)
+        all_trait_snps = delayed(read_trait_snps)(trait_snps)
 
-    trait_id_list = group["data_id"].tolist() if not isinstance(group, pd.Series) else group.tolist()
+    trait_id_list = group["data_id"].unique().tolist() if not isinstance(group, pd.Series) else group.unique().tolist()
     # Build the delayed tasks – each task receives the URI, not the object.
     tasks = []
     if function_name.__name__ == "_process_locusbreaker":
@@ -167,6 +185,9 @@ def _process_function_tasks(
         tasks.append(result)
     else:
         for trait in trait_id_list:
+            if trait_snps:
+                link_ids = group.loc[group["data_id"] == trait, "link_id"].unique()
+                kwargs["trait_snps"] = all_trait_snps[all_trait_snps["SOURCE_ID"].isin(link_ids)]
             extracted_df = delayed(_run_extraction)(
                 tiledb_uri,
                 tiledb_cfg,
@@ -174,7 +195,7 @@ def _process_function_tasks(
                 output_prefix_dict.get(trait),
                 **kwargs,
             )
-            transformed_df = delayed(_run_transformation)(extracted_df, group, trait)
+            transformed_df = delayed(_run_transformation)(extracted_df, group, trait, link_ids if trait_snps else None)
             result = delayed(write_table)(
                 transformed_df, output_prefix_dict.get(trait), logger, file_format=output_format, index=False
             )
@@ -375,7 +396,10 @@ def export(
         obj = EnhancedDataProfile(uri=mongo_uri)
         objs = query_mongo_obj(search_topics, obj, case_sensitive=case_sensitive, exact_match=exact_match)
 
-    meta_df = dataframe_from_mongo_objs(output_fields, objs)
+    if get_regions_leadsnps:
+        meta_df = dataframe_from_mongo_objs(output_fields, objs, search_topics=search_topics, exact_match=exact_match)
+    else:
+        meta_df = dataframe_from_mongo_objs(output_fields, objs)
 
     # Write metadata query result
     path = Path(output_prefix)

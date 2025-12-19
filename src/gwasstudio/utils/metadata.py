@@ -119,7 +119,7 @@ def query_mongo_obj(
     return final_results
 
 
-def dataframe_from_mongo_objs(fields: list, objs: list) -> pd.DataFrame:
+def dataframe_from_mongo_objs(fields: list, objs: list, *, search_topics: dict | None = None, exact_match=False) -> pd.DataFrame:
     """
     Create a DataFrame from MongoDB objects.
 
@@ -130,6 +130,10 @@ def dataframe_from_mongo_objs(fields: list, objs: list) -> pd.DataFrame:
     Parameters:
         fields (list): The field names to query from each object.
         objs (list): A list of MongoDB objects.
+        search_topics (dict, optional): contains exactly one of ('trait', 'notes').
+                                        The `link_id` column is added to the DataFrame, matching the search identifier.
+                                        Used to link `data_id` to trait-specific SNPs of read-in file. Default to None.
+        exact_match (bool, optional): Whether the `link_id` is an exact match to the search identifier (or substring match). Default to False.
 
     Returns:
         pd.DataFrame: The resulting DataFrame.
@@ -139,6 +143,28 @@ def dataframe_from_mongo_objs(fields: list, objs: list) -> pd.DataFrame:
 
     json_dict_fields = set(DataProfile.json_dict_fields())
     data_types = MetadataEnum.get_all_dtypes_dict()
+
+    # Add search identifier to metadata columns
+    if search_topics:
+        LINK_KEYS = {"trait", "notes"}
+        link_keys_in_search = [k for k in LINK_KEYS if k in search_topics]
+
+        if len(link_keys_in_search) == 1:
+            link_key = link_keys_in_search[0]
+
+            # Extract full link keys, e.g., 'protein_ids'
+            first_keys = [next(iter(item.keys())) for item in search_topics[link_key]]
+            unique_keys = list(set(first_keys))
+            if len(unique_keys) != 1:
+                raise ValueError(f"Only one of 'trait' or 'notes' is allowed in search_topics['{link_key}'], got {unique_keys}")
+            sub_key = unique_keys[0]
+
+            link_column = f"{link_key}_{sub_key}"
+            if link_column not in fields:
+                fields.append(link_column)
+
+        elif len(link_keys_in_search) > 1:
+            raise ValueError("Only one of 'trait' or 'notes' is allowed in search_topics")
 
     results = {}
     for field in fields:
@@ -155,7 +181,26 @@ def dataframe_from_mongo_objs(fields: list, objs: list) -> pd.DataFrame:
                 values.append(obj.get(field))
         results[field] = pd.Series(values, dtype=data_types.get(field, "object"))
 
-    return pd.DataFrame(data=results)
+    meta_df = pd.DataFrame(data=results)
+
+    if search_topics:
+        if exact_match:
+            meta_df["link_id"] = meta_df[link_column]
+        else:
+            # for substring match, a metadata column can have multiple matches with searched IDs
+            # (e.g. multiProt "P29459|P29460" matches with both "P29459" and "P29460")
+            # thus, the metadata is expanded for each searched ID
+            searched_ids = {v for item in search_topics[link_key] for v in item.values()} # extract searched trait/notes
+            expanded_rows = []
+            for _, row in meta_df.iterrows():
+                matched = [sid for sid in searched_ids if sid in str(row[link_column])]
+                for link_id in matched:
+                    new_row = row.copy()
+                    new_row["link_id"] = link_id
+                    expanded_rows.append(new_row)
+            meta_df = pd.DataFrame(expanded_rows)
+    
+    return meta_df
 
 
 def load_metadata(file_path: Path, delimiter: str = "\t") -> pd.DataFrame:
