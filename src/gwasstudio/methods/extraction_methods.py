@@ -239,7 +239,7 @@ def extract_regions_leadsnps(
             lead = process_dataframe(lead)
             if len(lead) > 1:  # if multiple lead SNPs
                 lead["is_multi"] = lead["SNPID"].apply(is_multiallelic)
-                mono = lead[not lead["is_multi"]]
+                mono = lead[~lead["is_multi"]]
                 if len(mono) > 0:
                     lead = mono.iloc[0]  # keep first bi-allelic
                 else:
