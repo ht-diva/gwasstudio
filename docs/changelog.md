@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.14.0] - 2026-01-08
+
+### 🚀 Features
+
+- Multi-query for trait-specific lead-SNPs
+
+### 🐛 Bug Fixes
+
+- Export exact regions
+- Test to validate indels
+
 ## [2.13.0] - 2025-12-05
 
 ### 🚀 Features
@@ -14,6 +25,10 @@ All notable changes to this project will be documented in this file.
 ### 🐛 Bug Fixes
 
 - Do not use equality operator to check for truth values and some linting
+
+### 💼 Other
+
+- Bump version
 
 ### 🧪 Testing
 
