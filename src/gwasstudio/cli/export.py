@@ -296,9 +296,14 @@ Export summary statistics from TileDB datasets with various filtering options.
         help="A DataFrame containing SOURCE_ID (trait), CHR, POS, EA and NEA for lead-SNP search",
     ),
     cloup.option(
-        "--region-width",
+        "--cis-flanks",
         default=500000,
-        help="Region width (in bp) around POS for lead-SNP search (default: 500000)",
+        help="Flanking region (in bp) around POS for the search of CIS lead-SNP (default: 500000)",
+    ),
+    cloup.option(
+        "--trans-flanks",
+        default=1000000,
+        help="Flanking region (in bp) around POS for the search of TRANS lead-SNP (default: 1000000)",
     ),
 )
 @cloup.option_group(
@@ -363,7 +368,8 @@ def export(
     meta_analysis: bool,
     get_regions_snps: str | None,
     get_regions_leadsnps: str | None,
-    region_width: int,
+    cis_flanks: int,
+    trans_flanks: int,
     skip_meta: bool,
     plot_out: bool,
     color_thr: str,
@@ -474,7 +480,8 @@ def export(
                         *common_args,
                         function_name=extract_regions_leadsnps,
                         trait_snps=traitsnp_fp,
-                        region_width=region_width,
+                        cis_flanks=cis_flanks,
+                        trans_flanks=trans_flanks,
                         dask_client=client,
                     )
                 case (_, _, _, True):

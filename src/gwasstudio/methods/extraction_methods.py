@@ -165,7 +165,8 @@ def extract_regions_leadsnps(
     trait: str,
     output_prefix: str,
     trait_snps: pd.DataFrame,
-    region_width: int = 500000,
+    cis_flanks: int = 500000,
+    trans_flanks: int = 1000000,
     attributes: Tuple[str] = None,
 ) -> pd.DataFrame:
     """
@@ -176,7 +177,8 @@ def extract_regions_leadsnps(
         trait (str): The trait to filter by.
         output_prefix (str): The prefix for the output file.
         trait_snps (pd.DataFrame, optional): A DataFrame containing SOURCE_ID (trait), CHR and POS for lead-SNP search.
-        region_width (int): Region width (in bp) around POS for lead-SNP search. Default 500000.
+        cis_flanks (int): Flanking region (in bp) around POS for the search of CIS lead-SNP (default: 500000).
+        trans_flanks (int): Flanking region (in bp) around POS for the search of TRANS lead-SNP (default: 1000000).
         attributes (list[str], optional): A list of attributes to include in the output. Defaults to None.
 
     Returns:
@@ -195,8 +197,14 @@ def extract_regions_leadsnps(
     ]
 
     # Make regions to query
-    trait_snps["START"] = (trait_snps["POS"] - round(region_width / 2)).clip(lower=1)
-    trait_snps["END"] = trait_snps["POS"] + round(region_width / 2)
+    DEFAULT_FLANKS = 1000000
+    if "CIS_TRANS" in trait_snps.columns:
+        cis_trans = trait_snps["CIS_TRANS"].str.strip().str.lower()
+        flanks = (cis_trans.map({"cis": cis_flanks, "trans": trans_flanks}).fillna(DEFAULT_FLANKS).astype(int))
+    else:
+        flanks = DEFAULT_FLANKS
+    trait_snps["START"] = (trait_snps["POS"] - flanks).clip(lower=1)
+    trait_snps["END"] = trait_snps["POS"] + flanks
 
     # Unique source identifier
     trait_snps["SOURCEID_SNP"] = (
