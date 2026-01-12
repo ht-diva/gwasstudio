@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.15.0] - 2026-01-12
+
+### 🚀 Features
+
+- Lead-SNP window cis-trans-specific
+
 ## [2.14.0] - 2026-01-08
 
 ### 🚀 Features
@@ -13,6 +19,10 @@ All notable changes to this project will be documented in this file.
 
 - Export exact regions
 - Test to validate indels
+
+### 💼 Other
+
+- Bump version
 
 ## [2.13.0] - 2025-12-05
 
@@ -944,3 +954,4 @@ This reverts commit 4e6546b860962a845fd8d3f3459d43ed79b47572.
 - Change to debian image
 - Set locale
 - Add info and query commands
+
