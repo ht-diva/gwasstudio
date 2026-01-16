@@ -276,6 +276,11 @@ Export summary statistics from TileDB datasets with various filtering options.
         help="Bed (or CHR,POS) file with regions or SNP list to filter",
     ),
     cloup.option(
+        "--pvalue-filt",
+        default=0.0,
+        help="Minimum -log10(p-value) threshold to keep significant filtered SNPs",
+    ),
+    cloup.option(
         "--skip-meta",
         default=False,
         is_flag=True,
@@ -310,7 +315,7 @@ Export summary statistics from TileDB datasets with various filtering options.
     "P-value filtering options",
     cloup.option(
         "--pvalue-thr",
-        default=0,
+        default=0.0,
         help="Minimum -log10(p-value) threshold to filter significant SNPs",
     ),
 )
@@ -367,6 +372,7 @@ def export(
     locusbreaker: bool,
     meta_analysis: bool,
     get_regions_snps: str | None,
+    pvalue_filt: float,
     get_regions_leadsnps: str | None,
     cis_flanks: int,
     trans_flanks: int,
@@ -470,6 +476,7 @@ def export(
                         *common_args,
                         function_name=extract_regions_snps,
                         regions_snps=bed_fp,
+                        pvalue_filt=pvalue_filt,
                         plot_out=plot_out,
                         color_thr=color_thr,
                         s_value=s_value,

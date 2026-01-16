@@ -34,6 +34,7 @@ gwasstudio export [OPTIONS]
 **Regions and SNP ID List Filtering Options:**
 
 - `--get-regions-snps TEXT`: Bed file (or txt file with CHR and POS columns) with regions or SNPs to filter.
+- `--pvalue-filt FLOAT`: Minimum -log10(p-value) threshold to keep significant filtered SNPs (default: 0, no filter)
 - `--nest`: Estimate effective population size (Work in progress, not fully implemented yet) (flag).
 
 **Trait-specific Lead-SNP Search Options:**

@@ -52,7 +52,7 @@ def extract_full_stats(
     plot_out: bool,
     color_thr: str,
     s_value: int,
-    pvalue_thr: float,
+    pvalue_thr: float = 0.0,
     attributes: Tuple[str] = None,
 ) -> pd.DataFrame:
     """
@@ -91,6 +91,7 @@ def extract_regions_snps(
     color_thr: str,
     s_value: int,
     regions_snps: pd.DataFrame = None,
+    pvalue_filt: float = 0.0,
     attributes: Tuple[str] = None,
 ) -> pd.DataFrame:
     """
@@ -101,6 +102,7 @@ def extract_regions_snps(
         trait (str): The trait to filter by.
         output_prefix (str): The prefix for the output file..
         regions_snps (pd.DataFrame, optional): A DataFrame containing the genomic regions or SNPs to filter by. Defaults to None.
+        pvalue_filt: Minimum -log10(p-value) threshold to keep significant filtered SNPs (default: 0, no filter)
         attributes (list[str], optional): A list of attributes to include in the output. Defaults to None.
         plot_out (bool, optional): Whether to plot the results. Defaults to True.
 
@@ -116,6 +118,8 @@ def extract_regions_snps(
             # Get all unique positions for this chromosome
             unique_positions = list(set(group["START"]))
             tiledb_query_df = tiledb_query.df[chr, trait, unique_positions]
+            if pvalue_filt > 0:
+                tiledb_query_df = tiledb_query_df[tiledb_query_df["MLOG10P"] > pvalue_filt]
             if not tiledb_query_df.empty:
                 title_plot = f"{trait} - {chr}:{min(unique_positions)}-{max(unique_positions)}"
             else:
@@ -126,6 +130,8 @@ def extract_regions_snps(
             min_pos = max(group["START"].min(), 1)
             max_pos = group["END"].max()
             tiledb_query_df = tiledb_query.df[chr, trait, min_pos:max_pos]
+            if pvalue_filt > 0:
+                tiledb_query_df = tiledb_query_df[tiledb_query_df["MLOG10P"] > pvalue_filt]
             if not tiledb_query_df.empty:
                 title_plot = f"{trait} - {chr}:{min(tiledb_query_df['POS'])}-{max(tiledb_query_df['POS'])}"
             else:
