@@ -15,7 +15,7 @@ from gwasstudio.methods.extraction_methods import extract_full_stats, extract_re
 from gwasstudio.methods.locus_breaker import _process_locusbreaker
 from gwasstudio.methods.meta_analysis import _meta_analysis
 from gwasstudio.mongo.models import EnhancedDataProfile
-from gwasstudio.utils import check_file_exists, write_table
+from gwasstudio.utils import check_file_exists, write_table, write_if_not_empty
 from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
 from gwasstudio.utils.enums import MetadataEnum
 from gwasstudio.utils.io import read_to_bed, read_trait_snps
@@ -183,6 +183,25 @@ def _process_function_tasks(
             df_metaanalysis, f"{output_prefix}_meta_analysis", logger, file_format=output_format, index=False
         )
         tasks.append(result)
+    elif function_name.__name__ == "extract_regions_snps":
+        for trait in trait_id_list:
+            extracted_tuple = delayed(_run_extraction)(
+                tiledb_uri,
+                tiledb_cfg,
+                trait,
+                output_prefix_dict.get(trait),
+                **kwargs,
+            )
+            extracted_df = delayed(lambda t: t[0])(extracted_tuple)
+            pvalue_filt_df = delayed(lambda t: t[1])(extracted_tuple)
+            transformed_df = delayed(_run_transformation)(extracted_df, group, trait, None)
+            result = delayed(write_table)(
+                transformed_df, output_prefix_dict.get(trait), logger, file_format=output_format, index=False,
+            )
+            result_pvalue_filt = delayed(write_if_not_empty)(
+                pvalue_filt_df, f"{output_prefix_dict.get(trait)}_pvalue_filt", logger, file_format=output_format, index=False,
+            )
+            tasks.extend([result, result_pvalue_filt])
     else:
         for trait in trait_id_list:
             if trait_snps:
