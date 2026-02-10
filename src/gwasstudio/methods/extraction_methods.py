@@ -93,7 +93,7 @@ def extract_regions_snps(
     regions_snps: pd.DataFrame = None,
     pvalue_filt: float = 0.0,
     attributes: Tuple[str] = None,
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Process data filtering by genomic regions or a list of SNPs and output as concatenated DataFrame in Parquet format.
 
@@ -107,12 +107,15 @@ def extract_regions_snps(
         plot_out (bool, optional): Whether to plot the results. Defaults to True.
 
     Returns:
-        pd.Dataframe
+        Tuple[pd.DataFrame, pd.DataFrame]:
+        concatenated_df: SNP/region filtered variants
+        pvalue_filt_df: region-level p-value filter flags
     """
     snp_filter = (regions_snps["END"] == regions_snps["START"] + 1).all()
     regions_snps = regions_snps.groupby("CHR")
     attributes, tiledb_query = tiledb_array_query(tiledb_array, attrs=attributes)
     dataframes = []
+    pvalue_flags = []
     for chr, group in regions_snps:
         if snp_filter:
             # Get all unique positions for this chromosome
@@ -130,18 +133,26 @@ def extract_regions_snps(
             min_pos = max(group["START"].min(), 1)
             max_pos = group["END"].max()
             tiledb_query_df = tiledb_query.df[chr, trait, min_pos:max_pos]
-            if pvalue_filt > 0:
-                tiledb_query_df = tiledb_query_df[tiledb_query_df["MLOG10P"] > pvalue_filt]
             if not tiledb_query_df.empty:
                 title_plot = f"{trait} - {chr}:{min(tiledb_query_df['POS'])}-{max(tiledb_query_df['POS'])}"
             else:
                 logger.warning(f"No regions found for chromosome {chr}.")
                 continue
 
-            # Keep positions that fall within at least one region interval
+            # Keep variants that fall within at least one region interval
             pos_mask = pd.Series(False, index=tiledb_query_df.index)
             for _, row in group.iterrows():
-                pos_mask |= (tiledb_query_df["POS"] >= row["START"]) & (tiledb_query_df["POS"] <= row["END"])
+                if pvalue_filt > 0:
+                    # Keep all variants within the region if at least one passes the p-value filter
+                    in_region = ((tiledb_query_df["POS"] >= row["START"]) & (tiledb_query_df["POS"] <= row["END"]))
+                    pvalue_flag = (tiledb_query_df.loc[in_region, "MLOG10P"] > pvalue_filt).any()
+                    if pvalue_flag:
+                        pos_mask |= in_region
+                    pvalue_flags.append(
+                        {"CHR":chr, "START":row["START"], "END":row["END"], "PVALUE_FILT_FLAG":bool(pvalue_flag)}
+                    )
+                else:
+                    pos_mask |= (tiledb_query_df["POS"] >= row["START"]) & (tiledb_query_df["POS"] <= row["END"])
             tiledb_query_df = tiledb_query_df[pos_mask]
 
         if plot_out:
@@ -157,13 +168,17 @@ def extract_regions_snps(
 
     # No regions/SNPs found
     if not dataframes:
-        return pd.DataFrame(columns=attributes)
+        return pd.DataFrame(columns=attributes), pd.DataFrame(columns=["CHR", "START", "END", "PVALUE_FILT_FLAG"])
 
     # Concatenate all DataFrames
     concatenated_df = pd.concat(dataframes, ignore_index=True)
     concatenated_df = process_dataframe(concatenated_df)
+    if not snp_filter and pvalue_filt > 0:
+        pvalue_filt_df = pd.DataFrame(pvalue_flags)
+    else:
+        pvalue_filt_df = pd.DataFrame(columns=["CHR", "START", "END", "PVALUE_FILT_FLAG"])
 
-    return concatenated_df
+    return concatenated_df, pvalue_filt_df
 
 
 def extract_regions_leadsnps(

@@ -191,3 +191,30 @@ def write_table(
         df.to_csv(output_path, compression=compression_to_use, **kwargs)
     else:
         df.to_csv(output_path, **kwargs)
+
+
+def write_if_not_empty(
+    df: pd.DataFrame,
+    where: str,
+    logger: object,
+    compression: bool = True,
+    file_format: str = "parquet",
+    log_msg: str = "none",
+    **kwargs,
+):
+    """
+    Write the DataFrame only if it is not empty.
+    Returns None if the DataFrame is empty.
+    """
+    if df is None or df.empty:
+        return None
+
+    return write_table(
+        df=df,
+        where=where,
+        logger=logger,
+        compression=compression,
+        file_format=file_format,
+        log_msg=log_msg,
+        **kwargs,
+    )
