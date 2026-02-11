@@ -4,6 +4,7 @@ Generic Utilities
 Generic utilities used by other modules.
 """
 
+import gzip
 import pathlib
 import random
 import string
@@ -113,22 +114,49 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict, ingest_pval: bool) -
         cfg (dict): A configuration dictionary to use for connecting to S3.
     """
 
-    # Read the file using pandas
-    cols = ["CHR", "POS", "EA", "NEA", "EAF", "SE", "BETA"]
-    types = {
-        "CHR": np.uint8,
-        "POS": np.uint32,
-        "EA": str,
-        "NEA": str,
-        "EAF": np.float32,
-        "SE": np.float32,
-        "BETA": np.float32,
-    }
-    if ingest_pval:
-        cols.append("MLOG10P")
-        types["MLOG10P"] = np.float32
+    def read_gwas_file(file_path, ingest_pval=False):
+        file_path = pathlib.Path(file_path)
+        required_cols = ["CHR", "POS", "EA", "NEA", "EAF", "SE", "BETA"]
+        types = {
+            "CHR": np.uint8,
+            "POS": np.uint32,
+            "EA": str,
+            "NEA": str,
+            "EAF": np.float32,
+            "SE": np.float32,
+            "BETA": np.float32,
+        }
+        if ingest_pval:
+            required_cols.append("MLOG10P")
+            types["MLOG10P"] = np.float32
 
-    df = pd.read_csv(file_path, compression="gzip", sep="\t", usecols=cols, dtype=types)
+        suffix = file_path.suffix.lower()
+
+        if suffix == ".parquet":
+            parquet_file = pd.read_parquet(file_path, columns=required_cols)
+            missing_cols = [col for col in required_cols if col not in parquet_file.columns]
+            if missing_cols:
+                raise ValueError(f"Missing required columns in parquet file: {missing_cols}")
+            df = parquet_file
+        elif suffix == ".gz":
+            with gzip.open(file_path, "rt") as f:
+                header = f.readline().strip().split("\t")
+                missing_cols = [col for col in required_cols if col not in header]
+                if missing_cols:
+                    raise ValueError(f"Missing required columns in tsv.gz file: {missing_cols}")
+            df = pd.read_csv(file_path, compression="gzip", sep="\t", usecols=required_cols)
+        else:
+            raise ValueError("Unsupported file format. Only .parquet and .tsv.gz are supported.")
+
+        # Apply type conversion after reading
+        for col, dtype in types.items():
+            if col in df.columns:
+                df[col] = df[col].astype(dtype)
+
+        return df
+
+    df = read_gwas_file(file_path, ingest_pval)
+
     # Add trait_id based on the checksum_dict
     hg = Hashing()
     df["TRAITID"] = hg.compute_hash(fpath=file_path)
