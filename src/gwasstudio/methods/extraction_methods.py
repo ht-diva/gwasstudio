@@ -144,12 +144,12 @@ def extract_regions_snps(
             for _, row in group.iterrows():
                 if pvalue_filt > 0:
                     # Keep all variants within the region if at least one passes the p-value filter
-                    in_region = ((tiledb_query_df["POS"] >= row["START"]) & (tiledb_query_df["POS"] <= row["END"]))
+                    in_region = (tiledb_query_df["POS"] >= row["START"]) & (tiledb_query_df["POS"] <= row["END"])
                     pvalue_flag = (tiledb_query_df.loc[in_region, "MLOG10P"] > pvalue_filt).any()
                     if pvalue_flag:
                         pos_mask |= in_region
                     pvalue_flags.append(
-                        {"CHR":chr, "START":row["START"], "END":row["END"], "PVALUE_FILT_FLAG":bool(pvalue_flag)}
+                        {"CHR": chr, "START": row["START"], "END": row["END"], "PVALUE_FILT_FLAG": bool(pvalue_flag)}
                     )
                 else:
                     pos_mask |= (tiledb_query_df["POS"] >= row["START"]) & (tiledb_query_df["POS"] <= row["END"])
@@ -221,7 +221,7 @@ def extract_regions_leadsnps(
     DEFAULT_FLANKS = 1000000
     if "CIS_TRANS" in trait_snps.columns:
         cis_trans = trait_snps["CIS_TRANS"].str.strip().str.lower()
-        flanks = (cis_trans.map({"cis": cis_flanks, "trans": trans_flanks}).fillna(DEFAULT_FLANKS).astype(int))
+        flanks = cis_trans.map({"cis": cis_flanks, "trans": trans_flanks}).fillna(DEFAULT_FLANKS).astype(int)
     else:
         flanks = DEFAULT_FLANKS
     trait_snps["START"] = (trait_snps["POS"] - flanks).clip(lower=1)

@@ -46,12 +46,12 @@ def create_output_prefix_dict(df: pd.DataFrame, output_prefix: str, source_id_co
     has_source_id = source_id_column in df.columns
 
     if has_link_id and has_source_id:
-        # Aggregate multiple link IDs per data ID, e.g. one seq ID map to multiple UniProts 
-        grouped = (df.groupby(key_column, as_index=False).agg(
-            link_id=("link_id", lambda x: "_".join(sorted(set(map(str, x))))),
-            source_id=(source_id_column, "first")))
-        grouped[value_column] = (output_prefix + "_" + grouped["link_id"] + "_" + grouped["source_id"].astype(str))
-        
+        # Aggregate multiple link IDs per data ID, e.g. one seq ID map to multiple UniProts
+        grouped = df.groupby(key_column, as_index=False).agg(
+            link_id=("link_id", lambda x: "_".join(sorted(set(map(str, x))))), source_id=(source_id_column, "first")
+        )
+        grouped[value_column] = output_prefix + "_" + grouped["link_id"] + "_" + grouped["source_id"].astype(str)
+
         # Create dictionary mapping data IDs and link IDs to prefixes
         output_prefix_dict = dict(zip(grouped[key_column], grouped[value_column]))
         logger.debug("Output prefix dictionary created with link_id")
@@ -115,7 +115,9 @@ def _process_function_tasks(
             # ``function_name`` expects the opened array as its first argument.
             return function_name(arr, traits, out_prefix, **inner_kwargs)
 
-    def _run_transformation(gwas_df: pd.DataFrame, meta_df: pd.DataFrame, trait_id: str, link_ids: list | None = None) -> pd.DataFrame:
+    def _run_transformation(
+        gwas_df: pd.DataFrame, meta_df: pd.DataFrame, trait_id: str, link_ids: list | None = None
+    ) -> pd.DataFrame:
         #  Optional metadata broadcast – only used when ``skip_meta`` is False.
         if isinstance(group, pd.Series):
             return gwas_df
@@ -123,7 +125,9 @@ def _process_function_tasks(
         id_col = "data_id"
         meta_row = meta_df.loc[meta_df[id_col] == trait_id].iloc[0]
         # meta_dict = meta_row.squeeze().to_dict()
-        meta_dict = {f"meta_{k}": v for k, v in meta_row.drop(["data_id", "output_prefix"], errors="ignore").to_dict().items()}
+        meta_dict = {
+            f"meta_{k}": v for k, v in meta_row.drop(["data_id", "output_prefix"], errors="ignore").to_dict().items()
+        }
         if trait_snps:
             meta_dict["meta_link_id"] = "_".join(sorted(map(str, link_ids)))
 
@@ -196,10 +200,18 @@ def _process_function_tasks(
             pvalue_filt_df = delayed(lambda t: t[1])(extracted_tuple)
             transformed_df = delayed(_run_transformation)(extracted_df, group, trait, None)
             result = delayed(write_table)(
-                transformed_df, output_prefix_dict.get(trait), logger, file_format=output_format, index=False,
+                transformed_df,
+                output_prefix_dict.get(trait),
+                logger,
+                file_format=output_format,
+                index=False,
             )
             result_pvalue_filt = delayed(write_if_not_empty)(
-                pvalue_filt_df, f"{output_prefix_dict.get(trait)}_pvalue_filt", logger, file_format=output_format, index=False,
+                pvalue_filt_df,
+                f"{output_prefix_dict.get(trait)}_pvalue_filt",
+                logger,
+                file_format=output_format,
+                index=False,
             )
             tasks.extend([result, result_pvalue_filt])
     else:

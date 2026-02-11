@@ -101,8 +101,9 @@ def read_trait_snps(fp: str) -> pd.DataFrame | None:
             except ValueError:
                 invalid_rows.append(idx)
         if invalid_rows:
-            raise ValueError("Invalid allele ordering detected."
-                             f"Examples of invalid rows:\n{df.loc[invalid_rows].head()}")
+            raise ValueError(
+                f"Invalid allele ordering detected.Examples of invalid rows:\n{df.loc[invalid_rows].head()}"
+            )
         return df
     except Exception:
         raise ValueError(f"--get-regions-leadsnps file '{fp}' should have the format SOURCE_ID,CHR,POS,EA,NEA")
