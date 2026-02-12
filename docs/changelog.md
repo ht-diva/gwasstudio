@@ -954,4 +954,3 @@ This reverts commit 4e6546b860962a845fd8d3f3459d43ed79b47572.
 - Change to debian image
 - Set locale
 - Add info and query commands
-

@@ -119,7 +119,9 @@ def query_mongo_obj(
     return final_results
 
 
-def dataframe_from_mongo_objs(fields: list, objs: list, *, search_topics: dict | None = None, exact_match=False) -> pd.DataFrame:
+def dataframe_from_mongo_objs(
+    fields: list, objs: list, *, search_topics: dict | None = None, exact_match=False
+) -> pd.DataFrame:
     """
     Create a DataFrame from MongoDB objects.
 
@@ -156,7 +158,9 @@ def dataframe_from_mongo_objs(fields: list, objs: list, *, search_topics: dict |
             first_keys = [next(iter(item.keys())) for item in search_topics[link_key]]
             unique_keys = list(set(first_keys))
             if len(unique_keys) != 1:
-                raise ValueError(f"Only one of 'trait' or 'notes' is allowed in search_topics['{link_key}'], got {unique_keys}")
+                raise ValueError(
+                    f"Only one of 'trait' or 'notes' is allowed in search_topics['{link_key}'], got {unique_keys}"
+                )
             sub_key = unique_keys[0]
 
             link_column = f"{link_key}_{sub_key}"
@@ -190,7 +194,9 @@ def dataframe_from_mongo_objs(fields: list, objs: list, *, search_topics: dict |
             # for substring match, a metadata column can have multiple matches with searched IDs
             # (e.g. multiProt "P29459|P29460" matches with both "P29459" and "P29460")
             # thus, the metadata is expanded for each searched ID
-            searched_ids = {v for item in search_topics[link_key] for v in item.values()} # extract searched trait/notes
+            searched_ids = {
+                v for item in search_topics[link_key] for v in item.values()
+            }  # extract searched trait/notes
             expanded_rows = []
             for _, row in meta_df.iterrows():
                 matched = [sid for sid in searched_ids if sid in str(row[link_column])]
@@ -199,7 +205,7 @@ def dataframe_from_mongo_objs(fields: list, objs: list, *, search_topics: dict |
                     new_row["link_id"] = link_id
                     expanded_rows.append(new_row)
             meta_df = pd.DataFrame(expanded_rows)
-    
+
     return meta_df
 
 
