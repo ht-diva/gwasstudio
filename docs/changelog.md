@@ -3,11 +3,33 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.16.0] - 2026-02-12
+
+### 🚀 Features
+
+- Add p-value filter to snp/region extraction
+- Update & add summary to pvalue-region filtering
+
+### 💼 Other
+
+- Reformat
+- Enhance file ingestion to support both parquet and tsv.gz formats
+
+- Add support for reading parquet files alongside existing tsv.gz support
+- Implement file format validation and required column checking
+- Move file reading logic into a dedicated helper function
+- Add proper type conversion after reading data
+- Improve error handling for missing columns
+
 ## [2.15.0] - 2026-01-12
 
 ### 🚀 Features
 
 - Lead-SNP window cis-trans-specific
+
+### 💼 Other
+
+- Bump version
 
 ## [2.14.0] - 2026-01-08
 
