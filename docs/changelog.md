@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.16.1] - 2026-02-18
+
+### 🐛 Bug Fixes
+
+- Add the argument to spin up single-node jobs
+
 ## [2.16.0] - 2026-02-12
 
 ### 🚀 Features
@@ -20,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Move file reading logic into a dedicated helper function
 - Add proper type conversion after reading data
 - Improve error handling for missing columns
+- Bump version
 
 ## [2.15.0] - 2026-01-12
 
