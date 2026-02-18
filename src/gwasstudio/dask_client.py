@@ -1,6 +1,5 @@
-import subprocess
 import datetime
-
+import subprocess
 from contextlib import contextmanager
 
 from dask.distributed import Client
@@ -104,7 +103,7 @@ class DaskCluster:
                 walltime=_walltime,
             )
             logger.debug(cluster.job_script())
-            cluster.scale(_workers)
+            cluster.scale(jobs=_workers)
             logger.info(
                 f"Dask SLURM cluster: starting {_workers} workers, with {_mem} of memory and {_cores} cpus per worker"
             )
