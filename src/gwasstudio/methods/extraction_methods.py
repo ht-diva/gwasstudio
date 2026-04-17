@@ -188,6 +188,7 @@ def extract_regions_leadsnps(
     trait_snps: pd.DataFrame,
     cis_flanks: int = 500000,
     trans_flanks: int = 1000000,
+    exact_alleles: bool = False,
     attributes: Tuple[str] = None,
 ) -> pd.DataFrame:
     """
@@ -200,6 +201,7 @@ def extract_regions_leadsnps(
         trait_snps (pd.DataFrame, optional): A DataFrame containing SOURCE_ID (trait), CHR and POS for lead-SNP search.
         cis_flanks (int): Flanking region (in bp) around POS for the search of CIS lead-SNP (default: 500000).
         trans_flanks (int): Flanking region (in bp) around POS for the search of TRANS lead-SNP (default: 1000000).
+        exact_alleles (bool): Whether exact lead match includes also EA and NEA, or only CHR and POS (default: False).
         attributes (list[str], optional): A list of attributes to include in the output. Defaults to None.
 
     Returns:
@@ -277,7 +279,12 @@ def extract_regions_leadsnps(
                 lead = lead.iloc[0]
 
             # Exact SNP
-            exact = region[(region.POS == row.POS) & (region.EA == row.EA) & (region.NEA == row.NEA)]
+            if exact_alleles:
+                # Exact CHR, POS, EA, NEA
+                exact = region[(region.POS == row.POS) & (region.EA == row.EA) & (region.NEA == row.NEA)]
+            else:
+                # Exact CHR, POS
+                exact = region[(region.POS == row.POS)]
             exact = process_dataframe(pd.DataFrame([exact.iloc[0]])).iloc[0] if not exact.empty else None
 
             dataframes.append(

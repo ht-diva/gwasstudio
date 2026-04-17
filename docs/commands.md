@@ -41,6 +41,7 @@ gwasstudio export [OPTIONS]
 - `--get-regions-leadsnps TEXT`: A DataFrame containing SOURCE_ID (trait), CHR, POS, EA and NEA (and optionally CIS_TRANS) for lead-SNP search.
 - `--cis-flanks INTEGER`: Flanking region (in bp) around POS for the search of CIS lead-SNP (default: 500000).
 - `--trans-flanks INTEGER`: Flanking region (in bp) around POS for the search of TRANS lead-SNP (default: 1000000).
+- `--exact-alleles`: Boolean to search exact lead match by CHR, POS, EA and NEA, or only by CHR and POS (default: False)
 
 **P-value Filtering Options:**
 

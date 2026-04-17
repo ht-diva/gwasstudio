@@ -341,6 +341,12 @@ Export summary statistics from TileDB datasets with various filtering options.
         default=1000000,
         help="Flanking region (in bp) around POS for the search of TRANS lead-SNP (default: 1000000)",
     ),
+    cloup.option(
+        "--exact-alleles",
+        default=False,
+        is_flag=True,
+        help="Whether exact lead match includes also EA and NEA, or only CHR and POS (default: False)",
+    ),
 )
 @cloup.option_group(
     "P-value filtering options",
@@ -407,6 +413,7 @@ def export(
     get_regions_leadsnps: str | None,
     cis_flanks: int,
     trans_flanks: int,
+    exact_alleles: bool,
     skip_meta: bool,
     plot_out: bool,
     color_thr: str,
@@ -520,6 +527,7 @@ def export(
                         trait_snps=traitsnp_fp,
                         cis_flanks=cis_flanks,
                         trans_flanks=trans_flanks,
+                        exact_alleles=exact_alleles,
                         dask_client=client,
                     )
                 case (_, _, _, True):
