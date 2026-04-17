@@ -3,11 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.17.0] - 2026-04-17
+
+### 🚀 Features
+
+- Add CHR,POS exact match for lead-snp search
+
 ## [2.16.1] - 2026-02-18
 
 ### 🐛 Bug Fixes
 
 - Add the argument to spin up single-node jobs
+
+### 💼 Other
+
+- Bump version
 
 ## [2.16.0] - 2026-02-12
 
@@ -983,3 +993,4 @@ This reverts commit 4e6546b860962a845fd8d3f3459d43ed79b47572.
 - Change to debian image
 - Set locale
 - Add info and query commands
+
