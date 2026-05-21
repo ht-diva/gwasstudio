@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 
-from gwasstudio.utils.io import read_to_bed
+from gwasstudio.utils.io import read_to_bed, _is_path
 
 
 class TestReadToBed(unittest.TestCase):
@@ -26,6 +26,30 @@ chr2\t300\t400"""
         df = read_to_bed(fp)
         self.assertIsNotNone(df)
         self.assertListEqual(df["CHR"].tolist(), [1, 2])
+
+    def test_is_path_inline_regions(self):
+        self.assertFalse(_is_path("1,100,200;2,300,400"))
+
+    def test_is_path_inline_snps(self):
+        self.assertFalse(_is_path("1,100;2,300"))
+
+    def test_inline_regions(self):
+        # Test regions inline string (e.g., CHR,START,END;CHR,START,END)
+        fp_string = "1,100,200;2,300,400"
+        df = read_to_bed(fp_string)
+        self.assertIsNotNone(df)
+        self.assertListEqual(df["CHR"].tolist(), [1, 2])
+        self.assertListEqual(df["START"].tolist(), [100, 300])
+        self.assertListEqual(df["END"].tolist(), [200, 400])
+
+    def test_inline_snps(self):
+        # Test SNPs inline string (e.g., CHR,POS;CHR,POS)
+        fp_string = "1,100;2,300"
+        df = read_to_bed(fp_string)
+        self.assertIsNotNone(df)
+        self.assertListEqual(df["CHR"].tolist(), [1, 2])
+        self.assertListEqual(df["START"].tolist(), [100, 300])
+        self.assertListEqual(df["END"].tolist(), [101, 301])
 
     def test_bed_format_xy_chromosomes(self):
         # Test X and Y chromosomes
