@@ -304,7 +304,7 @@ Export summary statistics from TileDB datasets with various filtering options.
     cloup.option(
         "--get-regions-snps",
         default=None,
-        help="Bed (or CHR,POS) file with regions or SNP list to filter",
+        help="BED (CHR\tSTART\tEND) or SNP list (CHR,POS) file paths, or string equivalents: (CHR,START,END;CHR,START,END) or (CHR,POS;CHR,POS)",
     ),
     cloup.option(
         "--pvalue-filt",
