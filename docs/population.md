@@ -16,7 +16,6 @@ Each category has a short, machine‑friendly code (the *shortcut*) that can be 
 | **EUR**  | European                                                           |
 | **MDE**  | Greater Middle Eastern (Middle Eastern, North African, or Persian) |
 | **AMR**  | Hispanic or Latin American                                         |
-| **ISL**  | Icelandic                                                          |
 | **NR**   | Not reported / unknown                                             |
 | **NAM**  | Native American                                                    |
 | **OCE**  | Oceanian                                                           |
