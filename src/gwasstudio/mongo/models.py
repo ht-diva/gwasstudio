@@ -14,7 +14,7 @@ DataCategory = Enum(
     "DataCategory",
     {item.replace(" ", "_").upper(): item for item in cm.get_data_category_list},
 )
-Ancestry = Enum("Ancestry", {item.replace(" ", "_").upper(): item for item in cm.get_ancestry_list})
+Ancestry = Enum("Ancestry", {item.replace(" ", "_").upper(): item for item in cm.get_ancestry_groups.keys()})
 Build = Enum("Build", {item.replace(" ", "_").upper(): item for item in cm.get_build_list})
 
 

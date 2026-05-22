@@ -18,7 +18,7 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
             trait='{"desc": "descriptionA"}',
             total='{"samples": "10"}',
             notes="{}",
-            population=[str(Ancestry.EUROPEAN)],
+            population=[str(Ancestry.EUR)],
             references=[],
             build=Build.GRCH37,
         )
@@ -30,7 +30,7 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
             data_id="data_id2",
             trait='{"desc": "descriptionB", "tissue": "blood"}',
             total='{"samples": "20"}',
-            population=[Ancestry.ICELANDIC.value],
+            population=[Ancestry.SEA.value],
             references=[],
             build=Build.GRCH38,
         )
@@ -42,7 +42,7 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
             data_id="data_id3",
             trait='{"desc": "descriptionA"}',
             total='{"samples": "30"}',
-            population=[str(Ancestry.EUROPEAN)],
+            population=[str(Ancestry.SAS)],
             references=[],
             build=Build.GRCH37,
         )
@@ -85,7 +85,7 @@ class TestEnhancedDataProfileQuery(unittest.TestCase):
         self.assertEqual(self.profile1.view(), profile[0])
 
     def test_query_by_population(self):
-        profiles = EnhancedDataProfile(mec=self.mec).query(population=Ancestry.ICELANDIC.value)
+        profiles = EnhancedDataProfile(mec=self.mec).query(population=Ancestry.SEA.value)
         self.assertEqual(len(profiles), 1)
         self.assertIn(self.profile2.view(), profiles)
 

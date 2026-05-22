@@ -56,7 +56,7 @@ class ConfigurationManager(metaclass=SingletonConfigurationManager):
         self.mdbc_uri = kwargs.get("uri", mdb_connection.get("uri"))
 
         self.data_category_list = c.get("data_category", [])
-        self.ancestry_list = c.get("ancestry", [])
+        self.ancestry_groups = c.get("ancestry_groups", {})
         self.build_list = c.get("build", [])
 
         self._hash_algorithm = c.get("hashing", {"algorithm": "sha256"}).get("algorithm")
@@ -82,8 +82,8 @@ class ConfigurationManager(metaclass=SingletonConfigurationManager):
         return self.data_category_list
 
     @property
-    def get_ancestry_list(self):
-        return self.ancestry_list
+    def get_ancestry_groups(self):
+        return self.ancestry_groups
 
     @property
     def get_build_list(self):
