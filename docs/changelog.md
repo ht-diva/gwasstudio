@@ -3,6 +3,30 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.18.0] - 2026-05-26
+
+### 🚀 Features
+
+- Add CL string input to get-region-snps
+
+### 🐛 Bug Fixes
+
+- Set ancestry_groups dictionary
+
+### 💼 Other
+
+- Bump version
+- Remove Icelandic from population documentation
+
+### 📚 Documentation
+
+- Update get-regions-snps documentation/help
+
+### 🧪 Testing
+
+- Add unit tests for regions-snps inline strings
+- Add functional tests for regions-snps inline strings
+
 ## [2.17.0] - 2026-04-17
 
 ### 🚀 Features
