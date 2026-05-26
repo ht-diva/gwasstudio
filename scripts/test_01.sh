@@ -75,8 +75,14 @@ run_command "Regions filtering..." "gwasstudio --stdout --mongo-uri ${MDB_URI} e
 # Regions filtering with P-value threshold
 run_command "Regions filtering with P-value threshold..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_regions_filtering_pvalue --output-format csv --uri ${TILEDB_DIR} --get-regions-snps regions_query.tsv --pvalue-filt 7.30103"
 
+# Regions filtering
+run_command "Regions filtering..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_regions_filtering_by_arg --output-format csv --uri ${TILEDB_DIR} --get-regions-snps '13,23947562,94021213;15,471752,49338760'"
+
 # Hapmap3 SNPs filtering
 run_command "SNPs filtering..." "gwasstudio --stdout --workers 4 --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_snps_filtering --uri ${TILEDB_DIR} --get-regions-snps hapmap3/hapmap3_snps.csv"
+
+# Hapmap3 SNPs filtering
+run_command "SNPs filtering..." "gwasstudio --stdout --workers 4 --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_snps_filtering_by_arg --uri ${TILEDB_DIR} --get-regions-snps '1,203669100;3,193327134;5,154619144;9,6741529;11,691029;12,108349821;18,677302'"
 
 # Trait-specific lead-SNP search
 run_command "Lead-SNP search..." "gwasstudio --stdout --workers 4 --mongo-uri ${MDB_URI} export --search-file search_example_08.yml --output-prefix ${TEST_DIR}/example_leadsnp_search --uri ${TILEDB_DIR} --get-regions-leadsnps opengwas_prot-a_Prolactin_snps.csv"
