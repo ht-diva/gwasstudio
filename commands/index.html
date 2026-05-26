@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -851,14 +851,20 @@
 </ul>
 <p><strong>Regions and SNP ID List Filtering Options:</strong></p>
 <ul>
-<li><code>--get-regions-snps TEXT</code>: Bed file (or txt file with CHR and POS columns) with regions or SNPs to filter.</li>
+<li><code>--get-regions-snps TEXT</code>:</li>
+<li>A valid BED (CHR\tSTART\tEND) file path or</li>
+<li>A valid SNP list (CHR,POS) file path or</li>
+<li>An inline string: "CHR,START,END;CHR,START,END" for regions; "CHR,POS;CHR,POS" for SNPs</li>
 <li><code>--pvalue-filt FLOAT</code>: Minimum -log10(p-value) threshold to keep significant filtered SNPs (default: 0, no filter)</li>
 <li><code>--nest</code>: Estimate effective population size (Work in progress, not fully implemented yet) (flag).</li>
 </ul>
-<p><strong>Trait-specific Lead-SNP Search Options:</strong>
-- <code>--get-regions-leadsnps TEXT</code>: A DataFrame containing SOURCE_ID (trait), CHR, POS, EA and NEA (and optionally CIS_TRANS) for lead-SNP search.
-- <code>--cis-flanks INTEGER</code>: Flanking region (in bp) around POS for the search of CIS lead-SNP (default: 500000).
-- <code>--trans-flanks INTEGER</code>: Flanking region (in bp) around POS for the search of TRANS lead-SNP (default: 1000000).</p>
+<p><strong>Trait-specific Lead-SNP Search Options:</strong></p>
+<ul>
+<li><code>--get-regions-leadsnps TEXT</code>: A DataFrame containing SOURCE_ID (trait), CHR, POS, EA and NEA (and optionally CIS_TRANS) for lead-SNP search.</li>
+<li><code>--cis-flanks INTEGER</code>: Flanking region (in bp) around POS for the search of CIS lead-SNP (default: 500000).</li>
+<li><code>--trans-flanks INTEGER</code>: Flanking region (in bp) around POS for the search of TRANS lead-SNP (default: 1000000).</li>
+<li><code>--exact-alleles</code>: Boolean to search exact lead match by CHR, POS, EA and NEA, or only by CHR and POS (default: False)</li>
+</ul>
 <p><strong>P-value Filtering Options:</strong></p>
 <ul>
 <li><code>--pvalue-thr FLOAT</code>: P-value threshold in -log10 format used to filter significant SNPs (default: 0, no filter)</li>
@@ -934,7 +940,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-01-16
+    2026-05-21
   </span>
 
     
@@ -984,10 +990,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy"], "search": "../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
