@@ -199,7 +199,7 @@ def _process_function_tasks(
             extracted_df = delayed(lambda t: t[0])(extracted_tuple)
             pvalue_filt_df = delayed(lambda t: t[1])(extracted_tuple)
             transformed_df = delayed(_run_transformation)(extracted_df, group, trait, None)
-            result = delayed(write_table)(
+            result = delayed(write_if_not_empty)(
                 transformed_df,
                 output_prefix_dict.get(trait),
                 logger,
@@ -312,6 +312,12 @@ Export summary statistics from TileDB datasets with various filtering options.
         help="Minimum -log10(p-value) threshold to keep significant filtered SNPs",
     ),
     cloup.option(
+        "--skip-out",
+        default=False,
+        is_flag=True,
+        help="Do not write regions output (default: False)",
+    ),
+    cloup.option(
         "--skip-meta",
         default=False,
         is_flag=True,
@@ -415,6 +421,7 @@ def export(
     trans_flanks: int,
     exact_alleles: bool,
     skip_meta: bool,
+    skip_out: bool,
     plot_out: bool,
     color_thr: str,
     s_value: int,
@@ -515,6 +522,7 @@ def export(
                         function_name=extract_regions_snps,
                         regions_snps=bed_fp,
                         pvalue_filt=pvalue_filt,
+                        skip_out=skip_out,
                         plot_out=plot_out,
                         color_thr=color_thr,
                         s_value=s_value,
