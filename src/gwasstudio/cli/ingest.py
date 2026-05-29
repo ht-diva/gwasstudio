@@ -16,7 +16,7 @@ from gwasstudio.utils.cfg import (
     get_mongo_uri,
 )
 from gwasstudio.utils.enums import MetadataEnum
-from gwasstudio.utils.metadata import load_metadata, ingest_metadata
+from gwasstudio.utils.metadata import load_metadata, ingest_metadata_bulk
 from gwasstudio.utils.mongo_manager import manage_mongo
 from gwasstudio.utils.path_joiner import join_path
 from gwasstudio.utils.s3 import does_uri_path_exist
@@ -94,7 +94,7 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
     if ingestion_type in ["metadata", "both"]:
         with manage_mongo(ctx):
             mongo_uri = get_mongo_uri(ctx)
-            ingest_metadata(df, mongo_uri)
+            ingest_metadata_bulk(df, mongo_uri)
 
     if ingestion_type in ["data", "both"]:
         scheme, netloc, path = parse_uri(uri)

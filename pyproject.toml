@@ -74,6 +74,7 @@ extend_exclude = [
 [tool.deptry.per_rule_ignores]
 DEP003 = [
     "gwasstudio",
+    "pymongo"
 ]
 DEP004 = [
     "mongomock",

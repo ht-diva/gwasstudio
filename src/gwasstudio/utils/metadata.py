@@ -296,3 +296,43 @@ def ingest_metadata(df: pd.DataFrame, mongo_uri: str = None) -> None:
         # Print the row counter every 100 rows
         if processed_rows % 100 == 0:
             logger.info(f"{processed_rows} documents processed")
+
+
+def ingest_metadata_bulk(df: pd.DataFrame, mongo_uri: str = None, batch_size: int = 1000) -> None:
+    """Ingest data into the MongoDB collection in bulk using generator pattern."""
+
+    def _document_generator(df):
+        for row in df.itertuples(index=False):
+            yield process_row(row)
+
+    logger.info("Starting bulk metadata ingestion")
+    rows = len(df.axes[0])
+    logger.info(f"{rows} documents to ingest")
+
+    # Process in batches to avoid memory issues
+    processed = 0
+
+    batch = []
+    for i, document in enumerate(_document_generator(df), 1):
+        batch.append(document)
+
+        if i % batch_size == 0:
+            result = EnhancedDataProfile.bulk_create(batch, mongo_uri, batch_size=batch_size)
+            if "invalid_documents" in result:
+                for invalid in result["invalid_documents"]:
+                    logger.error(f"Invalid document: {invalid}")
+            processed += result["total"]
+            logger.info(f"Processed batch: {processed}/{rows} documents")
+            batch = []
+
+    # Process remaining documents
+    if batch:
+        result = EnhancedDataProfile.bulk_create(batch, mongo_uri, batch_size=batch_size)
+        if "invalid_documents" in result:
+            for invalid in result["invalid_documents"]:
+                logger.error(f"Invalid document: {invalid}")
+
+        processed += result["total"]
+        logger.info(f"Processed final batch: {processed}/{rows} documents")
+
+    logger.info(f"Bulk ingestion complete: {processed} documents processed")
