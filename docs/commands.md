@@ -38,6 +38,7 @@ gwasstudio export [OPTIONS]
   - A valid SNP list (CHR,POS) file path or
   - An inline string: "CHR,START,END;CHR,START,END" for regions; "CHR,POS;CHR,POS" for SNPs
 - `--pvalue-filt FLOAT`: Minimum -log10(p-value) threshold to keep significant filtered SNPs (default: 0, no filter)
+- `--skip-out`: Boolean to skip writing region outputs (default: False).
 - `--nest`: Estimate effective population size (Work in progress, not fully implemented yet) (flag).
 
 **Trait-specific Lead-SNP Search Options:**
