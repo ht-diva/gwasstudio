@@ -145,3 +145,55 @@ class EnhancedDataProfile(MongoMixin):
         self._obj.data_id = data_id
 
     # end of required
+
+    def to_python(self) -> dict:
+        """Convert the MongoDB document to a Python dictionary.
+
+        Returns:
+            dict: Python dictionary representation of the document.
+
+        Raises:
+            ValidationError: If the document's JSON cannot be decoded.
+        """
+        try:
+            return json.loads(self.mdb_obj.to_json())
+        except json.JSONDecodeError as e:
+            raise ValidationError(f"Invalid JSON string: {e}") from e
+
+    @classmethod
+    def bulk_create(cls, documents: list, mongo_uri: str = None, batch_size: int = 1000) -> dict:
+        """
+        Class method for bulk creation of EnhancedDataProfile documents.
+
+        Args:
+            documents: List of document dictionaries
+            mongo_uri: MongoDB connection URI
+            batch_size: Number of documents to process in each batch
+
+        Returns:
+            Dictionary with counts of inserted, updated, and total documents processed
+        """
+        # Create EnhancedDataProfile instances
+        doc_objs = [cls(uri=mongo_uri, **doc) for doc in documents]
+
+        # Validation step
+        validated_documents = []
+        invalid_documents = []
+
+        for doc in doc_objs:
+            try:
+                doc.mdb_obj.validate()
+                validated_documents.append(doc)
+            except (ValueError, TypeError, ValidationError) as e:
+                invalid_documents.append({"document": doc.unique_key, "error": str(e)})
+
+        # Early return if all documents are invalid
+        if not validated_documents:
+            return {"total": 0, "success": 0, "failed": len(documents), "invalid_documents": invalid_documents}
+
+        # Use the first instance to call bulk_save
+        if validated_documents:
+            result = doc_objs[0].bulk_save(validated_documents, batch_size=batch_size)
+            result["invalid_documents"] = invalid_documents
+            return result
+        return {"inserted": 0, "updated": 0, "total": 0}

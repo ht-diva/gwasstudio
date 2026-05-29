@@ -1,8 +1,9 @@
 import datetime
 import json
-
 from mongoengine.errors import NotUniqueError
 from mongoengine.queryset.visitor import Q
+from pymongo import UpdateOne
+from pymongo.errors import BulkWriteError
 
 from gwasstudio import logger
 from gwasstudio.utils import find_item
@@ -21,12 +22,18 @@ class MongoMixin:
     def is_connected(self):
         return False if self.mec is None else True
 
-    @property
-    def is_mapped(self):
-        with self.mec:
-            obj = self.klass.objects(project=self.mdb_obj.project, data_id=self.mdb_obj.data_id).first()
-            return bool(obj)
-            # return False
+    def is_mapped(self, use_context_manager=True):
+        try:
+            if use_context_manager:
+                with self.mec:
+                    return (
+                        self.klass.objects.get(project=self.mdb_obj.project, data_id=self.mdb_obj.data_id).id
+                        is not None
+                    )
+            else:
+                return self.klass.objects.get(project=self.mdb_obj.project, data_id=self.mdb_obj.data_id).id is not None
+        except (self.klass.DoesNotExist, AttributeError):
+            return False
 
     def map(self):
         with self.mec:
@@ -52,7 +59,7 @@ class MongoMixin:
         :param kwargs:
         :return: DataObject
         """
-        if not self.is_mapped:
+        if not self.is_mapped():
             self.map()
 
         if hasattr(self.mdb_obj, "modification_date"):
@@ -177,3 +184,110 @@ class MongoMixin:
                 self.mdb_obj.delete(**kwargs)
                 logger.info("{} deleted".format(self.unique_key))
             self.mdb_obj.id = None
+
+    def bulk_save(self, documents: list, batch_size: int = 1000, **kwargs) -> dict:
+        """
+        Save multiple documents to the database in bulk using MongoEngine's bulk operations.
+        Processes documents in batches for better memory efficiency and database performance.
+
+        Args:
+            documents: List of document objects to save.
+            batch_size: Number of documents to process in each batch (default: 1000).
+            **kwargs: Additional keyword arguments to pass to the save operation.
+
+        Returns:
+            Dictionary with counts of inserted, updated, and total documents processed.
+        """
+        if not documents:
+            logger.warning("No documents to save.")
+            return {"inserted": 0, "updated": 0, "total": 0}
+
+        total_results = {"inserted": 0, "updated": 0, "total": 0}
+        batch_number = 0
+
+        with self.mec:
+            # Process documents in batches
+            for batch_start in range(0, len(documents), batch_size):
+                batch_number += 1  # Increment batch counter
+                batch = documents[batch_start : batch_start + batch_size]
+                new_docs = []
+                existing_docs = []
+
+                # Classify documents in current batch
+                for doc in batch:
+                    if doc.is_mapped(use_context_manager=False):
+                        doc.mdb_obj.modification_date = datetime.datetime.now()
+                        existing_docs.append(doc)
+                    else:
+                        new_docs.append(doc.mdb_obj)
+
+                # Process current batch
+                batch_results = {
+                    "inserted": self._bulk_insert(new_docs, **kwargs),
+                    "updated": self._bulk_update(existing_docs),
+                    "total": len(batch),
+                }
+
+                # Accumulate results
+                total_results["inserted"] += batch_results["inserted"]
+                total_results["updated"] += batch_results["updated"]
+                total_results["total"] += batch_results["total"]
+
+                logger.debug(
+                    f"Processed batch {batch_number}: "
+                    f"{batch_results['inserted']} inserted, "
+                    f"{batch_results['updated']} updated"
+                )
+
+        logger.info(
+            f"Bulk save completed: {total_results['inserted']} inserted, "
+            f"{total_results['updated']} updated, {total_results['total']} total"
+        )
+
+        return total_results
+
+    def _bulk_insert(self, documents: list, **kwargs) -> int:
+        """Helper method to bulk insert new documents."""
+        if not documents:
+            return 0
+
+        try:
+            self.klass.objects.insert(documents, load_bulk=False, **kwargs)
+            logger.debug(f"Inserted {len(documents)} new documents")
+            return len(documents)
+        except Exception as e:
+            logger.error(f"Error inserting documents: {e}")
+            raise
+
+    def _bulk_update(self, documents: list) -> int:
+        """Helper method to bulk update existing documents."""
+        if not documents:
+            return 0
+
+        # Extract unique fields from the class metadata
+        unique_fields = ["project", "data_id"]  # Default
+        if hasattr(self.klass, "_meta") and "index_specs" in self.klass._meta:
+            for spec in self.klass._meta["index_specs"]:
+                if spec.get("unique", False):
+                    unique_fields = [field[0] for field in spec["fields"]]
+                    break
+        logger.debug(f"unique_fields: {unique_fields}")
+
+        bulk_operations = [
+            UpdateOne(
+                {field: getattr(doc.mdb_obj, field) for field in unique_fields},
+                {"$set": {k: v for k, v in doc.to_python().items() if k not in ["_id"] + unique_fields}},
+            )
+            for doc in documents
+        ]
+
+        try:
+            update_result = self.klass._get_collection().bulk_write(bulk_operations, ordered=False)
+            logger.debug(f"Updated {update_result.modified_count} documents")
+            return update_result.modified_count
+        except BulkWriteError as bwe:
+            logger.error(f"Bulk update error: {bwe.details}")
+            return bwe.details.get("nModified", 0)
+        except Exception as e:
+            logger.error(f"Error updating documents: {e}")
+            raise
