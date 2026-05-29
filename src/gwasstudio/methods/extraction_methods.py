@@ -87,6 +87,7 @@ def extract_regions_snps(
     tiledb_array: tiledb.Array,
     trait: str,
     output_prefix: str,
+    skip_out: bool,
     plot_out: bool,
     color_thr: str,
     s_value: int,
@@ -104,6 +105,7 @@ def extract_regions_snps(
         regions_snps (pd.DataFrame, optional): A DataFrame containing the genomic regions or SNPs to filter by. Defaults to None.
         pvalue_filt: Minimum -log10(p-value) threshold to keep significant filtered SNPs (default: 0, no filter)
         attributes (list[str], optional): A list of attributes to include in the output. Defaults to None.
+        skip_out (bool, optional): Whether to write regions output. Defaults to False.
         plot_out (bool, optional): Whether to plot the results. Defaults to True.
 
     Returns:
@@ -175,6 +177,9 @@ def extract_regions_snps(
     concatenated_df = process_dataframe(concatenated_df)
     if not snp_filter and pvalue_filt > 0:
         pvalue_filt_df = pd.DataFrame(pvalue_flags)
+        if skip_out:
+            concatenated_df = pd.DataFrame(columns=attributes)
+            logger.warning(f"Skipping regions output for {trait}.")
     else:
         pvalue_filt_df = pd.DataFrame(columns=["CHR", "START", "END", "PVALUE_FILT_FLAG"])
 

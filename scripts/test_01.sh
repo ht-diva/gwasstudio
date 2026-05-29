@@ -75,6 +75,9 @@ run_command "Regions filtering..." "gwasstudio --stdout --mongo-uri ${MDB_URI} e
 # Regions filtering with P-value threshold
 run_command "Regions filtering with P-value threshold..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_regions_filtering_pvalue --output-format csv --uri ${TILEDB_DIR} --get-regions-snps regions_query.tsv --pvalue-filt 7.30103"
 
+# Regions filtering with P-value threshold and no output
+run_command "Regions filtering with P-value threshold and skip regions output..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_regions_filtering_pvalue_skipout --output-format csv --uri ${TILEDB_DIR} --get-regions-snps regions_query.tsv --pvalue-filt 7.30103 --skip-out"
+
 # Regions filtering
 run_command "Regions filtering..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_regions_filtering_by_arg --output-format csv --uri ${TILEDB_DIR} --get-regions-snps '13,23947562,94021213;15,471752,49338760'"
 
