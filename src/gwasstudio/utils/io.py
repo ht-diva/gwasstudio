@@ -9,12 +9,7 @@ from io import StringIO
 def _clean_chr(df: pd.DataFrame, logger) -> pd.DataFrame:
 
     # Remove 'chr' prefix and convert X/Y to 23/24
-    df.loc[:, "CHR"] = (
-        df["CHR"]
-        .astype(str)
-        .str.replace("chr", "", case=False)
-        .replace({"X": "23", "Y": "24"})
-    )
+    df.loc[:, "CHR"] = df["CHR"].astype(str).str.replace("chr", "", case=False).replace({"X": "23", "Y": "24"})
 
     count_row_before = df.shape[0]
     df = df[df["CHR"].str.isnumeric()]
@@ -48,17 +43,11 @@ def _validate_string(fp: str) -> int:
             raise ValueError(f"Empty field in record: '{record}'")
         ncols = len(fields)
         if ncols not in (2, 3):
-            raise ValueError(
-                f"Invalid record '{record}'. "
-                "Expected CHR,POS or CHR,START,END"
-            )
+            raise ValueError(f"Invalid record '{record}'. Expected CHR,POS or CHR,START,END")
         if expected_ncols is None:
             expected_ncols = ncols
         elif ncols != expected_ncols:
-            raise ValueError(
-                f"Mixed inline in record '{record}'. "
-                "Use either CHR,POS or CHR,START,END consistently."
-            )
+            raise ValueError(f"Mixed inline in record '{record}'. Use either CHR,POS or CHR,START,END consistently.")
 
     return expected_ncols
 
@@ -72,7 +61,6 @@ def read_to_bed(fp: str) -> pd.DataFrame | None:
 
     # File path input
     if _is_path(fp):
-
         try:
             # BED format
             df = pd.read_csv(
@@ -106,13 +94,11 @@ def read_to_bed(fp: str) -> pd.DataFrame | None:
             logger.debug(f"Trying SNP list format failed: {e}")
 
             raise ValueError(
-                f"--get_regions_snps file '{fp}' should be "
-                "in BED format or SNP list format (CHR,POS)"
+                f"--get_regions_snps file '{fp}' should be in BED format or SNP list format (CHR,POS)"
             ) from e
-    
+
     # Inline string input
     else:
-
         try:
             # Check inline string format
             ncols = _validate_string(fp)
