@@ -58,23 +58,61 @@ class Hashing:
 
         return hash_value if self.length is None else hash_value[: self.length] if hash_value else None
 
-    def compute_file_hash(self, path: pathlib.Path, bufsize: int = DEFAULT_BUFSIZE) -> str:
-        """
-        Computes the hash of a file using the algorithm function
+    def compute_file_hash(
+        self, file_path: pathlib.Path, bufsize: int = DEFAULT_BUFSIZE, method: str = "balanced"
+    ) -> str:
+        """Generate a hash for a file by reading strategic portions of its content.
+
+        The function can use the methods:
+        full - read the entire file
+        balanced - read chunks from the start, middle, and end of the file
+
+        This function creates a hash by reading:
+        1. The file header (beginning)
+        2. A middle chunk (center)
+        3. The file footer (end)
+
+        The function automatically adjusts read sizes for small files to prevent
+        reading beyond file boundaries.
 
         Args:
-            path: The path to the file for which to compute the hash.
-            bufsize (int): The size of the buffer to use when reading the file.
+            file_path: Path to the file (string or Path object)
+            bufsize: Minimum size (bytes) to read from file
+            method: strategy for reading the file
 
         Returns:
             str: The hexadecimal representation of the hash.
         """
+        path = pathlib.Path(file_path)
+        file_size = path.stat().st_size
         digest = hashlib.new(self.algorithm)
-        with open(path, "rb") as fp:
-            s = fp.read(bufsize)
-            while s:
-                digest.update(s)
-                s = fp.read(bufsize)
+
+        if method == "full":
+            with open(file_path, "rb") as f:
+                while chunk := f.read(bufsize):
+                    digest.update(chunk)
+        else:
+            with path.open("rb") as f:
+                # 1. Read header (adjust size if file is small)
+                header_size = min(bufsize, file_size)
+                header = f.read(header_size)
+                digest.update(header)
+
+                # 2. Read middle chunk (adjust position if file is small)
+                if file_size > header_size + bufsize:
+                    middle_pos = max(header_size, (file_size // 2) - (bufsize // 2))
+                    f.seek(middle_pos)
+                    middle_size = min(bufsize, file_size - middle_pos)
+                    middle = f.read(middle_size)
+                    digest.update(middle)
+
+                # 3. Read footer (adjust size if file is small)
+                if file_size > header_size + bufsize:
+                    f.seek(-bufsize, 2)
+                    footer_size = min(bufsize, file_size)
+                    footer = f.read(footer_size)
+                    digest.update(footer)
+
         return digest.hexdigest()
 
     def compute_string_hash(self, st: str) -> str:
