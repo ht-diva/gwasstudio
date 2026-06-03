@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [2.19.0] - 2026-06-03
+
+### 🚀 Features
+
+- Add option to skip regions output
+- Implement bulk metadata ingestion
+
+### 📚 Documentation
+
+- Add skip_out documentation
+
+### 🎨 Styling
+
+- Minor tweak
+
+### ⚙️ Miscellaneous Tasks
+
+- Update .gitignore
+
 ## [2.18.0] - 2026-05-26
 
 ### 🚀 Features
@@ -1017,3 +1036,4 @@ This reverts commit 4e6546b860962a845fd8d3f3459d43ed79b47572.
 - Change to debian image
 - Set locale
 - Add info and query commands
+

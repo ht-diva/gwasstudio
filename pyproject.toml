@@ -1,6 +1,6 @@
 [project]
 name = "gwasstudio"
-version = "2.18.0"
+version = "2.19.0"
 description = ""
 authors = [
     { name = "Gianmauro Cuccuru", email = "gianmauro.cuccuru@fht.org" },
@@ -74,7 +74,7 @@ extend_exclude = [
 [tool.deptry.per_rule_ignores]
 DEP003 = [
     "gwasstudio",
-    "pymongo"
+    "pymongo",
 ]
 DEP004 = [
     "mongomock",
