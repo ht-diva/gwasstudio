@@ -16,7 +16,8 @@ repos:
         args: [ --fix ]
       # Run the formatter.
       - id: ruff-format
-  - repo: https://github.com/fpgmaas/deptry.git
-    rev: 0.23.1
+  - repo: https://github.com/osprey-oss/deptry.git
+    rev: 0.25.1
     hooks:
       - id: deptry
+        args: ["--ignore", "DEP003"]

@@ -38,10 +38,10 @@ class DaskCluster:
         * ``cores_per_worker`` – CPU cores allocated per worker
         * ``memory_per_worker`` – memory allocated per worker (string accepted by Dask)
         """
-        _address = kwargs.get("address")
-        _image = kwargs.get("image")
+        _address = kwargs.get("gw_address")
+        _image = kwargs.get("gw_image")
         _cores = kwargs.get("cores_per_worker")
-        _workers = kwargs.get("workers")
+        _workers = kwargs.get("workers", 1)
         _mem = kwargs.get("memory_per_worker")
         _interface = kwargs.get("interface")
         _walltime = kwargs.get("walltime")
@@ -176,7 +176,7 @@ class DaskCluster:
                 return default_timeout  # Job already RUNNING
 
             start_time = datetime.datetime.strptime(start_line.split()[-1], "%Y-%m-%dT%H:%M:%S")
-            wait_seconds = (start_time - datetime.datetime.now()).total_seconds()
+            wait_seconds = int((start_time - datetime.datetime.now()).total_seconds())
             return max(wait_seconds, 0)
 
         except Exception as e:
