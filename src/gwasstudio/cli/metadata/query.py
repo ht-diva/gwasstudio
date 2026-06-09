@@ -6,9 +6,10 @@ import cloup
 from gwasstudio import logger
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table
-from gwasstudio.utils.cfg import get_mongo_uri
+
 from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataframe_from_mongo_objs
-from gwasstudio.utils.mongo_manager import manage_mongo
+from gwasstudio.cli.utils import create_config_from_context, get_mongo_uri
+from gwasstudio.core import ConfigurationError
 
 help_doc = """
 Query metadata records from MongoDB
@@ -45,10 +46,16 @@ def query_metadata(ctx, search_file, output_prefix, case_sensitive, exact_match)
     search_topics, output_fields = load_search_topics(search_file)
     logger.debug(search_topics)
 
-    with manage_mongo(ctx):
-        mongo_uri = get_mongo_uri(ctx)
-        obj = EnhancedDataProfile(uri=mongo_uri)
-        objs = query_mongo_obj(search_topics, obj, case_sensitive=case_sensitive, exact_match=exact_match)
+    # Create GWASStudioConfig from context (for core compatibility)
+    try:
+        config = create_config_from_context(ctx)
+    except Exception as e:
+        raise ConfigurationError(f"Failed to create configuration from context: {str(e)}")
+
+    mongo_uri = get_mongo_uri(config)
+
+    obj = EnhancedDataProfile(uri=mongo_uri)
+    objs = query_mongo_obj(search_topics, obj, case_sensitive=case_sensitive, exact_match=exact_match)
 
     # write metadata query result
     path = Path(output_prefix)

@@ -45,6 +45,8 @@ run_command() {
   echo "---" >> "${TEST_DIR}/execution_times.log"
 }
 
+python ../scripts/mongo_test_utils.py start --port 27018 --dbpath "${TEST_DIR}/data/mongo_db" --logpath "${TEST_DIR}/logs/mongod.log" --pid-file "${TEST_DIR}/logs/mongod.pid"
+
 # Ingest data
 run_command "Ingesting data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} ingest --ingestion-type metadata --file-path metadata_table.tsv --uri ${TILEDB_DIR}"
 
@@ -71,5 +73,9 @@ run_command "Querying data... 2 results expected" "gwasstudio --stdout --mongo-u
 
 # Query data
 run_command "Querying data... 0 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_07.yml --output-prefix ${TEST_DIR}/example_query_07"
+
+python ../scripts/mongo_test_utils.py stop
+
+python ../scripts/mongo_test_utils.py status
 
 echo "Results are available in ${TEST_DIR}"

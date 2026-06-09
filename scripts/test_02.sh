@@ -45,6 +45,9 @@ run_command() {
   echo "---" >> "${TEST_DIR}/execution_times.log"
 }
 
+python ../scripts/mongo_test_utils.py start --port 27018 --dbpath "${TEST_DIR}/data/mongo_db" --logpath "${TEST_DIR}/logs/mongod.log" --pid-file "${TEST_DIR}/logs/mongod.pid"
+
+
 # Ingest data recalculating the mlog10p for each variant
 run_command "Ingesting data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} ingest --file-path metadata_table.tsv --uri ${TILEDB_DIR} --pvalue"
 
@@ -71,5 +74,9 @@ run_command "SNPs filtering..." "gwasstudio --stdout --local-workers 4 --mongo-u
 
 # Locusbreaker
 run_command "Locusbreaker..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_locusbreaker --uri ${TILEDB_DIR} --locusbreaker"
+
+python ../scripts/mongo_test_utils.py stop
+
+python ../scripts/mongo_test_utils.py status
 
 echo "Results are available in ${TEST_DIR}"

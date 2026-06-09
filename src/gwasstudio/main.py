@@ -5,7 +5,6 @@ import cloup
 
 from gwasstudio import __appname__, __version__, context_settings, log_file, logger
 from gwasstudio.cli import list_projects, info, ingest, export, query_metadata
-from gwasstudio.utils.mongo_manager import mongo_deployment_types
 
 
 def configure_logging(stdout, verbosity, _logger):
@@ -58,12 +57,6 @@ def configure_logging(stdout, verbosity, _logger):
         type=click.Choice(["local", "gateway", "slurm"]),
         default="local",
         help="Specify the deployment environment for the Dask cluster",
-    ),
-    cloup.option(
-        "--mongo-deployment",
-        type=click.Choice(mongo_deployment_types),
-        default="embedded",
-        help="Specify the deployment environment for the MongoDB server",
     ),
 )
 @cloup.option_group(
@@ -135,7 +128,6 @@ def cli_init(
     python,
     local_directory,
     mongo_uri,
-    mongo_deployment,
     verbosity,
     stdout,
     vault_auth,
@@ -148,8 +140,7 @@ def cli_init(
     logger.info("{} started".format(__appname__.capitalize()))
 
     ctx.ensure_object(dict)
-    ctx.obj["mongo"] = {"uri": mongo_uri, "deployment": mongo_deployment}
-
+    ctx.obj["mongo"] = {"uri": mongo_uri}
     ctx.obj["vault"] = {
         "auth": vault_auth,
         "mount_point": vault_mount_point,

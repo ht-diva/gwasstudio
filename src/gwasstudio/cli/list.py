@@ -1,66 +1,64 @@
+"""
+GWASStudio CLI List Command (Core Version)
+=================================================================
+"""
+
 from collections import defaultdict
-from typing import Iterable
 
 import click
 import cloup
 
-from gwasstudio.config_manager import ConfigurationManager
-from gwasstudio.mongo.models import EnhancedDataProfile
-from gwasstudio.utils.cfg import get_mongo_uri
-from gwasstudio.utils.metadata import query_mongo_obj
-from gwasstudio.utils.mongo_manager import manage_mongo
+from gwasstudio.core.query import list_projects as core_list_projects
+from gwasstudio.core.exceptions import GWASStudioError, QueryError, ConfigurationError
+from gwasstudio.cli.utils import create_config_from_context
 
 HELP_DOC = """List every category → project → study hierarchy stored in the MongoDB."""
-
-
-def _collect_objects(cm: ConfigurationManager, profile: EnhancedDataProfile) -> list[dict]:
-    """
-    Query MongoDB for all objects belonging to the data‑categories defined in
-    ``cm`` and return them as a flat list of dictionaries.
-    """
-    categories = cm.get_data_category_list
-    return [obj for cat in categories for obj in query_mongo_obj({"category": cat}, profile)]
-
-
-def _build_category_map(objs: Iterable[dict]) -> dict[str, dict[str, set[str]]]:
-    """
-    Transform a flat list of MongoDB objects into a nested mapping::
-
-        {
-            "category": {
-                "project": {"study1", "study2", ...},
-                ...
-            },
-            ...
-        }
-
-    ``defaultdict`` removes the need for repeated ``if key not in …`` checks.
-    """
-    cat_map: defaultdict[str, defaultdict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
-    for obj in objs:
-        cat_map[obj["category"]][obj["project"]].add(obj["study"])
-    return cat_map
 
 
 @cloup.command("list", no_args_is_help=False, help=HELP_DOC)
 @click.pass_context
 def list_projects(ctx: click.Context) -> None:
     """
-    List every *category → project → study* hierarchy stored in the MongoDB
-    configured for the current Click context.
+    List every *category → project → study* hierarchy stored in MongoDB.
     """
-    cm = ConfigurationManager()
+    try:
+        # Create configuration
+        config = create_config_from_context(ctx)
 
-    with manage_mongo(ctx):
-        mongo_uri = get_mongo_uri(ctx)
-        profile = EnhancedDataProfile(uri=mongo_uri)
+        # Get projects from core (which queries MongoDB)
+        projects = core_list_projects(config=config)
 
-        raw_objects = _collect_objects(cm, profile)
+        if not projects:
+            click.echo("No projects found.")
+            return
 
-    cat_map = _build_category_map(raw_objects)
+        # Build hierarchy: category → project → {set of studies}
+        cat_map: defaultdict[str, defaultdict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
 
-    for category, projects in cat_map.items():
-        click.echo(f"Category: {category}")
-        for project, studies in projects.items():
-            studies_str = ", ".join(sorted(studies))
-            click.echo(f"  Project: {project}\n\tStudies: {studies_str}")
+        for doc in projects:
+            category = doc.get("category", "default")
+            project_name = doc.get("project", "unknown")
+            study_name = doc.get("study")
+
+            if study_name:
+                cat_map[category][project_name].add(study_name)
+
+        # Display hierarchy
+        for category in sorted(cat_map.keys()):
+            click.echo(f"Category: {category}")
+            for project, studies in sorted(cat_map[category].items()):
+                studies_str = ", ".join(sorted(studies))
+                click.echo(f"  Project: {project}\n\tStudies: {studies_str}")
+
+    except QueryError as e:
+        click.echo(f"Error querying projects: {e.message}", err=True)
+        raise SystemExit(1)
+    except ConfigurationError as e:
+        click.echo(f"Configuration error: {e.message}", err=True)
+        raise SystemExit(1)
+    except GWASStudioError as e:
+        click.echo(f"GWASStudio error: {e.message}", err=True)
+        raise SystemExit(1)
+    except Exception as e:
+        click.echo(f"Unexpected error: {str(e)}", err=True)
+        raise SystemExit(1)

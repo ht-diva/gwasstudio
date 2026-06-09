@@ -10,17 +10,23 @@ from dask import delayed, compute
 from dask.distributed import Client
 
 from gwasstudio import logger
+from gwasstudio.cli.utils import (
+    create_config_from_context,
+    get_mongo_uri,
+    get_tiledb_config,
+    get_dask_batch_size,
+    get_dask_deployment,
+)
+from gwasstudio.core import ConfigurationError
 from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
 from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions_snps, extract_regions_leadsnps
 from gwasstudio.methods.locus_breaker import _process_locusbreaker
 from gwasstudio.methods.meta_analysis import _meta_analysis
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table, write_if_not_empty
-from gwasstudio.utils.cfg import get_mongo_uri, get_tiledb_config, get_dask_batch_size, get_dask_deployment
 from gwasstudio.utils.enums import MetadataEnum
 from gwasstudio.utils.io import read_to_bed, read_trait_snps
 from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataframe_from_mongo_objs
-from gwasstudio.utils.mongo_manager import manage_mongo
 from gwasstudio.utils.path_joiner import join_path
 
 
@@ -429,7 +435,7 @@ def export(
     exact_match: bool,
 ) -> None:
     """Export summary statistics based on selected options."""
-    cfg = get_tiledb_config(ctx)
+
     if not check_file_exists(search_file, logger):
         exit(1)
 
@@ -447,11 +453,18 @@ def export(
                 "Plotting option is enabled but too many data_ids are provided in the search file. Please limit to 20 data_ids."
             )
             exit(1)
+
+    # Create GWASStudioConfig from context (for core compatibility)
+    try:
+        config = create_config_from_context(ctx)
+    except Exception as e:
+        raise ConfigurationError(f"Failed to create configuration from context: {str(e)}")
+
     # Query MongoDB
-    with manage_mongo(ctx):
-        mongo_uri = get_mongo_uri(ctx)
-        obj = EnhancedDataProfile(uri=mongo_uri)
-        objs = query_mongo_obj(search_topics, obj, case_sensitive=case_sensitive, exact_match=exact_match)
+    mongo_uri = get_mongo_uri(config)
+
+    obj = EnhancedDataProfile(uri=mongo_uri)
+    objs = query_mongo_obj(search_topics, obj, case_sensitive=case_sensitive, exact_match=exact_match)
 
     if get_regions_leadsnps:
         meta_df = dataframe_from_mongo_objs(output_fields, objs, search_topics=search_topics, exact_match=exact_match)
@@ -470,12 +483,14 @@ def export(
     output_prefix_dict = create_output_prefix_dict(meta_df, output_prefix, source_id_column=source_id_column)
 
     # Process according to selected options
-    if get_dask_deployment(ctx) not in dask_deployment_types:
+    if get_dask_deployment(config) not in dask_deployment_types:
         logger.error(f"A valid dask deployment type must be set from: {dask_deployment_types}")
         raise SystemExit(1)
 
+    cfg = get_tiledb_config(config)
+
     with manage_daskcluster(ctx) as client:
-        batch_size = get_dask_batch_size(ctx)
+        batch_size = get_dask_batch_size(config)
         grouped = meta_df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
         for name, group in grouped:
             group_name = "_".join(name)
