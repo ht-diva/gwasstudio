@@ -3,7 +3,7 @@ import unittest
 import pandas as pd
 
 from gwasstudio.cli.export import create_output_prefix_dict
-from gwasstudio.utils.enums import MetadataEnum
+from gwasstudio.core.enums import MetadataEnum
 
 
 class TestCreateOutputPrefixDict(unittest.TestCase):

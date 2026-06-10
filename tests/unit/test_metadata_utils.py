@@ -8,7 +8,7 @@ from ruamel.yaml import YAML
 
 from gwasstudio.utils import generate_random_word
 from gwasstudio.utils import lower_and_replace
-from gwasstudio.utils.enums import MetadataEnum
+from gwasstudio.core.enums import MetadataEnum
 from gwasstudio.utils.hashing import Hashing
 from gwasstudio.utils.metadata import load_search_topics, load_metadata, process_row
 

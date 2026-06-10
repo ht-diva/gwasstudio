@@ -45,37 +45,41 @@ run_command() {
   echo "---" >> "${TEST_DIR}/execution_times.log"
 }
 
-python ../scripts/mongo_test_utils.py start --port 27018 --dbpath "${TEST_DIR}/data/mongo_db" --logpath "${TEST_DIR}/logs/mongod.log" --pid-file "${TEST_DIR}/logs/mongod.pid"
+sleep 2
+python ../scripts/mongo_test_utils.py start --port 27018 --dbpath "${TEST_DIR}/mongo_db" --logpath "${TEST_DIR}/mongod.log" --pid-file "${TEST_DIR}/mongod.pid 2>&1"
 
 # Ingest data
-run_command "Ingesting data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} ingest --ingestion-type metadata --file-path metadata_table.tsv --uri ${TILEDB_DIR}"
+run_command "Ingesting data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} ingest --ingestion-type metadata --file-path metadata_table.tsv --uri ${TILEDB_DIR} 2>&1"
 
 # Ingest data again
-run_command "Ingesting data again..." "gwasstudio --stdout --mongo-uri ${MDB_URI} ingest --ingestion-type metadata --file-path metadata_table.tsv --uri ${TILEDB_DIR}"
+run_command "Ingesting data again..." "gwasstudio --stdout --mongo-uri ${MDB_URI} ingest --ingestion-type metadata --file-path metadata_table.tsv --uri ${TILEDB_DIR} 2>&1"
+
+# List projects
+run_command "Listing metadata..." "gwasstudio --stdout --verbosity loud --mongo-uri ${MDB_URI} list 2>&1"
 
 # Query data
-run_command "Querying data... 23 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_query_01"
+run_command "Querying data... 23 results expected" "gwasstudio --stdout --verbosity loud --mongo-uri ${MDB_URI} meta-query --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_query_01 2>&1"
 
 # Query data
-run_command "Querying data... 6 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_02.yml --output-prefix ${TEST_DIR}/example_query_02"
+run_command "Querying data... 6 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_02.yml --output-prefix ${TEST_DIR}/example_query_02 2>&1"
 
 # Query data
-run_command "Querying data... 5 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_03.yml --output-prefix ${TEST_DIR}/example_query_03"
+run_command "Querying data... 5 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_03.yml --output-prefix ${TEST_DIR}/example_query_03 2>&1"
 
 # Query data by trait description
-run_command "Querying data... 7 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_04.yml --output-prefix ${TEST_DIR}/example_query_04"
+run_command "Querying data... 7 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_04.yml --output-prefix ${TEST_DIR}/example_query_04 2>&1"
 
 # Query data
-run_command "Querying data... 3 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_05.yml --output-prefix ${TEST_DIR}/example_query_05"
+run_command "Querying data... 3 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_05.yml --output-prefix ${TEST_DIR}/example_query_05 2>&1"
 
 # Query data
-run_command "Querying data... 2 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_06.yml --output-prefix ${TEST_DIR}/example_query_06"
+run_command "Querying data... 2 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_06.yml --output-prefix ${TEST_DIR}/example_query_06 2>&1"
 
 # Query data
-run_command "Querying data... 0 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_07.yml --output-prefix ${TEST_DIR}/example_query_07"
+run_command "Querying data... 0 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_07.yml --output-prefix ${TEST_DIR}/example_query_07 2>&1"
 
-python ../scripts/mongo_test_utils.py stop
+python ../scripts/mongo_test_utils.py stop --pid-file "${TEST_DIR}/logs/mongod.pid"
 
-python ../scripts/mongo_test_utils.py status
+python ../scripts/mongo_test_utils.py status --pid-file "${TEST_DIR}/logs/mongod.pid"
 
 echo "Results are available in ${TEST_DIR}"

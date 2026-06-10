@@ -5,7 +5,8 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 
-from gwasstudio.utils import find_item, parse_uri, write_table
+from gwasstudio.utils import find_item, write_table
+from gwasstudio.cli.utils import parse_uri
 
 
 class TestFindItemFunction(unittest.TestCase):
