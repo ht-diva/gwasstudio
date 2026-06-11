@@ -244,6 +244,7 @@ def query_metadata(
 ) -> Tuple[List[Dict[str, Any]], Optional[List[str]]]:
     """
     Query metadata for projects stored in GWASStudio.
+    When data_id is present, it takes precedence and is used exclusively for the query.
 
     Args:
         template: Dictionary to match against metadata (MongoDB query).
@@ -278,9 +279,14 @@ def query_metadata(
     # Apply query options
     if template:
         template = _apply_query_options(template, case_sensitive, exact_match)
-    # Build query
+
+    # Build query - if data_id is present, use only that for querying
     query = {}
-    if template:
+    if template and "data_id" in template:
+        query["data_id"] = template["data_id"]
+    elif template:
+        # Apply query options to other fields
+        template = _apply_query_options(template, case_sensitive, exact_match)
         query.update(template)
 
     try:
