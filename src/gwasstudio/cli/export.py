@@ -24,7 +24,7 @@ from gwasstudio.methods.locus_breaker import _process_locusbreaker
 from gwasstudio.methods.meta_analysis import _meta_analysis
 from gwasstudio.mongo.models import EnhancedDataProfile
 from gwasstudio.utils import check_file_exists, write_table, write_if_not_empty
-from gwasstudio.utils.enums import MetadataEnum
+from gwasstudio.core.enums import MetadataEnum
 from gwasstudio.utils.io import read_to_bed, read_trait_snps
 from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataframe_from_mongo_objs
 from gwasstudio.utils.path_joiner import join_path

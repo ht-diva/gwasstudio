@@ -19,6 +19,9 @@ from gwasstudio.cli.utils import (
     get_dask_deployment,
     get_mongo_uri,
     create_config_from_context,
+    parse_uri,
+    load_metadata,
+    ingest_metadata_bulk,
 )
 from gwasstudio.core import (
     GWASStudioError,
@@ -32,9 +35,8 @@ from gwasstudio.core.config import (
     GWASStudioConfig,
 )
 from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
-from gwasstudio.utils import parse_uri, process_and_ingest, check_file_exists
-from gwasstudio.utils.enums import MetadataEnum
-from gwasstudio.utils.metadata import load_metadata, ingest_metadata_bulk
+from gwasstudio.utils import process_and_ingest, check_file_exists
+from gwasstudio.core.enums import MetadataEnum
 from gwasstudio.utils.path_joiner import join_path
 from gwasstudio.utils.s3 import does_uri_path_exist
 from gwasstudio.utils.tdb_schema import TileDBSchemaCreator

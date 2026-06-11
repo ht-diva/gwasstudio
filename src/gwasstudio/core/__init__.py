@@ -44,6 +44,7 @@ from gwasstudio.core.query import (
     QueryError,
     #     ProjectNotFoundError,
     #     InvalidQueryError,
+    InvalidQueryFieldError,
 )
 #
 # from gwasstudio.core.export import (
@@ -76,6 +77,8 @@ from gwasstudio.core.exceptions import (
     IngestionError,
     InvalidInputError,
 )
+
+from gwasstudio.core.enums import MetadataEnum
 
 # Re-export storage errors for backward compatibility
 StorageError = StorageError
@@ -130,4 +133,7 @@ __all__ = [
     "AuthenticationError",
     "VaultError",
     "PermissionError",
+    "InvalidQueryFieldError",
+    # Others
+    "MetadataEnum",
 ]

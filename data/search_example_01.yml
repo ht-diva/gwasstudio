@@ -1,8 +1,9 @@
-project: opengwas
-category: GWAS
+query_fields:
+  project: opengwas
+  category: GWAS
 
 
-output:
+output_fields:
   - build
   - population
   - notes_consortium

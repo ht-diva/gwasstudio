@@ -2,8 +2,7 @@ from typing import Dict, Any, List
 
 import tiledb
 
-from gwasstudio.utils.datatypes import DataType
-from gwasstudio.utils.enums import BaseEnum
+from gwasstudio.core.enums import BaseEnum, DataType
 
 
 class AttributeEnum(BaseEnum):

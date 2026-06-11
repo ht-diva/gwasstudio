@@ -8,7 +8,6 @@ import gzip
 import pathlib
 import random
 import string
-import urllib.parse
 from typing import Any, Dict
 
 import numpy as np
@@ -91,17 +90,6 @@ def lower_and_replace(text: str) -> str:
         str: The modified string with spaces replaced by underscores and converted to lowercase.
     """
     return f"{text.lower().replace(' ', '_')}"
-
-
-def parse_uri(uri: str) -> tuple[str, str, str]:
-    try:
-        parsed = urllib.parse.urlparse(uri)
-        scheme, netloc, path = parsed.scheme, parsed.netloc, parsed.path
-        if scheme in ["s3", "https"]:
-            path = path.strip("/")
-        return scheme, netloc, path
-    except ValueError as e:
-        raise ValueError(f"Invalid URI: {uri}") from e
 
 
 def process_and_ingest(file_path: str, uri: str, cfg: dict, ingest_pval: bool) -> None:

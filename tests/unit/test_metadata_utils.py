@@ -10,7 +10,8 @@ from gwasstudio.utils import generate_random_word
 from gwasstudio.utils import lower_and_replace
 from gwasstudio.core.enums import MetadataEnum
 from gwasstudio.utils.hashing import Hashing
-from gwasstudio.utils.metadata import load_search_topics, load_metadata, process_row
+from gwasstudio.utils.metadata import load_search_topics, process_row
+from gwasstudio.cli.utils import load_metadata
 
 
 class TestLoadSearchTopics(unittest.TestCase):

@@ -34,7 +34,6 @@ class MongoConfig:
     """Configuration for MongoDB storage."""
 
     uri: Optional[str] = None  # MongoDB connection URI
-    # deployment: str = "embedded"  # embedded, remote
     db_name: str = "datahub"
     log_path: Optional[Path] = None  # Path for MongoDB logs
     data_path: Optional[Path] = None  # Path for MongoDB data (embedded)

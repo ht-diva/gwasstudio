@@ -8,7 +8,7 @@ from ruamel.yaml import YAML
 from gwasstudio import logger
 from gwasstudio.mongo.models import EnhancedDataProfile, DataProfile
 from gwasstudio.utils import lower_and_replace, Hashing
-from gwasstudio.utils.enums import MetadataEnum
+from gwasstudio.core.enums import MetadataEnum
 
 
 def load_search_topics(search_file: str) -> Any | None:
@@ -209,21 +209,6 @@ def dataframe_from_mongo_objs(
     return meta_df
 
 
-def load_metadata(file_path: Path, delimiter: str = "\t") -> pd.DataFrame:
-    """Load metadata from a file in tabular format."""
-    try:
-        return pd.read_csv(file_path, sep=delimiter, dtype=MetadataEnum.get_all_dtypes_dict(), dtype_backend="pyarrow")
-    except FileNotFoundError:
-        logger.error("File not found. Please check the file path.")
-        raise ValueError("File not found")
-    except pd.errors.EmptyDataError:
-        logger.error("No data found in the file. Please check the file content.")
-        raise ValueError("No data found in the file")
-    except pd.errors.ParserError:
-        logger.error("Error parsing the file. Please check the file format.")
-        raise ValueError("Error parsing the file")
-
-
 def process_row(row: tuple[Any]) -> dict[Hashable, Any]:
     """
     Process a row (namedtuple from ``DataFrame.itertuples``) to create a
@@ -270,69 +255,3 @@ def process_row(row: tuple[Any]) -> dict[Hashable, Any]:
         _key: json.dumps(_value, cls=CustomEncoder) if _key in DataProfile.json_dict_fields() else _value
         for _key, _value in metadata.items()
     }
-
-
-def ingest_metadata(df: pd.DataFrame, mongo_uri: str = None) -> None:
-    """Ingest data into the MongoDB collection."""
-
-    def _document_generator(df):
-        for row in df.itertuples(index=False):
-            yield process_row(row)
-
-    logger.info("Starting metadata ingestion")
-    rows = len(df.axes[0])
-    processed_rows = 0
-    logger.info(f"{rows} documents to ingest")
-
-    # Helper that creates and saves a single document
-    def _save_document(doc):
-        obj = EnhancedDataProfile(uri=mongo_uri, **doc)
-        obj.save()
-        return 1  # count of one processed row
-
-    for document in _document_generator(df):
-        processed_rows += _save_document(document)
-
-        # Print the row counter every 100 rows
-        if processed_rows % 100 == 0:
-            logger.info(f"{processed_rows} documents processed")
-
-
-def ingest_metadata_bulk(df: pd.DataFrame, mongo_uri: str = None, batch_size: int = 1000) -> None:
-    """Ingest data into the MongoDB collection in bulk using generator pattern."""
-
-    def _document_generator(df):
-        for row in df.itertuples(index=False):
-            yield process_row(row)
-
-    logger.info("Starting bulk metadata ingestion")
-    rows = len(df.axes[0])
-    logger.info(f"{rows} documents to ingest")
-
-    # Process in batches to avoid memory issues
-    processed = 0
-
-    batch = []
-    for i, document in enumerate(_document_generator(df), 1):
-        batch.append(document)
-
-        if i % batch_size == 0:
-            result = EnhancedDataProfile.bulk_create(batch, mongo_uri, batch_size=batch_size)
-            if "invalid_documents" in result:
-                for invalid in result["invalid_documents"]:
-                    logger.error(f"Invalid document: {invalid}")
-            processed += result["total"]
-            logger.info(f"Processed batch: {processed}/{rows} documents")
-            batch = []
-
-    # Process remaining documents
-    if batch:
-        result = EnhancedDataProfile.bulk_create(batch, mongo_uri, batch_size=batch_size)
-        if "invalid_documents" in result:
-            for invalid in result["invalid_documents"]:
-                logger.error(f"Invalid document: {invalid}")
-
-        processed += result["total"]
-        logger.info(f"Processed final batch: {processed}/{rows} documents")
-
-    logger.info(f"Bulk ingestion complete: {processed} documents processed")

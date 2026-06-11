@@ -1,17 +1,18 @@
-project: opengwas
-category: GWAS
-notes:
-  - consortium: GIANT
-  - consortium: MRC-IEU
-trait:
-  - desc: Body Mass Index
-  - desc: BMI
-data_ids:
-  - 89f31189b3
-  - a9497f792c
+query_fields:
+  project: opengwas
+  category: GWAS
+  notes:
+    - consortium: GIANT
+    - consortium: MRC-IEU
+  trait_desc:
+    - Body Mass Index
+    - BMI
+  data_id:
+    - 89f31189b3
+    - a9497f792c
 
 
-output:
+output_fields:
   - build
   - population
   - notes_consortium

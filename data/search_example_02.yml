@@ -1,10 +1,11 @@
-project: opengwas
-category: GWAS
-notes:
-  - consortium: GIANT
+query_fields:
+  project: opengwas
+  category: GWAS
+  notes:
+    - consortium: GIANT
 
 
-output:
+output_fields:
   - build
   - population
   - notes_consortium

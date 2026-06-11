@@ -6,11 +6,16 @@ This module provides utility functions for the CLI that work with GWASStudioConf
 These functions are designed to be used with the new core configuration system.
 """
 
+import urllib.parse
 from pathlib import Path
 from typing import Optional, Dict, Any
 
+import pandas as pd
+
 from gwasstudio import logger
-from gwasstudio.core import GWASStudioConfig, DaskConfig, MongoConfig, S3Config, VaultConfig, TileDBConfig
+from gwasstudio.core import GWASStudioConfig, DaskConfig, MongoConfig, S3Config, VaultConfig, TileDBConfig, MetadataEnum
+from gwasstudio.mongo.models import EnhancedDataProfile
+from gwasstudio.utils.metadata import process_row
 
 
 def get_tiledb_config(config: GWASStudioConfig, prefix: Optional[str] = None) -> Dict[str, Any]:
@@ -129,6 +134,13 @@ def create_config_from_context(ctx) -> GWASStudioConfig:
     s3_config = ctx.obj.get("tiledb", {})
     vault_config = ctx.obj.get("vault", {})
 
+    mongo_uri = mongo_config.get("uri")
+    if mongo_uri:
+        _, _, db_name = parse_uri(mongo_uri)
+        db_name = db_name.replace("/", "")
+    else:
+        db_name = "gwasstudio"
+
     # Create GWASStudioConfig with extracted values
     config = GWASStudioConfig(
         dask=DaskConfig(
@@ -146,9 +158,8 @@ def create_config_from_context(ctx) -> GWASStudioConfig:
             local_directory=Path(dask_config.get("local_directory")) if dask_config.get("local_directory") else None,
         ),
         mongo=MongoConfig(
-            uri=mongo_config.get("uri"),
-            # deployment=mongo_config.get("deployment", "embedded"),
-            # db_name="gwasstudio",
+            uri=mongo_uri,
+            db_name=db_name,
         ),
         s3=S3Config(
             aws_access_key_id=s3_config.get("vfs.s3.aws_access_key_id"),
@@ -175,3 +186,95 @@ def create_config_from_context(ctx) -> GWASStudioConfig:
     )
 
     return config
+
+
+def parse_uri(uri: str) -> tuple[str, str, str]:
+    try:
+        parsed = urllib.parse.urlparse(uri)
+        scheme, netloc, path = parsed.scheme, parsed.netloc, parsed.path
+        if scheme in ["s3", "https"]:
+            path = path.strip("/")
+        return scheme, netloc, path
+    except ValueError as e:
+        raise ValueError(f"Invalid URI: {uri}") from e
+
+
+def load_metadata(file_path: Path, delimiter: str = "\t") -> pd.DataFrame:
+    """Load metadata from a file in tabular format."""
+    try:
+        return pd.read_csv(file_path, sep=delimiter, dtype=MetadataEnum.get_all_dtypes_dict(), dtype_backend="pyarrow")
+    except FileNotFoundError:
+        logger.error("File not found. Please check the file path.")
+        raise ValueError("File not found")
+    except pd.errors.EmptyDataError:
+        logger.error("No data found in the file. Please check the file content.")
+        raise ValueError("No data found in the file")
+    except pd.errors.ParserError:
+        logger.error("Error parsing the file. Please check the file format.")
+        raise ValueError("Error parsing the file")
+
+
+def ingest_metadata(df: pd.DataFrame, mongo_uri: str = None) -> None:
+    """Ingest data into the MongoDB collection."""
+
+    def _document_generator(df):
+        for row in df.itertuples(index=False):
+            yield process_row(row)
+
+    logger.info("Starting metadata ingestion")
+    rows = len(df.axes[0])
+    processed_rows = 0
+    logger.info(f"{rows} documents to ingest")
+
+    # Helper that creates and saves a single document
+    def _save_document(doc):
+        obj = EnhancedDataProfile(uri=mongo_uri, **doc)
+        obj.save()
+        return 1  # count of one processed row
+
+    for document in _document_generator(df):
+        processed_rows += _save_document(document)
+
+        # Print the row counter every 100 rows
+        if processed_rows % 100 == 0:
+            logger.info(f"{processed_rows} documents processed")
+
+
+def ingest_metadata_bulk(df: pd.DataFrame, mongo_uri: str = None, batch_size: int = 1000) -> None:
+    """Ingest data into the MongoDB collection in bulk using generator pattern."""
+
+    def _document_generator(df):
+        for row in df.itertuples(index=False):
+            yield process_row(row)
+
+    logger.info("Starting bulk metadata ingestion")
+    rows = len(df.axes[0])
+    logger.info(f"{rows} documents to ingest")
+
+    # Process in batches to avoid memory issues
+    processed = 0
+
+    batch = []
+    for i, document in enumerate(_document_generator(df), 1):
+        batch.append(document)
+
+        if i % batch_size == 0:
+            result = EnhancedDataProfile.bulk_create(batch, mongo_uri, batch_size=batch_size)
+            if "invalid_documents" in result:
+                for invalid in result["invalid_documents"]:
+                    logger.error(f"Invalid document: {invalid}")
+            processed += result["total"]
+            logger.info(f"Processed batch: {processed}/{rows} documents")
+            batch = []
+
+    # Process remaining documents
+    if batch:
+        result = EnhancedDataProfile.bulk_create(batch, mongo_uri, batch_size=batch_size)
+        if "invalid_documents" in result:
+            for invalid in result["invalid_documents"]:
+                logger.error(f"Invalid document: {invalid}")
+
+        processed += result["total"]
+        logger.info(f"Processed final batch: {processed}/{rows} documents")
+
+    logger.info(f"Bulk ingestion complete: {processed} documents processed")

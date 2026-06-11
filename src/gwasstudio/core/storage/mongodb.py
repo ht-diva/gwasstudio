@@ -55,16 +55,8 @@ class MongoDBStorage(StorageBackend):
             MongoDBError: If client setup fails.
         """
         try:
-            if self._mongo_config.deployment == "embedded":
-                # Use embedded MongoDB (for local development)
-                # Note: In production, you might want to use mongomock or a real embedded MongoDB
-                from mongomock import MongoClient
-
-                return MongoClient()
-            else:
-                # Use remote MongoDB
-                uri = self._mongo_config.uri or "mongodb://localhost:27017"
-                return pymongo.MongoClient(uri, maxPoolSize=50)
+            uri = self._mongo_config.uri or "mongodb://localhost:27017"
+            return pymongo.MongoClient(uri, maxPoolSize=50)
         except Exception as e:
             raise MongoDBError(f"Failed to set up MongoDB client: {str(e)}")
 

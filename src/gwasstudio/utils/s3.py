@@ -1,7 +1,7 @@
 import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
 
-from gwasstudio.utils import parse_uri
+from gwasstudio.cli.utils import parse_uri
 
 
 def get_s3_client(cfg):
