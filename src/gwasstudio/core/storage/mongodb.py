@@ -7,7 +7,8 @@ MongoDB is used for storing metadata and, optionally, genomic data.
 """
 
 import uuid
-from typing import Optional, Dict, Any, List, Generator
+from typing import Any, Dict, Generator, List, Optional
+
 import pandas as pd
 import pymongo
 from gridfs import GridFS
@@ -246,6 +247,41 @@ class MongoDBStorage(StorageBackend):
             )
         except Exception as e:
             raise MongoDBError(f"Failed to store metadata for project {project_id}: {str(e)}")
+
+    def bulk_store_metadata(self, metadata_list: List[Dict[str, Any]]) -> None:
+        """
+        Insert or update multiple metadata documents in bulk.
+
+        Args:
+            metadata_list: List of metadata dictionaries to store.
+                         Each dict should contain a 'project_id' key.
+
+        Raises:
+            MongoDBError: If bulk operation fails.
+        """
+        if not metadata_list:
+            return
+
+        try:
+            # Prepare bulk operations
+            operations = []
+            for metadata in metadata_list:
+                if "data_id" not in metadata:
+                    raise MongoDBError("Each metadata document must contain a 'data_id'")
+
+                operations.append(
+                    pymongo.UpdateOne(
+                        {"data_id": metadata["data_id"]},
+                        {"$set": metadata},
+                        upsert=True,
+                    )
+                )
+
+            # Execute bulk write operation
+            if operations:
+                self._projects_collection.bulk_write(operations)
+        except Exception as e:
+            raise MongoDBError(f"Failed to bulk store metadata: {str(e)}")
 
     def get_metadata(self, project_id: str) -> Optional[Dict[str, Any]]:
         """

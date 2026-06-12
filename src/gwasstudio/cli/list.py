@@ -8,9 +8,9 @@ from collections import defaultdict
 import click
 import cloup
 
-from gwasstudio.core.query import list_projects as core_list_projects
-from gwasstudio.core.exceptions import GWASStudioError, QueryError, ConfigurationError
 from gwasstudio.cli.utils import create_config_from_context
+from gwasstudio.core.exceptions import ConfigurationError, GWASStudioError, QueryError
+from gwasstudio.core.query import list_projects as core_list_projects
 
 HELP_DOC = """List every category → project → study hierarchy stored in the MongoDB."""
 

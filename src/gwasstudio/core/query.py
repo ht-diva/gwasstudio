@@ -12,11 +12,13 @@ Updates:
 - Validation for query fields against MetadataEnum
 """
 
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
+from gwasstudio import logger
 from gwasstudio.core.config import GWASStudioConfig
-from gwasstudio.core.storage import MongoDBStorage  # ,TileDBStorage
-from gwasstudio.core.exceptions import QueryError, InvalidQueryError
 from gwasstudio.core.enums import MetadataEnum
+from gwasstudio.core.exceptions import InvalidQueryError, QueryError
+from gwasstudio.core.storage import MongoDBStorage  # ,TileDBStorage
 
 
 class InvalidQueryFieldError(InvalidQueryError):
@@ -62,13 +64,20 @@ def _flatten_nested_template(template: Dict[str, Any]) -> Dict[str, Any]:
     for field, value in template.items():
         if isinstance(value, list):
             if all(isinstance(item, dict) for item in value):
-                nested_values = []
+                # Handle nested list of dicts
                 for item in value:
                     nested_key = next(iter(item.keys()))
-                    nested_values.append(item[nested_key])
+                    nested_value = item[nested_key]
                     full_field = f"{field}.{nested_key}"
                     target_field = field_mapping.get(full_field, full_field.replace(".", "_"))
-                flattened[target_field] = {"$in": nested_values}
+                    # If we already have this field, append to list, otherwise create new list
+                    if target_field in flattened:
+                        if isinstance(flattened[target_field], list):
+                            flattened[target_field].append(nested_value)
+                        else:
+                            flattened[target_field] = [flattened[target_field], nested_value]
+                    else:
+                        flattened[target_field] = [nested_value]
             else:
                 flattened[field] = {"$in": value}
         else:
@@ -139,7 +148,20 @@ def _apply_query_options(
 
         if isinstance(value, dict):
             # Handle MongoDB operators (e.g., {"$in": [...]})
-            modified_template[field] = value
+            if "$in" in value and (exact_match or not case_sensitive):
+                # Convert $in list to regex OR pattern
+                items = value["$in"]
+                if exact_match:
+                    pattern = "^(" + "|".join(items) + ")$"
+                else:
+                    pattern = "|".join(items)
+
+                if not case_sensitive:
+                    modified_template[field] = {"$regex": pattern, "$options": "i"}
+                else:
+                    modified_template[field] = {"$regex": pattern}
+            else:
+                modified_template[field] = value
         elif isinstance(value, str):
             # Apply case sensitivity and exact match
             if not case_sensitive and not exact_match:
@@ -156,7 +178,17 @@ def _apply_query_options(
                 modified_template[field] = {"$regex": value}
         else:
             # For non-string values (numbers, booleans, lists, etc.)
-            modified_template[field] = value
+            if isinstance(value, list):
+                # Convert list to regex with OR
+                pattern = "|".join(value)
+                if exact_match:
+                    pattern = "^(" + pattern + ")$"
+                if not case_sensitive:
+                    modified_template[field] = {"$regex": pattern, "$options": "i"}
+                else:
+                    modified_template[field] = {"$regex": pattern}
+            else:
+                modified_template[field] = value
 
     return modified_template
 
@@ -271,11 +303,13 @@ def query_metadata(
     output_fields = None
     # If yaml_template is provided, parse it
     if yaml_template:
+        logger.debug(f"Parsing template: {yaml_template}")
         template, output_fields = _parse_yaml_template(yaml_template)
 
     # Validate template fields
     if template:
         _validate_query_template(template)
+
     # Apply query options
     if template:
         template = _apply_query_options(template, case_sensitive, exact_match)
@@ -285,13 +319,13 @@ def query_metadata(
     if template and "data_id" in template:
         query["data_id"] = template["data_id"]
     elif template:
-        # Apply query options to other fields
-        template = _apply_query_options(template, case_sensitive, exact_match)
         query.update(template)
 
     try:
         mongo_storage = MongoDBStorage(config)
+        logger.debug(f"Final MongoDB query: {query}")
         results = list(mongo_storage.query_metadata(query, **kwargs))
+        logger.debug(f"Query returned {len(results)} results")
         return results, output_fields
     except Exception as e:
         raise QueryError(f"Failed to query metadata: {str(e)}")

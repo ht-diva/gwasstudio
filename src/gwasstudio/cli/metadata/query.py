@@ -53,26 +53,27 @@ Notes:
 """
 
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 import click
 import cloup
-import yaml
 import pandas as pd
+import yaml
 
-# Import ONLY from core module
-from gwasstudio.core.query import query_metadata as core_query_metadata
-from gwasstudio.core import (
-    GWASStudioError,
-    QueryError,
-    ConfigurationError,
-    InvalidInputError,
-    InvalidQueryFieldError,
-)
+from gwasstudio import logger
 
 # Import updated utilities
 from gwasstudio.cli.utils import create_config_from_context
-from gwasstudio import logger
+from gwasstudio.core import (
+    ConfigurationError,
+    GWASStudioError,
+    InvalidInputError,
+    InvalidQueryFieldError,
+    QueryError,
+)
+
+# Import ONLY from core module
+from gwasstudio.core.query import query_metadata as core_query_metadata
 
 HELP_DOC = """
 Query metadata records from MongoDB using GWASStudio core.
@@ -197,7 +198,6 @@ def query_metadata(
 
         # Load YAML file
         yaml_content = _load_yaml_file(search_file)
-        logger.debug(f"YAML content: {yaml_content}")
 
         # Create configuration and adapter
         config = create_config_from_context(ctx)

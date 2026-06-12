@@ -1,9 +1,9 @@
 import hashlib
 import pathlib
 
-from gwasstudio.config_manager import ConfigurationManager
-
 DEFAULT_BUFSIZE = 4096
+HASH_ALGORITHM = "sha256"
+HASH_LENGTH = 10
 
 
 class Hashing:
@@ -16,9 +16,8 @@ class Hashing:
 
     def __init__(self):
         if not hasattr(self, "initialized"):
-            cm = ConfigurationManager()
-            self.algorithm = cm.hash_algorithm
-            self.length = cm.hash_length
+            self.algorithm = HASH_ALGORITHM
+            self.length = HASH_LENGTH
             self.initialized = True
 
     @property

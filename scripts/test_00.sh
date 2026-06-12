@@ -58,22 +58,22 @@ run_command "Ingesting data again..." "gwasstudio --stdout --mongo-uri ${MDB_URI
 run_command "Listing metadata..." "gwasstudio --stdout --verbosity loud --mongo-uri ${MDB_URI} list 2>&1"
 
 # Query data
-run_command "Querying data... 23 results expected" "gwasstudio --stdout --verbosity loud --mongo-uri ${MDB_URI} meta-query --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_query_01 2>&1"
+run_command "Querying data... 23 results expected" "gwasstudio --stdout --verbosity loud --mongo-uri ${MDB_URI} meta-query --case-sensitive --exact-match --search-file search_example_01.yml --output-prefix ${TEST_DIR}/example_query_01 2>&1"
 
 # Query data
-run_command "Querying data... 6 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_02.yml --output-prefix ${TEST_DIR}/example_query_02 2>&1"
+run_command "Querying data... 6 results expected" "gwasstudio --stdout --verbosity loud --mongo-uri ${MDB_URI} meta-query --exact-match --search-file search_example_02.yml --output-prefix ${TEST_DIR}/example_query_02 2>&1"
 
 # Query data
 run_command "Querying data... 5 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_03.yml --output-prefix ${TEST_DIR}/example_query_03 2>&1"
 
 # Query data by trait description
-run_command "Querying data... 7 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_04.yml --output-prefix ${TEST_DIR}/example_query_04 2>&1"
+run_command "Querying data... 7 results expected" "gwasstudio --stdout --verbosity loud --mongo-uri ${MDB_URI} meta-query --search-file search_example_04.yml --output-prefix ${TEST_DIR}/example_query_04 2>&1"
 
 # Query data
 run_command "Querying data... 3 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_05.yml --output-prefix ${TEST_DIR}/example_query_05 2>&1"
 
 # Query data
-run_command "Querying data... 2 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_06.yml --output-prefix ${TEST_DIR}/example_query_06 2>&1"
+run_command "Querying data... 2 results expected" "gwasstudio --stdout --verbosity loud --mongo-uri ${MDB_URI} meta-query --search-file search_example_06.yml --output-prefix ${TEST_DIR}/example_query_06 2>&1"
 
 # Query data
 run_command "Querying data... 0 results expected" "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file search_example_07.yml --output-prefix ${TEST_DIR}/example_query_07 2>&1"

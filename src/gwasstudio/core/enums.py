@@ -76,6 +76,7 @@ class MetadataEnum(BaseEnum):
     SOMALOGIC_ID = ("trait_seqid", DataType.STRING_PA)
     TISSUE = ("trait_tissue", DataType.CATEGORY)
     UNIT = ("trait_unit", DataType.STRING_PA)
+    POPULATION = ("population", DataType.STRING_PA)
 
     @classmethod
     def required_fields(cls):

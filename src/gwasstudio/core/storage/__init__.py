@@ -10,7 +10,8 @@ from gwasstudio.core.storage.base import StorageBackend, StorageError
 
 # # Import all storage backends
 # from gwasstudio.core.storage.tiledb import TileDBStorage, TileDBError
-from gwasstudio.core.storage.mongodb import MongoDBStorage, MongoDBError
+from gwasstudio.core.storage.mongodb import MongoDBError, MongoDBStorage
+
 # from gwasstudio.core.storage.s3 import S3Storage, S3Error
 #
 # # Import Iceberg backend if available

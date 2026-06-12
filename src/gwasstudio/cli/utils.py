@@ -8,14 +8,23 @@ These functions are designed to be used with the new core configuration system.
 
 import urllib.parse
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 import pandas as pd
 
 from gwasstudio import logger
-from gwasstudio.core import GWASStudioConfig, DaskConfig, MongoConfig, S3Config, VaultConfig, TileDBConfig, MetadataEnum
+from gwasstudio.core import (
+    DaskConfig,
+    GWASStudioConfig,
+    InvalidInputError,
+    MetadataEnum,
+    MongoConfig,
+    S3Config,
+    TileDBConfig,
+    VaultConfig,
+)
+from gwasstudio.core.ingestion import process_metadata_dict
 from gwasstudio.mongo.models import EnhancedDataProfile
-from gwasstudio.utils.metadata import process_row
 
 
 def get_tiledb_config(config: GWASStudioConfig, prefix: Optional[str] = None) -> Dict[str, Any]:
@@ -65,13 +74,15 @@ def get_mongo_uri(config: GWASStudioConfig) -> Optional[str]:
     if config.mongo.uri:
         return config.mongo.uri
 
-    # 2. Try Vault
-    if config.vault and config.vault.path and config.vault.url:
+    # 2. Try Vault - need path, token, and url
+    if config.vault and config.vault.path and config.vault.token and config.vault.url:
         try:
+            from dataclasses import asdict
+
             from gwasstudio.utils.vault import get_config_from_vault
 
-            # Convert VaultConfig dataclass to dict
-            vault_options = config.vault.__dict__
+            # Convert VaultConfig dataclass to dict using asdict for proper serialization
+            vault_options = asdict(config.vault)
             mongo_config = get_config_from_vault("mongo", vault_options)
             if mongo_config:
                 return mongo_config.get("uri")
@@ -219,7 +230,7 @@ def ingest_metadata(df: pd.DataFrame, mongo_uri: str = None) -> None:
 
     def _document_generator(df):
         for row in df.itertuples(index=False):
-            yield process_row(row)
+            yield process_metadata_dict(row)
 
     logger.info("Starting metadata ingestion")
     rows = len(df.axes[0])
@@ -245,7 +256,7 @@ def ingest_metadata_bulk(df: pd.DataFrame, mongo_uri: str = None, batch_size: in
 
     def _document_generator(df):
         for row in df.itertuples(index=False):
-            yield process_row(row)
+            yield process_metadata_dict(row)
 
     logger.info("Starting bulk metadata ingestion")
     rows = len(df.axes[0])
@@ -257,6 +268,8 @@ def ingest_metadata_bulk(df: pd.DataFrame, mongo_uri: str = None, batch_size: in
     batch = []
     for i, document in enumerate(_document_generator(df), 1):
         batch.append(document)
+
+        print(batch)
 
         if i % batch_size == 0:
             result = EnhancedDataProfile.bulk_create(batch, mongo_uri, batch_size=batch_size)
@@ -278,3 +291,43 @@ def ingest_metadata_bulk(df: pd.DataFrame, mongo_uri: str = None, batch_size: in
         logger.info(f"Processed final batch: {processed}/{rows} documents")
 
     logger.info(f"Bulk ingestion complete: {processed} documents processed")
+
+
+def _get_valid_metadata_columns() -> list[str]:
+    """
+    Get the list of valid metadata fields from MetadataEnum.
+
+    Returns:
+        List[str]: List of valid metadata field names.
+    """
+    return [field.get_value() for field in MetadataEnum]
+
+
+def validate_metadata_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Validate that the DataFrame contains all required columns and no invalid columns.
+
+    Args:
+        df: pandas DataFrame containing metadata to validate
+
+    Returns:
+        pandas DataFrame: The input DataFrame if validation passes
+
+    Raises:
+        InvalidInputError: If required columns are missing or invalid columns are present
+    """
+    # Validate columns using core exception
+    required_columns = MetadataEnum.required_fields()
+    missing_cols = set(required_columns) - set(df.columns)
+    if missing_cols:
+        raise InvalidInputError(f"Missing column(s) in the input file: {', '.join(missing_cols)}")
+
+    valid_columns = _get_valid_metadata_columns()
+    invalid_columns = []
+    for column in df.columns:
+        if column not in valid_columns:
+            invalid_columns.append(column)
+
+    if invalid_columns:
+        raise InvalidInputError(f"Invalid column(s) in the input file: {', '.join(invalid_columns)}")
+
+    return df

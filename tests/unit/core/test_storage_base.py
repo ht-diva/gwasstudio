@@ -5,9 +5,10 @@ Tests for GWASStudio Core Storage Base Module
 Tests for the base storage classes in gwasstudio.core.storage.base.
 """
 
-import pytest
-from typing import Optional, Dict, Any, List, Generator
+from typing import Any, Dict, Generator, List, Optional
+
 import pandas as pd
+import pytest
 
 from gwasstudio.core.storage.base import StorageBackend, StorageError
 

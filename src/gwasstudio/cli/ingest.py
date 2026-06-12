@@ -10,33 +10,30 @@ from pathlib import Path
 
 import click
 import cloup
-from dask import delayed, compute
+from dask import compute, delayed
 
 from gwasstudio import logger
 from gwasstudio.cli.utils import (
-    get_tiledb_config,
+    create_config_from_context,
     get_dask_batch_size,
     get_dask_deployment,
-    get_mongo_uri,
-    create_config_from_context,
-    parse_uri,
+    get_tiledb_config,
     load_metadata,
-    ingest_metadata_bulk,
+    parse_uri,
+    validate_metadata_columns,
 )
 from gwasstudio.core import (
+    ConfigurationError,
+    GWASStudioConfig,
     GWASStudioError,
     IngestionError,
     InvalidInputError,
+    MetadataEnum,
     StorageError,
-    ConfigurationError,
 )
-
-from gwasstudio.core.config import (
-    GWASStudioConfig,
-)
+from gwasstudio.core import ingest_metadata as core_ingest_metadata
 from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
-from gwasstudio.utils import process_and_ingest, check_file_exists
-from gwasstudio.core.enums import MetadataEnum
+from gwasstudio.utils import check_file_exists, process_and_ingest
 from gwasstudio.utils.path_joiner import join_path
 from gwasstudio.utils.s3 import does_uri_path_exist
 from gwasstudio.utils.tdb_schema import TileDBSchemaCreator
@@ -108,13 +105,28 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
             raise InvalidInputError("URI is required")
 
         # Load metadata
-        df = load_metadata(Path(file_path), delimiter)
+        raw_df = load_metadata(Path(file_path), delimiter)
 
-        # Validate required columns using core exception
-        required_columns = MetadataEnum.required_fields()
-        missing_cols = set(required_columns) - set(df.columns)
-        if missing_cols:
-            raise InvalidInputError(f"Missing column(s) in the input file: {', '.join(missing_cols)}")
+        # Validate columns
+        # required_columns = MetadataEnum.required_fields()
+        # missing_cols = set(required_columns) - set(raw_df.columns)
+        # if missing_cols:
+        #     raise InvalidInputError(f"Missing column(s) in the input file: {', '.join(missing_cols)}")
+        #
+        # valid_columns = _get_valid_metadata_columns()
+        # invalid_columns = []
+        # for column in raw_df.columns:
+        #     if column not in valid_columns:
+        #         invalid_columns.append(column)
+        #
+        # if invalid_columns:
+        #     raise InvalidInputError(
+        #         f"Invalid column(s) in the input file: {', '.join(invalid_columns)}"
+        #     )
+        #
+        validated_df = validate_metadata_columns(raw_df)
+
+        df = validated_df
 
         logger.info("Starting data ingestion: {} file to process".format(len(df["file_path"].tolist())))
 
@@ -126,9 +138,10 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
 
         # Process metadata ingestion
         if ingestion_type in ["metadata", "both"]:
-            mongo_uri = get_mongo_uri(config)
+            # mongo_uri = get_mongo_uri(config)
             try:
-                ingest_metadata_bulk(df, mongo_uri)
+                core_ingest_metadata(df.to_dict(orient="records"), config=config)
+                # ingest_metadata_bulk(df, mongo_uri)
                 logger.info("Metadata ingestion completed successfully")
             except Exception as e:
                 raise IngestionError(f"Failed to ingest metadata: {str(e)}")

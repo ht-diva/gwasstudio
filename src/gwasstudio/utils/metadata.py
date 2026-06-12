@@ -1,14 +1,14 @@
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Hashable
+from typing import Any, Dict, List
 
 import pandas as pd
 from ruamel.yaml import YAML
 
 from gwasstudio import logger
-from gwasstudio.mongo.models import EnhancedDataProfile, DataProfile
-from gwasstudio.utils import lower_and_replace, Hashing
 from gwasstudio.core.enums import MetadataEnum
+from gwasstudio.core.str_utils import lower_and_replace
+from gwasstudio.mongo.models import DataProfile, EnhancedDataProfile
 
 
 def load_search_topics(search_file: str) -> Any | None:
@@ -207,51 +207,3 @@ def dataframe_from_mongo_objs(
             meta_df = pd.DataFrame(expanded_rows)
 
     return meta_df
-
-
-def process_row(row: tuple[Any]) -> dict[Hashable, Any]:
-    """
-    Process a row (namedtuple from ``DataFrame.itertuples``) to create a
-    metadata dictionary.
-
-    """
-    # ------ Normalise the namedtuple to a dict for easy iteration ------
-    row_dict = row._asdict()  # OrderedDict of field_name → value
-
-    # Helper for direct attribute access
-    def get(key: str) -> Any:
-        """Return the attribute ``key`` from the namedtuple."""
-        return getattr(row, key)
-
-    # Custom JSON encoder
-    class CustomEncoder(json.JSONEncoder):
-        def default(self, obj):
-            if isinstance(obj, type(pd.NA)):
-                return None
-            return super().default(obj)
-
-    project_key = lower_and_replace(get("project"))
-    study_key = lower_and_replace(get("study"))
-
-    hg = Hashing()
-
-    metadata = {"project": project_key, "study": study_key, "data_id": hg.compute_hash(fpath=get("file_path"))}
-
-    for key, value in row_dict.items():
-        if "_" in key and key.startswith(tuple(DataProfile.json_dict_fields())):
-            k, subk = key.split("_", 1)
-            metadata.setdefault(k, {})[subk] = value
-        elif key in tuple(DataProfile.listfield_names()):
-            if "," in value:
-                parts = value.split(",")
-                items = [part.strip() for part in parts]
-            else:
-                items = [value.strip()]
-            metadata.setdefault(key, []).extend(items)
-        else:
-            metadata[key] = value
-
-    return {
-        _key: json.dumps(_value, cls=CustomEncoder) if _key in DataProfile.json_dict_fields() else _value
-        for _key, _value in metadata.items()
-    }

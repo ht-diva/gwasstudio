@@ -5,13 +5,13 @@ Unit Tests for GWASStudio CLI List Command
 Tests for the list command in gwasstudio.cli.list.
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 from click.testing import CliRunner
 
-from gwasstudio.cli.list import list_projects, HELP_DOC
-from gwasstudio.core.config import GWASStudioConfig, MongoConfig, TileDBConfig
-from gwasstudio.core.exceptions import GWASStudioError, QueryError, ConfigurationError
+from gwasstudio.cli.list import HELP_DOC, list_projects
+from gwasstudio.core import ConfigurationError, GWASStudioConfig, GWASStudioError, MongoConfig, QueryError, TileDBConfig
 
 
 @pytest.fixture
@@ -271,8 +271,8 @@ class TestListProjectsCore:
     @patch("gwasstudio.core.query.MongoDBStorage")
     def test_list_projects_core_exception(self, mock_storage_class, mock_config):
         """Test core list_projects with exception."""
-        from gwasstudio.core.query import list_projects as core_list_projects
         from gwasstudio.core.query import QueryError as CoreQueryError
+        from gwasstudio.core.query import list_projects as core_list_projects
 
         mock_storage = MagicMock()
         mock_storage.list_projects.side_effect = Exception("Storage error")

@@ -8,12 +8,12 @@ Tests for the configuration classes in gwasstudio.core.config.
 from pathlib import Path
 
 from gwasstudio.core.config import (
-    GWASStudioConfig,
     DaskConfig,
+    GWASStudioConfig,
     MongoConfig,
     S3Config,
-    VaultConfig,
     TileDBConfig,
+    VaultConfig,
 )
 
 

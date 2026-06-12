@@ -7,8 +7,8 @@ It centralizes all configuration options for Dask, MongoDB, S3, Vault, and TileD
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 @dataclass

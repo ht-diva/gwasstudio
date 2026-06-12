@@ -8,44 +8,15 @@ It exposes all public APIs for the core functionality.
 
 # Import configuration classes
 from gwasstudio.core.config import (
-    GWASStudioConfig,
     DaskConfig,
+    GWASStudioConfig,
     MongoConfig,
     S3Config,
-    VaultConfig,
     TileDBConfig,
+    VaultConfig,
 )
+from gwasstudio.core.enums import MetadataEnum
 
-#
-# # Import storage backends
-from gwasstudio.core.storage import (
-    StorageBackend,
-    #     TileDBStorage,
-    MongoDBStorage,
-    #     S3Storage,
-    StorageError,
-)
-
-#
-# # Import core functionality
-# from gwasstudio.core.ingestion import (
-#     ingest_summary_stats,
-#     ingest_metadata,
-#     IngestionError,
-#     InvalidInputError,
-#     StorageError as IngestionStorageError,
-# )
-#
-from gwasstudio.core.query import (
-    #     query_metadata,
-    #     query_data,
-    #     query_data_stream,
-    list_projects,
-    QueryError,
-    #     ProjectNotFoundError,
-    #     InvalidQueryError,
-    InvalidQueryFieldError,
-)
 #
 # from gwasstudio.core.export import (
 #     export_data,
@@ -63,22 +34,52 @@ from gwasstudio.core.query import (
 #     PlottingError,
 #     InvalidDataError,
 # )
-
 # Import exceptions
 from gwasstudio.core.exceptions import (
-    GWASStudioError,
-    ConfigurationError,
-    InvalidConfigError,
-    DaskError,
-    ClusterError,
     AuthenticationError,
-    VaultError,
-    PermissionError,
+    ClusterError,
+    ConfigurationError,
+    DaskError,
+    GWASStudioError,
     IngestionError,
+    InvalidConfigError,
     InvalidInputError,
+    PermissionError,
+    VaultError,
+)
+from gwasstudio.core.hashing import Hashing
+
+#
+# # Import core functionality
+from gwasstudio.core.ingestion import (
+    #     ingest_summary_stats,
+    ingest_metadata,
+    #     IngestionError,
+    #     InvalidInputError,
+    #     StorageError as IngestionStorageError,
 )
 
-from gwasstudio.core.enums import MetadataEnum
+#
+from gwasstudio.core.query import (
+    #     ProjectNotFoundError,
+    #     InvalidQueryError,
+    InvalidQueryFieldError,
+    QueryError,
+    #     query_metadata,
+    #     query_data,
+    #     query_data_stream,
+    list_projects,
+)
+
+#
+# # Import storage backends
+from gwasstudio.core.storage import (
+    #     TileDBStorage,
+    MongoDBStorage,
+    StorageBackend,
+    #     S3Storage,
+    StorageError,
+)
 
 # Re-export storage errors for backward compatibility
 StorageError = StorageError
@@ -99,7 +100,7 @@ __all__ = [
     # "S3Storage",
     # Ingestion
     # "ingest_summary_stats",
-    # "ingest_metadata",
+    "ingest_metadata",
     # Query
     # "query_metadata",
     # "query_data",
@@ -114,6 +115,7 @@ __all__ = [
     # "generate_manhattan_plot",
     # "generate_qq_plot",
     # "generate_meta_analysis_plot",
+    "Hashing",
     # Exceptions
     "GWASStudioError",
     "IngestionError",

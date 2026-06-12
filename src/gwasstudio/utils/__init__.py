@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import tiledb
 
-from gwasstudio.utils.hashing import Hashing
+from gwasstudio.core import Hashing
 
 
 def check_file_exists(input_file: str, logger: object) -> bool:
@@ -77,19 +77,6 @@ def generate_random_word(length: int) -> str:
         str: A random word of the specified length.
     """
     return "".join(random.choice(string.ascii_lowercase) for _ in range(length))
-
-
-def lower_and_replace(text: str) -> str:
-    """
-    Replaces spaces in the input string with underscores and converts it to lowercase.
-
-    Args:
-        text (str): The input string to be modified.
-
-    Returns:
-        str: The modified string with spaces replaced by underscores and converted to lowercase.
-    """
-    return f"{text.lower().replace(' ', '_')}"
 
 
 def process_and_ingest(file_path: str, uri: str, cfg: dict, ingest_pval: bool) -> None:

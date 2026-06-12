@@ -6,10 +6,11 @@ This module defines the abstract base class for storage backends.
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any, List, Generator
+from typing import Any, Dict, Generator, List, Optional
+
 import pandas as pd
 
-from gwasstudio.core.exceptions import GWASStudioError
+from gwasstudio.core import GWASStudioError
 
 
 class StorageError(GWASStudioError):

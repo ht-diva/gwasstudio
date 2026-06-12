@@ -6,27 +6,27 @@ import click
 import cloup
 import pandas as pd
 import tiledb
-from dask import delayed, compute
+from dask import compute, delayed
 from dask.distributed import Client
 
 from gwasstudio import logger
 from gwasstudio.cli.utils import (
     create_config_from_context,
-    get_mongo_uri,
-    get_tiledb_config,
     get_dask_batch_size,
     get_dask_deployment,
+    get_mongo_uri,
+    get_tiledb_config,
 )
 from gwasstudio.core import ConfigurationError
-from gwasstudio.dask_client import manage_daskcluster, dask_deployment_types
-from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions_snps, extract_regions_leadsnps
+from gwasstudio.core.enums import MetadataEnum
+from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
+from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions_leadsnps, extract_regions_snps
 from gwasstudio.methods.locus_breaker import _process_locusbreaker
 from gwasstudio.methods.meta_analysis import _meta_analysis
 from gwasstudio.mongo.models import EnhancedDataProfile
-from gwasstudio.utils import check_file_exists, write_table, write_if_not_empty
-from gwasstudio.core.enums import MetadataEnum
+from gwasstudio.utils import check_file_exists, write_if_not_empty, write_table
 from gwasstudio.utils.io import read_to_bed, read_trait_snps
-from gwasstudio.utils.metadata import load_search_topics, query_mongo_obj, dataframe_from_mongo_objs
+from gwasstudio.utils.metadata import dataframe_from_mongo_objs, load_search_topics, query_mongo_obj
 from gwasstudio.utils.path_joiner import join_path
 
 

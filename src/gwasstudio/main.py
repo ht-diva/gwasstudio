@@ -4,7 +4,7 @@ import click
 import cloup
 
 from gwasstudio import __appname__, __version__, context_settings, log_file, logger
-from gwasstudio.cli import list_projects, info, ingest, export, query_metadata
+from gwasstudio.cli import export, info, ingest, list_projects, query_metadata
 
 
 def configure_logging(stdout, verbosity, _logger):

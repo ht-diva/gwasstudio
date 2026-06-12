@@ -2,8 +2,7 @@ import datetime
 import subprocess
 from contextlib import contextmanager
 
-from dask.distributed import Client
-from dask.distributed import LocalCluster
+from dask.distributed import Client, LocalCluster
 from dask_gateway import Gateway
 from dask_jobqueue import SLURMCluster as Cluster
 

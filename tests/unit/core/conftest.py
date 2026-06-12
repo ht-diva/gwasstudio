@@ -8,12 +8,12 @@ This module provides shared fixtures for testing the GWASStudio core module.
 import tempfile
 from pathlib import Path
 from typing import Generator
-import pytest
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+import pytest
 
-from gwasstudio.core.config import GWASStudioConfig, DaskConfig, MongoConfig, S3Config, VaultConfig, TileDBConfig
-
+from gwasstudio.core import DaskConfig, GWASStudioConfig, MongoConfig, S3Config, TileDBConfig, VaultConfig
 
 # --- Fixtures for Configuration ---
 
@@ -102,6 +102,7 @@ def invalid_config() -> GWASStudioConfig:
 def mock_tiledb_storage(base_config: GWASStudioConfig, temp_data_dir: Path, monkeypatch) -> Generator:
     """Provide a mocked TileDBStorage for testing."""
     from unittest.mock import patch
+
     from gwasstudio.core.storage.tiledb import TileDBStorage
 
     # Mock TileDB functions
@@ -138,6 +139,7 @@ def mock_mongo_storage(base_config: GWASStudioConfig) -> Generator:
 def mock_s3_storage(base_config: GWASStudioConfig) -> Generator:
     """Provide a mocked S3Storage for testing."""
     from unittest.mock import MagicMock, patch
+
     from gwasstudio.core.storage.s3 import S3Storage
 
     with patch("boto3.client") as mock_client:
