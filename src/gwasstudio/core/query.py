@@ -19,6 +19,7 @@ from gwasstudio.core.config import GWASStudioConfig
 from gwasstudio.core.enums import MetadataEnum
 from gwasstudio.core.exceptions import InvalidQueryError, QueryError
 from gwasstudio.core.storage import MongoDBStorage  # ,TileDBStorage
+from gwasstudio.core.str_utils import lower_and_replace
 
 
 class InvalidQueryFieldError(InvalidQueryError):
@@ -252,7 +253,7 @@ def _parse_yaml_template(yaml_content: Dict[str, Any]) -> Tuple[Dict[str, Any], 
 
     for key, value in yaml_content.items():
         if key in ("project", "study"):
-            yaml_content[key] = value.lower().replace(" ", "_")
+            yaml_content[key] = lower_and_replace(value)
 
     # Get output fields from either "output" or "output_fields" key
     output_fields = MetadataEnum.required_output_fields() + yaml_content.pop(

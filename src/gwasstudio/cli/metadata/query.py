@@ -94,6 +94,7 @@ def _load_yaml_file(search_file: str) -> Dict[str, Any]:
         InvalidInputError: If the file doesn't exist or is invalid YAML.
     """
     try:
+        logger.info(f"Processing {search_file}")
         with open(search_file, "r") as f:
             return yaml.safe_load(f) or {}
     except FileNotFoundError:

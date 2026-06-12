@@ -1,3 +1,8 @@
+"""
+String utility helpers.
+"""
+
+
 def lower_and_replace(text: str) -> str:
     """
     Replaces spaces in the input string with underscores and converts it to lowercase.
