@@ -1,5 +1,5 @@
 """
-GWASStudio Core Query Module
+GWASStudio Core Ingestion Module
 =============================
 
 This module provides functions for ingesting genomic data and metadata
