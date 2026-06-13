@@ -14,7 +14,7 @@ from gwasstudio.core import (
     Hashing,
     IngestionError,
 )
-from gwasstudio.core.enums import AncestryEnum
+from gwasstudio.core.enums import AncestryEnum, DataCategoryEnum
 from gwasstudio.core.storage import MongoDBStorage  # ,TileDBStorage
 from gwasstudio.core.str_utils import lower_and_replace
 
@@ -69,6 +69,14 @@ def process_metadata_dict(metadata: dict[Hashable, Any]) -> dict[Hashable, Any]:
         population = normalized_population
     else:
         population = []
+
+    # Validate data_category value
+    category = metadata.get("category")
+    if category is not None:
+        try:
+            DataCategoryEnum.validate(category)
+        except ValueError as e:
+            raise ValueError(f"Invalid category value '{category}'. {str(e)}")
 
     # Perform transformations
     hg = Hashing()

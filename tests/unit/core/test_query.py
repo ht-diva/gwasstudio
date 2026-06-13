@@ -1051,3 +1051,65 @@ class TestPopulationValidation:
         template = {"project": "test"}
         _validate_and_normalize_population(template)
         assert "population" not in template
+
+
+class TestDataCategoryValidation:
+    """Tests for data_category field validation in queries."""
+
+    def test_category_valid(self):
+        """Test that valid category codes pass through."""
+        from gwasstudio.core.query import _validate_data_category
+
+        template = {"category": "GWAS"}
+        _validate_data_category(template)
+        assert template["category"] == "GWAS"
+
+    def test_category_valid_pqtl(self):
+        """Test another valid category."""
+        from gwasstudio.core.query import _validate_data_category
+
+        template = {"category": "pQTL"}
+        _validate_data_category(template)
+        assert template["category"] == "pQTL"
+
+    def test_category_case_sensitive(self):
+        """Test that category matching is case-sensitive."""
+        from gwasstudio.core.query import InvalidQueryFieldError, _validate_data_category
+
+        template = {"category": "gwas"}
+        with pytest.raises(InvalidQueryFieldError) as exc_info:
+            _validate_data_category(template)
+        assert "gwas" in str(exc_info.value)
+
+    def test_category_list_valid(self):
+        """Test that list of category values are validated."""
+        from gwasstudio.core.query import _validate_data_category
+
+        template = {"category": ["GWAS", "pQTL"]}
+        _validate_data_category(template)
+        assert template["category"] == ["GWAS", "pQTL"]
+
+    def test_category_invalid_raises_error(self):
+        """Test that invalid category values raise InvalidQueryFieldError."""
+        from gwasstudio.core.query import InvalidQueryFieldError, _validate_data_category
+
+        template = {"category": "INVALID"}
+        with pytest.raises(InvalidQueryFieldError) as exc_info:
+            _validate_data_category(template)
+        assert "INVALID" in str(exc_info.value)
+
+    def test_category_none_pass_through(self):
+        """Test that None category passes through unchanged."""
+        from gwasstudio.core.query import _validate_data_category
+
+        template = {"category": None}
+        _validate_data_category(template)
+        assert template["category"] is None
+
+    def test_category_missing_no_error(self):
+        """Test that missing category field doesn't cause error."""
+        from gwasstudio.core.query import _validate_data_category
+
+        template = {"project": "test"}
+        _validate_data_category(template)
+        assert "category" not in template

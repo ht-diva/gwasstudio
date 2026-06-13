@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from gwasstudio import logger
 from gwasstudio.core.config import GWASStudioConfig
-from gwasstudio.core.enums import AncestryEnum, MetadataEnum
+from gwasstudio.core.enums import AncestryEnum, DataCategoryEnum, MetadataEnum
 from gwasstudio.core.exceptions import InvalidQueryError, QueryError
 from gwasstudio.core.storage import MongoDBStorage  # ,TileDBStorage
 from gwasstudio.core.str_utils import lower_and_replace
@@ -84,6 +84,45 @@ def _validate_and_normalize_population(template: Dict[str, Any]) -> None:
                 else:
                     normalized_list.append(item)
             template["population"] = normalized_list
+
+
+def _validate_data_category(template: Dict[str, Any]) -> None:
+    """
+    Validate data_category values in the query template.
+
+    Args:
+        template: Dictionary with query parameters.
+
+    Raises:
+        InvalidQueryFieldError: If data_category value is invalid.
+    """
+    if not template:
+        return
+
+    # Check for category field
+    category_value = template.get("category")
+    if category_value is not None:
+        # Handle both string and list inputs
+        if isinstance(category_value, str):
+            try:
+                DataCategoryEnum.validate(category_value)
+            except ValueError as e:
+                raise InvalidQueryFieldError(
+                    f"Invalid category value '{category_value}': {str(e)}",
+                    invalid_fields=["category"],
+                    valid_fields=[f"Valid values: {', '.join(DataCategoryEnum.get_values())}"],
+                )
+        elif isinstance(category_value, list):
+            for item in category_value:
+                if isinstance(item, str):
+                    try:
+                        DataCategoryEnum.validate(item)
+                    except ValueError as e:
+                        raise InvalidQueryFieldError(
+                            f"Invalid category value '{item}': {str(e)}",
+                            invalid_fields=["category"],
+                            valid_fields=[f"Valid values: {', '.join(DataCategoryEnum.get_values())}"],
+                        )
 
 
 def _generate_nested_mapping(schema_or_data: Dict[str, Any]) -> Dict[str, str]:
@@ -356,6 +395,10 @@ def query_metadata(
     # Validate and normalize population values
     if template:
         _validate_and_normalize_population(template)
+
+    # Validate data_category values
+    if template:
+        _validate_data_category(template)
 
     # Validate template fields
     if template:

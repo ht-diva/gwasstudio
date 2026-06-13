@@ -117,6 +117,44 @@ class AncestryEnum(str, Enum):
         )
 
 
+class DataCategoryEnum(str, Enum):
+    """
+    Data category codes for GWASStudio.
+    """
+
+    GWAS = "GWAS"
+    PQTL = "pQTL"
+    EQTL = "eQTL"
+
+    @classmethod
+    def get_values(cls) -> list[str]:
+        """Return list of valid data category codes."""
+        return [member.value for member in cls]
+
+    @classmethod
+    def validate(cls, value: str) -> str:
+        """
+        Validate a data category value (case-sensitive).
+
+        Args:
+            value: Data category value to validate
+
+        Returns:
+            The validated value (same as input if valid)
+
+        Raises:
+            ValueError: If value is not a valid data category
+        """
+        if not value:
+            return value
+
+        # Check if it's a valid code (case-sensitive)
+        if value in cls.get_values():
+            return value
+
+        raise ValueError(f"Invalid data_category value '{value}'. Valid values are: {', '.join(cls.get_values())}")
+
+
 class BaseEnum(Enum):
     def __init__(self, value, dtype):
         self._value_ = value
