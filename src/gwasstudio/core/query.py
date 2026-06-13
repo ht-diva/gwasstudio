@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from gwasstudio import logger
 from gwasstudio.core.config import GWASStudioConfig
-from gwasstudio.core.enums import MetadataEnum
+from gwasstudio.core.enums import AncestryEnum, MetadataEnum
 from gwasstudio.core.exceptions import InvalidQueryError, QueryError
 from gwasstudio.core.storage import MongoDBStorage  # ,TileDBStorage
 from gwasstudio.core.str_utils import lower_and_replace
@@ -38,6 +38,52 @@ def _get_valid_metadata_fields() -> List[str]:
         List[str]: List of valid metadata field names.
     """
     return [field.get_value() for field in MetadataEnum]
+
+
+def _validate_and_normalize_population(template: Dict[str, Any]) -> None:
+    """
+    Validate and normalize population values in the query template.
+    Accepts both codes (e.g., 'EUR') and descriptions (e.g., 'European').
+
+    Args:
+        template: Dictionary with query parameters.
+
+    Raises:
+        InvalidQueryFieldError: If population value is invalid.
+    """
+    if not template:
+        return
+
+    # Check for population field (could be flat or nested)
+    population_value = template.get("population")
+    if population_value is not None:
+        # Normalize the value
+        if isinstance(population_value, str):
+            try:
+                normalized = AncestryEnum.normalize(population_value)
+                template["population"] = normalized
+            except ValueError as e:
+                raise InvalidQueryFieldError(
+                    f"Invalid population value '{population_value}': {str(e)}",
+                    invalid_fields=["population"],
+                    valid_fields=[f"Valid codes: {', '.join(AncestryEnum.get_values())}"],
+                )
+        elif isinstance(population_value, list):
+            normalized_list = []
+            for item in population_value:
+                if isinstance(item, str):
+                    try:
+                        normalized = AncestryEnum.normalize(item)
+                        normalized_list.append(normalized)
+                    except ValueError as e:
+                        raise InvalidQueryFieldError(
+                            f"Invalid population value '{item}': {str(e)}",
+                            invalid_fields=["population"],
+                            valid_fields=[f"Valid codes: {', '.join(AncestryEnum.get_values())}"],
+                        )
+                else:
+                    normalized_list.append(item)
+            template["population"] = normalized_list
 
 
 def _generate_nested_mapping(schema_or_data: Dict[str, Any]) -> Dict[str, str]:
@@ -306,6 +352,10 @@ def query_metadata(
     if yaml_template:
         logger.debug(f"Parsing template: {yaml_template}")
         template, output_fields = _parse_yaml_template(yaml_template)
+
+    # Validate and normalize population values
+    if template:
+        _validate_and_normalize_population(template)
 
     # Validate template fields
     if template:

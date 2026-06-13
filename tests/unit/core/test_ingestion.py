@@ -150,7 +150,7 @@ class TestProcessMetadataDict:
 
         tpl = _template(population=None)
         result = process_metadata_dict(tpl)
-        assert result["population"] == [None]
+        assert result["population"] == []
 
     def test_empty_population(self, monkeypatch):
         """Test handling of empty population."""
@@ -160,7 +160,48 @@ class TestProcessMetadataDict:
 
         tpl = _template(population="")
         result = process_metadata_dict(tpl)
-        assert result["population"] == [""]
+        # Empty strings are filtered out during normalization
+        assert result["population"] == []
+
+    def test_population_normalization_code(self, monkeypatch):
+        """Test that population codes are kept as-is."""
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+
+        tpl = _template(population="EUR")
+        result = process_metadata_dict(tpl)
+        assert result["population"] == ["EUR"]
+
+    def test_population_normalization_description(self, monkeypatch):
+        """Test that population descriptions are normalized to codes."""
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+
+        tpl = _template(population="European")
+        result = process_metadata_dict(tpl)
+        assert result["population"] == ["EUR"]
+
+    def test_population_normalization_case_insensitive(self, monkeypatch):
+        """Test that population normalization is case-insensitive."""
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+
+        tpl = _template(population="european")
+        result = process_metadata_dict(tpl)
+        assert result["population"] == ["EUR"]
+
+    def test_population_normalization_mixed_list(self, monkeypatch):
+        """Test normalization of mixed codes and descriptions."""
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+
+        tpl = _template(population=["EUR", "African American or Afro-Caribbean", "EAS"])
+        result = process_metadata_dict(tpl)
+        assert result["population"] == ["EUR", "AFA", "EAS"]
 
     def test_special_characters_in_project(self, monkeypatch):
         """Test project with special characters passes through correctly (lowercased)."""

@@ -14,6 +14,7 @@ from gwasstudio.core import (
     Hashing,
     IngestionError,
 )
+from gwasstudio.core.enums import AncestryEnum
 from gwasstudio.core.storage import MongoDBStorage  # ,TileDBStorage
 from gwasstudio.core.str_utils import lower_and_replace
 
@@ -45,6 +46,30 @@ def process_metadata_dict(metadata: dict[Hashable, Any]) -> dict[Hashable, Any]:
     """
     Process a metadata dictionary.
     """
+    # Validate and normalize population values against AncestryEnum
+    population = metadata.get("population")
+    if population is not None:
+        # Handle both string and list inputs
+        if isinstance(population, str):
+            population_list = [population]
+        elif isinstance(population, list):
+            population_list = population
+        else:
+            population_list = [str(population)]
+
+        # Normalize each value and validate
+        normalized_population = []
+        for pop in population_list:
+            if pop:  # Skip empty strings
+                try:
+                    normalized = AncestryEnum.normalize(pop)
+                    normalized_population.append(normalized)
+                except ValueError as e:
+                    raise ValueError(f"Invalid population value '{pop}'. {str(e)}")
+        population = normalized_population
+    else:
+        population = []
+
     # Perform transformations
     hg = Hashing()
 
@@ -53,9 +78,7 @@ def process_metadata_dict(metadata: dict[Hashable, Any]) -> dict[Hashable, Any]:
     data_id = hg.compute_hash(fpath=metadata.get("file_path"))
 
     # Update the dictionary with new values
-    metadata.update(
-        {"project": project_key, "study": study_key, "data_id": data_id, "population": [metadata.get("population")]}
-    )
+    metadata.update({"project": project_key, "study": study_key, "data_id": data_id, "population": population})
 
     # Clean up unwanted keys
     metadata.pop("file_path")

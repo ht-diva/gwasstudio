@@ -18,6 +18,105 @@ class DataType(Enum):
     FLOAT_PA = "Float64[pyarrow]"
 
 
+# Mapping from full descriptions to ancestry codes for normalization
+ANCESTRY_DESCRIPTION_TO_CODE = {
+    "Aboriginal Australian": "AUS",
+    "African American or Afro-Caribbean": "AFA",
+    "African unspecified": "AFR",
+    "Asian unspecified": "ASN",
+    "Central Asian": "CAS",
+    "East Asian": "EAS",
+    "European": "EUR",
+    "Greater Middle Eastern": "MDE",
+    "Middle Eastern, North African, or Persian": "MDE",
+    "Hispanic or Latin American": "AMR",
+    "Not reported / unknown": "NR",
+    "Native American": "NAM",
+    "Oceanian": "OCE",
+    "Other": "OTH",
+    "Other admixed ancestry": "ADM",
+    "South Asian": "SAS",
+    "South East Asian": "SEA",
+    "Sub-Saharan African": "SAF",
+}
+
+# Reverse mapping for validation
+ANCESTRY_CODE_TO_DESCRIPTION = {v: k for k, v in ANCESTRY_DESCRIPTION_TO_CODE.items()}
+
+
+class AncestryEnum(str, Enum):
+    """
+    Ancestry group codes based on NCBI PMC5815218.
+
+    Reference: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5815218/table/Tab1/
+    """
+
+    AUS = "AUS"  # Aboriginal Australian
+    AFA = "AFA"  # African American or Afro-Caribbean
+    AFR = "AFR"  # African unspecified
+    ASN = "ASN"  # Asian unspecified
+    CAS = "CAS"  # Central Asian
+    EAS = "EAS"  # East Asian
+    EUR = "EUR"  # European
+    MDE = "MDE"  # Greater Middle Eastern (Middle Eastern, North African, or Persian)
+    AMR = "AMR"  # Hispanic or Latin American
+    NR = "NR"  # Not reported / unknown
+    NAM = "NAM"  # Native American
+    OCE = "OCE"  # Oceanian
+    OTH = "OTH"  # Other
+    ADM = "ADM"  # Other admixed ancestry
+    SAS = "SAS"  # South Asian
+    SEA = "SEA"  # South East Asian
+    SAF = "SAF"  # Sub-Saharan African
+
+    @classmethod
+    def get_values(cls) -> list[str]:
+        """Return list of valid ancestry codes."""
+        return [member.value for member in cls]
+
+    @classmethod
+    def normalize(cls, value: str) -> str:
+        """
+        Normalize a population value to its standard code.
+        Accepts either the code (e.g., 'EUR') or full description (e.g., 'European').
+
+        Args:
+            value: Population value to normalize
+
+        Returns:
+            Standard ancestry code
+
+        Raises:
+            ValueError: If value is not a valid code or description
+        """
+        if not value:
+            return value
+
+        # Check if it's already a valid code
+        if value in ANCESTRY_CODE_TO_DESCRIPTION:
+            return value
+
+        # Check if it's a valid description
+        if value in ANCESTRY_DESCRIPTION_TO_CODE:
+            return ANCESTRY_DESCRIPTION_TO_CODE[value]
+
+        # Check with case-insensitive matching
+        value_upper = value.upper()
+        for code in cls.get_values():
+            if code == value_upper:
+                return code
+
+        for desc, code in ANCESTRY_DESCRIPTION_TO_CODE.items():
+            if desc.upper() == value_upper:
+                return code
+
+        raise ValueError(
+            f"Invalid population value '{value}'. "
+            f"Valid codes: {', '.join(cls.get_values())}. "
+            f"Valid descriptions: {', '.join(sorted(ANCESTRY_DESCRIPTION_TO_CODE.keys())[:5])}..."
+        )
+
+
 class BaseEnum(Enum):
     def __init__(self, value, dtype):
         self._value_ = value

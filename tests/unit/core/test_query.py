@@ -990,3 +990,64 @@ class TestValidateRegion:
         assert result["chr"] == "chr-"
         assert result["start"] is None
         assert result["end"] is None
+
+
+class TestPopulationValidation:
+    """Tests for population field validation and normalization in queries."""
+
+    def test_population_code_valid(self):
+        """Test that valid population codes pass through."""
+        from gwasstudio.core.query import _validate_and_normalize_population
+
+        template = {"population": "EUR"}
+        _validate_and_normalize_population(template)
+        assert template["population"] == "EUR"
+
+    def test_population_description_normalized(self):
+        """Test that population descriptions are normalized to codes."""
+        from gwasstudio.core.query import _validate_and_normalize_population
+
+        template = {"population": "European"}
+        _validate_and_normalize_population(template)
+        assert template["population"] == "EUR"
+
+    def test_population_case_insensitive(self):
+        """Test that population matching is case-insensitive."""
+        from gwasstudio.core.query import _validate_and_normalize_population
+
+        template = {"population": "european"}
+        _validate_and_normalize_population(template)
+        assert template["population"] == "EUR"
+
+    def test_population_list_normalized(self):
+        """Test that list of population values are normalized."""
+        from gwasstudio.core.query import _validate_and_normalize_population
+
+        template = {"population": ["EUR", "African American or Afro-Caribbean"]}
+        _validate_and_normalize_population(template)
+        assert template["population"] == ["EUR", "AFA"]
+
+    def test_population_invalid_raises_error(self):
+        """Test that invalid population values raise InvalidQueryFieldError."""
+        from gwasstudio.core.query import InvalidQueryFieldError, _validate_and_normalize_population
+
+        template = {"population": "INVALID"}
+        with pytest.raises(InvalidQueryFieldError) as exc_info:
+            _validate_and_normalize_population(template)
+        assert "INVALID" in str(exc_info.value)
+
+    def test_population_none_pass_through(self):
+        """Test that None population passes through unchanged."""
+        from gwasstudio.core.query import _validate_and_normalize_population
+
+        template = {"population": None}
+        _validate_and_normalize_population(template)
+        assert template["population"] is None
+
+    def test_population_missing_no_error(self):
+        """Test that missing population field doesn't cause error."""
+        from gwasstudio.core.query import _validate_and_normalize_population
+
+        template = {"project": "test"}
+        _validate_and_normalize_population(template)
+        assert "population" not in template

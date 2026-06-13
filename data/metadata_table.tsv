@@ -4,7 +4,7 @@ opengwas	bbj-a	GWAS	./dataset/bbj-a-2.gwaslab.tsv.sampled.gz		Males	bbj-a-2	GRCh
 opengwas	bbj-a	GWAS	./dataset/bbj-a-3.gwaslab.tsv.sampled.gz		Females	bbj-a-3	GRCh37	EAS	72390			Body mass index
 opengwas	ebi-a	GWAS	./dataset/ebi-a-GCST004904.gwaslab.tsv.sampled.gz			ebi-a-GCST004904	GRCh37	EAS	158284			Body mass index
 opengwas	ieu-a	GWAS	./dataset/ieu-a-1089.gwaslab.tsv.sampled.gz	UK Biobank	Combined	ieu-a-1089	GRCh37	EUR	120286			Body mass index
-opengwas	ieu-a	GWAS	./dataset/ieu-a-2.gwaslab.tsv.sampled.gz	GIANT	Combined	ieu-a-2	GRCh37	ADM	338224			Body mass index
+opengwas	ieu-a	GWAS	./dataset/ieu-a-2.gwaslab.tsv.sampled.gz	GIANT	Combined	ieu-a-2	GRCh37	Other admixed ancestry	338224			Body mass index
 opengwas	ieu-a	GWAS	./dataset/ieu-a-785.gwaslab.tsv.sampled.gz	GIANT	Males	ieu-a-785	GRCh37	EUR	152893			Body mass index
 opengwas	ieu-a	GWAS	./dataset/ieu-a-85.gwaslab.tsv.sampled.gz	GIANT	Combined	ieu-a-85	GRCh37	EUR	16068	7962	8106	Extreme body mass index
 opengwas	ieu-a	GWAS	./dataset/ieu-a-974.gwaslab.tsv.sampled.gz	GIANT	Females	ieu-a-974	GRCh37	EUR	171977			Body mass index
