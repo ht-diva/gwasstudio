@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from gwasstudio import logger
 from gwasstudio.core.config import GWASStudioConfig
-from gwasstudio.core.enums import AncestryEnum, DataCategoryEnum, MetadataEnum
+from gwasstudio.core.enums import AncestryEnum, BuildEnum, DataCategoryEnum, MetadataEnum
 from gwasstudio.core.exceptions import InvalidQueryError, QueryError
 from gwasstudio.core.storage import MongoDBStorage  # ,TileDBStorage
 from gwasstudio.core.str_utils import lower_and_replace
@@ -122,6 +122,45 @@ def _validate_data_category(template: Dict[str, Any]) -> None:
                             f"Invalid category value '{item}': {str(e)}",
                             invalid_fields=["category"],
                             valid_fields=[f"Valid values: {', '.join(DataCategoryEnum.get_values())}"],
+                        )
+
+
+def _validate_build(template: Dict[str, Any]) -> None:
+    """
+    Validate build values in the query template.
+
+    Args:
+        template: Dictionary with query parameters.
+
+    Raises:
+        InvalidQueryFieldError: If build value is invalid.
+    """
+    if not template:
+        return
+
+    # Check for build field
+    build_value = template.get("build")
+    if build_value is not None:
+        # Handle both string and list inputs
+        if isinstance(build_value, str):
+            try:
+                BuildEnum.validate(build_value)
+            except ValueError as e:
+                raise InvalidQueryFieldError(
+                    f"Invalid build value '{build_value}': {str(e)}",
+                    invalid_fields=["build"],
+                    valid_fields=[f"Valid values: {', '.join(BuildEnum.get_values())}"],
+                )
+        elif isinstance(build_value, list):
+            for item in build_value:
+                if isinstance(item, str):
+                    try:
+                        BuildEnum.validate(item)
+                    except ValueError as e:
+                        raise InvalidQueryFieldError(
+                            f"Invalid build value '{item}': {str(e)}",
+                            invalid_fields=["build"],
+                            valid_fields=[f"Valid values: {', '.join(BuildEnum.get_values())}"],
                         )
 
 
@@ -399,6 +438,10 @@ def query_metadata(
     # Validate data_category values
     if template:
         _validate_data_category(template)
+
+    # Validate build values
+    if template:
+        _validate_build(template)
 
     # Validate template fields
     if template:
