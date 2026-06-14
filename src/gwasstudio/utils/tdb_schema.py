@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 import tiledb
 
@@ -28,7 +28,7 @@ class TileDBSchemaCreator:
     def __init__(
         self,
         uri: str,
-        cfg: Dict[str, Any],
+        cfg: dict[str, Any],
         ingest_pval: bool,
         attribute_enum: BaseEnum = AttributeEnum,
         dimension_enum: BaseEnum = DimensionEnum,
@@ -74,7 +74,7 @@ class TileDBSchemaCreator:
             ),
         )
 
-    def _create_attributes(self) -> List[tiledb.Attr]:
+    def _create_attributes(self) -> list[tiledb.Attr]:
         """
         Create the attributes for the TileDB schema.
 

@@ -6,7 +6,8 @@ This module defines the abstract base class for storage backends.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generator, List, Optional
+from collections.abc import Generator
+from typing import Any
 
 import pandas as pd
 
@@ -54,10 +55,10 @@ class StorageBackend(ABC):
     def query_data(
         self,
         project_id: str,
-        region: Optional[Dict[str, Any]] = None,
-        snp_list: Optional[List[str]] = None,
-        pval_threshold: Optional[float] = None,
-        limit: Optional[int] = None,
+        region: dict[str, Any] | None = None,
+        snp_list: list[str] | None = None,
+        pval_threshold: float | None = None,
+        limit: int | None = None,
         **kwargs,
     ) -> pd.DataFrame:
         """
@@ -83,9 +84,9 @@ class StorageBackend(ABC):
     def query_data_stream(
         self,
         project_id: str,
-        region: Optional[Dict[str, Any]] = None,
-        snp_list: Optional[List[str]] = None,
-        pval_threshold: Optional[float] = None,
+        region: dict[str, Any] | None = None,
+        snp_list: list[str] | None = None,
+        pval_threshold: float | None = None,
         chunk_size: int = 10000,
         **kwargs,
     ) -> Generator[pd.DataFrame, None, None]:

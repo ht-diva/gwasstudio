@@ -1,5 +1,3 @@
-from typing import Dict
-
 from hvac import Client
 
 
@@ -45,7 +43,7 @@ def get_secret_from_vault(vault_client: Client, vault_kwargs: dict) -> dict:
     return read_response["data"]["data"]
 
 
-def get_config_from_vault(vault_label: str, vault_options: Dict[str, str]) -> Dict:
+def get_config_from_vault(vault_label: str, vault_options: dict[str, str]) -> dict:
     """Retrieve configuration data from HashiCorp Vault."""
 
     if not (vault_client := create_vault_client(vault_options)):

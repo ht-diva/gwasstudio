@@ -5,7 +5,8 @@ Tests for GWASStudio Core Storage Base Module
 Tests for the base storage classes in gwasstudio.core.storage.base.
 """
 
-from typing import Any, Dict, Generator, List, Optional
+from collections.abc import Generator
+from typing import Any, Optional
 
 import pandas as pd
 import pytest
@@ -44,8 +45,8 @@ class TestStorageBackend:
             def query_data(
                 self,
                 project_id: str,
-                region: Optional[Dict[str, Any]] = None,
-                snp_list: Optional[List[str]] = None,
+                region: Optional[dict[str, Any]] = None,
+                snp_list: Optional[list[str]] = None,
                 pval_threshold: Optional[float] = None,
                 limit: Optional[int] = None,
                 **kwargs,
@@ -55,8 +56,8 @@ class TestStorageBackend:
             def query_data_stream(
                 self,
                 project_id: str,
-                region: Optional[Dict[str, Any]] = None,
-                snp_list: Optional[List[str]] = None,
+                region: Optional[dict[str, Any]] = None,
+                snp_list: Optional[list[str]] = None,
                 pval_threshold: Optional[float] = None,
                 chunk_size: int = 10000,
                 **kwargs,
@@ -82,8 +83,8 @@ class TestStorageBackend:
             def query_data_stream(
                 self,
                 project_id: str,
-                region: Optional[Dict[str, Any]] = None,
-                snp_list: Optional[List[str]] = None,
+                region: Optional[dict[str, Any]] = None,
+                snp_list: Optional[list[str]] = None,
                 pval_threshold: Optional[float] = None,
                 chunk_size: int = 10000,
                 **kwargs,
@@ -109,8 +110,8 @@ class TestStorageBackend:
             def query_data(
                 self,
                 project_id: str,
-                region: Optional[Dict[str, Any]] = None,
-                snp_list: Optional[List[str]] = None,
+                region: Optional[dict[str, Any]] = None,
+                snp_list: Optional[list[str]] = None,
                 pval_threshold: Optional[float] = None,
                 limit: Optional[int] = None,
                 **kwargs,
@@ -136,8 +137,8 @@ class TestStorageBackend:
             def query_data(
                 self,
                 project_id: str,
-                region: Optional[Dict[str, Any]] = None,
-                snp_list: Optional[List[str]] = None,
+                region: Optional[dict[str, Any]] = None,
+                snp_list: Optional[list[str]] = None,
                 pval_threshold: Optional[float] = None,
                 limit: Optional[int] = None,
                 **kwargs,
@@ -147,8 +148,8 @@ class TestStorageBackend:
             def query_data_stream(
                 self,
                 project_id: str,
-                region: Optional[Dict[str, Any]] = None,
-                snp_list: Optional[List[str]] = None,
+                region: Optional[dict[str, Any]] = None,
+                snp_list: Optional[list[str]] = None,
                 pval_threshold: Optional[float] = None,
                 chunk_size: int = 10000,
                 **kwargs,
@@ -171,8 +172,8 @@ class TestStorageBackend:
             def query_data(
                 self,
                 project_id: str,
-                region: Optional[Dict[str, Any]] = None,
-                snp_list: Optional[List[str]] = None,
+                region: Optional[dict[str, Any]] = None,
+                snp_list: Optional[list[str]] = None,
                 pval_threshold: Optional[float] = None,
                 limit: Optional[int] = None,
                 **kwargs,
@@ -182,8 +183,8 @@ class TestStorageBackend:
             def query_data_stream(
                 self,
                 project_id: str,
-                region: Optional[Dict[str, Any]] = None,
-                snp_list: Optional[List[str]] = None,
+                region: Optional[dict[str, Any]] = None,
+                snp_list: Optional[list[str]] = None,
                 pval_threshold: Optional[float] = None,
                 chunk_size: int = 10000,
                 **kwargs,

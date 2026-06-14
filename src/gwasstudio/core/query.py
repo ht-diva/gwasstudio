@@ -12,7 +12,7 @@ Updates:
 - Validation for query fields against MetadataEnum
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from gwasstudio import logger
 from gwasstudio.core.config import GWASStudioConfig
@@ -25,12 +25,12 @@ from gwasstudio.core.str_utils import lower_and_replace
 class InvalidQueryFieldError(InvalidQueryError):
     """Exception raised when a query field is not valid."""
 
-    def __init__(self, message: str, invalid_fields: List[str] = None, valid_fields: List[str] = None):
+    def __init__(self, message: str, invalid_fields: list[str] = None, valid_fields: list[str] = None):
         details = {"invalid_fields": invalid_fields, "valid_fields": valid_fields} if invalid_fields else {}
         super().__init__(message, details=details)
 
 
-def _get_valid_metadata_fields() -> List[str]:
+def _get_valid_metadata_fields() -> list[str]:
     """
     Get the list of valid metadata fields from MetadataEnum.
 
@@ -40,7 +40,7 @@ def _get_valid_metadata_fields() -> List[str]:
     return [field.get_value() for field in MetadataEnum]
 
 
-def _validate_and_normalize_population(template: Dict[str, Any]) -> None:
+def _validate_and_normalize_population(template: dict[str, Any]) -> None:
     """
     Validate and normalize population values in the query template.
     Accepts both codes (e.g., 'EUR') and descriptions (e.g., 'European').
@@ -86,7 +86,7 @@ def _validate_and_normalize_population(template: Dict[str, Any]) -> None:
             template["population"] = normalized_list
 
 
-def _validate_data_category(template: Dict[str, Any]) -> None:
+def _validate_data_category(template: dict[str, Any]) -> None:
     """
     Validate data_category values in the query template.
 
@@ -125,7 +125,7 @@ def _validate_data_category(template: Dict[str, Any]) -> None:
                         )
 
 
-def _validate_build(template: Dict[str, Any]) -> None:
+def _validate_build(template: dict[str, Any]) -> None:
     """
     Validate build values in the query template.
 
@@ -164,7 +164,7 @@ def _validate_build(template: Dict[str, Any]) -> None:
                         )
 
 
-def _generate_nested_mapping(schema_or_data: Dict[str, Any]) -> Dict[str, str]:
+def _generate_nested_mapping(schema_or_data: dict[str, Any]) -> dict[str, str]:
     """Convert from dot notation to underscore notation."""
     mapping = {}
     for field, value in schema_or_data.items():
@@ -178,7 +178,7 @@ def _generate_nested_mapping(schema_or_data: Dict[str, Any]) -> Dict[str, str]:
     return mapping
 
 
-def _flatten_nested_template(template: Dict[str, Any]) -> Dict[str, Any]:
+def _flatten_nested_template(template: dict[str, Any]) -> dict[str, Any]:
     """Convert the nested template into a flat MongoDB query."""
     if not template:
         return {}
@@ -212,7 +212,7 @@ def _flatten_nested_template(template: Dict[str, Any]) -> Dict[str, Any]:
     return flattened
 
 
-def _validate_query_template(template: Dict[str, Any]) -> None:
+def _validate_query_template(template: dict[str, Any]) -> None:
     """
     Validate that all fields in the query template are valid metadata fields.
 
@@ -245,10 +245,10 @@ def _validate_query_template(template: Dict[str, Any]) -> None:
 
 
 def _apply_query_options(
-    template: Dict[str, Any],
+    template: dict[str, Any],
     case_sensitive: bool = False,
     exact_match: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Apply query options (case_sensitive, exact_match) to the template.
 
@@ -352,7 +352,7 @@ def _parse_yaml_template(yaml_content: dict[str, Any]) -> tuple[dict, list[str] 
     return flattened_template, output_fields
 
 
-def _process_project_study_fields(data: Dict[str, Any]) -> None:
+def _process_project_study_fields(data: dict[str, Any]) -> None:
     """Process project and study fields by applying lower_and_replace."""
     for key in ("project", "study"):
         if key in data:
@@ -360,13 +360,13 @@ def _process_project_study_fields(data: Dict[str, Any]) -> None:
 
 
 def query_metadata(
-    template: Optional[Dict[str, Any]] = None,
-    config: Optional[GWASStudioConfig] = None,
+    template: dict[str, Any] | None = None,
+    config: GWASStudioConfig | None = None,
     case_sensitive: bool = False,
     exact_match: bool = False,
-    yaml_template: Optional[Dict[str, Any]] = None,
+    yaml_template: dict[str, Any] | None = None,
     **kwargs,
-) -> Tuple[List[Dict[str, Any]], Optional[List[str]]]:
+) -> tuple[list[dict[str, Any]], list[str] | None]:
     """
     Query metadata for projects stored in GWASStudio.
     When data_id is present, it takes precedence and is used exclusively for the query.
@@ -548,9 +548,9 @@ def query_metadata(
 
 
 def list_projects(
-    config: Optional[GWASStudioConfig] = None,
+    config: GWASStudioConfig | None = None,
     **kwargs,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     List all projects stored in GWASStudio.
 
@@ -577,7 +577,7 @@ def _validate_project_id(project_id: str) -> None:
         raise InvalidQueryError("project_id cannot be empty")
 
 
-def _validate_region(region: str) -> Dict[str, Any]:
+def _validate_region(region: str) -> dict[str, Any]:
     """
     Validate and parse a genomic region string.
 

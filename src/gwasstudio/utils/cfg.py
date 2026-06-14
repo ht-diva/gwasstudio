@@ -1,5 +1,3 @@
-from typing import Dict
-
 from gwasstudio import logger
 from gwasstudio.config_manager import ConfigurationManager
 from gwasstudio.utils.vault import get_config_from_vault
@@ -20,7 +18,7 @@ def get_mongo_uri(ctx: object) -> str:
     return mongo_config.get("uri") or ctx.obj.get("mongo").get("uri")
 
 
-def get_tiledb_config(ctx: object) -> Dict[str, str]:
+def get_tiledb_config(ctx: object) -> dict[str, str]:
     """
     Retrieve the combined TileDB configuration from VFS and SM configurations.
 
@@ -39,7 +37,7 @@ def get_tiledb_config(ctx: object) -> Dict[str, str]:
         return {}
 
 
-def get_tiledb_vfs_config(ctx: object) -> Dict[str, str]:
+def get_tiledb_vfs_config(ctx: object) -> dict[str, str]:
     """
     Retrieve TileDB VFS configuration from Vault or command line options.
 
@@ -58,7 +56,7 @@ def get_tiledb_vfs_config(ctx: object) -> Dict[str, str]:
         return {}
 
 
-def get_tiledb_sm_config() -> Dict[str, str]:
+def get_tiledb_sm_config() -> dict[str, str]:
     """
     Retrieve TileDB SM configuration from the configuration file.
 

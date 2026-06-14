@@ -1,6 +1,6 @@
 import math
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, List, Union
 
 import click
 import cloup
@@ -111,7 +111,7 @@ def _process_function_tasks(
     def _run_extraction(
         uri: str,
         cfg: dict[str, str],
-        traits: Union[str, List[str]],
+        traits: str | list[str],
         out_prefix: str | None,
         **inner_kwargs,
     ) -> pd.DataFrame:

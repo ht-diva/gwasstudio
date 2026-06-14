@@ -1,5 +1,3 @@
-from typing import Set
-
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -46,7 +44,7 @@ def _build_snpid(df: pd.DataFrame) -> pd.Series:
     return snpid_series
 
 
-def _check_required_columns(required_columns: Set[str], df: pd.DataFrame) -> None:
+def _check_required_columns(required_columns: set[str], df: pd.DataFrame) -> None:
     """
     Check if the required columns are present in the DataFrame.
 

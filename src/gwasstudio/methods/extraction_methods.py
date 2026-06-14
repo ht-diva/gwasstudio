@@ -1,4 +1,4 @@
-from typing import Any, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -15,7 +15,7 @@ TILEDB_DIMS = dn.get_names()
 
 
 def tiledb_array_query(
-    tiledb_array: tiledb.Array, dims: Tuple[str] = TILEDB_DIMS, attrs: Tuple[str] = ()
+    tiledb_array: tiledb.Array, dims: tuple[str] = TILEDB_DIMS, attrs: tuple[str] = ()
 ) -> tuple[tuple[str], Any]:
     """
     Query a TileDB array with specified dimensions and attributes.
@@ -54,7 +54,7 @@ def extract_full_stats(
     color_thr: str,
     s_value: int,
     pvalue_thr: float = 0.0,
-    attributes: Tuple[str] = None,
+    attributes: tuple[str] = None,
 ) -> pd.DataFrame:
     """
     Export full summary statistics.
@@ -94,8 +94,8 @@ def extract_regions_snps(
     s_value: int,
     regions_snps: pd.DataFrame = None,
     pvalue_filt: float = 0.0,
-    attributes: Tuple[str] = None,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    attributes: tuple[str] = None,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Process data filtering by genomic regions or a list of SNPs and output as concatenated DataFrame in Parquet format.
 
@@ -195,7 +195,7 @@ def extract_regions_leadsnps(
     cis_flanks: int = 500000,
     trans_flanks: int = 1000000,
     exact_alleles: bool = False,
-    attributes: Tuple[str] = None,
+    attributes: tuple[str] = None,
 ) -> pd.DataFrame:
     """
     Process data filtering by genomic regions or a list of SNPs and output as concatenated DataFrame in Parquet format.

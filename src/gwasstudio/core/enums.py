@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -222,7 +222,7 @@ class BaseEnum(Enum):
         return self.dtype.value
 
     @classmethod
-    def get_names(cls) -> Tuple[str, ...]:
+    def get_names(cls) -> tuple[str, ...]:
         """
         Return a tuple with the dimension names.
 

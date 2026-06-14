@@ -53,7 +53,6 @@ Notes:
 """
 
 from pathlib import Path
-from typing import Optional
 
 import click
 import cloup
@@ -83,7 +82,7 @@ def _write_output_table(
     df: pd.DataFrame,
     output_path: Path,
     file_format: str = "csv",
-    log_msg: Optional[str] = None,
+    log_msg: str | None = None,
 ) -> None:
     """
     Write DataFrame to output file.

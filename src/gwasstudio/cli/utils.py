@@ -10,7 +10,7 @@ import gzip
 import pathlib
 import urllib.parse
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -34,7 +34,7 @@ from gwasstudio.core.ingestion import process_metadata_dict
 # from gwasstudio.mongo.models import EnhancedDataProfile
 
 
-def get_tiledb_config(config: GWASStudioConfig, prefix: Optional[str] = None) -> Dict[str, Any]:
+def get_tiledb_config(config: GWASStudioConfig, prefix: str | None = None) -> dict[str, Any]:
     """
     Get TileDB configuration from GWASStudioConfig.
 
@@ -63,7 +63,7 @@ def get_tiledb_config(config: GWASStudioConfig, prefix: Optional[str] = None) ->
         return {k: v for k, v in combined.items() if k.startswith(prefix)}
 
 
-def get_mongo_uri(config: GWASStudioConfig) -> Optional[str]:
+def get_mongo_uri(config: GWASStudioConfig) -> str | None:
     """
     Get MongoDB URI from GWASStudioConfig or Vault.
 
@@ -341,7 +341,7 @@ def validate_metadata_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def load_yaml_file(file_path: str) -> Dict[str, Any]:
+def load_yaml_file(file_path: str) -> dict[str, Any]:
     """
     Load and parse a YAML file.
 

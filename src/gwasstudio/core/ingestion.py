@@ -7,7 +7,8 @@ stored in GWASStudio backends (TileDB, MongoDB).
 
 """
 
-from typing import Any, Hashable, Optional
+from collections.abc import Hashable
+from typing import Any
 
 from gwasstudio.core import (
     GWASStudioConfig,
@@ -26,7 +27,7 @@ def _document_generator(documents):
 
 def ingest_metadata(
     template: list[dict[Hashable, Any]],
-    config: Optional[GWASStudioConfig] = None,
+    config: GWASStudioConfig | None = None,
 ) -> None:
     if config is None:
         config = GWASStudioConfig()

@@ -8,7 +8,7 @@ It centralizes all configuration options for Dask, MongoDB, S3, Vault, and TileD
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -19,13 +19,13 @@ class DaskConfig:
     workers: int = 2
     cores_per_worker: int = 2
     memory_per_worker: str = "4GiB"
-    interface: Optional[str] = None  # e.g., ib0
-    gw_address: Optional[str] = None  # Dask gateway address
-    gw_image: Optional[str] = None  # Dask gateway image
+    interface: str | None = None  # e.g., ib0
+    gw_address: str | None = None  # Dask gateway address
+    gw_image: str | None = None  # Dask gateway image
     walltime: str = "12:00:00"  # Walltime for each worker (SLURM)
-    job_script_prologue: List[str] = field(default_factory=list)  # Commands to add to script before launching worker
-    python: Optional[str] = None  # Python executable used to launch Dask workers
-    local_directory: Optional[Path] = None  # Fast local directory for Dask workers
+    job_script_prologue: list[str] = field(default_factory=list)  # Commands to add to script before launching worker
+    python: str | None = None  # Python executable used to launch Dask workers
+    local_directory: Path | None = None  # Fast local directory for Dask workers
     batch_size: int = 0  # Number of tasks per batch (0 for no batching)
 
 
@@ -33,19 +33,19 @@ class DaskConfig:
 class MongoConfig:
     """Configuration for MongoDB storage."""
 
-    uri: Optional[str] = None  # MongoDB connection URI
+    uri: str | None = None  # MongoDB connection URI
     db_name: str = "datahub"
-    log_path: Optional[Path] = None  # Path for MongoDB logs
-    data_path: Optional[Path] = None  # Path for MongoDB data (embedded)
+    log_path: Path | None = None  # Path for MongoDB logs
+    data_path: Path | None = None  # Path for MongoDB data (embedded)
 
 
 @dataclass
 class S3Config:
     """Configuration for S3 storage."""
 
-    aws_access_key_id: Optional[str] = None
-    aws_secret_access_key: Optional[str] = None
-    endpoint_override: Optional[str] = None
+    aws_access_key_id: str | None = None
+    aws_secret_access_key: str | None = None
+    endpoint_override: str | None = None
     use_virtual_addressing: bool = False
     scheme: str = "https"
     region: str = ""
@@ -60,17 +60,17 @@ class VaultConfig:
 
     auth: str = "basic"  # basic, oidc
     mount_point: str = "secret"
-    path: Optional[str] = None
-    token: Optional[str] = None
-    url: Optional[str] = None
+    path: str | None = None
+    token: str | None = None
+    url: str | None = None
 
 
 @dataclass
 class TileDBConfig:
     """Configuration for TileDB storage."""
 
-    vfs_config: Dict[str, Any] = field(default_factory=dict)
-    sm_config: Dict[str, Any] = field(default_factory=dict)
+    vfs_config: dict[str, Any] = field(default_factory=dict)
+    sm_config: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -101,11 +101,11 @@ class GWASStudioConfig:
 
     # Logging and paths
     log_level: str = "INFO"
-    log_file: Optional[Path] = None
-    data_dir: Optional[Path] = None
-    config_dir: Optional[Path] = None
+    log_file: Path | None = None
+    data_dir: Path | None = None
+    config_dir: Path | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert the configuration to a dictionary."""
         return {
             "dask": self.dask.__dict__,
@@ -120,7 +120,7 @@ class GWASStudioConfig:
         }
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "GWASStudioConfig":
+    def from_dict(cls, config_dict: dict[str, Any]) -> "GWASStudioConfig":
         """Create a GWASStudioConfig from a dictionary."""
         return cls(
             dask=DaskConfig(**config_dict.get("dask", {})),

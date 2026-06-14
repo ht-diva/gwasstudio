@@ -7,7 +7,8 @@ MongoDB is used for storing metadata and, optionally, genomic data.
 """
 
 import uuid
-from typing import Any, Dict, Generator, List, Optional
+from collections.abc import Generator
+from typing import Any
 
 import pandas as pd
 import pymongo
@@ -106,10 +107,10 @@ class MongoDBStorage(StorageBackend):
     def query_data(
         self,
         project_id: str,
-        region: Optional[Dict[str, Any]] = None,
-        snp_list: Optional[List[str]] = None,
-        pval_threshold: Optional[float] = None,
-        limit: Optional[int] = None,
+        region: dict[str, Any] | None = None,
+        snp_list: list[str] | None = None,
+        pval_threshold: float | None = None,
+        limit: int | None = None,
         **kwargs,
     ) -> pd.DataFrame:
         """
@@ -164,9 +165,9 @@ class MongoDBStorage(StorageBackend):
     def query_data_stream(
         self,
         project_id: str,
-        region: Optional[Dict[str, Any]] = None,
-        snp_list: Optional[List[str]] = None,
-        pval_threshold: Optional[float] = None,
+        region: dict[str, Any] | None = None,
+        snp_list: list[str] | None = None,
+        pval_threshold: float | None = None,
         chunk_size: int = 10000,
         **kwargs,
     ) -> Generator[pd.DataFrame, None, None]:
@@ -227,7 +228,7 @@ class MongoDBStorage(StorageBackend):
             except Exception as e:
                 raise MongoDBError(f"Failed to delete project {project_id}: {str(e)}")
 
-    def store_metadata(self, project_id: str, metadata: Dict[str, Any]) -> None:
+    def store_metadata(self, project_id: str, metadata: dict[str, Any]) -> None:
         """
         Store metadata for a project.
 
@@ -248,7 +249,7 @@ class MongoDBStorage(StorageBackend):
         except Exception as e:
             raise MongoDBError(f"Failed to store metadata for project {project_id}: {str(e)}")
 
-    def bulk_store_metadata(self, metadata_list: List[Dict[str, Any]]) -> None:
+    def bulk_store_metadata(self, metadata_list: list[dict[str, Any]]) -> None:
         """
         Insert or update multiple metadata documents in bulk.
 
@@ -283,7 +284,7 @@ class MongoDBStorage(StorageBackend):
         except Exception as e:
             raise MongoDBError(f"Failed to bulk store metadata: {str(e)}")
 
-    def get_metadata(self, project_id: str) -> Optional[Dict[str, Any]]:
+    def get_metadata(self, project_id: str) -> dict[str, Any] | None:
         """
         Get metadata for a project.
 
@@ -295,7 +296,7 @@ class MongoDBStorage(StorageBackend):
         """
         return self._projects_collection.find_one({"project_id": project_id})
 
-    def query_metadata(self, query: Dict[str, Any], **kwargs) -> List[Dict[str, Any]]:
+    def query_metadata(self, query: dict[str, Any], **kwargs) -> list[dict[str, Any]]:
         """
         Query metadata for projects.
 
@@ -308,7 +309,7 @@ class MongoDBStorage(StorageBackend):
         """
         return list(self._projects_collection.find(query, **kwargs))
 
-    def list_projects(self, **kwargs) -> List[Dict[str, Any]]:
+    def list_projects(self, **kwargs) -> list[dict[str, Any]]:
         """
         List all projects.
 

@@ -6,8 +6,8 @@ This module provides shared fixtures for testing the GWASStudio core module.
 """
 
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
 
 import numpy as np
 import pandas as pd
