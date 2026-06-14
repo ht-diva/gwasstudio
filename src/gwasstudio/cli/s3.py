@@ -1,5 +1,5 @@
 import boto3
-from botocore.exceptions import NoCredentialsError, ClientError
+from botocore.exceptions import ClientError, NoCredentialsError
 
 from gwasstudio.cli.utils import parse_uri
 

@@ -1,8 +1,9 @@
+from io import StringIO
+from pathlib import Path
+
 import pandas as pd
 
 from gwasstudio import logger
-from pathlib import Path
-from io import StringIO
 
 
 # Helper: format chromosome

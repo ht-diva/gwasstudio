@@ -2,7 +2,7 @@ import unittest
 
 import botocore.client
 
-from gwasstudio.utils.s3 import get_s3_client
+from gwasstudio.cli.s3 import get_s3_client
 
 
 class TestGetS3Client(unittest.TestCase):
@@ -15,8 +15,3 @@ class TestGetS3Client(unittest.TestCase):
         }
         s3_client = get_s3_client(cfg)
         self.assertIsInstance(s3_client, botocore.client.BaseClient)
-
-    # def test_get_s3_client_no_credentials(self):
-    #     cfg = {}
-    #     with self.assertRaises(NoCredentialsError):
-    #         get_s3_client(cfg)

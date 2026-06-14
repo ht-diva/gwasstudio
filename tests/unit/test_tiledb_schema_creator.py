@@ -4,7 +4,7 @@ import unittest
 
 import tiledb
 
-from gwasstudio.utils.tdb_schema import TileDBSchemaCreator, DimensionEnum
+from gwasstudio.utils.tdb_schema import DimensionEnum, TileDBSchemaCreator
 
 
 class TestTileDBSchemaCreator(unittest.TestCase):

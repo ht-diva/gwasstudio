@@ -10,24 +10,24 @@ from dask import compute, delayed
 from dask.distributed import Client
 
 from gwasstudio import logger
+from gwasstudio.cli.path_utils import join_path
+from gwasstudio.cli.region_io import read_to_bed, read_trait_snps
 from gwasstudio.cli.utils import (
     create_config_from_context,
     get_dask_batch_size,
     get_dask_deployment,
-    get_mongo_uri,
     get_tiledb_config,
+    load_yaml_file,
+    write_if_not_empty,
+    write_table,
 )
-from gwasstudio.core import ConfigurationError
+from gwasstudio.core import ConfigurationError, InvalidInputError
 from gwasstudio.core.enums import MetadataEnum
+from gwasstudio.core.query import query_metadata as core_query_metadata
 from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
 from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions_leadsnps, extract_regions_snps
 from gwasstudio.methods.locus_breaker import _process_locusbreaker
 from gwasstudio.methods.meta_analysis import _meta_analysis
-from gwasstudio.mongo.models import EnhancedDataProfile
-from gwasstudio.utils import check_file_exists, write_if_not_empty, write_table
-from gwasstudio.utils.io import read_to_bed, read_trait_snps
-from gwasstudio.utils.metadata import dataframe_from_mongo_objs, load_search_topics, query_mongo_obj
-from gwasstudio.utils.path_joiner import join_path
 
 
 def create_output_prefix_dict(df: pd.DataFrame, output_prefix: str, source_id_column: str) -> dict:
@@ -436,23 +436,12 @@ def export(
 ) -> None:
     """Export summary statistics based on selected options."""
 
-    if not check_file_exists(search_file, logger):
-        exit(1)
+    # Validate search file exists
+    if not Path(search_file).exists():
+        raise InvalidInputError(f"Search file not found: {search_file}")
 
-    search_topics, output_fields = load_search_topics(search_file)
-    if plot_out:
-        # plot_config = get_plot_config(ctx)
-        # if not plot_config:
-        # logger.error("Plotting configuration is required for plotting output.")
-        # exit(1)
-        if "data_ids" not in search_topics:
-            logger.error("Plotting option is enabled but no data_ids is provided in the search file.")
-            exit(1)
-        if len(search_topics["data_ids"]) > 20:
-            logger.error(
-                "Plotting option is enabled but too many data_ids are provided in the search file. Please limit to 20 data_ids."
-            )
-            exit(1)
+    # Load YAML file
+    yaml_content = load_yaml_file(search_file)
 
     # Create GWASStudioConfig from context (for core compatibility)
     try:
@@ -460,22 +449,87 @@ def export(
     except Exception as e:
         raise ConfigurationError(f"Failed to create configuration from context: {str(e)}")
 
-    # Query MongoDB
-    mongo_uri = get_mongo_uri(config)
+    # Query metadata using core function with YAML template
+    # The core function will handle parsing, validation, and query options
+    query_results, output_fields = core_query_metadata(
+        yaml_template=yaml_content,
+        config=config,
+        case_sensitive=case_sensitive,
+        exact_match=exact_match,
+    )
 
-    obj = EnhancedDataProfile(uri=mongo_uri)
-    objs = query_mongo_obj(search_topics, obj, case_sensitive=case_sensitive, exact_match=exact_match)
+    if not query_results:
+        logger.info("No results found.")
+        return
 
-    if get_regions_leadsnps:
-        meta_df = dataframe_from_mongo_objs(output_fields, objs, search_topics=search_topics, exact_match=exact_match)
+    # Extract search topics from yaml_content for backwards compatibility
+    yaml_query_fields = yaml_content.get("query_fields", yaml_content)
+
+    if plot_out:
+        if "data_id" not in yaml_query_fields:
+            logger.error("Plotting option is enabled but no data_ids is provided in the search file.")
+            exit(1)
+        # Extract data_ids from query_results
+        data_ids = [r.get("data_id") for r in query_results if r.get("data_id")]
+        if len(data_ids) > 20:
+            logger.error(
+                "Plotting option is enabled but too many data_ids are provided in the search file. Please limit to 20 data_ids."
+            )
+            exit(1)
+
+    # Convert query_results to DataFrame
+    # output_fields contains the list of fields requested in the output
+    if output_fields:
+        meta_df = pd.DataFrame(query_results, columns=output_fields)
     else:
-        meta_df = dataframe_from_mongo_objs(output_fields, objs)
+        # If no output fields specified, use all available keys from first result
+        if query_results:
+            output_fields = list(query_results[0].keys())
+            meta_df = pd.DataFrame(query_results, columns=output_fields)
+        else:
+            meta_df = pd.DataFrame()
+
+    # Add link_id column if trait or notes fields are present in yaml_content
+    # This is needed for get_regions_leadsnps functionality
+    # Note: trait and notes fields are now stored as dicts (not JSON strings) due to JSONField
+    yaml_query_fields = yaml_content.get("query_fields", yaml_content)
+    if get_regions_leadsnps and ("trait" in yaml_query_fields or "notes" in yaml_query_fields):
+        # Extract the first trait or notes subfield from YAML
+        trait_data = yaml_query_fields.get("trait", [])
+        notes_data = yaml_query_fields.get("notes", [])
+
+        field_to_use = None
+        subfield = None
+
+        if trait_data:
+            field_to_use = "trait"
+            first_item = trait_data[0] if trait_data else {}
+        elif notes_data:
+            field_to_use = "notes"
+            first_item = notes_data[0] if notes_data else {}
+
+        if field_to_use and isinstance(first_item, dict):
+            subfield = next(iter(first_item.keys()))
+
+        if field_to_use and subfield:
+            # The metadata field is the raw trait/notes dict
+            metadata_field = field_to_use
+            if metadata_field in meta_df.columns:
+                # Extract link_id from the dict
+                def extract_link_id(value):
+                    if pd.isna(value):
+                        return None
+                    if isinstance(value, dict):
+                        return value.get(subfield)
+                    return value
+
+                meta_df["link_id"] = meta_df[metadata_field].apply(extract_link_id)
 
     # Write metadata query result
     path = Path(output_prefix)
     output_path = path.with_suffix("").with_name(path.stem + "_meta")
     kwargs = {"index": False}
-    log_msg = f"{len(objs)} results found. Writing to {output_path}.csv"
+    log_msg = f"{len(query_results)} results found. Writing to {output_path}.csv"
     write_table(meta_df, str(output_path), logger, file_format="csv", log_msg=log_msg, **kwargs)
 
     # Create an output prefix dictionary to generate output filenames

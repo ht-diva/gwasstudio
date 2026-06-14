@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 
 from gwasstudio.methods.dataframe import (
-    _get_log_p_value_from_z,
     _build_snpid,
     _check_required_columns,
+    _get_log_p_value_from_z,
     process_dataframe,
 )
 

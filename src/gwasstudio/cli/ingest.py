@@ -13,6 +13,8 @@ import cloup
 from dask import compute, delayed
 
 from gwasstudio import logger
+from gwasstudio.cli.path_utils import join_path
+from gwasstudio.cli.s3 import does_uri_path_exist
 from gwasstudio.cli.utils import (
     create_config_from_context,
     get_dask_batch_size,
@@ -20,6 +22,7 @@ from gwasstudio.cli.utils import (
     get_tiledb_config,
     load_metadata,
     parse_uri,
+    process_and_ingest,
     validate_metadata_columns,
 )
 from gwasstudio.core import (
@@ -33,9 +36,6 @@ from gwasstudio.core import (
 )
 from gwasstudio.core import ingest_metadata as core_ingest_metadata
 from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
-from gwasstudio.utils import process_and_ingest
-from gwasstudio.utils.path_joiner import join_path
-from gwasstudio.utils.s3 import does_uri_path_exist
 from gwasstudio.utils.tdb_schema import TileDBSchemaCreator
 
 help_doc = """

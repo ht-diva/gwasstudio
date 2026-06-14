@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 
-from gwasstudio.utils.io import read_to_bed, _is_path
+from gwasstudio.cli.region_io import _is_path, read_to_bed
 
 
 class TestReadToBed(unittest.TestCase):

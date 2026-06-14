@@ -461,9 +461,9 @@ def query_metadata(
     try:
         mongo_storage = MongoDBStorage(config)
         logger.debug(f"Final MongoDB query: {query}")
-        results = list(mongo_storage.query_metadata(query, **kwargs))
-        logger.debug(f"Query returned {len(results)} results")
-        return results, output_fields
+        query_results = list(mongo_storage.query_metadata(query, **kwargs))
+        logger.debug(f"Query returned {len(query_results)} results")
+        return query_results, output_fields
     except Exception as e:
         raise QueryError(f"Failed to query metadata: {str(e)}")
 

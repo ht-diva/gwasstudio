@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 from hvac import Client
 
-from gwasstudio.utils.vault import create_vault_client, get_secret_from_vault, get_config_from_vault
+from gwasstudio.utils.vault import create_vault_client, get_config_from_vault, get_secret_from_vault
 
 
 class TestVaultFunctions(unittest.TestCase):

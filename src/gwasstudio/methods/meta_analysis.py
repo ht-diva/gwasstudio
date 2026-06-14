@@ -1,7 +1,9 @@
 from functools import reduce
+
 import numpy as np
 import pandas as pd
 from scipy import stats
+
 from gwasstudio.methods.extraction_methods import tiledb_array_query
 
 

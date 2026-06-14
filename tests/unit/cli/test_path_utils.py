@@ -22,7 +22,7 @@ import pytest
 
 # Import the function we are testing.
 # Adjust the import if your module lives in a package.
-from gwasstudio.utils.path_joiner import join_path
+from gwasstudio.cli.path_utils import join_path
 
 
 # ----------------------------------------------------------------------

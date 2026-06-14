@@ -1,4 +1,4 @@
-from typing import Tuple, Any
+from typing import Any, Tuple
 
 import numpy as np
 import pandas as pd
@@ -8,7 +8,8 @@ from gwasstudio import logger
 from gwasstudio.methods.dataframe import process_dataframe
 from gwasstudio.methods.manhattan_plot import _plot_manhattan
 from gwasstudio.utils.snps import is_multiallelic
-from gwasstudio.utils.tdb_schema import AttributeEnum as an, DimensionEnum as dn
+from gwasstudio.utils.tdb_schema import AttributeEnum as an
+from gwasstudio.utils.tdb_schema import DimensionEnum as dn
 
 TILEDB_DIMS = dn.get_names()
 

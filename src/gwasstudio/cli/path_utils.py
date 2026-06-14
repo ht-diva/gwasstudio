@@ -19,7 +19,7 @@ It also copes with stray slashes, empty components and
 different OS path conventions.
 """
 
-from pathlib import PurePosixPath, Path
+from pathlib import Path, PurePosixPath
 from urllib.parse import urlparse, urlunparse
 
 

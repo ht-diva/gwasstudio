@@ -53,17 +53,16 @@ Notes:
 """
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Optional
 
 import click
 import cloup
 import pandas as pd
-import yaml
 
 from gwasstudio import logger
 
 # Import updated utilities
-from gwasstudio.cli.utils import create_config_from_context
+from gwasstudio.cli.utils import create_config_from_context, load_yaml_file
 from gwasstudio.core import (
     ConfigurationError,
     GWASStudioError,
@@ -78,29 +77,6 @@ from gwasstudio.core.query import query_metadata as core_query_metadata
 HELP_DOC = """
 Query metadata records from MongoDB using GWASStudio core.
 """
-
-
-def _load_yaml_file(search_file: str) -> Dict[str, Any]:
-    """
-    Load and parse a YAML file.
-
-    Args:
-        search_file: Path to the YAML file.
-
-    Returns:
-        Dict[str, Any]: Parsed YAML content.
-
-    Raises:
-        InvalidInputError: If the file doesn't exist or is invalid YAML.
-    """
-    try:
-        logger.info(f"Processing {search_file}")
-        with open(search_file, "r") as f:
-            return yaml.safe_load(f) or {}
-    except FileNotFoundError:
-        raise InvalidInputError(f"Search file not found: {search_file}")
-    except yaml.YAMLError as e:
-        raise InvalidInputError(f"Invalid YAML in search file: {str(e)}")
 
 
 def _write_output_table(
@@ -198,10 +174,13 @@ def query_metadata(
             raise InvalidInputError(f"Search file not found: {search_file}")
 
         # Load YAML file
-        yaml_content = _load_yaml_file(search_file)
+        yaml_content = load_yaml_file(search_file)
 
-        # Create configuration and adapter
-        config = create_config_from_context(ctx)
+        # Create GWASStudioConfig from context (for core compatibility)
+        try:
+            config = create_config_from_context(ctx)
+        except Exception as e:
+            raise ConfigurationError(f"Failed to create configuration from context: {str(e)}")
 
         # Query metadata using core function with YAML template
         # The core function will handle parsing, validation, and query options
