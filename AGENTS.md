@@ -62,4 +62,68 @@ def process(
   - `methods/` — analysis methods
   - `utils/` — standalone helpers
 - `tests/` — test suite (mirrors src structure)
+  - `unit/` — unit tests
+  - `integration/` — integration tests (require MongoDB)
+  - `data/` — test fixtures and sample data
 - `docs/` — documentation
+
+## Running Tests
+
+### Prerequisites
+
+1. **Conda environment** activated with `gwasstudio` installed (dev dependencies).
+2. **MongoDB** — the `mongod` binary must be on `$PATH`. For integration tests, `mongostat` is also required (usually bundled with MongoDB).
+3. **Git submodules** initialized — run `git submodule update --init --recursive` before running integration tests that depend on external data.
+
+### Unit Tests
+
+Run all unit tests:
+
+```bash
+pytest tests/unit/
+```
+
+Run with coverage:
+
+```bash
+make unit_test
+```
+
+Run a specific test module:
+
+```bash
+pytest tests/unit/core/test_hashing.py -v
+pytest tests/unit/core/test_ingestion.py -v
+pytest tests/unit/core/test_query.py -v
+```
+
+### Integration Tests
+
+Integration tests require a live MongoDB instance. They start/stop `mongod` automatically via `tests/integration/conftest.py`.
+
+**Via Makefile targets:**
+
+```bash
+make test_ingest_metadata      # Metadata ingestion + query tests
+make test_full_export           # Full pipeline export tests
+make test_ingest_with_recalc    # Ingest with -log10p recalculation tests
+```
+
+**Via pytest directly:**
+
+```bash
+pytest tests/integration/ -v --tb=short
+```
+
+### Full Test Suite
+
+```bash
+make test                      # Runs unit tests + metadata integration
+```
+
+### Test Data & Environment Notes
+
+- Test sample data lives in `tests/data/` and `data/dataset/`.
+- The `metadata_table.tsv` in `data/` uses `data/dataset/`-prefixed paths so file resolution works from the project root.
+- All integration scripts must be run from the project root directory.
+- The `mongod` fixture in `tests/integration/conftest.py` manages the MongoDB lifecycle automatically for pytest-based integration tests.

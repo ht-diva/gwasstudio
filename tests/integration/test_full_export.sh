@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+
+# Navigate to project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$PROJECT_ROOT"
+
+# Check if gwasstudio command is available
+if ! command -v gwasstudio &> /dev/null; then
+  echo "gwasstudio command not found. Activate the conda env. Exiting."
+  exit 1
+fi
+
+# Define the test directory variables (relative to project root)
+TEST_DIR="tests/integration/tests/01"
+MDB_URI="mongodb://localhost:27018/test_01"
+TILEDB_DIR="${TEST_DIR}/tileDB"
+
+# Clone example files submodule if it is not already cloned
+git submodule update --init --recursive
+
+# Clean up existing mongodata and test directories
+echo "Cleaning up existing test directories..."
+rm -rf "${TEST_DIR}"
+
+# Create the test directory structure
+mkdir -p "${TILEDB_DIR}"
+
+# Function to run a command with a description
+run_command() {
+  local description=$1
+  local cmd=$2
+  echo " "
+  echo "${description}"
+  echo "Running command: ${cmd}"
+  echo "Date: $(date)" >> "${TEST_DIR}/execution_times.log"
+  echo "Command: ${cmd}" >> "${TEST_DIR}/execution_times.log"
+  echo "Description: ${description}" >> "${TEST_DIR}/execution_times.log"
+  echo "Software Version: $(gwasstudio --version)" >> "${TEST_DIR}/execution_times.log"
+  echo "Execution Time:" >> "${TEST_DIR}/execution_times.log"
+  { time eval ${cmd}; } 2>> "${TEST_DIR}/execution_times.log"
+  echo "---" >> "${TEST_DIR}/execution_times.log"
+}
+
+MONGO_UTILS="${PROJECT_ROOT}/tests/integration/mongo_test_utils.py"
+
+sleep 2
+python "${MONGO_UTILS}" start --port 27018 --dbpath "${TEST_DIR}/mongo_db" --logpath "${TEST_DIR}/mongod.log" --pid-file "${TEST_DIR}/mongod.pid"
+
+# Ingest data (paths in metadata_table.tsv are project-root-relative: data/dataset/...)
+run_command "Ingesting data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} ingest --file-path data/metadata_table.tsv --uri ${TILEDB_DIR} 2>&1"
+
+# List projects
+run_command "Listing metadata..." "gwasstudio --stdout --verbosity loud --mongo-uri ${MDB_URI} list 2>&1"
+
+# Query data
+run_command "Querying data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file data/search_example_01.yml --output-prefix ${TEST_DIR}/example_query 2>&1"
+
+# Query data by trait description
+run_command "Querying data by trait description..." "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file data/search_example_04.yml --output-prefix ${TEST_DIR}/example_query_by_trait_desc 2>&1"
+
+# Query data by data_ids - it is a precision query, only 2 results expected
+run_command "Querying data by data_ids..." "gwasstudio --stdout --mongo-uri ${MDB_URI} meta-query --search-file data/search_example_06.yml --output-prefix ${TEST_DIR}/example_query_by_trait_desc 2>&1"
+
+# Export data
+run_command "Exporting data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file data/search_example_06.yml --output-prefix ${TEST_DIR}/example_export --uri ${TILEDB_DIR} --plot-out 2>&1"
+
+# Export data
+run_command "Exporting data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file data/search_example_06.yml --output-prefix ${TEST_DIR}/example_export_attrs --uri ${TILEDB_DIR} --attr BETA,SE,EAF,MLOG10P,EA,NEA 2>&1"
+
+# Export data with skip-meta
+run_command "Exporting data..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file data/search_example_06.yml --output-prefix ${TEST_DIR}/example_export_skip_meta --uri ${TILEDB_DIR} --plot-out --skip-meta 2>&1"
+
+# Export data with a different file format and batch size
+run_command "Exporting data..." "gwasstudio --stdout --batch-size 4 --mongo-uri ${MDB_URI} export --search-file data/search_example_01.yml --output-prefix ${TEST_DIR}/example_export --output-format parquet --uri ${TILEDB_DIR} 2>&1"
+
+# Regions filtering
+run_command "Regions filtering..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file data/search_example_01.yml --output-prefix ${TEST_DIR}/example_regions_filtering --output-format csv --uri ${TILEDB_DIR} --get-regions-snps data/regions_query.tsv 2>&1"
+
+# Regions filtering with P-value threshold
+run_command "Regions filtering with P-value threshold..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file data/search_example_01.yml --output-prefix ${TEST_DIR}/example_regions_filtering_pvalue --output-format csv --uri ${TILEDB_DIR} --get-regions-snps data/regions_query.tsv --pvalue-filt 7.30103 2>&1"
+
+# Regions filtering with P-value threshold and no output
+run_command "Regions filtering with P-value threshold and skip regions output..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file data/search_example_01.yml --output-prefix ${TEST_DIR}/example_regions_filtering_pvalue_skipout --output-format csv --uri ${TILEDB_DIR} --get-regions-snps data/regions_query.tsv --pvalue-filt 7.30103 --skip-out 2>&1"
+
+# Regions filtering
+run_command "Regions filtering..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file data/search_example_01.yml --output-prefix ${TEST_DIR}/example_regions_filtering_by_arg --output-format csv --uri ${TILEDB_DIR} --get-regions-snps '13,23947562,94021213;15,471752,49338760' 2>&1"
+
+# Hapmap3 SNPs filtering
+run_command "SNPs filtering..." "gwasstudio --stdout --workers 4 --mongo-uri ${MDB_URI} export --search-file data/search_example_01.yml --output-prefix ${TEST_DIR}/example_snps_filtering --uri ${TILEDB_DIR} --get-regions-snps data/hapmap3/hapmap3_snps.csv 2>&1"
+
+# Hapmap3 SNPs filtering
+run_command "SNPs filtering..." "gwasstudio --stdout --workers 4 --mongo-uri ${MDB_URI} export --search-file data/search_example_01.yml --output-prefix ${TEST_DIR}/example_snps_filtering_by_arg --uri ${TILEDB_DIR} --get-regions-snps '1,203669100;3,193327134;5,154619144;9,6741529;11,691029;12,108349821;18,677302' 2>&1"
+
+# Trait-specific lead-SNP search
+run_command "Lead-SNP search..." "gwasstudio --stdout --workers 4 --mongo-uri ${MDB_URI} export --search-file data/search_example_08.yml --output-prefix ${TEST_DIR}/example_leadsnp_search --uri ${TILEDB_DIR} --get-regions-leadsnps data/opengwas_prot-a_Prolactin_snps.csv 2>&1"
+
+# Locusbreaker
+run_command "Locusbreaker..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file data/search_example_01.yml --output-prefix ${TEST_DIR}/example_locusbreaker --uri ${TILEDB_DIR} --locusbreaker 2>&1"
+
+# meta analysis
+run_command "Meta analysis..." "gwasstudio --stdout --mongo-uri ${MDB_URI} export --search-file data/search_example_05.yml --output-prefix ${TEST_DIR}/example_meta_analysis --uri ${TILEDB_DIR} --meta-analysis 2>&1"
+
+python "${MONGO_UTILS}" stop --pid-file "${TEST_DIR}/mongod.pid" || true
+
+python "${MONGO_UTILS}" status --pid-file "${TEST_DIR}/mongod.pid" || true
+
+echo "Results are available in ${TEST_DIR}"

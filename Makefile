@@ -98,31 +98,39 @@ unit_test:
 	fi; \
 	pytest --cov=src/gwasstudio/ tests
 
-functional_test_00:
-	@echo "Functional test 00"
+test_ingest_metadata:
+	@echo "Running ingest + query integration tests..."
 	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
-	cd scripts && ./test_00.sh
+	bash tests/integration/test_ingest_metadata.sh
 
-functional_test_01:
-	@echo "Functional test 01"
+test_full_export:
+	@echo "Running full pipeline integration tests..."
 	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
-	cd scripts && ./test_01.sh
+	bash tests/integration/test_full_export.sh
 
-functional_test_02:
-	@echo "Functional test 02"
+test_ingest_with_recalc:
+	@echo "Running ingest with -log10p recalculation tests..."
 	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
-	cd scripts && ./test_02.sh
+	bash tests/integration/test_ingest_with_recalc.sh
 
-test: unit_test functional_test_00
+test-integration-pytest:
+	@echo "Running integration tests via pytest..."
+	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+        echo "Activating conda environment: ${ENV_NAME}"; \
+		$(CONDA_ACTIVATE) ${ENV_NAME}; \
+	fi; \
+	pytest tests/integration/ -v --tb=short
+
+test: unit_test test_ingest_metadata
 	@echo "End-to-End tests"
 
 test-integration: test-integration-setup test-integration-exec #test-integration-stop## Run integration tests
