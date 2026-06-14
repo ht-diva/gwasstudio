@@ -318,53 +318,15 @@ def _apply_query_options(
     return modified_template
 
 
-def _parse_yaml_template(yaml_content: Dict[str, Any]) -> Tuple[Dict[str, Any], Optional[List[str]]]:
-    """
-    Parse a YAML template that may have nested structures and output fields.
+def _parse_yaml_template(yaml_content: dict[str, Any]) -> tuple[dict, list[str] | None]:
+    """Parse a YAML query template into a flattened query dict and output fields.
 
-    This function handles two formats:
-    1. Simple format:
-       ```yaml
-       category: "GWAS"
-       project: "opengwas"
-       output:
-         - build
-         - population
-       ```
-       or
-       ```yaml
-       query_fields:
-         project: opengwas
-         category: GWAS
-       output:
-         - build
-         - population
-
-       ```
-
-    2. Nested format:
-       ```yaml
-       project: opengwas
-       study: ukb-d
-       trait:
-         - desc: skin and subcutaneous tissue
-         - desc: Z01
-       output:
-         - build
-         - population
-       ```
-       or
-       ```yaml
-       query_fields:
-         project: opengwas
-         study: ukb-d
-         trait:
-           - desc: skin and subcutaneous tissue
-           - desc: Z01
-       output:
-         - build
-         - population
-       ```
+    Handles simple and nested YAML formats.  Nested lists of dicts are
+    expanded into underscore-joined fields (e.g. ``trait.desc`` →
+    ``trait_desc``).  ``project`` and ``study`` values are lowercased with
+    spaces replaced by underscores.  Output fields combine the document's
+    ``output`` / ``output_fields`` keys with the required set from
+    :class:`~gwasstudio.core.enums.MetadataEnum`.
 
     Args:
         yaml_content: Parsed YAML content as a dictionary.
@@ -375,20 +337,26 @@ def _parse_yaml_template(yaml_content: Dict[str, Any]) -> Tuple[Dict[str, Any], 
     if not yaml_content:
         return {}, None
 
-    for key, value in yaml_content.items():
-        if key in ("project", "study"):
-            yaml_content[key] = lower_and_replace(value)
-
     # Get output fields from either "output" or "output_fields" key
     output_fields = MetadataEnum.required_output_fields() + yaml_content.pop(
         "output", yaml_content.pop("output_fields", [])
     )
 
+    # Process project/study fields in both main and query_fields sections
+    _process_project_study_fields(yaml_content)
     query_template = yaml_content.get("query_fields", yaml_content)
+    _process_project_study_fields(query_template)
 
     # Flatten nested structures in the query template
     flattened_template = _flatten_nested_template(query_template)
     return flattened_template, output_fields
+
+
+def _process_project_study_fields(data: Dict[str, Any]) -> None:
+    """Process project and study fields by applying lower_and_replace."""
+    for key in ("project", "study"):
+        if key in data:
+            data[key] = lower_and_replace(data[key])
 
 
 def query_metadata(

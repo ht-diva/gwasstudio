@@ -589,7 +589,7 @@ class TestParseYamlTemplate:
         assert "population" in outputs
 
     def test_project_in_query_fields_also_converted(self):
-        """Test that project and study are lowercased at the ROOT level, not inside query_fields."""
+        """Test that project and study are lowercased both at root level AND inside query_fields."""
         tpl, _ = _parse_yaml_template(
             {
                 "query_fields": {
@@ -599,10 +599,26 @@ class TestParseYamlTemplate:
                 "output": [],
             }
         )
-        # project/study inside query_fields are NOT converted at the top level
-        # because the loop only looks for "project"/"study" at yaml_content level
-        assert tpl["project"] == "My Project"
-        assert tpl["study"] == "My Study"
+        # project/study inside query_fields ARE NOW converted (bugfix)
+        assert tpl["project"] == "my_project"
+        assert tpl["study"] == "my_study"
+
+    def test_root_and_query_fields_project_standalone(self):
+        """Test that root-level project/study and query_fields are both converted."""
+        tpl, _ = _parse_yaml_template(
+            {
+                "project": "Root Project",
+                "study": "Root Study",
+                "query_fields": {
+                    "project": "QF Project",
+                },
+                "output": [],
+            }
+        )
+        # When query_fields is present, tpl comes from query_fields (which is lowercased)
+        assert tpl["project"] == "qf_project"
+        # Root-level study is lowercased but not in tpl since query_fields overrides
+        assert "study" not in tpl
 
 
 # ========================================================================
