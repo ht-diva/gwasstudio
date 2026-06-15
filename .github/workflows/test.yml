@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.12", "3.13", "3.14"]
+        python-version: ["3.12", "3.13"]
 
     steps:
       - name: Checkout repository
@@ -16,12 +16,13 @@ jobs:
         with:
           submodules: true
 
-      - uses: conda-incubator/setup-miniconda@v3
+      - uses: conda-incubator/setup-miniconda@v4
         with:
+          use-mamba: true
           activate-environment: gwasstudio
           environment-file: base_environment_docker.yml
           auto-update-conda: true
-          auto-activate-base: false
+          auto-activate: false
           python-version: ${{ matrix.python-version }}
 
       - name: Install the project
