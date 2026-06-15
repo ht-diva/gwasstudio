@@ -1,6 +1,6 @@
 # Summary Statistics
 
-GWASStudio requires summary-statistics files(s) to be harmonized and formatted in tsv.gz.
+GWASStudio requires harmonized summary-statistics files(s).
 
 ---
 
@@ -8,10 +8,10 @@ GWASStudio requires summary-statistics files(s) to be harmonized and formatted i
 
 | Column | Description |
 | --- | --- |
-| `CHR` | Chromomsome in integer format |
+| `CHR` | Chromosome in integer format |
 | `POS` | Position of the variant |
 | `EA` | Effect allele |
-| `NEA` | Non-effect alle |
+| `NEA` | Non-effect allele |
 | `EAF` | Effect allele frequency |
 | `BETA` | Effect size |
 | `SE` | Standard error |
@@ -28,7 +28,6 @@ GWASStudio requires summary-statistics files(s) to be harmonized and formatted i
 | `rsID` | SNP ID following dbSNP convention |
 | `SNPID` | SNPID described as CHR:POS:A1:A2 with A1 and A2 being the alleles in alphabetical order |
 | `N` | Sample size |
-| `STATUS` | Sample size |
 
 
 ---

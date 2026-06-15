@@ -31,12 +31,13 @@ ${HOME}/.vault-token
 **NOTE**:
 
 - The vault token is **personal and confidential**. **Do not** share it with other users
-- If `${HOME}/.vault-token` is missing, you will be prompted to manually paste the token during commmand execution
+- If `${HOME}/.vault-token` is missing, you will be prompted to manually paste the token during command execution
 
+---
 
 ## **Main commands**
 
-GWASStudio has three main commands for users:
+GWASStudio has four main commands for users:
 
 - [list](#1-list): list available/accessible data
 - [meta-query](#2-meta-query): query metadata of interest
@@ -72,10 +73,10 @@ The `meta-query` command retrieves [metadata](metadata.md) of interest using a [
 ##### Meta-query example
 
 ```
-gwasstudio meta-query --search-file query_ex01.txt --output-prefix output_query_ex01
+gwasstudio meta-query --search-file query_ex01.yml --output-prefix output_query_ex01
 ```
 
-The output is a [metadata](metadata.md) table named [output_query_ex01.csv](#meta-query-output-example) with records filtered by the query file [query_ex01.txt](#query-file-example).
+The output is a [metadata](metadata.md) table named `output_query_ex01_meta.csv` with records filtered by the query file `query_ex01.yml`.
 
 For a detailed explanation of all command options, see also [meta-query command](commands.md#meta-query).
 
@@ -86,11 +87,13 @@ For a detailed explanation of all command options, see also [meta-query command]
 The query file used to retrieve (meta)data follows a structured format with two sections:
 
 - Filtering criteria: [metadata fields](metadata.md) used to query the database, specified as `metadata field: filtering value` pairs
-- Output specification (`output:`): a list of valid [metadata fields](metadata.md) to include in the output
+- Output specification (`output:` or `output_fields:`): a list of valid [metadata fields](metadata.md) to include in the output
+
+The query file must be in **YAML** format (`.yml` or `.yaml` extension).
 
 ##### Query file example
 
-```
+```yaml
 project: opengwas
 study: ukb-d
 
@@ -113,9 +116,10 @@ This query file searches within the `ukb-d` study for all trait descriptions con
 
 **NOTES**:
 
-- Filtering values can include partial matches  (e.g. trait descriptions containing `Z42` or `pregnancy`)
+- Filtering values can include partial matches (e.g., trait descriptions containing `Z42` or `pregnancy`)
 - Filtering values are processed by lowercasing and replacing special characters before being used to query the database
-- It is possible to query across different projects and studies by not specifiyng `project` and `study` in the query file
+- It is possible to query across different projects and studies by not specifying `project` and `study` in the query file
+- Use the `--exact-match` flag for exact string matching, or `--case-sensitive` for case-sensitive search
 
 ---
 
@@ -123,7 +127,7 @@ This query file searches within the `ukb-d` study for all trait descriptions con
 
 | project | study | category | data_id | build | population | notes_sex | notes_source_id | total_samples | total_cases | total_controls | trait_desc |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| opengwas | ukb-d | GWAS | 47e96deafe | GRCh38 | European | Males and Females | ukb-d-XV_PREGNANCY_BIRTH | 361194 | 11959 | 349235 | "Pregnancy,  childbirth and the puerperium" |
+| opengwas | ukb-d | GWAS | 47e96deafe | GRCh38 | European | Males and Females | ukb-d-XV_PREGNANCY_BIRTH | 361194 | 11959 | 349235 | Pregnancy, childbirth and the puerperium |
 | opengwas | ukb-d | GWAS | 531f0d4bcc | GRCh38 | European | Males and Females | ukb-d-Z42 | 361194 | 1963 | 359231 | Diagnoses - main ICD10: Z42 Follow-up care involving plastic surgery |
 | opengwas | ukb-d | GWAS | cc18ce8683 | GRCh38 | European | Males and Females | ukb-d-O26 | 361194 | 1289 | 359905 | Diagnoses - main ICD10: O26 Maternal care for other conditions predominantly related to pregnancy |
 
@@ -131,7 +135,7 @@ This query file searches within the `ukb-d` study for all trait descriptions con
 
 ### **3. `ingest`**
 
-The `ingest` command stores [harmonized summary-statistics](summary-statistics.md) files(s) into a TileDB dataset, , using the relative metadata (which includes the source file paths) and the specified destination path.
+The `ingest` command stores [harmonized summary-statistics](summary-statistics.md) files(s) into a TileDB dataset, using the relative metadata (which includes the source file paths) and the specified destination path.
 
 For a detailed explanation of input formatting, see [Summary-statistics columns](summary-statistics.md) and [Metadata fields](metadata.md).
 
@@ -151,7 +155,7 @@ For a detailed explanation of all command options, see also [ingest command](com
 
 ### **4. `export`**
 
-The `export` command is used to extract records of summary statistics (and associated metadata) from TileDB as speficied in the query file.
+The `export` command is used to extract records of summary statistics (and associated metadata) from TileDB as specified in the query file.
 
 ---
 
@@ -172,7 +176,7 @@ salloc --partition=cpu-interactive --nodes=1 --ntasks-per-node=2 --mem-per-cpu=2
 The `export` command, when used without any filtering options, will export the full set of summary statistics.
 
 ```
-gwasstudio export --search-file query_ex01.txt
+gwasstudio export --search-file query_ex01.yml
 ```
 
 ---
@@ -188,7 +192,7 @@ Exports can also be performed with different filtering options.
 Command example to export data by filtering regions and SNPIDs provided in `region_or_snp_list.tsv`:
 
 ```
-gwasstudio export --search-file query_ex01.txt --get-regions-snps region_or_snp_list.tsv
+gwasstudio export --search-file query_ex01.yml --get-regions-snps region_or_snp_list.tsv
 ```
 
 The list of regions and SNPs to filter should preferably be in BED format. Example: [`regions_query.tsv`](https://github.com/ht-diva/gwasstudio/blob/main/data/regions_query.tsv).
@@ -199,7 +203,7 @@ Alternatively, SNPIDs can also be listed in CHR,POS format. Example: [`hapmap3_s
 
 ##### Trait-specific lead-SNP search
 
-Given an input table trait_snps_list.csv (SOURCE_ID,CHR,POS,EA,NEA), the command `--get-regions-leadsnps` creates a window of given width (default 1 Mb) and extracts from this region the statistics (MLOG10P, BETA, SE) of:
+Given an input table `trait_snps_list.csv` (SOURCE_ID,CHR,POS,EA,NEA), the command `--get-regions-leadsnps` creates a window of given width (default 1 Mb) and extracts from this region the statistics (MLOG10P, BETA, SE) of:
 
 1. the lead SNP, i.e. the SNPID with the most significant P-value;
 2. the exact SNP, i.e. the exact CHR:POS:EA:NEA of the input. *Note* that the input SNPs must be harmonized to alphabetically ordered alleles.
@@ -215,7 +219,7 @@ gwasstudio export --search-file query_trait_snps.yml --get-regions-leadsnps trai
 Command example to export data by filtering based on a P-value threshold (in -log10 format):
 
 ```
-gwasstudio export --search-file query_ex01.txt --pvalue-thr 4
+gwasstudio export --search-file query_ex01.yml --pvalue-thr 4
 ```
 
 ---
@@ -225,7 +229,7 @@ gwasstudio export --search-file query_ex01.txt --pvalue-thr 4
 Command example to export data with locusbreaker:
 
 ```
-gwasstudio export --search-file query_ex01.txt --locusbreaker
+gwasstudio export --search-file query_ex01.yml --locusbreaker
 ```
 
 ---

@@ -90,6 +90,8 @@ Then, we can run the `export` using the following command:
 gwasstudio export --search-file search_believe.yml --get-regions-snps snp_list.txt
 ```
 
+> **Note:** The `--attr` option defaults to `BETA,SE,EAF,MLOG10P,EA,NEA`. Use it to customise which columns to export.
+
 Sample log output:
 
 ```terminaloutput
@@ -105,7 +107,7 @@ Sample log output:
 ```
 
 The resulting summary‑statistics tables are written to the current directory.
-Again, you can change the output file prefix with `--output-prefix` <prefix>.
+You can change the output file prefix with `--output-prefix <prefix>` (default: `out`).
 
 ## **Filtering a study by SNPs on some traits - GWAS study**
 

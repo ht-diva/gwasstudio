@@ -30,14 +30,15 @@ theme:
 nav:
   - 'Menu':
     - 'Welcome': index.md
-    - 'Installation': installation.md
     - 'Getting Started': getting-started.md
+    - 'Query format': yaml_query_format.md
     - 'Examples': examples.md
     - 'Commands': commands.md
     - 'Metadata': metadata.md
     - 'Summary Statistics': summary-statistics.md
     - 'Population': population.md
     - 'Projects' : projects.md
+    - 'Installation': installation.md
     - 'Changelog': changelog.md
 
 # Plugins

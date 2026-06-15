@@ -71,7 +71,7 @@ git clone https://github.com/ht-diva/gwasstudio.git
 cd gwasstudio
 ```
 
-**1. Create the Conda Environment**
+**2. Create the Conda Environment**
 
 Create a new conda environment using the provided configuration file:
 ```sh
@@ -79,7 +79,7 @@ conda env create --file base_environment.yml
 ```
 This command sets up a conda environment with all the base dependencies specified in `base_environment.yml`.
 
-**2. Activate the Conda Environment**
+**3. Activate the Conda Environment**
 
 Activate the environment with the following commands:
 ```sh

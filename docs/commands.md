@@ -4,7 +4,7 @@
 
 ### `export`
 
- Export summary statistics from TileDB datasets with various filtering options.
+Export summary statistics from TileDB datasets with various filtering options.
 
 **Usage:**
 
@@ -12,62 +12,63 @@
 gwasstudio export [OPTIONS]
 ```
 
-**Options:**
+**TileDB options:**
 
-- `--uri TEXT`: URI of the TileDB dataset.
-- `--output-prefix TEXT`: Prefix for naming output files (default: `out`).
-- `--output-format [parquet|csv.gz|csv]`: Output file format (default: `csv.gz`).
-- `--search-file TEXT`: Input file for querying metadata (required).
-- `--attr TEXT`: String delimited by comma with the attributes to export (default: `BETA,SE,EAF,MLOG10P`).
+- `--uri TEXT`: URI of the TileDB dataset
+- `--output-prefix TEXT`: Prefix for naming output files
+- `--output-format [parquet|csv.gz|csv]`: Output file format
+- `--search-file TEXT`: Input file for querying metadata (required)
+- `--attr TEXT`: string delimited by comma with the attributes to export (required)
 
+**Meta-analysis options:**
 
-**Locusbreaker Options:**
+- `--meta-analysis`: Option to run meta-analysis
 
-- `--locusbreaker`: Option to run locusbreaker (flag).
-- `--pvalue-sig FLOAT`: Maximum log p-value threshold within the window (default: `5.0`).
-- `--pvalue-limit FLOAT`: Log p-value threshold for loci borders (default: `3.3`).
-- `--hole-size INTEGER`: Minimum pair-base distance between SNPs in different loci (default: `250000`).
-- `--maf FLOAT`: MAF filter to apply before locusbreaker (default: `0.01`).
-- `--locus-flanks INTEGER`: Flanking regions (in bp) to extend each locus in both directions (default: `100000`).
-- `--phenovar`: Boolean to compute phenovariance (Work in progress, not fully implemented yet) (flag).
+**Locusbreaker options:**
 
-**Regions and SNP ID List Filtering Options:**
+- `--locusbreaker`: Option to run locusbreaker
+- `--pvalue-sig FLOAT`: Maximum log p-value threshold within the window
+- `--pvalue-limit FLOAT`: Log p-value threshold for loci borders
+- `--hole-size INTEGER`: Minimum pair-base distance between SNPs in different loci
+- `--maf FLOAT`: MAF filter to apply before locusbreaker
+- `--phenovar`: Boolean to compute phenovariance (Work in progress, not fully implemented yet)
+- `--locus-flanks INTEGER`: Flanking regions (in bp) to extend each locus in both directions
 
-- `--get-regions-snps TEXT`:
-  - A valid BED (CHR\tSTART\tEND) file path or
-  - A valid SNP list (CHR,POS) file path or
-  - An inline string: "CHR,START,END;CHR,START,END" for regions; "CHR,POS;CHR,POS" for SNPs
-- `--pvalue-filt FLOAT`: Minimum -log10(p-value) threshold to keep significant filtered SNPs (default: 0, no filter)
-- `--skip-out`: Boolean to skip writing region outputs (default: False).
-- `--nest`: Estimate effective population size (Work in progress, not fully implemented yet) (flag).
+**Regions or SNP ID filtering options:**
 
-**Trait-specific Lead-SNP Search Options:**
+- `--get-regions-snps TEXT`: BED (CHR\tSTART\tEND) or SNP list (CHR,POS) file paths, or string equivalents: (CHR,START,END;CHR,START,END) for regions; (CHR,POS;CHR,POS) for SNPs
+- `--pvalue-filt FLOAT`: Minimum -log10(p-value) threshold to keep significant filtered SNPs
+- `--skip-out`: Do not write regions output (default: False)
+- `--skip-meta`: Do not add metadata columns (default: False)
+- `--nest`: Estimate effective population size (Work in progress, not fully implemented yet)
 
-- `--get-regions-leadsnps TEXT`: A DataFrame containing SOURCE_ID (trait), CHR, POS, EA and NEA (and optionally CIS_TRANS) for lead-SNP search.
-- `--cis-flanks INTEGER`: Flanking region (in bp) around POS for the search of CIS lead-SNP (default: 500000).
-- `--trans-flanks INTEGER`: Flanking region (in bp) around POS for the search of TRANS lead-SNP (default: 1000000).
-- `--exact-alleles`: Boolean to search exact lead match by CHR, POS, EA and NEA, or only by CHR and POS (default: False)
+**Trait-specific lead-SNP search options:**
 
-**P-value Filtering Options:**
+- `--get-regions-leadsnps TEXT`: A DataFrame containing SOURCE_ID (trait), CHR, POS, EA and NEA for lead-SNP search
+- `--cis-flanks INTEGER`: Flanking region (in bp) around POS for the search of CIS lead-SNP
+- `--trans-flanks INTEGER`: Flanking region (in bp) around POS for the search of TRANS lead-SNP
+- `--exact-alleles`: Whether exact lead match includes also EA and NEA, or only CHR and POS (default: False)
 
-- `--pvalue-thr FLOAT`: P-value threshold in -log10 format used to filter significant SNPs (default: 0, no filter)
+**P-value filtering options:**
 
-**Plotting Options:**
+- `--pvalue-thr FLOAT`: Minimum -log10(p-value) threshold to filter significant SNPs
 
-- `--plot-out`: Boolean to plot results. If enabled, the output will be plotted as a Manhattan plot (flag).
-- `--color-thr TEXT`: Color for the points passing the threshold line in the plot (default: `red`).
-- `--s-value INTEGER`: Value for the suggestive p-value line in the plot (default: `5`).
+**Option to plot results:**
 
-**Query Options:**
+- `--plot-out`: Boolean to plot results. If enabled, the output will be plotted as a Manhattan plot.
+- `--color-thr TEXT`: Color for the points passing the threshold line in the plot
+- `--s-value INTEGER`: Value for the suggestive p-value line in the plot
 
-- `--case-sensitive`: Enable case sensitive search of data to export
-- `--exact-match`: Enable exact match search of data to export
+**Option to query metadata before export:**
+
+- `--case-sensitive`: Perform case-sensitive matching on query values (default: False)
+- `--exact-match`: Perform exact match on query values (default: False)
 
 ---
 
 ### `info`
 
-Show GWASStudio details
+Show GWASStudio details.
 
 **Usage:**
 
@@ -79,7 +80,7 @@ gwasstudio info
 
 ### `ingest`
 
-Ingest data in TileDB datasets.
+Ingest data in a TileDB-unified dataset.
 
 **Usage:**
 
@@ -89,17 +90,17 @@ gwasstudio ingest [OPTIONS]
 
 **Options:**
 
-- `--file-path TEXT`: Path to the tabular file containing details for the ingestion (required).
-- `--delimiter TEXT`: Character or regex pattern to treat as the delimiter (default: `\t`).
-- `--uri TEXT`: Destination path where to store the tiledb dataset. The prefix can be `s3://` or `file://` (required).
-- `--ingestion-type [metadata|data|both]`: Choose between metadata ingestion, data ingestion, or both (default: `both`).
-- `--pvalue`: Indicate whether to ingest the p-value from the summary statistics instead of calculating it (default: `True`).
+- `--file-path TEXT`: Path to the tabular file containing details for the ingestion (required)
+- `--delimiter TEXT`: Character or regex pattern to treat as the delimiter
+- `--uri TEXT`: Destination path where to store the tiledb dataset. The prefix must be s3:// or file://
+- `--ingestion-type [metadata|data|both]`: Choose between metadata ingestion, data ingestion, or both
+- `--pvalue`: Indicate whether to ingest the p-value from the summary statistics instead of calculating it
 
 ---
 
 ### `list`
 
-List every category → project → study hierarchy stored in the metadata DB
+List every category → project → study hierarchy stored in the metadata DB.
 
 **Usage:**
 
@@ -111,7 +112,7 @@ gwasstudio list
 
 ### `meta-query`
 
-Query metadata records from MongoDB
+Query metadata records from MongoDB using GWASStudio core.
 
 **Usage:**
 
@@ -121,9 +122,10 @@ gwasstudio meta-query [OPTIONS]
 
 **Options:**
 
-- `--search-file`: The search file used for querying metadata  [required]
-- `--output-prefix`: Prefix to be used for naming the output files
-- `--case-sensitive`: Enable case sensitive search
-- `--exact-match`: Enable exact match search
+- `--search-file PATH`: Path to the YAML file containing search criteria (required)
+- `--output-prefix TEXT`: Prefix for the output file name
+- `--output-format [csv|parquet|tsv]`: Output file format
+- `--case-sensitive`: Enable case-sensitive search (exact string matching)
+- `--exact-match`: Enable exact match search (no regex for strings)
 
 ---

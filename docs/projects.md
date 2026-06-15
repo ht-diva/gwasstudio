@@ -1,22 +1,20 @@
-# **Projects**
+# Projects
 
-This is an overview of the GWASStudio projects available on-premises at Human Tecnopole, along with the relevant core metadata fields (see metadata.md#core-metadata-fields).
+This is an overview of the GWASStudio projects available on-premises at Human Tecnopole, along with the relevant core metadata fields (see [metadata.md](metadata.md)).
 
-*Note*: All summary statistics were harmonized to the GWASLab format via [harmonization_pipeline](https://github.com/ht-diva/harmonization_pipeline.git).
+*Note:* All summary statistics were harmonized to the GWASLab format via [harmonization_pipeline](https://github.com/ht-diva/harmonization_pipeline.git).
 
-
-| **Project name** | `category` | `project` | `study`|
-| --- | --- | --- | --- |
-| [deCODE](#decode) | `pQTL` | `DECODE` | `large scale plasma 2023` |
+| Project name | `category` | `project` | `study` |
+|---|---|---|---|
+| [deCODE](#decode) | `pQTL` | `DECODE` | `large_scale_plasma_2023` |
 | [FinnGen](#finngen) | `GWAS` | `finngen` | `R12` |
 | [Genes & Health](#genes--health) | `GWAS` | `genesandhealth` | `v010_binary_traits_3digitICD10`, `v010_quantitative_traits_median_values` |
-| [UKB](#uk-biobank-ukb) | `GWAS` |  `opengwas` | `ukb-a`, `ukb-b`, `ukb-d` |
+| [UKB](#uk-biobank-ukb) | `GWAS` | `opengwas` | `ukb-a`, `ukb-b`, `ukb-d` |
 | [UKB-PPP](#uk-biobank-pharma-proteomics-project-ukb-ppp) | `pQTL` | `ukb-ppp_consortium` | `ukb-ppp_African`, `ukb-ppp_American`, `ukb-ppp_Combined`, `ukb-ppp_East_Asian`, `ukb-ppp_European`, `ukb-ppp_Middle_Eastern`, `ukb-ppp_South_Asian` |
-
 
 ---
 
-## **deCODE**
+## deCODE
 
 The **deCODE** project is a large-scale population genetics initiative that integrates medical and genetic data from over 160,000 Icelandic participants. This includes genotype information, whole-genome sequencing, quantitative traits, binary disease phenotypes, and extensive genealogical records. Through global collaborations with medical institutions, deCODE has also incorporated data from ~500,000 individuals worldwide. A primary goal is to identify genetic risk factors for common diseases (e.g., heart attack, asthma, stroke, and cancer) and to advance personalized medicine.
 
@@ -26,7 +24,7 @@ For more information on the deCODE Project, see the [deCODE genetics Inc. articl
 
 For details on the plasma proteomics GWAS, see the [original article](https://doi.org/10.1038/s41588-021-00978-w) and the 2023 follow-up study that integrates results with data from [UKB-PPP](#uk-biobank-pharma-proteomics-project-ukb-ppp): [UKB-deCODE comparative analysis](https://doi.org/10.1038/s41586-023-06563-x).
 
-### **Key Metadata**
+### Key Metadata
 
 * **Number of Protein Analytes**
     * 4,907 aptamers (measuring 4,719 proteins)
@@ -43,11 +41,11 @@ For details on the plasma proteomics GWAS, see the [original article](https://do
 * **GWAS Method**
     * linear mixed model (BOLT-LMM)
 
-*Note*: For detailed GWAS methodology, see the [original article](https://doi.org/10.1038/s41588-021-00978-w).
+*Note:* For detailed GWAS methodology, see the [original article](https://doi.org/10.1038/s41588-021-00978-w).
 
 ---
 
-## **FinnGen**
+## FinnGen
 
 **FinnGen** is a large-scale research initiative that integrates genomic data with national health registry data from 500,000 Finnish biobank participants. The project aims to identify genetic risk factors for disease, understand disease progression and treatment response, and advance personalized medicine.
 
@@ -57,7 +55,7 @@ For more information on the FinnGen Project and methods, see the [FinnGen docume
 
 To browse FinnGen traits (including trait definition, prevalence, and longitudinal comorbidities), see the [Risteys portal](https://risteys.finngen.fi/).
 
-### **Key Metadata**
+### Key Metadata
 
 * **Number of Traits**
     * 2,469
@@ -75,19 +73,19 @@ To browse FinnGen traits (including trait definition, prevalence, and longitudin
 * **GWAS Method**
     * regenie v2.2.4 (v3.3 used for traits not converging under v2.2.4)
 
-*Note*: For detailed GWAS methodology, see the [FinnGen documentation](https://finngen.gitbook.io/documentation/methods/phewas).
+*Note:* For detailed GWAS methodology, see the [FinnGen documentation](https://finngen.gitbook.io/documentation/methods/phewas).
 
 ---
 
-## **Genes & Health**
+## Genes & Health
 
-**Genes & Health** is a community‑based genetic research initiative, focusing on British Bangladeshi and British Pakistani communities, with over 100,000 participants. The project aims to reduce health disparities in these groups (e.g. in diabetes, cardiovascular diseases, and mental health disorders) by researching genetic risk factors, disease progression, treatment response, and supporting more inclusive precision medicine.
+**Genes & Health** is a community-based genetic research initiative, focusing on British Bangladeshi and British Pakistani communities, with over 100,000 participants. The project aims to reduce health disparities in these groups (e.g. in diabetes, cardiovascular diseases, and mental health disorders) by researching genetic risk factors, disease progression, treatment response, and supporting more inclusive precision medicine.
 
-**GWASStudio** includes 762 binary‑trait summary statistics and 107 quantitative‑trait summary statistics from Genes & Health (2025 Realease).
+**GWASStudio** includes 762 binary-trait summary statistics and 107 quantitative-trait summary statistics from Genes & Health (2025 Release).
 
 For more information on the Genes & Health project, data access, and methods, see the Genes & Health ["Data & Researchers"](https://genesandhealth.org/researchers/data/) page and the [project website](https://genesandhealth.org/).
 
-### **Key Metadata**
+### Key Metadata
 
 * **Number of Traits**
     * `v010_binary_traits_3digitICD10`: 762 binary traits
@@ -106,13 +104,13 @@ For more information on the Genes & Health project, data access, and methods, se
 * **GWAS Method**
     * regenie
 
-*Note*: For quantitative traits, Genes & Health provides 321 quantitative‑trait summary statistics derived from minimum, median, and maximum observed values per individual. For consistency and to reduce variability caused by extreme measurements or outliers, median values were selected to represent each quantitative trait in the GWAS analyses included in GWASStudio.
+*Note:* For quantitative traits, Genes & Health provides 321 quantitative-trait summary statistics derived from minimum, median, and maximum observed values per individual. For consistency and to reduce variability caused by extreme measurements or outliers, median values were selected to represent each quantitative trait in the GWAS analyses included in GWASStudio.
 
-*Note*: For more information on the phenotypes and notation, see the [dedicated page](https://www.genesandhealth.org/researchers/healthdataphenotypes/) on the project website.
+*Note:* For more information on the phenotypes and notation, see the [dedicated page](https://www.genesandhealth.org/researchers/healthdataphenotypes/) on the project website.
 
 ---
 
-## **UK Biobank (UKB)**
+## UK Biobank (UKB)
 
 **UK Biobank (UKB)** is a large-scale biomedical database and research resource containing detailed health, lifestyle, environmental, and genetic data from approximately 500,000 UK participants aged 40–69 at recruitment (2006–2010). Participants have been followed longitudinally through linked electronic health records, imaging, biomarker assays, and repeat assessments.
 
@@ -124,7 +122,7 @@ A wide range of GWAS analyses have been conducted on UKB phenotypes by multiple 
 
 For more information on the UK Biobank project, see [https://www.ukbiobank.ac.uk/](https://www.ukbiobank.ac.uk/) and [UKB Data Showcase](https://biobank.ndph.ox.ac.uk/showcase/), which provides searchable metadata on all available phenotypes and samples.
 
-### **Key Metadata**
+### Key Metadata
 
 * **Number of Traits**
     * `ukb-a`: 596
@@ -150,14 +148,14 @@ For more information on the UK Biobank project, see [https://www.ukbiobank.ac.uk
     * `ukb-a` and `ukb-d`: linear regression (Hail, `linreg3`)
     * `ukb-b`: linear mixed model (BOLT-LMM or SAIGE, depending on the trait)
 
-*Note*: For detailed GWAS methodology, see:
+*Note:* For detailed GWAS methodology, see:
 
 * `ukb-a` and `ukb-d`: [GitHub repo](https://github.com/Nealelab/UK_Biobank_GWAS) and [Blog](https://www.nealelab.is/blog/2017/9/11/details-and-considerations-of-the-uk-biobank-gwas)
 * `ukb-b`: [GitHub repo](https://github.com/MRCIEU/UKBiobankGWAS) and [Documentation](https://data.bris.ac.uk/data/dataset/1ovaau5sxunp2cv8rcy88688v)
 
 ---
 
-## **UK Biobank Pharma Proteomics Project (UKB-PPP)**
+## UK Biobank Pharma Proteomics Project (UKB-PPP)
 
 **UK Biobank Pharma Proteomics Project (UKB-PPP)** is a biopharmaceutical consortium that performed plasma proteomic profiling of 54,219 UK Biobank participants. Protein quantitative trait loci (pQTL) analyses were conducted across European individuals and five additional non-European ancestry groups.
 
@@ -165,7 +163,7 @@ For more information on the UK Biobank project, see [https://www.ukbiobank.ac.uk
 
 For more information on the UKB-PPP project, see the original [UKB-PPP article](https://doi.org/10.1038/s41586-023-06592-6).
 
-### **Key Metadata**
+### Key Metadata
 
 * **Number of Protein Analytes**:
     * 2,941 protein analytes (2,943 unique proteins)
@@ -186,6 +184,6 @@ For more information on the UKB-PPP project, see the original [UKB-PPP article](
 * **GWAS Method**
     * regenie v2.2.1
 
-*Note*: Ancestry groups in UKB-PPP are defined following the [pan-UKBB](https://pan.ukbb.broadinstitute.org/) framework, based on clustering individuals in principal component (PC) space using reference populations from the [1000 Genomes Project](https://www.internationalgenome.org/) and the Human Genome Diversity Panel. For more information, see the [pan-UKBB study design](https://pan-dev.ukbb.broadinstitute.org/docs/study-design).
+*Note:* Ancestry groups in UKB-PPP are defined following the [pan-UKBB](https://pan.ukbb.broadinstitute.org/) framework, based on clustering individuals in principal component (PC) space using reference populations from the [1000 Genomes Project](https://www.internationalgenome.org/) and the Human Genome Diversity Panel. For more information, see the [pan-UKBB study design](https://pan-dev.ukbb.broadinstitute.org/docs/study-design).
 
-*Note*: For detailed GWAS methodology, see the original [UKB-PPP article](https://doi.org/10.1038/s41586-023-06592-6).
+*Note:* For detailed GWAS methodology, see the original [UKB-PPP article](https://doi.org/10.1038/s41586-023-06592-6).
