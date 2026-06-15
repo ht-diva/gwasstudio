@@ -13,4 +13,4 @@ def lower_and_replace(text: str) -> str:
     Returns:
         str: The modified string with spaces replaced by underscores and converted to lowercase.
     """
-    return f"{text.lower().replace(' ', '_')}"
+    return f"{text.strip().lower().replace(' ', '_')}"
