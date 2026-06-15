@@ -222,9 +222,12 @@ def _process_function_tasks(
             tasks.extend([result, result_pvalue_filt])
     else:
         for trait in trait_id_list:
-            if trait_snps:
+            if trait_snps and "link_id" in group.columns:
                 link_ids = group.loc[group["data_id"] == trait, "link_id"].unique()
-                kwargs["trait_snps"] = all_trait_snps[all_trait_snps["SOURCE_ID"].isin(link_ids)]
+                if len(link_ids) and link_ids[0] is not None:
+                    kwargs["trait_snps"] = all_trait_snps[all_trait_snps["SOURCE_ID"].isin(link_ids)]
+            elif trait_snps:
+                kwargs["trait_snps"] = pd.DataFrame()
             extracted_df = delayed(_run_extraction)(
                 tiledb_uri,
                 tiledb_cfg,
@@ -512,10 +515,10 @@ def export(
             subfield = next(iter(first_item.keys()))
 
         if field_to_use and subfield:
-            # The metadata field is the raw trait/notes dict
-            metadata_field = field_to_use
-            if metadata_field in meta_df.columns:
-                # Extract link_id from the dict
+            # Map the YAML key to the MongoDB field name (underscore-joined)
+            mongodb_field_name = f"{field_to_use}_{subfield}"
+            if mongodb_field_name in meta_df.columns:
+                # Extract link_id from the dict stored in the MongoDB field
                 def extract_link_id(value):
                     if pd.isna(value):
                         return None
@@ -523,7 +526,7 @@ def export(
                         return value.get(subfield)
                     return value
 
-                meta_df["link_id"] = meta_df[metadata_field].apply(extract_link_id)
+                meta_df["link_id"] = meta_df[mongodb_field_name].apply(extract_link_id)
 
     # Write metadata query result
     path = Path(output_prefix)
