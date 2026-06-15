@@ -50,6 +50,6 @@ cover/
 .ruff_cache/
 
 wip/
-scripts/tests
+tests/integration/tests/
 version.txt
 .continue/
