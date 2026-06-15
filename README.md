@@ -9,6 +9,8 @@
 
 GWASStudio is a powerful CLI tool designed for efficient storage, retrieval, and querying of genomic summary statistics. It offers a high-performance infrastructure for handling and analyzing large-scale GWAS and QTL datasets, enabling seamless cross-dataset exploration.
 
+Please see the documentation at [https://ht-diva.github.io/gwasstudio/](https://ht-diva.github.io/gwasstudio/)
+
 ## Core Purpose
 
 GWASStudio provides a unified interface across the [CDH](https://github.com/ht-diva/cdh_in_a_box) infrastructure, handling the ingestion, storage, querying and export of genomic data using high-performance technologies.
@@ -42,7 +44,7 @@ For detailed installation instructions, please refer to the documentation at [ht
 
 ## Usage
 
-For detailed instructions on how to use this tool, please refer to the [documentation](https://ht-diva.github.io/gwasstudio/) and check the [cli_test](scripts/) script for a practical guide by examples.
+For detailed instructions on how to use this tool, please refer to the [documentation](https://ht-diva.github.io/gwasstudio/) and check the [cli_test](tests/integration/) scripts for a practical guide by examples.
 
 ## Citation
 
