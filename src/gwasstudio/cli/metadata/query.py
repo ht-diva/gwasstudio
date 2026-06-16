@@ -61,7 +61,7 @@ import pandas as pd
 from gwasstudio import logger
 
 # Import updated utilities
-from gwasstudio.cli.utils import create_config_from_context, load_yaml_file
+from gwasstudio.cli.utils import create_config_from_context, load_yaml_file, write_table
 from gwasstudio.core import (
     ConfigurationError,
     GWASStudioError,
@@ -76,34 +76,6 @@ from gwasstudio.core.query import query_metadata as core_query_metadata
 HELP_DOC = """
 Query metadata records from MongoDB using GWASStudio core.
 """
-
-
-def _write_output_table(
-    df: pd.DataFrame,
-    output_path: Path,
-    file_format: str = "csv",
-    log_msg: str | None = None,
-) -> None:
-    """
-    Write DataFrame to output file.
-
-    Args:
-        df: DataFrame to write.
-        output_path: Path to the output file.
-        file_format: Format for the output file ("csv", "parquet", "tsv").
-        log_msg: Optional message to log.
-    """
-    if log_msg:
-        logger.info(log_msg)
-
-    if file_format == "csv":
-        df.to_csv(str(output_path), index=False)
-    elif file_format == "parquet":
-        df.to_parquet(str(output_path))
-    elif file_format == "tsv":
-        df.to_csv(str(output_path), index=False, sep="\t")
-    else:
-        raise InvalidInputError(f"Unsupported file format: {file_format}")
 
 
 @cloup.command("meta-query", no_args_is_help=True, help=HELP_DOC)
@@ -208,19 +180,12 @@ def query_metadata(
                     f"None of the specified output fields exist in results. Available fields: {list(df.columns)}"
                 )
 
-        # Write output
-        output_path = Path(output_prefix)
-        output_path = output_path.with_suffix("").with_name(output_path.stem + "_meta")
-
-        if output_format == "csv":
-            output_path = output_path.with_suffix(".csv")
-        elif output_format == "parquet":
-            output_path = output_path.with_suffix(".parquet")
-        elif output_format == "tsv":
-            output_path = output_path.with_suffix(".tsv")
-
-        log_msg = f"{len(df)} results found. Writing to {output_path}"
-        _write_output_table(df, output_path, file_format=output_format, log_msg=log_msg)
+        # Write metadata query result
+        path = Path(output_prefix)
+        output_path = path.with_suffix("").with_name(path.stem + "_meta")
+        kwargs = {"index": False}
+        log_msg = f"{len(df)} results found. Writing to {output_path}.csv"
+        write_table(df, str(output_path), logger, file_format="csv", log_msg=log_msg, **kwargs)
 
     except InvalidInputError as e:
         click.echo(f"Input error: {e.message}", err=True)

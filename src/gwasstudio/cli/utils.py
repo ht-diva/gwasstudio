@@ -29,43 +29,11 @@ from gwasstudio.core import (
     TileDBConfig,
     VaultConfig,
 )
-from gwasstudio.core.ingestion import process_metadata_dict
-
-# from gwasstudio.mongo.models import EnhancedDataProfile
 
 
-def get_tiledb_config(config: GWASStudioConfig, prefix: str | None = None) -> dict[str, Any]:
+def mongo_conn_info(config: "GWASStudioConfig") -> tuple[str | None, str | None]:
     """
-    Get TileDB configuration from GWASStudioConfig.
-
-    Args:
-        config: GWASStudio configuration object.
-        prefix: Optional prefix to filter keys ('vfs' or 'sm').
-                If None, returns merged vfs_config and sm_config.
-                If 'vfs', returns only vfs_config.
-                If 'sm', returns only sm_config.
-
-    Returns:
-        dict: TileDB configuration dictionary.
-    """
-    vfs_config = config.tiledb.vfs_config
-    sm_config = config.tiledb.sm_config
-
-    if prefix is None:
-        return vfs_config | sm_config
-    elif prefix == "vfs":
-        return vfs_config
-    elif prefix == "sm":
-        return sm_config
-    else:
-        # Return filtered dict based on key prefix
-        combined = vfs_config | sm_config
-        return {k: v for k, v in combined.items() if k.startswith(prefix)}
-
-
-def get_mongo_uri(config: GWASStudioConfig) -> str | None:
-    """
-    Get MongoDB URI from GWASStudioConfig or Vault.
+    Get MongoDB connection URI and database name from GWASStudioConfig or Vault.
 
     Priority:
     1. Direct URI from config.mongo.uri
@@ -75,70 +43,35 @@ def get_mongo_uri(config: GWASStudioConfig) -> str | None:
         config: GWASStudio configuration object.
 
     Returns:
-        str or None: MongoDB connection URI.
+        tuple[str | None, str | None]: (connection_uri, database_name)
     """
-    # 1. Try direct URI
-    if config.mongo.uri:
-        return config.mongo.uri
+    # Try direct URI first
+    if uri := getattr(config.mongo, "uri", None):
+        _, _, db_name = parse_uri(uri)
+        return uri, db_name.replace("/", "")
 
-    # 2. Try Vault - need path, token, and url
-    if config.vault and config.vault.path and config.vault.token and config.vault.url:
+    # Fall back to Vault if configured
+    vault = getattr(config, "vault", None)
+    if vault and all(getattr(vault, attr) for attr in ("path", "token", "url")):
         try:
-            from dataclasses import asdict
-
             from gwasstudio.utils.vault import get_config_from_vault
 
-            # Convert VaultConfig dataclass to dict using asdict for proper serialization
-            vault_options = asdict(config.vault)
-            mongo_config = get_config_from_vault("mongo", vault_options)
-            if mongo_config:
-                return mongo_config.get("uri")
-        except ImportError:
-            pass
-        except Exception as e:
-            logger.warning(f"Failed to get MongoDB URI from Vault: {str(e)}")
+            mongo_config = get_config_from_vault("mongo", vault)
+            if uri := mongo_config.get("uri"):
+                _, _, db_name = parse_uri(uri)
+                return uri, db_name.replace("/", "")
+        except (ImportError, Exception) as e:
+            logger.warning("Failed to get MongoDB URI from Vault: %s", e)
 
-    return None
-
-
-def get_dask_batch_size(config: GWASStudioConfig, capacity_mode: bool = False) -> int:
-    """
-    Get the Dask batch size. When capacity_mode is true, return the total worker capacity.
-    Otherwise, fall back to the batch size from GWASStudioConfig.
-
-    Args:
-        config: GWASStudio configuration object.
-        capacity_mode: If True, use capacity-based batch sizing.
-
-    Returns:
-        int: Batch size for Dask operations.
-    """
-    workers = config.dask.workers
-    cores_per_worker = config.dask.cores_per_worker
-
-    return workers * cores_per_worker if capacity_mode else config.dask.batch_size
-
-
-def get_dask_deployment(config: GWASStudioConfig) -> str:
-    """
-    Get Dask deployment type from GWASStudioConfig.
-
-    Args:
-        config: GWASStudio configuration object.
-
-    Returns:
-        str: Dask deployment type ("local", "gateway", "slurm").
-    """
-    return config.dask.deployment
+    return None, None
 
 
 def create_config_from_context(ctx) -> GWASStudioConfig:
     """
     Create a GWASStudioConfig object from the Click context.
 
-    This function extracts configuration from the Click context (ctx.obj)
-    and creates a standardized GWASStudioConfig object that can be used
-    by the core modules.
+    Extracts configuration from the Click context (ctx.obj) and creates a
+    standardized GWASStudioConfig object for use by core modules.
 
     Args:
         ctx: Click context object.
@@ -151,13 +84,6 @@ def create_config_from_context(ctx) -> GWASStudioConfig:
     dask_config = ctx.obj.get("dask", {})
     s3_config = ctx.obj.get("tiledb", {})
     vault_config = ctx.obj.get("vault", {})
-
-    mongo_uri = mongo_config.get("uri")
-    if mongo_uri:
-        _, _, db_name = parse_uri(mongo_uri)
-        db_name = db_name.replace("/", "")
-    else:
-        db_name = "gwasstudio"
 
     # Create GWASStudioConfig with extracted values
     config = GWASStudioConfig(
@@ -175,10 +101,7 @@ def create_config_from_context(ctx) -> GWASStudioConfig:
             python=dask_config.get("python"),
             local_directory=Path(dask_config.get("local_directory")) if dask_config.get("local_directory") else None,
         ),
-        mongo=MongoConfig(
-            uri=mongo_uri,
-            db_name=db_name,
-        ),
+        mongo=MongoConfig(uri=mongo_config.get("uri"), db_name="gwasstudio"),
         s3=S3Config(
             aws_access_key_id=s3_config.get("vfs.s3.aws_access_key_id"),
             aws_secret_access_key=s3_config.get("vfs.s3.aws_secret_access_key"),
@@ -202,6 +125,11 @@ def create_config_from_context(ctx) -> GWASStudioConfig:
             sm_config={"sm.dedup_coords": "false"},
         ),
     )
+
+    # Update mongo config with resolved connection info
+    if (uri := mongo_conn_info(config)[0]) is not None:
+        config.mongo.uri = uri
+        config.mongo.db_name = mongo_conn_info(config)[1]
 
     return config
 

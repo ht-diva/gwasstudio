@@ -7,15 +7,42 @@ from dask_gateway import Gateway
 from dask_jobqueue import SLURMCluster as Cluster
 
 from gwasstudio import logger
-from gwasstudio.utils.cfg import get_dask_config
+from gwasstudio.core.config import GWASStudioConfig
 
 dask_deployment_types = ["local", "gateway", "slurm"]
 
 
+def _config_to_dict(config: GWASStudioConfig) -> dict:
+    """Convert a GWASStudioConfig DaskConfig to a plain dict for DaskCluster."""
+    return {
+        "deployment": config.dask.deployment,
+        "workers": config.dask.workers,
+        "cores_per_worker": config.dask.cores_per_worker,
+        "memory_per_worker": config.dask.memory_per_worker,
+        "interface": config.dask.interface,
+        "gw_address": config.dask.gw_address,
+        "gw_image": config.dask.gw_image,
+        "walltime": config.dask.walltime,
+        "job_script_prologue": config.dask.job_script_prologue,
+        "python": config.dask.python,
+        "local_directory": config.dask.local_directory,
+    }
+
+
 @contextmanager
-def manage_daskcluster(ctx):
-    dask_ctx = get_dask_config(ctx)
-    cluster = DaskCluster(**dask_ctx)
+def manage_daskcluster(config: GWASStudioConfig):
+    """
+    Manage a Dask cluster lifecycle for ingestion/export.
+
+    Creates the appropriate cluster (local/gateway/slurm) based on
+    ``config.dask.deployment``, yields the connected Client, and
+    ensures clean shutdown on exit.
+
+    Args:
+        config: GWASStudioConfig containing Dask settings.
+    """
+    dask_kwargs = _config_to_dict(config)
+    cluster = DaskCluster(**dask_kwargs)
     client = cluster.get_connected_client()
     logger.debug(f"Dask client: {client}")
     logger.info(f"Dask cluster dashboard: {cluster.dashboard_link}")

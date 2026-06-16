@@ -14,14 +14,12 @@ from gwasstudio.cli.path_utils import join_path
 from gwasstudio.cli.region_io import read_to_bed, read_trait_snps
 from gwasstudio.cli.utils import (
     create_config_from_context,
-    get_dask_batch_size,
-    get_dask_deployment,
-    get_tiledb_config,
     load_yaml_file,
     write_if_not_empty,
     write_table,
 )
 from gwasstudio.core import ConfigurationError, InvalidInputError
+from gwasstudio.core.config import get_dask_batch_size, get_dask_deployment, get_tiledb_config
 from gwasstudio.core.enums import MetadataEnum
 from gwasstudio.core.query import query_metadata as core_query_metadata
 from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
@@ -546,7 +544,7 @@ def export(
 
     cfg = get_tiledb_config(config)
 
-    with manage_daskcluster(ctx) as client:
+    with manage_daskcluster(config) as client:
         batch_size = get_dask_batch_size(config)
         grouped = meta_df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
         for name, group in grouped:

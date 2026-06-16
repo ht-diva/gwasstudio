@@ -44,7 +44,7 @@ class MongoDBStorage(StorageBackend):
         self._client = self._setup_mongo_client()
         self._db = self._client[self._mongo_config.db_name]
         self._fs = GridFS(self._db)
-        self._projects_collection = self._db["metadata"]
+        self._projects_collection = self._db[self._mongo_config.collection]
 
     def _setup_mongo_client(self) -> pymongo.MongoClient:
         """

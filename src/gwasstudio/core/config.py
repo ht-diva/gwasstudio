@@ -6,9 +6,69 @@ This module defines the configuration classes for GWASStudio core functionality.
 It centralizes all configuration options for Dask, MongoDB, S3, Vault, and TileDB.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+
+def get_dask_batch_size(config: GWASStudioConfig, capacity_mode: bool = False) -> int:
+    """
+    Get the Dask batch size. When capacity_mode is true, return the total worker capacity.
+
+    Args:
+        config: GWASStudioConfig containing Dask settings.
+        capacity_mode: If True, use capacity-based batch sizing (workers * cores_per_worker).
+
+    Returns:
+        int: Batch size for Dask operations.
+    """
+    workers = config.dask.workers
+    cores_per_worker = config.dask.cores_per_worker
+    return workers * cores_per_worker if capacity_mode else config.dask.batch_size
+
+
+def get_dask_deployment(config: GWASStudioConfig) -> str:
+    """
+    Get Dask deployment type from GWASStudioConfig.
+
+    Args:
+        config: GWASStudioConfig containing Dask settings.
+
+    Returns:
+        str: Dask deployment type ("local", "gateway", "slurm").
+    """
+    return config.dask.deployment
+
+
+def get_tiledb_config(config: GWASStudioConfig, prefix: str | None = None) -> dict[str, Any]:
+    """
+    Get TileDB configuration from GWASStudioConfig.
+
+    Args:
+        config: GWASStudio configuration object.
+        prefix: Optional prefix to filter keys ('vfs' or 'sm').
+                If None, returns merged vfs_config and sm_config.
+                If 'vfs', returns only vfs_config.
+                If 'sm', returns only sm_config.
+
+    Returns:
+        dict: TileDB configuration dictionary.
+    """
+    vfs_config = config.tiledb.vfs_config
+    sm_config = config.tiledb.sm_config
+
+    if prefix is None:
+        return vfs_config | sm_config
+    elif prefix == "vfs":
+        return vfs_config
+    elif prefix == "sm":
+        return sm_config
+    else:
+        # Return filtered dict based on key prefix
+        combined = vfs_config | sm_config
+        return {k: v for k, v in combined.items() if k.startswith(prefix)}
 
 
 @dataclass
@@ -34,7 +94,8 @@ class MongoConfig:
     """Configuration for MongoDB storage."""
 
     uri: str | None = None  # MongoDB connection URI
-    db_name: str = "datahub"
+    db_name: str = "gwasstudio"
+    collection: str = "metadata"
     log_path: Path | None = None  # Path for MongoDB logs
     data_path: Path | None = None  # Path for MongoDB data (embedded)
 

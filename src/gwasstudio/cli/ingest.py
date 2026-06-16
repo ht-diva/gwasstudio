@@ -17,9 +17,6 @@ from gwasstudio.cli.path_utils import join_path
 from gwasstudio.cli.s3 import does_uri_path_exist
 from gwasstudio.cli.utils import (
     create_config_from_context,
-    get_dask_batch_size,
-    get_dask_deployment,
-    get_tiledb_config,
     load_metadata,
     parse_uri,
     process_and_ingest,
@@ -35,6 +32,7 @@ from gwasstudio.core import (
     StorageError,
 )
 from gwasstudio.core import ingest_metadata as core_ingest_metadata
+from gwasstudio.core.config import get_dask_batch_size, get_dask_deployment, get_tiledb_config
 from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
 from gwasstudio.utils.tdb_schema import TileDBSchemaCreator
 
@@ -131,7 +129,7 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
         # Process data ingestion
         if ingestion_type in ["data", "both"]:
             scheme, netloc, path = parse_uri(uri)
-            with manage_daskcluster(ctx):
+            with manage_daskcluster(config):
                 grouped = df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
                 for name, group in grouped:
                     group_name = "_".join(name)

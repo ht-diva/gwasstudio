@@ -14,6 +14,9 @@ from gwasstudio.core.config import (
     S3Config,
     TileDBConfig,
     VaultConfig,
+    get_dask_batch_size,
+    get_dask_deployment,
+    get_tiledb_config,
 )
 from gwasstudio.core.enums import MetadataEnum
 
@@ -49,6 +52,9 @@ __all__ = [
     "S3Config",
     "TileDBConfig",
     "VaultConfig",
+    get_dask_batch_size,
+    get_dask_deployment,
+    get_tiledb_config,
     # Exceptions
     "GWASStudioError",
     "IngestionError",
