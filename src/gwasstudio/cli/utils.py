@@ -122,6 +122,8 @@ def create_config_from_context(ctx) -> GWASStudioConfig:
         ),
         tiledb=TileDBConfig(
             vfs_config=s3_config,  # Reuse S3 config for TileDB,
+            # TileDB configuration
+            # https://cloud.tiledb.com/academy/structure/arrays/tutorials/basics/configuration/index.html
             sm_config={"sm.dedup_coords": "false"},
         ),
     )

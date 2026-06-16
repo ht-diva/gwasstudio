@@ -55,7 +55,7 @@ class TestMongoConfig:
     def test_default_values(self):
         """Test that MongoConfig has correct default values."""
         config = MongoConfig()
-        assert config.db_name == "datahub"
+        assert config.db_name == "gwasstudio"
         assert config.uri is None
 
     def test_custom_values(self):

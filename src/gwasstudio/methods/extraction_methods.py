@@ -5,9 +5,9 @@ import pandas as pd
 import tiledb
 
 from gwasstudio import logger
+from gwasstudio.core.str_utils import is_multiallelic
 from gwasstudio.methods.dataframe import process_dataframe
 from gwasstudio.methods.manhattan_plot import _plot_manhattan
-from gwasstudio.utils.snps import is_multiallelic
 from gwasstudio.utils.tdb_schema import AttributeEnum as an
 from gwasstudio.utils.tdb_schema import DimensionEnum as dn
 
