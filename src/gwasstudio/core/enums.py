@@ -258,6 +258,11 @@ class MetadataEnum(BaseEnum):
     TISSUE = ("trait_tissue", DataType.CATEGORY)
     UNIT = ("trait_unit", DataType.STRING_PA)
     POPULATION = ("population", DataType.STRING_PA)
+    MAKER = ("notes_maker", DataType.STRING_PA)
+    MAKER_PLATFORM_TECHNOLOGY = ("notes_maker_platform_technology", DataType.STRING_PA)
+    MAKER_PLATFORM_DESCRIPTION = ("notes_maker_platform_description", DataType.STRING_PA)
+    MAKER_PLATFORM_VERSION = ("notes_maker_platform_version", DataType.STRING_PA)
+    MAKER_PLATFORM_NORMALIZATION = ("notes_maker_platform_normalization", DataType.STRING_PA)
 
     @classmethod
     def required_fields(cls):
