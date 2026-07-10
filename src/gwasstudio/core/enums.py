@@ -249,6 +249,7 @@ class MetadataEnum(BaseEnum):
     SAMPLES = ("total_samples", DataType.UINT64_PA)
     CASES = ("total_cases", DataType.UINT64_PA)
     CONTROLS = ("total_controls", DataType.UINT64_PA)
+    VARIANTS = ("total_variants", DataType.UINT64_PA)
     HEALTHCARE_TAXONOMY = ("trait_code", DataType.STRING_PA)
     DESCRIPTION = ("trait_desc", DataType.STRING_PA)
     GENE_IDS = ("trait_gene_ids", DataType.STRING_PA)

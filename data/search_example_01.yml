@@ -11,4 +11,5 @@ output_fields:
   - total_samples
   - total_cases
   - total_controls
+  - total_variants
   - trait_desc
