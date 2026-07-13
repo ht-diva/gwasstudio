@@ -88,7 +88,7 @@ def join_path(base: str, *parts: str) -> str:
     clean_parts = [p.strip("/") for p in parts if p and p.strip("/")]
 
     # ------------------------------------------------------------------
-    # 1️⃣  S3‑style URIs (or any URI with a scheme) – treat everything
+    #  S3‑style URIs (or any URI with a scheme) – treat everything
     #     after the scheme:// as a POSIX path.
     # ------------------------------------------------------------------
     if _is_uri(base):
@@ -113,7 +113,7 @@ def join_path(base: str, *parts: str) -> str:
         return rebuilt
 
     # ------------------------------------------------------------------
-    # 2️⃣  Plain filesystem path.
+    #  Plain filesystem path.
     # ------------------------------------------------------------------
     # On Windows we must respect the native separator.  ``Path`` does that.
     # If the base path already uses forward slashes we still want the
@@ -126,3 +126,41 @@ def join_path(base: str, *parts: str) -> str:
     # ``Path`` will automatically use ``os.sep`` for the current platform.
     # For consistency with the examples we return a string.
     return str(p)
+
+
+def compose_tiledb_uri(base_uri: str, group_name_parts: tuple[str, ...], logger_instance=None) -> tuple[str, str]:
+    """
+    Compose a TileDB URI by joining the base URI with the group name parts.
+
+    This is a convenience function that joins a base URI with group name parts
+    (typically from a pandas groupby operation) to form a complete TileDB URI.
+
+    Parameters
+    ----------
+    base_uri : str
+        The base URI of the TileDB dataset (e.g., "s3://my-bucket/dataset" or "file:///path/to/dataset").
+    group_name_parts : tuple[str, ...]
+        The group name parts to join (typically from a pandas groupby operation).
+    logger_instance : logging.Logger, optional
+        Logger instance to log the processing message. If None, no logging is performed.
+
+    Returns
+    -------
+    tuple[str, str]
+        A tuple of (group_name, tiledb_uri) where:
+        - group_name: The joined group name string (e.g., "group1_group2")
+        - tiledb_uri: The composed TileDB URI (e.g., "s3://my-bucket/dataset/group1_group2")
+
+    Examples
+    --------
+    >>> compose_tiledb_uri("s3://my-bucket/dataset", ("group1", "group2"))
+    ('group1_group2', 's3://my-bucket/dataset/group1_group2')
+
+    >>> compose_tiledb_uri("file:///data", ("study1",))
+    ('study1', 'file:///data/study1')
+    """
+    group_name = "_".join(group_name_parts)
+    if logger_instance is not None:
+        logger_instance.info(f"Processing the group {group_name}")
+    tiledb_uri = join_path(base_uri, group_name)
+    return group_name, tiledb_uri

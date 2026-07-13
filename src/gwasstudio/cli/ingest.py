@@ -13,7 +13,7 @@ import cloup
 from dask import compute, delayed
 
 from gwasstudio import logger
-from gwasstudio.cli.path_utils import join_path
+from gwasstudio.cli.path_utils import compose_tiledb_uri, join_path
 from gwasstudio.cli.s3 import does_uri_path_exist
 from gwasstudio.cli.utils import (
     create_config_from_context,
@@ -132,10 +132,8 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
             with manage_daskcluster(config):
                 grouped = df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
                 for name, group in grouped:
-                    group_name = "_".join(name)
-                    logger.info(f"Processing the group {group_name}")
                     input_file_list = group["file_path"].tolist()
-                    tiledb_uri = join_path(uri, group_name)
+                    group_name, tiledb_uri = compose_tiledb_uri(uri, name, logger)
                     logger.debug(f"tiledb_uri: {tiledb_uri}")
 
                     if scheme == "s3":
