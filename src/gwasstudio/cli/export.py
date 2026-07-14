@@ -19,8 +19,10 @@ from gwasstudio.cli.utils import (
     write_table,
 )
 from gwasstudio.core import ConfigurationError, InvalidInputError
+from gwasstudio.core.authorization import AuthorizationService, VaultUserContext
 from gwasstudio.core.config import get_dask_batch_size, get_dask_deployment, get_tiledb_config
 from gwasstudio.core.enums import MetadataEnum
+from gwasstudio.core.exceptions import PermissionError
 from gwasstudio.core.query import query_metadata as core_query_metadata
 from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
 from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions_leadsnps, extract_regions_snps
@@ -459,9 +461,37 @@ def export(
         exact_match=exact_match,
     )
 
-    if not query_results:
-        logger.info("No results found.")
+    # Filter results to only accessible datasets based on authorization
+    auth_service = AuthorizationService(config)
+    accessible_results = []
+    skipped_results = []
+
+    for result in query_results:
+        data_id = result.get("data_id")
+        if data_id:
+            try:
+                if auth_service.check_access(data_id=data_id):
+                    accessible_results.append(result)
+                else:
+                    skipped_results.append(data_id)
+                    logger.debug(f"Skipping {data_id} - user not authorized")
+            except PermissionError as e:
+                skipped_results.append(data_id)
+                logger.debug(f"Skipping {data_id} - authorization error: {e}")
+        else:
+            # If no data_id, include the result (might be metadata-only)
+            accessible_results.append(result)
+
+    if not accessible_results:
+        if skipped_results:
+            logger.info(f"No accessible datasets found. Skipped {len(skipped_results)} datasets due to authorization.")
+        else:
+            logger.info("No results found.")
         return
+
+    # Log if any datasets were skipped
+    if skipped_results:
+        logger.info(f"Filtered out {len(skipped_results)} datasets due to authorization restrictions")
 
     # Extract search topics from yaml_content for backwards compatibility
     yaml_query_fields = yaml_content.get("query_fields", yaml_content)
@@ -470,23 +500,23 @@ def export(
         if "data_id" not in yaml_query_fields:
             logger.error("Plotting option is enabled but no data_ids is provided in the search file.")
             exit(1)
-        # Extract data_ids from query_results
-        data_ids = [r.get("data_id") for r in query_results if r.get("data_id")]
+        # Extract data_ids from accessible_results
+        data_ids = [r.get("data_id") for r in accessible_results if r.get("data_id")]
         if len(data_ids) > 20:
             logger.error(
                 "Plotting option is enabled but too many data_ids are provided in the search file. Please limit to 20 data_ids."
             )
             exit(1)
 
-    # Convert query_results to DataFrame
+    # Convert accessible_results to DataFrame
     # output_fields contains the list of fields requested in the output
     if output_fields:
-        meta_df = pd.DataFrame(query_results, columns=output_fields)
+        meta_df = pd.DataFrame(accessible_results, columns=output_fields)
     else:
         # If no output fields specified, use all available keys from first result
-        if query_results:
-            output_fields = list(query_results[0].keys())
-            meta_df = pd.DataFrame(query_results, columns=output_fields)
+        if accessible_results:
+            output_fields = list(accessible_results[0].keys())
+            meta_df = pd.DataFrame(accessible_results, columns=output_fields)
         else:
             meta_df = pd.DataFrame()
 
@@ -530,7 +560,7 @@ def export(
     path = Path(output_prefix)
     output_path = path.with_suffix("").with_name(path.stem + "_meta")
     kwargs = {"index": False}
-    log_msg = f"{len(query_results)} results found. Writing to {output_path}.csv"
+    log_msg = f"{len(accessible_results)} results found. Writing to {output_path}.csv"
     write_table(meta_df, str(output_path), logger, file_format="csv", log_msg=log_msg, **kwargs)
 
     # Create an output prefix dictionary to generate output filenames
