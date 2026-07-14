@@ -263,6 +263,10 @@ class MetadataEnum(BaseEnum):
     MAKER_PLATFORM_DESCRIPTION = ("notes_maker_platform_description", DataType.STRING_PA)
     MAKER_PLATFORM_VERSION = ("notes_maker_platform_version", DataType.STRING_PA)
     MAKER_PLATFORM_NORMALIZATION = ("notes_maker_platform_normalization", DataType.STRING_PA)
+    ACCESS_LEVEL = ("access_level", DataType.CATEGORY)
+    ALLOWED_TOKEN_ACCESSORS = ("allowed_token_accessors", DataType.STRING_PA)
+    ALLOWED_USERS = ("allowed_users", DataType.STRING_PA)
+    ALLOWED_POLICIES = ("allowed_policies", DataType.STRING_PA)
 
     @classmethod
     def required_fields(cls):

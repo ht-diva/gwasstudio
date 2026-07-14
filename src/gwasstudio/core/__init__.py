@@ -7,7 +7,14 @@ APIs are re-exported here; internal helpers live in their submodules.
 """
 
 # ── configuration ──────────────────────────────────────────────────────
+# ── authorization ─────────────────────────────────────────────────────────
+from gwasstudio.core.authorization import (
+    AccessLevel,
+    AuthorizationService,
+    VaultUserContext,
+)
 from gwasstudio.core.config import (
+    AuthConfig,
     DaskConfig,
     GWASStudioConfig,
     MongoConfig,
@@ -52,6 +59,7 @@ __all__ = [
     "S3Config",
     "TileDBConfig",
     "VaultConfig",
+    "AuthConfig",
     get_dask_batch_size,
     get_dask_deployment,
     get_tiledb_config,
@@ -74,6 +82,10 @@ __all__ = [
     "ingest_metadata",
     "list_projects",
     "MetadataEnum",
+    # Authorization
+    "AccessLevel",
+    "AuthorizationService",
+    "VaultUserContext",
     # Backward-compatible
     "StorageError",
 ]

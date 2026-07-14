@@ -135,6 +135,28 @@ class TileDBConfig:
 
 
 @dataclass
+class AuthConfig:
+    """
+    Configuration for GWASStudio authorization.
+
+    Attributes:
+        enabled: Whether authorization checks are enforced
+        default_access_level: Default access level for new datasets
+        allow_anonymous_public: Allow unauthenticated access to PUBLIC datasets
+        use_policies: Enable policy-based authorization
+        use_username: Enable username-based authorization (from display_name)
+        use_accessor: Enable token accessor-based authorization
+    """
+
+    enabled: bool = True
+    default_access_level: str = "protected"
+    allow_anonymous_public: bool = True
+    use_policies: bool = True
+    use_username: bool = True
+    use_accessor: bool = True
+
+
+@dataclass
 class GWASStudioConfig:
     """
     Main configuration class for GWASStudio.
@@ -159,6 +181,7 @@ class GWASStudioConfig:
     s3: S3Config = field(default_factory=S3Config)
     vault: VaultConfig = field(default_factory=VaultConfig)
     tiledb: TileDBConfig = field(default_factory=TileDBConfig)
+    auth: AuthConfig = field(default_factory=AuthConfig)
 
     # Logging and paths
     log_level: str = "INFO"
@@ -174,6 +197,7 @@ class GWASStudioConfig:
             "s3": self.s3.__dict__,
             "vault": self.vault.__dict__,
             "tiledb": self.tiledb.__dict__,
+            "auth": self.auth.__dict__,
             "log_level": self.log_level,
             "log_file": str(self.log_file) if self.log_file else None,
             "data_dir": str(self.data_dir) if self.data_dir else None,
@@ -189,6 +213,7 @@ class GWASStudioConfig:
             s3=S3Config(**config_dict.get("s3", {})),
             vault=VaultConfig(**config_dict.get("vault", {})),
             tiledb=TileDBConfig(**config_dict.get("tiledb", {})),
+            auth=AuthConfig(**config_dict.get("auth", {})),
             log_level=config_dict.get("log_level", "INFO"),
             log_file=Path(config_dict["log_file"]) if config_dict.get("log_file") else None,
             data_dir=Path(config_dict["data_dir"]) if config_dict.get("data_dir") else None,

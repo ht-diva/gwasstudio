@@ -11,7 +11,7 @@ from typing import Any
 
 import pandas as pd
 
-from gwasstudio.core import GWASStudioError
+from gwasstudio.core.exceptions import GWASStudioError
 
 
 class StorageError(GWASStudioError):
