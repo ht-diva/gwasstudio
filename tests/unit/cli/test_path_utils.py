@@ -170,13 +170,13 @@ def test_non_string_input():
         # Simple S3 URI with single group part
         ("s3://my-bucket/dataset", ("group1",), "group1", "s3://my-bucket/dataset/group1"),
         # S3 URI with multiple group parts
-        ("s3://my-bucket/dataset", ("group1", "group2"), "group1_group2", "s3://my-bucket/dataset/group1_group2"),
+        ("s3://my-bucket/dataset", ("group1", "group2"), "group1_group2", "s3://my-bucket/dataset/group1/group2"),
         # File URI with single group part
         ("file:///data", ("study1",), "study1", "file:///data/study1"),
         # File URI with multiple group parts
-        ("file:///data", ("study1", "batch2"), "study1_batch2", "file:///data/study1_batch2"),
+        ("file:///data", ("study1", "batch2"), "study1_batch2", "file:///data/study1/batch2"),
         # Local path with group parts
-        ("/tmp/data", ("group1", "group2"), "group1_group2", "/tmp/data/group1_group2"),
+        ("/tmp/data", ("group1", "group2"), "group1_group2", "/tmp/data/group1/group2"),
         # S3 bucket only
         ("s3://my-bucket", ("dataset",), "dataset", "s3://my-bucket/dataset"),
     ],
@@ -200,7 +200,7 @@ def test_compose_tiledb_uri_with_logger(caplog):
         group_name, tiledb_uri = compose_tiledb_uri(base_uri, group_name_parts, logger)
 
     assert group_name == "group1_group2"
-    assert tiledb_uri == "s3://my-bucket/dataset/group1_group2"
+    assert tiledb_uri == "s3://my-bucket/dataset/group1/group2"
     assert "Processing the group group1_group2" in caplog.text
 
 

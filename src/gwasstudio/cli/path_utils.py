@@ -149,12 +149,12 @@ def compose_tiledb_uri(base_uri: str, group_name_parts: tuple[str, ...], logger_
     tuple[str, str]
         A tuple of (group_name, tiledb_uri) where:
         - group_name: The joined group name string (e.g., "group1_group2")
-        - tiledb_uri: The composed TileDB URI (e.g., "s3://my-bucket/dataset/group1_group2")
+        - tiledb_uri: The composed TileDB URI (e.g., "s3://my-bucket/dataset/group1/group2")
 
     Examples
     --------
     >>> compose_tiledb_uri("s3://my-bucket/dataset", ("group1", "group2"))
-    ('group1_group2', 's3://my-bucket/dataset/group1_group2')
+    ('group1_group2', 's3://my-bucket/dataset/group1/group2')
 
     >>> compose_tiledb_uri("file:///data", ("study1",))
     ('study1', 'file:///data/study1')
@@ -162,5 +162,5 @@ def compose_tiledb_uri(base_uri: str, group_name_parts: tuple[str, ...], logger_
     group_name = "_".join(group_name_parts)
     if logger_instance is not None:
         logger_instance.info(f"Processing the group {group_name}")
-    tiledb_uri = join_path(base_uri, group_name)
+    tiledb_uri = join_path(base_uri, *group_name_parts)
     return group_name, tiledb_uri

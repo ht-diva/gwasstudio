@@ -267,6 +267,7 @@ class MetadataEnum(BaseEnum):
     ALLOWED_TOKEN_ACCESSORS = ("allowed_token_accessors", DataType.STRING_PA)
     ALLOWED_USERS = ("allowed_users", DataType.STRING_PA)
     ALLOWED_POLICIES = ("allowed_policies", DataType.STRING_PA)
+    WAREHOUSE_URI = ("warehouse_uri", DataType.STRING_PA)
 
     @classmethod
     def required_fields(cls):

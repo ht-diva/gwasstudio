@@ -22,7 +22,7 @@ opengwas	ukb-d	GWAS	data/dataset/ukb-d-XVIII_MISCFINDINGS.gwaslab.tsv.sampled.gz
 opengwas	ukb-d	GWAS	data/dataset/ukb-d-XII_SKIN_SUBCUTAN.gwaslab.tsv.sampled.gz	public		Combined	ukb-d-XII_SKIN_SUBCUTAN	GRCh38	EUR	361194	10	27074	334120	Diseases of the skin and subcutaneous tissue
 opengwas	ukb-d	GWAS	data/dataset/ukb-d-XV_PREGNANCY_BIRTH.gwaslab.tsv.sampled.gz	public		Combined	ukb-d-XV_PREGNANCY_BIRTH	GRCh38	EUR	10	361194	11959	349235	Pregnancy, childbirth and the puerperium
 opengwas	ukb-d	GWAS	data/dataset/ukb-d-Z01.gwaslab.tsv.sampled.gz	public		Combined	ukb-d-Z01	GRCh38	EUR	10	361194	1370	359824	Diagnoses - main ICD10: Z01 Other special examinations and investigations of persons without complaint or reported diagnosis
-opengwas	eqtl-a	eQTL	data/dataset/eqtl-a-ENSG00000228923.gwaslab.tsv.sampled.gz	public		Combined	eqtl-a-ENSG00000228923	GRCh37	EUR	10	4169			ENSG00000228923
-opengwas	eqtl-a	eQTL	data/dataset/eqtl-a-ENSG00000255833.gwaslab.tsv.sampled.gz	public		Combined	eqtl-a-ENSG00000255833	GRCh37	EUR	10	31684			ENSG00000255833
-opengwas	prot-a	pQTL	data/dataset/prot-a-2375.gwaslab.tsv.sampled.gz	public		Combined	prot-a-2375	GRCh37	EUR	10	3301			Prolactin
-opengwas	prot-a	pQTL	data/dataset/prot-a-2325.gwaslab.tsv.sampled.gz	public		Combined	prot-a-2325	GRCh37	EUR	10	3301			Beta-endorphin
+opengwas-e	eqtl-a	eQTL	data/dataset/eqtl-a-ENSG00000228923.gwaslab.tsv.sampled.gz	public		Combined	eqtl-a-ENSG00000228923	GRCh37	EUR	10	4169			ENSG00000228923
+opengwas-e	eqtl-a	eQTL	data/dataset/eqtl-a-ENSG00000255833.gwaslab.tsv.sampled.gz	public		Combined	eqtl-a-ENSG00000255833	GRCh37	EUR	10	31684			ENSG00000255833
+opengwas-p	prot-a	pQTL	data/dataset/prot-a-2375.gwaslab.tsv.sampled.gz	public		Combined	prot-a-2375	GRCh37	EUR	10	3301			Prolactin
+opengwas-p	prot-a	pQTL	data/dataset/prot-a-2325.gwaslab.tsv.sampled.gz	public		Combined	prot-a-2325	GRCh37	EUR	10	3301			Beta-endorphin

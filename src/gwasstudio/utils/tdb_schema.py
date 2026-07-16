@@ -1,7 +1,9 @@
+from pathlib import Path
 from typing import Any
 
 import tiledb
 
+from gwasstudio.cli.utils import parse_uri
 from gwasstudio.core.enums import BaseEnum, DataType
 
 
@@ -118,6 +120,12 @@ class TileDBSchemaCreator:
 
         try:
             ctx = tiledb.Ctx(self.cfg)
+            # Ensure parent directory exists for local filesystem URIs
+            scheme, _, path = parse_uri(self.uri)
+            if not scheme or scheme == "file":
+                array_path = Path(path)
+                array_path.parent.mkdir(parents=True, exist_ok=True)
+
             tiledb.Array.create(self.uri, schema, ctx=ctx)
         except Exception as e:
             raise RuntimeError(f"Failed to create TileDB schema: {e}")

@@ -10,7 +10,7 @@ from dask import compute, delayed
 from dask.distributed import Client
 
 from gwasstudio import logger
-from gwasstudio.cli.path_utils import compose_tiledb_uri, join_path
+from gwasstudio.cli.path_utils import compose_tiledb_uri
 from gwasstudio.cli.region_io import read_to_bed, read_trait_snps
 from gwasstudio.cli.utils import (
     create_config_from_context,
@@ -19,7 +19,7 @@ from gwasstudio.cli.utils import (
     write_table,
 )
 from gwasstudio.core import ConfigurationError, InvalidInputError
-from gwasstudio.core.authorization import AuthorizationService, VaultUserContext
+from gwasstudio.core.authorization import AuthorizationService
 from gwasstudio.core.config import get_dask_batch_size, get_dask_deployment, get_tiledb_config
 from gwasstudio.core.enums import MetadataEnum
 from gwasstudio.core.exceptions import PermissionError
@@ -264,7 +264,7 @@ Export summary statistics from TileDB datasets with various filtering options.
 @cloup.command("export", no_args_is_help=True, help=HELP_DOC)
 @cloup.option_group(
     "TileDB options",
-    cloup.option("--uri", default="s3://tiledb", help="URI of the TileDB dataset"),
+    cloup.option("--uri", default=None, help="URI of the TileDB dataset (optional if stored in metadata)"),
     cloup.option("--output-prefix", default="out", help="Prefix for naming output files"),
     cloup.option(
         "--output-format", type=click.Choice(["parquet", "csv.gz", "csv"]), default="csv.gz", help="Output file format"
@@ -520,6 +520,17 @@ def export(
         else:
             meta_df = pd.DataFrame()
 
+    # Validate that if uri is None, all groups have tiledb_uri in metadata
+    if uri is None:
+        if meta_df.empty:
+            # No results, but we'll handle this later
+            pass
+        elif MetadataEnum.WAREHOUSE_URI.get_value() not in meta_df.columns:
+            raise InvalidInputError(
+                "URI not provided via --uri and {MetadataEnum.WAREHOUSE_URI.get_value()} not found in metadata. "
+                "Re-ingest data with --uri or provide --uri for export."
+            )
+
     # Add link_id column if trait or notes fields are present in yaml_content
     # This is needed for get_regions_leadsnps functionality
     # Note: trait and notes fields are now stored as dicts (not JSON strings) due to JSONField
@@ -578,8 +589,31 @@ def export(
         batch_size = get_dask_batch_size(config)
         grouped = meta_df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
         for name, group in grouped:
-            group_name, tiledb_uri = compose_tiledb_uri(uri, name, logger)
-            logger.debug(f"tiledb_uri: {tiledb_uri}")
+            # Determine URI and group_name for this group: from CLI or metadata
+            if uri is None:
+                # Get URI from metadata
+                if MetadataEnum.WAREHOUSE_URI.get_value() not in group.columns:
+                    raise InvalidInputError(
+                        f"No {MetadataEnum.WAREHOUSE_URI.get_value()} found in metadata for group {name}. "
+                        "Provide --uri or ensure metadata contains {MetadataEnum.WAREHOUSE_URI} field."
+                    )
+                unique_uris = group[MetadataEnum.WAREHOUSE_URI.get_value()].dropna().unique()
+                if len(unique_uris) == 0:
+                    raise InvalidInputError(
+                        f"No {MetadataEnum.WAREHOUSE_URI.get_value()} found in metadata for group {name}"
+                    )
+                if len(unique_uris) > 1:
+                    raise InvalidInputError(
+                        f"Multiple URIs found for group {name}: {list(unique_uris)}. "
+                        "All datasets in a project-study group must have the same URI."
+                    )
+                warehouse_uri = unique_uris[0]
+                group_name, tiledb_uri = compose_tiledb_uri(warehouse_uri, name, logger)
+                logger.info(f"Using TileDB URI from metadata for group {group_name}: {tiledb_uri}")
+            else:
+                # Use CLI-provided URI (backward compatible)
+                group_name, tiledb_uri = compose_tiledb_uri(uri, name, logger)
+                logger.debug(f"tiledb_uri: {tiledb_uri}")
 
             # Build a per‑group output‑prefix dict
             _output_prefix_dict = {

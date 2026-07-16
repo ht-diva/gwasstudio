@@ -13,7 +13,7 @@ import cloup
 from dask import compute, delayed
 
 from gwasstudio import logger
-from gwasstudio.cli.path_utils import compose_tiledb_uri, join_path
+from gwasstudio.cli.path_utils import compose_tiledb_uri
 from gwasstudio.cli.s3 import does_uri_path_exist
 from gwasstudio.cli.utils import (
     create_config_from_context,
@@ -57,7 +57,7 @@ Ingest data in a TileDB-unified dataset.
     cloup.option(
         "--uri",
         default=None,
-        help="Destination path where to store the tiledb dataset. The prefix can be s3:// or file://",
+        help="Warehouse path for storing the tiledb dataset. The prefix can be s3:// or file://",
     ),
     cloup.option(
         "--ingestion-type",
@@ -85,7 +85,7 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
         ctx (click.Context): The click context.
         file_path (str): Path to the tabular file containing details for the ingestion.
         delimiter (str): Character or regex pattern to treat as the delimiter.
-        uri (str): Destination path where to store the tiledb dataset.
+        uri (str): Warehouse path for storing the tiledb dataset.
         ingestion_type (str): Choose between metadata ingestion, data ingestion, or both.
         pvalue (bool): Indicate whether to ingest the p-value from the summary statistics.
 
@@ -99,16 +99,37 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
         if not Path(file_path).exists():
             raise InvalidInputError(f"File not found: {file_path}")
 
-        if not uri:
-            raise InvalidInputError("URI is required")
-
         # Load metadata
         raw_df = load_metadata(Path(file_path), delimiter)
 
         # Validate columns
         df = validate_metadata_columns(raw_df)
 
-        logger.info("Starting data ingestion: {} file to process".format(len(df["file_path"].tolist())))
+        # Validate that if uri is None, warehouse_uri is in metadata file
+        if uri is None:
+            if MetadataEnum.WAREHOUSE_URI.get_value() not in df.columns:
+                raise InvalidInputError(
+                    f"URI not provided via --uri and not found in the metadata file. "
+                    f"Re-ingest data with --uri or provide {MetadataEnum.WAREHOUSE_URI.get_value()}."
+                )
+            else:
+                grouped = df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
+                for name, group in grouped:
+                    unique_uris = group[MetadataEnum.WAREHOUSE_URI.get_value()].dropna().unique()
+                    if len(unique_uris) == 0:
+                        raise InvalidInputError(
+                            f"No {MetadataEnum.WAREHOUSE_URI.get_value()} found in metadata for group {name}"
+                        )
+                    if len(unique_uris) > 1:
+                        raise InvalidInputError(
+                            f"Multiple URIs found for group {name}: {list(unique_uris)}. "
+                            "All datasets in a project-study group must have the same URI."
+                        )
+        else:
+            # Add warehouse_uri column
+            df[MetadataEnum.WAREHOUSE_URI.get_value()] = uri
+
+        logger.info(f"Starting data ingestion: {len(df['file_path'].tolist())} file to process")
 
         # Create GWASStudioConfig from context (for core compatibility)
         try:
@@ -118,35 +139,32 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
 
         # Process metadata ingestion
         if ingestion_type in ["metadata", "both"]:
-            # mongo_uri = get_mongo_uri(config)
             try:
                 core_ingest_metadata(df.to_dict(orient="records"), config=config)
-                # ingest_metadata_bulk(df, mongo_uri)
                 logger.info("Metadata ingestion completed successfully")
             except Exception as e:
                 raise IngestionError(f"Failed to ingest metadata: {str(e)}")
 
         # Process data ingestion
         if ingestion_type in ["data", "both"]:
-            scheme, netloc, path = parse_uri(uri)
+            # scheme, netloc, path = parse_uri(uri)
             with manage_daskcluster(config):
                 grouped = df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
                 for name, group in grouped:
-                    input_file_list = group["file_path"].tolist()
-                    group_name, tiledb_uri = compose_tiledb_uri(uri, name, logger)
+                    warehouse_uri = group[MetadataEnum.WAREHOUSE_URI.get_value()].dropna().unique()[0]
+                    input_file_list = group[MetadataEnum.FILE_PATH.get_value()].tolist()
+                    group_name, tiledb_uri = compose_tiledb_uri(warehouse_uri, name, logger)
                     logger.debug(f"tiledb_uri: {tiledb_uri}")
 
-                    if scheme == "s3":
-                        try:
+                    scheme, _, _ = parse_uri(warehouse_uri)
+
+                    try:
+                        if scheme == "s3":
                             ingest_to_s3(input_file_list, tiledb_uri, pvalue, config)
-                        except Exception as e:
-                            raise StorageError(f"Failed to ingest S3 data for group {group_name}: {str(e)}")
-                    else:
-                        # Assuming file system ingestion if not S3
-                        try:
+                        else:
                             ingest_to_fs(input_file_list, tiledb_uri, pvalue, config)
-                        except Exception as e:
-                            raise StorageError(f"Failed to ingest filesystem data for group {group_name}: {str(e)}")
+                    except Exception as e:
+                        raise StorageError(f"Failed to ingest data for group {group_name}: {str(e)}") from e
 
         logger.info("Ingestion done")
 
