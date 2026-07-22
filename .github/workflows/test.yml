@@ -21,16 +21,13 @@ jobs:
 
       - uses: conda-incubator/setup-miniconda@v4
         with:
-          use-mamba: true
+#          use-mamba: true
           activate-environment: gwasstudio
           environment-file: base_environment_docker.yml
           auto-update-conda: true
           auto-activate-base: false
           python-version: ${{ matrix.python-version }}
-          channels: conda-forge
-          channel-priority: true
-        env:
-          CONDA_NO_PLUGINS: "true"
+          miniforge-version: latest
 
       - name: Install the project
         shell: bash -el {0}
