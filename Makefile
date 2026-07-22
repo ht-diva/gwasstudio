@@ -1,10 +1,23 @@
 APPNAME=$(shell grep -m 1 name pyproject.toml|cut -f2 -d'"')
-TARGETS=build clean create-env dependencies deploy editable_install install test uninstall
+TARGETS=build clean create-env dependencies deploy editable_install install test uninstall test-dependencies
 VERSION=$(shell grep -m 1 version pyproject.toml|cut -f2 -d'"')
 ENV_NAME=${APPNAME}
 CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
 
 .PHONY: ${TARGETS}
+
+# Target to install MongoDB dependencies for testing
+test-dependencies:
+	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+        echo "Activating conda environment: ${ENV_NAME}"; \
+		$(CONDA_ACTIVATE) ${ENV_NAME}; \
+	fi; \
+	if ! command -v mongod &> /dev/null; then \
+	    echo "Installing MongoDB dependencies for testing..."; \
+	    mamba install -y mongodb mongo-tools; \
+	else \
+	    echo "MongoDB dependencies already installed"; \
+	fi
 
 all:
 	@echo "Try one of: ${TARGETS}"
@@ -98,7 +111,7 @@ unit_test:
 	fi; \
 	pytest --cov=src/gwasstudio/ tests
 
-test_ingest_metadata:
+test_ingest_metadata: test-dependencies
 	@echo "Running ingest + query integration tests..."
 	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
@@ -106,7 +119,7 @@ test_ingest_metadata:
 	fi; \
 	bash tests/integration/test_ingest_metadata.sh
 
-test_full_export:
+test_full_export: test-dependencies
 	@echo "Running full pipeline integration tests..."
 	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
@@ -114,7 +127,7 @@ test_full_export:
 	fi; \
 	bash tests/integration/test_full_export.sh
 
-test_ingest_with_recalc:
+test_ingest_with_recalc: test-dependencies
 	@echo "Running ingest with -log10p recalculation tests..."
 	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
@@ -122,7 +135,7 @@ test_ingest_with_recalc:
 	fi; \
 	bash tests/integration/test_ingest_with_recalc.sh
 
-test-integration-pytest:
+test-integration-pytest: test-dependencies
 	@echo "Running integration tests via pytest..."
 	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \

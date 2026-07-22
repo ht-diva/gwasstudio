@@ -8,6 +8,4 @@ dependencies:
   - poetry-core=2.1.*
   - poetry=2.*
   - make
-  - mongodb
-  - mongo-tools
   - dash-bio
