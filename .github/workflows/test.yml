@@ -16,14 +16,19 @@ jobs:
         with:
           submodules: true
 
+      - name: Clear conda cache
+        run: conda clean --all -y
+
       - uses: conda-incubator/setup-miniconda@v4
         with:
           use-mamba: true
           activate-environment: gwasstudio
           environment-file: base_environment_docker.yml
           auto-update-conda: true
-          auto-activate: false
+          auto-activate-base: false
           python-version: ${{ matrix.python-version }}
+          channels: conda-forge
+          channel-priority: true
 
       - name: Install the project
         shell: bash -el {0}
