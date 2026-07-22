@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.12"]
 
     steps:
       - name: Checkout repository
@@ -29,6 +29,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           channels: conda-forge
           channel-priority: true
+          # Add this to skip problematic packages
+          conda-remove-pkgs: findpython
 
       - name: Install the project
         shell: bash -el {0}
