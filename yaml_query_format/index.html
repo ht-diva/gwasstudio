@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://ht-diva.github.io/gwasstudio/getting-started/">
+        <link rel="canonical" href="https://ht-diva.github.io/gwasstudio/yaml_query_format/">
       
       
-        <link rel="prev" href="..">
+        <link rel="prev" href="../getting-started/">
       
       
-        <link rel="next" href="../yaml_query_format/">
+        <link rel="next" href="../examples/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Getting Started - GWASStudio documentation</title>
+        <title>Query format - GWASStudio documentation</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#getting-started" class="md-skip">
+        <a href="#gwasstudio-yaml-query-format" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Getting Started
+              Query format
             
           </span>
         </div>
@@ -332,6 +332,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -351,7 +379,7 @@
   <span class="md-ellipsis">
     
   
-    Getting Started
+    Query format
   
 
     
@@ -369,7 +397,7 @@
   <span class="md-ellipsis">
     
   
-    Getting Started
+    Query format
   
 
     
@@ -395,22 +423,44 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#usage-on-the-ht-hpc" class="md-nav__link">
+  <a href="#what-is-yaml" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage on the HT-HPC
+        What is YAML
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Usage on the HT-HPC">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Format
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic Format">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#vault-token" class="md-nav__link">
+  <a href="#simple-query" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Vault token
+        Simple Query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-explicit-query-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With Explicit Query Fields
       
     </span>
   </a>
@@ -423,34 +473,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#main-commands" class="md-nav__link">
+  <a href="#nested-structure-format" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Main commands
+        Nested Structure Format
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Main commands">
+    <nav class="md-nav" aria-label="Nested Structure Format">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-list" class="md-nav__link">
+  <a href="#single-nested-field" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. list
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. list">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        List example
+        Single Nested Field
       
     </span>
   </a>
@@ -458,10 +496,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#list-output-example" class="md-nav__link">
+  <a href="#multiple-nested-values" class="md-nav__link">
     <span class="md-ellipsis">
       
-        List output example
+        Multiple Nested Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plain-list-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plain List Values
       
     </span>
   </a>
@@ -472,24 +521,46 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#2-meta-query" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#trait-specific-queries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. meta-query
+        Trait-Specific Queries
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2. meta-query">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output Fields
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Query Options">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#meta-query-example" class="md-nav__link">
+  <a href="#case-sensitivity" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Meta-query example
+        Case Sensitivity
       
     </span>
   </a>
@@ -497,22 +568,38 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#query-file" class="md-nav__link">
+  <a href="#exact-match" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Query file
+        Exact Match
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Query file">
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complete-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Complete Examples">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#query-file-example" class="md-nav__link">
+  <a href="#example-1-basic-query" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Query file example
+        Example 1: Basic Query
       
     </span>
   </a>
@@ -520,10 +607,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#meta-query-output-example" class="md-nav__link">
+  <a href="#example-2-nested-query" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Meta-query output example
+        Example 2: Nested Query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-3-trait-specific-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 3: Trait-Specific Query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-4-multi-value-population-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 4: Multi-Value Population Filter
       
     </span>
   </a>
@@ -534,142 +643,48 @@
     </nav>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-ingest" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#field-mapping" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. ingest
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="3. ingest">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#ingest-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Ingest example
+        Field Mapping
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-export" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#valid-metadata-fields" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. export
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. export">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enter-compute-node" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enter compute node
+        Valid Metadata Fields
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#full-stats" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#usage-with-cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Full stats
+        Usage with CLI
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#filtering-options" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Filtering options
+        Notes
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Filtering options">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#region-and-snp-filtering" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Region and SNP filtering
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trait-specific-lead-snp-search" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Trait-specific lead-SNP search
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#p-value-filtering" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        P-value filtering
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#locusbreaker" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Locusbreaker
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -677,34 +692,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../yaml_query_format/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Query format
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -968,22 +955,44 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#usage-on-the-ht-hpc" class="md-nav__link">
+  <a href="#what-is-yaml" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage on the HT-HPC
+        What is YAML
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Usage on the HT-HPC">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Format
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic Format">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#vault-token" class="md-nav__link">
+  <a href="#simple-query" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Vault token
+        Simple Query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-explicit-query-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With Explicit Query Fields
       
     </span>
   </a>
@@ -996,34 +1005,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#main-commands" class="md-nav__link">
+  <a href="#nested-structure-format" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Main commands
+        Nested Structure Format
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Main commands">
+    <nav class="md-nav" aria-label="Nested Structure Format">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-list" class="md-nav__link">
+  <a href="#single-nested-field" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. list
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. list">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        List example
+        Single Nested Field
       
     </span>
   </a>
@@ -1031,10 +1028,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#list-output-example" class="md-nav__link">
+  <a href="#multiple-nested-values" class="md-nav__link">
     <span class="md-ellipsis">
       
-        List output example
+        Multiple Nested Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plain-list-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plain List Values
       
     </span>
   </a>
@@ -1045,24 +1053,46 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#2-meta-query" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#trait-specific-queries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. meta-query
+        Trait-Specific Queries
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2. meta-query">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output Fields
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Query Options">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#meta-query-example" class="md-nav__link">
+  <a href="#case-sensitivity" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Meta-query example
+        Case Sensitivity
       
     </span>
   </a>
@@ -1070,22 +1100,38 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#query-file" class="md-nav__link">
+  <a href="#exact-match" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Query file
+        Exact Match
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Query file">
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complete-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Complete Examples">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#query-file-example" class="md-nav__link">
+  <a href="#example-1-basic-query" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Query file example
+        Example 1: Basic Query
       
     </span>
   </a>
@@ -1093,10 +1139,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#meta-query-output-example" class="md-nav__link">
+  <a href="#example-2-nested-query" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Meta-query output example
+        Example 2: Nested Query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-3-trait-specific-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 3: Trait-Specific Query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-4-multi-value-population-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 4: Multi-Value Population Filter
       
     </span>
   </a>
@@ -1107,142 +1175,48 @@
     </nav>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-ingest" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#field-mapping" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. ingest
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="3. ingest">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#ingest-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Ingest example
+        Field Mapping
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-export" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#valid-metadata-fields" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. export
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. export">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enter-compute-node" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enter compute node
+        Valid Metadata Fields
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#full-stats" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#usage-with-cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Full stats
+        Usage with CLI
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#filtering-options" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Filtering options
+        Notes
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Filtering options">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#region-and-snp-filtering" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Region and SNP filtering
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trait-specific-lead-snp-search" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Trait-specific lead-SNP search
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#p-value-filtering" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        P-value filtering
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#locusbreaker" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Locusbreaker
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1266,208 +1240,298 @@
   
 
 
-<h1 id="getting-started"><strong>Getting Started</strong></h1>
-<p>This short overview of GWASStudio will help you get started.</p>
-<hr />
-<h2 id="usage-on-the-ht-hpc"><strong>Usage on the HT-HPC</strong></h2>
-<p>To use GWASStudio on the HT computing cluster, simply type:</p>
-<pre><code>source /exchange/healthds/singularity_functions
+<h1 id="gwasstudio-yaml-query-format">GWASStudio YAML Query Format</h1>
+<p>This document describes the YAML format for querying GWASStudio metadata.</p>
+<h2 id="what-is-yaml">What is YAML</h2>
+<p>YAML is a human-readable data serialization format that uses indentation and simple syntax to represent structured data like mappings, lists, and scalars.</p>
+<p>See the <a href="../yaml-intro/">YAML Crash Course for GWASStudio</a> for a focused introduction to YAML covering only the concepts you need to work with GWASStudio configuration, query, and metadata files.</p>
+<h2 id="basic-format">Basic Format</h2>
+<h3 id="simple-query">Simple Query</h3>
+<pre><code class="language-yaml">project: opengwas
+category: GWAS
 </code></pre>
-<p>Verify with:</p>
-<pre><code>gwasstudio --version
+<p>This queries for all documents where:
+- <code>project</code> field matches "opengwas" (case-insensitive by default)
+- <code>category</code> field matches "GWAS" (case-insensitive by default)</p>
+<h3 id="with-explicit-query-fields">With Explicit Query Fields</h3>
+<pre><code class="language-yaml">query_fields:
+  project: opengwas
+  category: GWAS
 </code></pre>
-<h3 id="vault-token"><strong>Vault token</strong></h3>
-<p>To securely access (meta)data according to your user permissions, you will be provided with a vault token.</p>
-<p>To authenticate automatically, please save your token in the following file:</p>
-<pre><code>${HOME}/.vault-token
+<p>The <code>query_fields</code> key is optional. If present, the query parameters are nested under it.</p>
+<h2 id="nested-structure-format">Nested Structure Format</h2>
+<h3 id="single-nested-field">Single Nested Field</h3>
+<pre><code class="language-yaml">query_fields:
+  project: opengwas
+  category: GWAS
+  notes:
+    - consortium: GIANT
+
+output_fields:
+  - build
+  - population
+  - notes_consortium
 </code></pre>
-<p><strong>NOTE</strong>:</p>
-<ul>
-<li>The vault token is <strong>personal and confidential</strong>. <strong>Do not</strong> share it with other users</li>
-<li>If <code>${HOME}/.vault-token</code> is missing, you will be prompted to manually paste the token during command execution</li>
-</ul>
-<hr />
-<h2 id="main-commands"><strong>Main commands</strong></h2>
-<p>GWASStudio has four main commands for users:</p>
-<ul>
-<li><a href="#1-list">list</a>: list available/accessible data</li>
-<li><a href="#2-meta-query">meta-query</a>: query metadata of interest</li>
-<li><a href="#3-ingest">ingest</a>: ingestion of summary-statistics files(s)</li>
-<li><a href="#4-export">export</a>: export data of interest</li>
-</ul>
-<hr />
-<h3 id="1-list"><strong>1. <code>list</code></strong></h3>
-<p>The <code>list</code> command is used to display all summary statistics available on MongoDB, based on your access permissions (see <a href="#vault-token">vault token</a>) as category → project → study.</p>
-<h5 id="list-example">List example</h5>
-<pre><code>gwasstudio list
+<p>The <code>notes.consortium</code> field is automatically mapped to <code>notes_consortium</code> (underscore notation).</p>
+<p><strong>Resulting MongoDB Query:</strong></p>
+<pre><code class="language-json">{
+  &quot;project&quot;: {&quot;$regex&quot;: &quot;opengwas&quot;, &quot;$options&quot;: &quot;i&quot;},
+  &quot;category&quot;: {&quot;$regex&quot;: &quot;GWAS&quot;, &quot;$options&quot;: &quot;i&quot;},
+  &quot;notes_consortium&quot;: {&quot;$regex&quot;: &quot;GIANT&quot;, &quot;$options&quot;: &quot;i&quot;}
+}
 </code></pre>
-<h5 id="list-output-example">List output example</h5>
-<pre><code>Category: GWAS
-  Project: opengwas
-        Studies: ukb-a, ukb-b, ukb-d
+<h3 id="multiple-nested-values">Multiple Nested Values</h3>
+<p>When the same nested key appears in multiple list items, the values are combined into a <strong>regex OR</strong> pattern:</p>
+<pre><code class="language-yaml">query_fields:
+  project: opengwas
+  category: GWAS
+  notes:
+    - consortium: GIANT
+    - consortium: MRC-IEU
 </code></pre>
-<hr />
-<h3 id="2-meta-query"><strong>2. <code>meta-query</code></strong></h3>
-<p>The <code>meta-query</code> command retrieves <a href="../metadata/">metadata</a> of interest using a <a href="#query-file">query file</a>. It can be used to verify the availability and characteristics of the data to <a href="#4-export">export</a>.</p>
-<h5 id="meta-query-example">Meta-query example</h5>
-<pre><code>gwasstudio meta-query --search-file query_ex01.yml --output-prefix output_query_ex01
+<p><strong>Resulting MongoDB Query:</strong></p>
+<pre><code class="language-json">{
+  &quot;project&quot;: {&quot;$regex&quot;: &quot;opengwas&quot;, &quot;$options&quot;: &quot;i&quot;},
+  &quot;category&quot;: {&quot;$regex&quot;: &quot;GWAS&quot;, &quot;$options&quot;: &quot;i&quot;},
+  &quot;notes_consortium&quot;: {&quot;$regex&quot;: &quot;GIANT|MRC-IEU&quot;, &quot;$options&quot;: &quot;i&quot;}
+}
 </code></pre>
-<p>The output is a <a href="../metadata/">metadata</a> table named <code>output_query_ex01_meta.csv</code> with records filtered by the query file <code>query_ex01.yml</code>.</p>
-<p>For a detailed explanation of all command options, see also <a href="../commands/#meta-query">meta-query command</a>.</p>
-<hr />
-<h4 id="query-file"><strong>Query file</strong></h4>
-<p>The query file used to retrieve (meta)data follows a structured format with two sections:</p>
-<ul>
-<li>Filtering criteria: <a href="../metadata/">metadata fields</a> used to query the database, specified as <code>metadata field: filtering value</code> pairs</li>
-<li>Output specification (<code>output:</code> or <code>output_fields:</code>): a list of valid <a href="../metadata/">metadata fields</a> to include in the output</li>
-</ul>
-<p>The query file must be in <strong>YAML</strong> format (<code>.yml</code> or <code>.yaml</code> extension).</p>
-<h5 id="query-file-example">Query file example</h5>
+<blockquote>
+<p><strong>Note:</strong> This is equivalent to an <code>$in</code> match on <code>notes_consortium</code>, but GWASStudio produces a regex pattern internally.</p>
+</blockquote>
+<h3 id="plain-list-values">Plain List Values</h3>
+<p>When a field is a plain list (not a list of dicts), GWASStudio uses <code>$in</code> in the MongoDB query:</p>
+<pre><code class="language-yaml">query_fields:
+  population:
+    - EUR
+    - ASN
+</code></pre>
+<p><strong>Resulting MongoDB Query:</strong></p>
+<pre><code class="language-json">{
+  &quot;population&quot;: {&quot;$in&quot;: [&quot;EUR&quot;, &quot;ASN&quot;]}
+}
+</code></pre>
+<h2 id="trait-specific-queries">Trait-Specific Queries</h2>
+<p>To filter by trait attributes, use the <code>trait</code> key with a list of dicts:</p>
 <pre><code class="language-yaml">project: opengwas
 study: ukb-d
 
 trait:
-  - desc: Z42
-  - desc: pregnancy
+  - desc: heart failure
+  - desc: BMI
 
 output:
   - build
   - population
+  - trait_desc
+</code></pre>
+<p><strong>Resulting MongoDB Query:</strong></p>
+<pre><code class="language-json">{
+  &quot;project&quot;: {&quot;$regex&quot;: &quot;opengwas&quot;, &quot;$options&quot;: &quot;i&quot;},
+  &quot;study&quot;: {&quot;$regex&quot;: &quot;ukb-d&quot;, &quot;$options&quot;: &quot;i&quot;},
+  &quot;trait_desc&quot;: {&quot;$regex&quot;: &quot;heart failure|BMI&quot;, &quot;$options&quot;: &quot;i&quot;}
+}
+</code></pre>
+<h2 id="output-fields">Output Fields</h2>
+<p>Specify which fields to include in the output:</p>
+<pre><code class="language-yaml">output_fields:
+  - build
+  - population
+  - notes_consortium
   - notes_sex
-  - notes_source_id
   - total_samples
   - total_cases
   - total_controls
   - trait_desc
 </code></pre>
-<p>This query file searches within the <code>ukb-d</code> study for all trait descriptions containing <code>Z42</code> or <code>pregnancy</code>, and returns a table with the columns specified in section <code>output:</code>.</p>
-<p><strong>NOTES</strong>:</p>
+<p>The <code>output</code> key can also be used. This is for backward compatibility.</p>
+<pre><code class="language-yaml">output:
+  - build
+  - population
+  - notes_consortium
+</code></pre>
+<h2 id="query-options">Query Options</h2>
+<h3 id="case-sensitivity">Case Sensitivity</h3>
 <ul>
-<li>Filtering values can include partial matches (e.g., trait descriptions containing <code>Z42</code> or <code>pregnancy</code>)</li>
-<li>Filtering values are processed by lowercasing and replacing special characters before being used to query the database</li>
-<li>It is possible to query across different projects and studies by not specifying <code>project</code> and <code>study</code> in the query file</li>
-<li>Use the <code>--exact-match</code> flag for exact string matching, or <code>--case-sensitive</code> for case-sensitive search</li>
+<li><strong>Default</strong>: Case-insensitive matching</li>
+<li><strong>Case-sensitive</strong>: Use <code>--case-sensitive</code> flag</li>
 </ul>
-<hr />
-<h5 id="meta-query-output-example">Meta-query output example</h5>
+<h3 id="exact-match">Exact Match</h3>
+<ul>
+<li><strong>Default</strong>: Partial matching with regex</li>
+<li><strong>Exact match</strong>: Use <code>--exact-match</code> flag</li>
+</ul>
+<p><strong>Example with exact match:</strong></p>
+<pre><code class="language-bash">gwasstudio meta-query --exact-match --search-file search.yml
+</code></pre>
+<p><strong>Resulting MongoDB Query:</strong></p>
+<pre><code class="language-json">{
+  &quot;project&quot;: {&quot;$regex&quot;: &quot;^opengwas$&quot;, &quot;$options&quot;: &quot;i&quot;},
+  &quot;category&quot;: {&quot;$regex&quot;: &quot;^GWAS$&quot;, &quot;$options&quot;: &quot;i&quot;},
+  &quot;notes_consortium&quot;: {&quot;$regex&quot;: &quot;^(GIANT|MRC-IEU)$&quot;, &quot;$options&quot;: &quot;i&quot;}
+}
+</code></pre>
+<p>With both <code>--exact-match</code> and <code>--case-sensitive</code>:</p>
+<pre><code class="language-json">{
+  &quot;project&quot;: &quot;opengwas&quot;,
+  &quot;category&quot;: &quot;GWAS&quot;,
+  &quot;notes_consortium&quot;: {&quot;$regex&quot;: &quot;^(GIANT|MRC-IEU)$&quot;}
+}
+</code></pre>
+<h2 id="complete-examples">Complete Examples</h2>
+<h3 id="example-1-basic-query">Example 1: Basic Query</h3>
+<p><strong>File: <code>search_example_01.yml</code></strong></p>
+<pre><code class="language-yaml">query_fields:
+  project: opengwas
+  category: GWAS
+  build: GRCh37
+
+output_fields:
+  - study
+  - population
+  - total_samples
+</code></pre>
+<h3 id="example-2-nested-query">Example 2: Nested Query</h3>
+<p><strong>File: <code>search_example_02.yml</code></strong></p>
+<pre><code class="language-yaml">query_fields:
+  project: opengwas
+  category: GWAS
+  notes:
+    - consortium: GIANT
+
+output_fields:
+  - build
+  - population
+  - notes_consortium
+  - total_samples
+  - total_cases
+  - total_controls
+  - trait_desc
+</code></pre>
+<h3 id="example-3-trait-specific-query">Example 3: Trait-Specific Query</h3>
+<p><strong>File: <code>search_example_04.yml</code></strong></p>
+<pre><code class="language-yaml">project: opengwas
+category: GWAS
+trait:
+  - desc: Body Mass Index
+  - desc: BMI
+
+output:
+  - build
+  - population
+  - trait_desc
+</code></pre>
+<h3 id="example-4-multi-value-population-filter">Example 4: Multi-Value Population Filter</h3>
+<p><strong>File: <code>search_example_05.yml</code></strong></p>
+<pre><code class="language-yaml">project: opengwas
+category: GWAS
+
+population:
+  - EUR
+  - ASN
+
+output:
+  - study
+  - trait_desc
+</code></pre>
+<h2 id="field-mapping">Field Mapping</h2>
+<p>Nested fields are automatically mapped from dotted key notation to underscore notation:</p>
 <table>
 <thead>
 <tr>
-<th>project</th>
-<th>study</th>
-<th>category</th>
-<th>data_id</th>
-<th>build</th>
-<th>population</th>
-<th>notes_sex</th>
-<th>notes_source_id</th>
-<th>total_samples</th>
-<th>total_cases</th>
-<th>total_controls</th>
-<th>trait_desc</th>
+<th>YAML Format</th>
+<th>MongoDB Field</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>opengwas</td>
-<td>ukb-d</td>
-<td>GWAS</td>
-<td>47e96deafe</td>
-<td>GRCh38</td>
-<td>European</td>
-<td>Males and Females</td>
-<td>ukb-d-XV_PREGNANCY_BIRTH</td>
-<td>361194</td>
-<td>11959</td>
-<td>349235</td>
-<td>Pregnancy, childbirth and the puerperium</td>
+<td><code>notes.consortium</code></td>
+<td><code>notes_consortium</code></td>
 </tr>
 <tr>
-<td>opengwas</td>
-<td>ukb-d</td>
-<td>GWAS</td>
-<td>531f0d4bcc</td>
-<td>GRCh38</td>
-<td>European</td>
-<td>Males and Females</td>
-<td>ukb-d-Z42</td>
-<td>361194</td>
-<td>1963</td>
-<td>359231</td>
-<td>Diagnoses - main ICD10: Z42 Follow-up care involving plastic surgery</td>
+<td><code>notes.sex</code></td>
+<td><code>notes_sex</code></td>
 </tr>
 <tr>
-<td>opengwas</td>
-<td>ukb-d</td>
-<td>GWAS</td>
-<td>cc18ce8683</td>
-<td>GRCh38</td>
-<td>European</td>
-<td>Males and Females</td>
-<td>ukb-d-O26</td>
-<td>361194</td>
-<td>1289</td>
-<td>359905</td>
-<td>Diagnoses - main ICD10: O26 Maternal care for other conditions predominantly related to pregnancy</td>
+<td><code>trait.desc</code></td>
+<td><code>trait_desc</code></td>
+</tr>
+<tr>
+<td><code>trait.code</code></td>
+<td><code>trait_code</code></td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h3 id="3-ingest"><strong>3. <code>ingest</code></strong></h3>
-<p>The <code>ingest</code> command stores <a href="../summary-statistics/">harmonized summary-statistics</a> files(s) into a TileDB dataset, using the relative metadata (which includes the source file paths) and the specified destination path.</p>
-<p>For a detailed explanation of input formatting, see <a href="../summary-statistics/">Summary-statistics columns</a> and <a href="../metadata/">Metadata fields</a>.</p>
-<hr />
-<h5 id="ingest-example">Ingest example</h5>
-<pre><code>gwasstudio ingest --file-path metadata_ukb_d_sampled.tsv --uri destination
+<h2 id="valid-metadata-fields">Valid Metadata Fields</h2>
+<p>Refer to <code>MetadataEnum</code> in <code>gwasstudio.core.enums</code> for the complete list of valid fields:</p>
+<ul>
+<li><code>project</code></li>
+<li><code>study</code></li>
+<li><code>file_path</code></li>
+<li><code>category</code></li>
+<li><code>data_id</code></li>
+<li><code>build</code></li>
+<li><code>notes_consortium</code></li>
+<li><code>notes_sex</code></li>
+<li><code>notes_source_id</code></li>
+<li><code>total_samples</code></li>
+<li><code>total_cases</code></li>
+<li><code>total_controls</code></li>
+<li><code>trait_code</code></li>
+<li><code>trait_desc</code></li>
+<li><code>trait_gene_ids</code></li>
+<li><code>trait_protein_ids</code></li>
+<li><code>trait_seqid</code></li>
+<li><code>trait_tissue</code></li>
+<li><code>trait_unit</code></li>
+</ul>
+<h2 id="usage-with-cli">Usage with CLI</h2>
+<pre><code class="language-bash"># Basic query
+gwasstudio meta-query \
+  --search-file search_example_02.yml \
+  --output-prefix results/
+
+# With exact match
+gwasstudio meta-query --exact-match \
+  --search-file search_example_02.yml \
+  --output-prefix results/
+
+# With case-sensitive matching
+gwasstudio meta-query --case-sensitive \
+  --search-file search_example_02.yml \
+  --output-prefix results/
+
+# With both exact and case-sensitive
+gwasstudio meta-query --exact-match --case-sensitive \
+  --search-file search_example_02.yml \
+  --output-prefix results/
+
+# With verbose logging
+gwasstudio --stdout --verbosity loud meta-query \
+  --search-file search_example_02.yml \
+  --output-prefix results/
 </code></pre>
-<p>This command creates a folder named <code>destination</code>, containing the summary-statistics data stored in TileDB format.</p>
-<p>For a detailed explanation of all command options, see also <a href="../commands/#ingest">ingest command</a>.</p>
-<hr />
-<h3 id="4-export"><strong>4. <code>export</code></strong></h3>
-<p>The <code>export</code> command is used to extract records of summary statistics (and associated metadata) from TileDB as specified in the query file.</p>
-<hr />
-<h4 id="enter-compute-node">Enter compute node</h4>
-<p>The <code>export</code> command is a computationally intensive operation. Therefore, it must be executed from a <strong>compute node</strong>.</p>
-<p>To enter a compute node, run the following command:</p>
-<pre><code>salloc --partition=cpu-interactive --nodes=1 --ntasks-per-node=2 --mem-per-cpu=2048M --time=12:00:00
-</code></pre>
-<hr />
-<h4 id="full-stats">Full stats</h4>
-<p>The <code>export</code> command, when used without any filtering options, will export the full set of summary statistics.</p>
-<pre><code>gwasstudio export --search-file query_ex01.yml
-</code></pre>
-<hr />
-<h4 id="filtering-options">Filtering options</h4>
-<p>Exports can also be performed with different filtering options.</p>
-<hr />
-<h5 id="region-and-snp-filtering">Region and SNP filtering</h5>
-<p>Command example to export data by filtering regions and SNPIDs provided in <code>region_or_snp_list.tsv</code>:</p>
-<pre><code>gwasstudio export --search-file query_ex01.yml --get-regions-snps region_or_snp_list.tsv
-</code></pre>
-<p>The list of regions and SNPs to filter should preferably be in BED format. Example: <a href="https://github.com/ht-diva/gwasstudio/blob/main/data/regions_query.tsv"><code>regions_query.tsv</code></a>.</p>
-<p>Alternatively, SNPIDs can also be listed in CHR,POS format. Example: <a href="https://github.com/ht-diva/gwasstudio/blob/main/data/hapmap3/hapmap3_snps.csv"><code>hapmap3_snps.csv</code></a>.</p>
-<hr />
-<h5 id="trait-specific-lead-snp-search">Trait-specific lead-SNP search</h5>
-<p>Given an input table <code>trait_snps_list.csv</code> (SOURCE_ID,CHR,POS,EA,NEA), the command <code>--get-regions-leadsnps</code> creates a window of given width (default 1 Mb) and extracts from this region the statistics (MLOG10P, BETA, SE) of:</p>
+<h2 id="notes">Notes</h2>
 <ol>
-<li>the lead SNP, i.e. the SNPID with the most significant P-value;</li>
-<li>the exact SNP, i.e. the exact CHR:POS:EA:NEA of the input. <em>Note</em> that the input SNPs must be harmonized to alphabetically ordered alleles.</li>
+<li>
+<p><strong>Project and Study Transformation</strong>: The <code>project</code> and <code>study</code> fields are automatically transformed to lowercase with spaces replaced by underscores before the query is sent to MongoDB.</p>
+</li>
+<li>
+<p><strong>Empty Values</strong>: Empty or null values are handled gracefully.</p>
+</li>
+<li>
+<p><strong>Validation</strong>: All query fields are validated against the metadata schema. Invalid fields will raise an <code>InvalidQueryFieldError</code> with a list of valid fields.</p>
+</li>
+<li>
+<p><strong>Logging</strong>: Use <code>--verbosity loud</code> to see detailed information about the parsed template and final MongoDB query.</p>
+</li>
+<li>
+<p><strong>Matching Behavior</strong>:</p>
+</li>
+<li>String values → regex match (<code>$regex</code>) by default</li>
+<li>List values → <code>$in</code> match if the list contains plain values (e.g., populations)</li>
+<li>List of dicts (e.g., <code>trait: [{desc: ...}]</code>) → regex OR (<code>|</code>) on the nested field</li>
 </ol>
-<pre><code>gwasstudio export --search-file query_trait_snps.yml --get-regions-leadsnps trait_snps_list.csv
-</code></pre>
-<hr />
-<h5 id="p-value-filtering">P-value filtering</h5>
-<p>Command example to export data by filtering based on a P-value threshold (in -log10 format):</p>
-<pre><code>gwasstudio export --search-file query_ex01.yml --pvalue-thr 4
-</code></pre>
-<hr />
-<h5 id="locusbreaker">Locusbreaker</h5>
-<p>Command example to export data with locusbreaker:</p>
-<pre><code>gwasstudio export --search-file query_ex01.yml --locusbreaker
-</code></pre>
-<hr />
-<p>For a detailed explanation of all command options, see also <a href="../commands/#export">export command</a>.</p>
-<hr />
 
 
 

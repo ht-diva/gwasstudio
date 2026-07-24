@@ -335,14 +335,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Installation
+    Getting Started
   
 
     
@@ -363,14 +363,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/" class="md-nav__link">
+      <a href="../yaml_query_format/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Getting Started
+    Query format
   
 
     
@@ -678,6 +678,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../changelog/" class="md-nav__link">
         
   
@@ -831,94 +859,97 @@
 <p><strong>Usage:</strong></p>
 <pre><code class="language-shell">gwasstudio export [OPTIONS]
 </code></pre>
-<p><strong>Options:</strong></p>
+<p><strong>TileDB options:</strong></p>
 <ul>
-<li><code>--uri TEXT</code>: URI of the TileDB dataset.</li>
-<li><code>--output-prefix TEXT</code>: Prefix for naming output files (default: <code>out</code>).</li>
-<li><code>--output-format [parquet|csv.gz|csv]</code>: Output file format (default: <code>csv.gz</code>).</li>
-<li><code>--search-file TEXT</code>: Input file for querying metadata (required).</li>
-<li><code>--attr TEXT</code>: String delimited by comma with the attributes to export (default: <code>BETA,SE,EAF,MLOG10P</code>).</li>
+<li><code>--uri TEXT</code>: URI of the TileDB dataset</li>
+<li><code>--output-prefix TEXT</code>: Prefix for naming output files</li>
+<li><code>--output-format [parquet|csv.gz|csv]</code>: Output file format</li>
+<li><code>--search-file TEXT</code>: Input file for querying metadata (required)</li>
+<li><code>--attr TEXT</code>: string delimited by comma with the attributes to export (required)</li>
 </ul>
-<p><strong>Locusbreaker Options:</strong></p>
+<p><strong>Meta-analysis options:</strong></p>
 <ul>
-<li><code>--locusbreaker</code>: Option to run locusbreaker (flag).</li>
-<li><code>--pvalue-sig FLOAT</code>: Maximum log p-value threshold within the window (default: <code>5.0</code>).</li>
-<li><code>--pvalue-limit FLOAT</code>: Log p-value threshold for loci borders (default: <code>3.3</code>).</li>
-<li><code>--hole-size INTEGER</code>: Minimum pair-base distance between SNPs in different loci (default: <code>250000</code>).</li>
-<li><code>--maf FLOAT</code>: MAF filter to apply before locusbreaker (default: <code>0.01</code>).</li>
-<li><code>--locus-flanks INTEGER</code>: Flanking regions (in bp) to extend each locus in both directions (default: <code>100000</code>).</li>
-<li><code>--phenovar</code>: Boolean to compute phenovariance (Work in progress, not fully implemented yet) (flag).</li>
+<li><code>--meta-analysis</code>: Option to run meta-analysis</li>
 </ul>
-<p><strong>Regions and SNP ID List Filtering Options:</strong></p>
+<p><strong>Locusbreaker options:</strong></p>
 <ul>
-<li><code>--get-regions-snps TEXT</code>:</li>
-<li>A valid BED (CHR\tSTART\tEND) file path or</li>
-<li>A valid SNP list (CHR,POS) file path or</li>
-<li>An inline string: "CHR,START,END;CHR,START,END" for regions; "CHR,POS;CHR,POS" for SNPs</li>
-<li><code>--pvalue-filt FLOAT</code>: Minimum -log10(p-value) threshold to keep significant filtered SNPs (default: 0, no filter)</li>
-<li><code>--skip-out</code>: Boolean to skip writing region outputs (default: False).</li>
-<li><code>--nest</code>: Estimate effective population size (Work in progress, not fully implemented yet) (flag).</li>
+<li><code>--locusbreaker</code>: Option to run locusbreaker</li>
+<li><code>--pvalue-sig FLOAT</code>: Maximum log p-value threshold within the window</li>
+<li><code>--pvalue-limit FLOAT</code>: Log p-value threshold for loci borders</li>
+<li><code>--hole-size INTEGER</code>: Minimum pair-base distance between SNPs in different loci</li>
+<li><code>--maf FLOAT</code>: MAF filter to apply before locusbreaker</li>
+<li><code>--phenovar</code>: Boolean to compute phenovariance (Work in progress, not fully implemented yet)</li>
+<li><code>--locus-flanks INTEGER</code>: Flanking regions (in bp) to extend each locus in both directions</li>
 </ul>
-<p><strong>Trait-specific Lead-SNP Search Options:</strong></p>
+<p><strong>Regions or SNP ID filtering options:</strong></p>
 <ul>
-<li><code>--get-regions-leadsnps TEXT</code>: A DataFrame containing SOURCE_ID (trait), CHR, POS, EA and NEA (and optionally CIS_TRANS) for lead-SNP search.</li>
-<li><code>--cis-flanks INTEGER</code>: Flanking region (in bp) around POS for the search of CIS lead-SNP (default: 500000).</li>
-<li><code>--trans-flanks INTEGER</code>: Flanking region (in bp) around POS for the search of TRANS lead-SNP (default: 1000000).</li>
-<li><code>--exact-alleles</code>: Boolean to search exact lead match by CHR, POS, EA and NEA, or only by CHR and POS (default: False)</li>
+<li><code>--get-regions-snps TEXT</code>: BED (CHR\tSTART\tEND) or SNP list (CHR,POS) file paths, or string equivalents: (CHR,START,END;CHR,START,END) for regions; (CHR,POS;CHR,POS) for SNPs</li>
+<li><code>--pvalue-filt FLOAT</code>: Minimum -log10(p-value) threshold to keep significant filtered SNPs</li>
+<li><code>--skip-out</code>: Do not write regions output (default: False)</li>
+<li><code>--skip-meta</code>: Do not add metadata columns (default: False)</li>
+<li><code>--nest</code>: Estimate effective population size (Work in progress, not fully implemented yet)</li>
 </ul>
-<p><strong>P-value Filtering Options:</strong></p>
+<p><strong>Trait-specific lead-SNP search options:</strong></p>
 <ul>
-<li><code>--pvalue-thr FLOAT</code>: P-value threshold in -log10 format used to filter significant SNPs (default: 0, no filter)</li>
+<li><code>--get-regions-leadsnps TEXT</code>: A DataFrame containing SOURCE_ID (trait), CHR, POS, EA and NEA for lead-SNP search</li>
+<li><code>--cis-flanks INTEGER</code>: Flanking region (in bp) around POS for the search of CIS lead-SNP</li>
+<li><code>--trans-flanks INTEGER</code>: Flanking region (in bp) around POS for the search of TRANS lead-SNP</li>
+<li><code>--exact-alleles</code>: Whether exact lead match includes also EA and NEA, or only CHR and POS (default: False)</li>
 </ul>
-<p><strong>Plotting Options:</strong></p>
+<p><strong>P-value filtering options:</strong></p>
 <ul>
-<li><code>--plot-out</code>: Boolean to plot results. If enabled, the output will be plotted as a Manhattan plot (flag).</li>
-<li><code>--color-thr TEXT</code>: Color for the points passing the threshold line in the plot (default: <code>red</code>).</li>
-<li><code>--s-value INTEGER</code>: Value for the suggestive p-value line in the plot (default: <code>5</code>).</li>
+<li><code>--pvalue-thr FLOAT</code>: Minimum -log10(p-value) threshold to filter significant SNPs</li>
 </ul>
-<p><strong>Query Options:</strong></p>
+<p><strong>Option to plot results:</strong></p>
 <ul>
-<li><code>--case-sensitive</code>: Enable case sensitive search of data to export</li>
-<li><code>--exact-match</code>: Enable exact match search of data to export</li>
+<li><code>--plot-out</code>: Boolean to plot results. If enabled, the output will be plotted as a Manhattan plot.</li>
+<li><code>--color-thr TEXT</code>: Color for the points passing the threshold line in the plot</li>
+<li><code>--s-value INTEGER</code>: Value for the suggestive p-value line in the plot</li>
+</ul>
+<p><strong>Option to query metadata before export:</strong></p>
+<ul>
+<li><code>--case-sensitive</code>: Perform case-sensitive matching on query values (default: False)</li>
+<li><code>--exact-match</code>: Perform exact match on query values (default: False)</li>
 </ul>
 <hr />
 <h3 id="info"><code>info</code></h3>
-<p>Show GWASStudio details</p>
+<p>Show GWASStudio details.</p>
 <p><strong>Usage:</strong></p>
 <pre><code class="language-shell">gwasstudio info
 </code></pre>
 <hr />
 <h3 id="ingest"><code>ingest</code></h3>
-<p>Ingest data in TileDB datasets.</p>
+<p>Ingest data in a TileDB-unified dataset.</p>
 <p><strong>Usage:</strong></p>
 <pre><code class="language-bash">gwasstudio ingest [OPTIONS]
 </code></pre>
 <p><strong>Options:</strong></p>
 <ul>
-<li><code>--file-path TEXT</code>: Path to the tabular file containing details for the ingestion (required).</li>
-<li><code>--delimiter TEXT</code>: Character or regex pattern to treat as the delimiter (default: <code>\t</code>).</li>
-<li><code>--uri TEXT</code>: Destination path where to store the tiledb dataset. The prefix can be <code>s3://</code> or <code>file://</code> (required).</li>
-<li><code>--ingestion-type [metadata|data|both]</code>: Choose between metadata ingestion, data ingestion, or both (default: <code>both</code>).</li>
-<li><code>--pvalue</code>: Indicate whether to ingest the p-value from the summary statistics instead of calculating it (default: <code>True</code>).</li>
+<li><code>--file-path TEXT</code>: Path to the tabular file containing details for the ingestion (required)</li>
+<li><code>--delimiter TEXT</code>: Character or regex pattern to treat as the delimiter</li>
+<li><code>--uri TEXT</code>: Destination path where to store the tiledb dataset. The prefix must be s3:// or file://</li>
+<li><code>--ingestion-type [metadata|data|both]</code>: Choose between metadata ingestion, data ingestion, or both</li>
+<li><code>--pvalue</code>: Indicate whether to ingest the p-value from the summary statistics instead of calculating it</li>
 </ul>
 <hr />
 <h3 id="list"><code>list</code></h3>
-<p>List every category → project → study hierarchy stored in the metadata DB</p>
+<p>List every category → project → study hierarchy stored in the metadata DB.</p>
 <p><strong>Usage:</strong></p>
 <pre><code class="language-shell">gwasstudio list
 </code></pre>
 <hr />
 <h3 id="meta-query"><code>meta-query</code></h3>
-<p>Query metadata records from MongoDB</p>
+<p>Query metadata records from MongoDB using GWASStudio core.</p>
 <p><strong>Usage:</strong></p>
 <pre><code class="language-bash">gwasstudio meta-query [OPTIONS]
 </code></pre>
 <p><strong>Options:</strong></p>
 <ul>
-<li><code>--search-file</code>: The search file used for querying metadata  [required]</li>
-<li><code>--output-prefix</code>: Prefix to be used for naming the output files</li>
-<li><code>--case-sensitive</code>: Enable case sensitive search</li>
-<li><code>--exact-match</code>: Enable exact match search</li>
+<li><code>--search-file PATH</code>: Path to the YAML file containing search criteria (required)</li>
+<li><code>--output-prefix TEXT</code>: Prefix for the output file name</li>
+<li><code>--output-format [csv|parquet|tsv]</code>: Output file format</li>
+<li><code>--case-sensitive</code>: Enable case-sensitive search (exact string matching)</li>
+<li><code>--exact-match</code>: Enable exact match search (no regex for strings)</li>
 </ul>
 <hr />
 
@@ -941,7 +972,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-05-29
+    2026-06-15
   </span>
 
     

@@ -8,7 +8,7 @@
       
       
       
-        <link rel="canonical" href="https://ht-diva.github.io/gwasstudio/configuration/">
+        <link rel="canonical" href="https://ht-diva.github.io/gwasstudio/yaml-intro/">
       
       
       
@@ -21,7 +21,7 @@
     
     
       
-        <title>GWASStudio: Configuration - GWASStudio documentation</title>
+        <title>YAML Crash Course for GWASStudio - GWASStudio documentation</title>
       
     
     
@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#gwasstudio-configuration" class="md-skip">
+        <a href="#yaml-crash-course-for-gwasstudio" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              GWASStudio: Configuration
+              YAML Crash Course for GWASStudio
             
           </span>
         </div>
@@ -329,14 +329,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Installation
+    Getting Started
   
 
     
@@ -357,14 +357,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/" class="md-nav__link">
+      <a href="../yaml_query_format/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Getting Started
+    Query format
   
 
     
@@ -553,6 +553,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../changelog/" class="md-nav__link">
         
   
@@ -601,6 +629,208 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-yaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Is YAML?
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What Is YAML?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#minimal-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-concepts-you-need-to-know" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Concepts You Need to Know
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Concepts You Need to Know">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-key-value-pairs-scalars" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Key-Value Pairs (Scalars)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-nested-objects-dictionaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Nested Objects (Dictionaries)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-lists-arrays" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Lists (Arrays)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-combining-both-lists-of-objects" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Combining Both — Lists of Objects
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#indentation-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indentation Rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#syntax-you-will-encounter-in-gwasstudio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syntax You Will Encounter in GWASStudio
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Syntax You Will Encounter in GWASStudio">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#comments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-line-strings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-line Strings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quotes-vs-no-quotes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quotes vs No Quotes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#special-characters-to-escape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Special Characters to Escape
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-gwasstudio-reads-yaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How GWASStudio Reads YAML
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference-cheat-sheet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference Cheat Sheet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#further-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Further Reading
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -619,8 +849,214 @@
   
 
 
-<h1 id="gwasstudio-configuration"><strong>GWASStudio: Configuration</strong></h1>
-<p>How to configure access to the diverse components used by GWASStudio.</p>
+<h1 id="yaml-crash-course-for-gwasstudio">YAML Crash Course for GWASStudio</h1>
+<p>This guide covers the YAML features you need to understand GWASStudio's configuration, queries, and metadata files. Everything else is unnecessary for this project.</p>
+<h2 id="what-is-yaml">What Is YAML?</h2>
+<p>YAML (<strong>Y</strong>AML <strong>A</strong>in't <strong>M</strong>arkup <strong>L</strong>anguage) is a human-readable data serialization format. It is essentially a cleaner, whitespace-sensitive alternative to JSON. GWASStudio uses YAML to describe study configurations, metadata queries, and export templates.</p>
+<h3 id="minimal-example">Minimal Example</h3>
+<pre><code class="language-yaml"># A single study definition
+trait: &quot;type 2 diabetes&quot;
+cohort: &quot;UK Biobank&quot;
+p_value: 0.05
+</code></pre>
+<p>This represents a single key-value mapping, which is the foundation of everything in GWASStudio.</p>
+<hr />
+<h2 id="core-concepts-you-need-to-know">Core Concepts You Need to Know</h2>
+<h3 id="1-key-value-pairs-scalars">1. Key-Value Pairs (Scalars)</h3>
+<p>The simplest building block:</p>
+<pre><code class="language-yaml">key: value
+</code></pre>
+<p>The key is on the left, the value on the right, separated by <code>:</code> (colon + space). Values can be:</p>
+<ul>
+<li><strong>Strings</strong>: <code>trait: "type 2 diabetes"</code> (quotes optional for simple values)</li>
+<li><strong>Numbers</strong>: <code>p_value: 0.05</code> or <code>n: 500000</code></li>
+<li><strong>Booleans</strong>: <code>active: true</code> or <code>active: yes</code></li>
+<li><strong>Null</strong>: <code>description: null</code> or <code>description: ~</code></li>
+</ul>
+<h3 id="2-nested-objects-dictionaries">2. Nested Objects (Dictionaries)</h3>
+<p>Use <strong>indentation</strong> (always spaces, never tabs) to nest:</p>
+<pre><code class="language-yaml">study:
+  trait: &quot;type 2 diabetes&quot;
+  cohort: &quot;UK Biobank&quot;
+  details:
+    sample_size: 500000
+    p_value_threshold: 0.05
+</code></pre>
+<p>This represents a dictionary where <code>study</code> maps to another dictionary. In GWASStudio, this is how <code>export.yaml</code> templates describe complex export queries.</p>
+<h3 id="3-lists-arrays">3. Lists (Arrays)</h3>
+<p>Prefix items with <code>-</code> (dash + space) at the same indentation level:</p>
+<pre><code class="language-yaml">trait:
+  - &quot;type 2 diabetes&quot;
+  - &quot;type 1 diabetes&quot;
+  - &quot;gestational diabetes&quot;
+</code></pre>
+<p>This is a list (array) of strings. In GWASStudio queries:</p>
+<ul>
+<li><strong>Plain lists</strong> of strings → MongoDB <code>$in</code> operator (match any value)</li>
+<li><strong>Lists of nested dicts</strong> → regex OR pattern on flattened fields</li>
+</ul>
+<p>You can also write lists on a single line using JSON-like syntax:</p>
+<pre><code class="language-yaml">trait: [&quot;type 2 diabetes&quot;, &quot;type 1 diabetes&quot;]
+</code></pre>
+<h3 id="4-combining-both-lists-of-objects">4. Combining Both — Lists of Objects</h3>
+<p>This is the most important pattern for GWASStudio:</p>
+<pre><code class="language-yaml">query:
+  filters:
+    - cohort: &quot;UK Biobank&quot;
+      population: &quot;EUR&quot;
+    - cohort: &quot;All of Us&quot;
+      population: &quot;AFR&quot;
+</code></pre>
+<p>This is a <strong>list of dictionaries</strong>. Each dash starts a new object. In GWASStudio's query engine, this triggers a regex OR pattern — it will match studies where <em>either</em> the first dict's conditions <em>or</em> the second dict's conditions are satisfied.</p>
+<hr />
+<h2 id="indentation-rules">Indentation Rules</h2>
+<p>Indentation defines structure. The rules are strict:</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use <strong>spaces only</strong> (2 or 4 per level). Never tabs.</td>
+<td>✅ <code>trait: "T2D"</code></td>
+</tr>
+<tr>
+<td>Children are indented deeper than their parent.</td>
+<td>✅ 2–4 spaces</td>
+</tr>
+<tr>
+<td>Items in a list share the same indentation.</td>
+<td>✅ <code>- value1</code></td>
+</tr>
+<tr>
+<td>Keys inside a dict share the same indentation.</td>
+<td>✅ <code>key: value</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Common mistake:</strong> Mixing indentation levels breaks the document:</p>
+<pre><code class="language-yaml"># ❌ Wrong — inconsistent indentation
+study:
+trait: &quot;T2D&quot;       # Not indented under study
+
+# ✅ Correct
+study:
+  trait: &quot;T2D&quot;    # Indented under study
+</code></pre>
+<hr />
+<h2 id="syntax-you-will-encounter-in-gwasstudio">Syntax You Will Encounter in GWASStudio</h2>
+<h3 id="comments">Comments</h3>
+<p>Start a line with <code>#</code>:</p>
+<pre><code class="language-yaml">trait: &quot;type 2 diabetes&quot;  # This is a comment
+# This entire line is ignored
+</code></pre>
+<h3 id="multi-line-strings">Multi-line Strings</h3>
+<p>Use <code>|</code> for literal blocks (preserves newlines) or <code>&gt;</code> for folded blocks (wraps to single line):</p>
+<pre><code class="language-yaml"># Literal block — newlines are preserved
+description: |
+  This is a long
+  description with
+  multiple lines
+
+# Folded block — newlines become spaces
+summary: &gt;
+  This is a long description
+  that will be folded into
+  a single line
+</code></pre>
+<h3 id="quotes-vs-no-quotes">Quotes vs No Quotes</h3>
+<ul>
+<li><strong>Unquoted</strong>: Simple strings, numbers, booleans (<code>yes</code>, <code>no</code>, <code>true</code>, <code>false</code>)</li>
+<li><strong>Double quotes</strong>: Strings with special characters, leading/trailing spaces</li>
+<li><strong>Single quotes</strong>: Strings that contain double quotes or backslashes</li>
+</ul>
+<pre><code class="language-yaml"># No quotes needed
+trait: diabetes
+n: 500000
+
+# Quotes required
+trait: &quot;type 2 diabetes&quot;    # space in value
+trait: 'contains &quot;quotes&quot;'  # quote in value
+trait: &quot;  spaced  &quot;         # preserves leading/trailing spaces
+</code></pre>
+<h3 id="special-characters-to-escape">Special Characters to Escape</h3>
+<p>Some characters have meaning in YAML. When used as data, they may need quotes:</p>
+<pre><code class="language-yaml"># ❌ May cause parse errors
+trait: type: 2 diabetes      # colon confuses parser
+
+# ✅ Safe
+trait: &quot;type: 2 diabetes&quot;    # quoted
+trait: 'type: 2 diabetes'    # or single-quoted
+</code></pre>
+<hr />
+<h2 id="how-gwasstudio-reads-yaml">How GWASStudio Reads YAML</h2>
+<p>When GWASStudio loads a YAML file (e.g., <code>export.yaml</code> or a metadata query), it converts the YAML structure into Python dictionaries and lists. The query engine then interprets those structures:</p>
+<table>
+<thead>
+<tr>
+<th>YAML Structure</th>
+<th>MongoDB Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>key: "value"</code></td>
+<td>Exact match on <code>key = "value"</code></td>
+</tr>
+<tr>
+<td><code>key: ["a", "b"]</code></td>
+<td><code>$in</code> operator: <code>key in ["a", "b"]</code></td>
+</tr>
+<tr>
+<td><code>key: {nested: val}</code></td>
+<td>Regex OR on flattened field path</td>
+</tr>
+<tr>
+<td><code>key: [{a: 1}, {a: 2}]</code></td>
+<td>Regex OR on nested dict fields</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="quick-reference-cheat-sheet">Quick Reference Cheat Sheet</h2>
+<pre><code class="language-yaml"># ─── Scalars ───
+string: hello
+number: 42
+float: 3.14
+bool: true
+null: null
+
+# ─── Mapping (dict) ───
+person:
+  name: Alice
+  age: 30
+
+# ─── Sequence (list) ───
+colors:
+  - red
+  - green
+  - blue
+
+# ─── List of objects ───
+studies:
+  - name: study1
+    trait: diabetes
+  - name: study2
+    trait: obesity
+
+# ─── Inline JSON-style ───
+traits: [diabetes, obesity]
+
+# ─── Comment ───
+# This is ignored by the parser
+key: value  # inline comment also works
+</code></pre>
+<hr />
+<h2 id="further-reading">Further Reading</h2>
+<p>For anything not covered here (anchors, tags, merge keys, etc.), the <a href="https://yaml.org/spec/1.2/spec.html">official YAML spec</a> is the definitive reference. But for GWASStudio, the concepts above cover 100% of what you will encounter.</p>
 
 
 
@@ -641,7 +1077,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-09-23
+    2026-06-15
   </span>
 
     

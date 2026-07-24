@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://ht-diva.github.io/gwasstudio/examples/">
       
       
-        <link rel="prev" href="../getting-started/">
+        <link rel="prev" href="../yaml_query_format/">
       
       
         <link rel="next" href="../commands/">
@@ -335,14 +335,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Installation
+    Getting Started
   
 
     
@@ -363,14 +363,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/" class="md-nav__link">
+      <a href="../yaml_query_format/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Getting Started
+    Query format
   
 
     
@@ -639,6 +639,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../changelog/" class="md-nav__link">
         
   
@@ -809,6 +837,9 @@ We can create a file named <code>snp_list.txt</code> containing the following:</
 <p>Then, we can run the <code>export</code> using the following command:</p>
 <pre><code>gwasstudio export --search-file search_believe.yml --get-regions-snps snp_list.txt
 </code></pre>
+<blockquote>
+<p><strong>Note:</strong> The <code>--attr</code> option defaults to <code>BETA,SE,EAF,MLOG10P,EA,NEA</code>. Use it to customise which columns to export.</p>
+</blockquote>
 <p>Sample log output:</p>
 <pre><code class="language-terminaloutput">2025-10-08 17:05:50.707 | INFO     | Gwasstudio started
 2025-10-08 17:05:50.737 | INFO     | Processing search_believe.yml
@@ -821,7 +852,7 @@ We can create a file named <code>snp_list.txt</code> containing the following:</
 2025-10-08 17:06:55.437 | INFO     | Shutting down Dask client and cluster.
 </code></pre>
 <p>The resulting summary‑statistics tables are written to the current directory.
-Again, you can change the output file prefix with <code>--output-prefix</code> <prefix>.</p>
+You can change the output file prefix with <code>--output-prefix &lt;prefix&gt;</code> (default: <code>out</code>).</p>
 <h2 id="filtering-a-study-by-snps-on-some-traits-gwas-study"><strong>Filtering a study by SNPs on some traits - GWAS study</strong></h2>
 <p>This example shows how to filter a study by a list of SNPs and retrieve the corresponding summary statistics.</p>
 <p>The chosen study is "ukb-d", which belongs to the "opengwas" project.</p>
@@ -892,7 +923,7 @@ We can create a file named <code>snp_list.txt</code> containing the following:</
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-11-19
+    2026-06-15
   </span>
 
     
