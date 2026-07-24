@@ -527,7 +527,7 @@ def export(
             pass
         elif MetadataEnum.WAREHOUSE_URI.get_value() not in meta_df.columns:
             raise InvalidInputError(
-                "URI not provided via --uri and {MetadataEnum.WAREHOUSE_URI.get_value()} not found in metadata. "
+                f"URI not provided via --uri and {MetadataEnum.WAREHOUSE_URI.get_value()} not found in metadata. "
                 "Re-ingest data with --uri or provide --uri for export."
             )
 
@@ -609,7 +609,7 @@ def export(
                     )
                 warehouse_uri = unique_uris[0]
                 group_name, tiledb_uri = compose_tiledb_uri(warehouse_uri, name, logger)
-                logger.info(f"Using TileDB URI from metadata for group {group_name}: {tiledb_uri}")
+                logger.debug(f"Using TileDB URI from metadata for group {group_name}: {tiledb_uri}")
             else:
                 # Use CLI-provided URI (backward compatible)
                 group_name, tiledb_uri = compose_tiledb_uri(uri, name, logger)

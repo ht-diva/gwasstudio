@@ -19,9 +19,9 @@ jobs:
       - name: Clear conda cache
         run: conda clean --all -y
 
-      - uses: conda-incubator/setup-miniconda@v4
+      - name: Conda setup
+        uses: conda-incubator/setup-miniconda@v4
         with:
-#          use-mamba: true
           activate-environment: gwasstudio
           environment-file: base_environment_docker.yml
           auto-update-conda: true
@@ -29,13 +29,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
           miniforge-version: latest
 
-      - name: Install the project
+      - name:  Install project
         shell: bash -el {0}
         run: |
           make dependencies_dev
           make install
 
-      - name: Test version
+      - name: Run test
         shell: bash -el {0}
         run: |
           make test

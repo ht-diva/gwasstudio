@@ -288,6 +288,7 @@ class MetadataEnum(BaseEnum):
             cls.CATEGORY.get_value(),
             cls.DATA_ID.get_value(),
             cls.SOURCE_ID.get_value(),
+            cls.WAREHOUSE_URI.get_value(),
         ]
 
     @classmethod
