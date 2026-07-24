@@ -24,42 +24,40 @@ class Hashing:
     def hash_length(self):
         return self.length
 
-    def compute_hash(self, fpath: str = None, st: str = None) -> str | None:
+    def compute_hash(self, filepath: str | pathlib.Path, method: str = "path_only") -> str:
         """
-        Computes file or string hash using the algorithm set in the class.
-        Notes:
-            - If `fpath` is provided, the hash is computed based on the filename and file content.
-            - If `st` is provided, the hash is computed based on the string content.
-            - If neither `fpath` nor `st` is provided, the function returns None.
+        Computes file hash using the algorithm set in the class.
+
+        The file path is normalized to an absolute resolved path before hashing.
 
         Args:
-            fpath (str): Path to a file for which to compute the hash.
-            st (str): String for which to compute the hash.
+            filepath (str | pathlib.Path): Path to a file for which to compute the hash.
+            method (str): Hashing method. Options:
+                - "full": Read and hash the entire file content + filename
+                - "balanced": Read and hash chunks from start, middle, end + filename
+                - "path_only": Hash only the resolved file path (no file read)
+
         Returns:
-            str: The hash of the input as a hexadecimal string, or None if neither input is provided.
+            str: The hash of the input as a hexadecimal string, truncated to hash_length.
+
+        Raises:
+            ValueError: If the method is not one of "full", "balanced", or "path_only".
         """
-        match (fpath, st):
-            case (None, None):
-                return None
-            case (None, _):
-                hash_value = self.compute_string_hash(st)
-            case (_, None):
-                # Convert the file path to a Path object
-                path = pathlib.Path(fpath)
-                # Compute the hash of the filename
-                filename_hash = self.compute_string_hash(path.name)
-                # Compute the hash of the file content
-                file_content_hash = self.compute_file_hash(path)
-                # Bind the filename hash, and the file content hash
-                hash_value = self.compute_string_hash(filename_hash + file_content_hash)
+        path = pathlib.Path(filepath).resolve() if isinstance(filepath, str) else filepath.resolve()
+
+        match method:
+            case "full" | "balanced":
+                filename_hash = self._hash_string(path.name)
+                file_content_hash = self._hash_file(path, method=method)
+                hash_value = self._hash_string(filename_hash + file_content_hash)
+            case "path_only":
+                hash_value = self._hash_string(str(path))
             case _:
-                raise ValueError("Cannot provide both file path and string")
+                raise ValueError(f"Invalid method '{method}'. Must be 'full', 'balanced', or 'path_only'.")
 
-        return hash_value if self.length is None else hash_value[: self.length] if hash_value else None
+        return hash_value[: self.length] if self.length is not None else hash_value
 
-    def compute_file_hash(
-        self, file_path: pathlib.Path, bufsize: int = DEFAULT_BUFSIZE, method: str = "balanced"
-    ) -> str:
+    def _hash_file(self, file_path: pathlib.Path, bufsize: int = DEFAULT_BUFSIZE, method: str = "balanced") -> str:
         """Generate a hash for a file by reading strategic portions of its content.
 
         The function can use the methods:
@@ -114,7 +112,7 @@ class Hashing:
 
         return digest.hexdigest()
 
-    def compute_string_hash(self, st: str) -> str:
+    def _hash_string(self, st: str) -> str:
         """
         Computes the hash of a string using the algorithm function.
 

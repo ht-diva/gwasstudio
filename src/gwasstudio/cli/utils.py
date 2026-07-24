@@ -426,7 +426,7 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict, ingest_pval: bool) -
 
     # Add trait_id based on the checksum_dict
     hg = Hashing()
-    df["TRAITID"] = hg.compute_hash(fpath=file_path)
+    df["TRAITID"] = hg.compute_hash(file_path)
     # Store the processed data in TileDB
     ctx = tiledb.Ctx(tiledb.Config(cfg))
     tiledb.from_pandas(

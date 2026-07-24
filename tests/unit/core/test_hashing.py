@@ -121,8 +121,8 @@ class TestSingleton:
         assert hasattr(hashing, "length")
         assert hasattr(hashing, "hash_length")
         assert hasattr(hashing, "compute_hash")
-        assert hasattr(hashing, "compute_file_hash")
-        assert hasattr(hashing, "compute_string_hash")
+        assert hasattr(hashing, "_hash_file")
+        assert hasattr(hashing, "_hash_string")
 
 
 # ---------------------------------------------------------------------------
@@ -152,28 +152,38 @@ class TestInitialization:
 class TestComputeHash:
     """Tests for compute_hash method."""
 
-    def test_neither_arg_returns_none(self, hashing):
-        """Calling with no arguments should return None."""
-        assert hashing.compute_hash() is None
-
-    def test_both_args_raises(self, hashing):
-        """Calling with both fpath and st should raise ValueError."""
-        with pytest.raises(ValueError, match="Cannot provide both file path and string"):
-            hashing.compute_hash(fpath="/tmp/x", st="hello")
-
-    def test_string_input_returns_truncated(self, hashing):
-        """String input should return truncated hash."""
-        result = hashing.compute_hash(st="test string")
-        assert result is not None
-        assert len(result) == hashing.hash_length
-        assert isinstance(result, str)
-
     def test_file_input_returns_truncated(self, hashing, temp_file_small):
         """File input should return truncated hash."""
-        result = hashing.compute_hash(fpath=str(temp_file_small))
+        result = hashing.compute_hash(str(temp_file_small))
         assert result is not None
         assert len(result) == hashing.hash_length
         assert isinstance(result, str)
+
+    def test_path_object_input_returns_truncated(self, hashing, temp_file_small):
+        """Path object input should return truncated hash."""
+        result = hashing.compute_hash(temp_file_small)
+        assert result is not None
+        assert len(result) == hashing.hash_length
+        assert isinstance(result, str)
+
+    def test_path_only_method_returns_truncated(self, hashing, temp_file_small):
+        """path_only method should return truncated hash without reading file."""
+        result = hashing.compute_hash(str(temp_file_small), method="path_only")
+        assert result is not None
+        assert len(result) == hashing.hash_length
+        assert isinstance(result, str)
+
+    def test_full_method_returns_truncated(self, hashing, temp_file_small):
+        """full method should return truncated hash."""
+        result = hashing.compute_hash(str(temp_file_small), method="full")
+        assert result is not None
+        assert len(result) == hashing.hash_length
+        assert isinstance(result, str)
+
+    def test_invalid_method_raises(self, hashing):
+        """Invalid method should raise ValueError."""
+        with pytest.raises(ValueError, match="Invalid method"):
+            hashing.compute_hash("/tmp/test.txt", method="invalid")
 
 
 # ---------------------------------------------------------------------------
@@ -186,38 +196,38 @@ class TestComputeStringHash:
 
     def test_deterministic(self, hashing):
         """Same string should always produce the same hash."""
-        h1 = hashing.compute_string_hash("hello world")
-        h2 = hashing.compute_string_hash("hello world")
+        h1 = hashing._hash_string("hello world")
+        h2 = hashing._hash_string("hello world")
         assert h1 == h2
 
     def test_different_strings_different_hashes(self, hashing):
         """Different strings should produce different hashes."""
-        h1 = hashing.compute_string_hash("hello")
-        h2 = hashing.compute_string_hash("world")
+        h1 = hashing._hash_string("hello")
+        h2 = hashing._hash_string("world")
         assert h1 != h2
 
     def test_returns_full_sha256(self, hashing):
         """Should return a full SHA-256 hex digest (64 chars)."""
-        result = hashing.compute_string_hash("test")
+        result = hashing._hash_string("test")
         assert len(result) == 64
         assert set(result) <= set("0123456789abcdef")
 
     def test_ascii_encoding(self, hashing):
         """Should encode string as ASCII."""
-        result = hashing.compute_string_hash("ascii only")
+        result = hashing._hash_string("ascii only")
         expected = hashlib.new("sha256", "ascii only".encode("ascii")).hexdigest()
         assert result == expected
 
     def test_empty_string(self, hashing):
         """Empty string should produce a valid hash."""
-        result = hashing.compute_string_hash("")
+        result = hashing._hash_string("")
         expected = hashlib.new("sha256", b"").hexdigest()
         assert result == expected
 
     def test_unicode_raises_or_handles(self, hashing):
         """Unicode strings may raise on ASCII encoding or produce a hash."""
         try:
-            result = hashing.compute_string_hash("café")
+            result = hashing._hash_string("café")
             # If it doesn't raise, it should still be 64 hex chars
             assert len(result) == 64
         except UnicodeEncodeError:
@@ -227,7 +237,7 @@ class TestComputeStringHash:
     def test_long_string(self, hashing):
         """Long string should produce a valid hash."""
         long_str = "x" * 100_000
-        result = hashing.compute_string_hash(long_str)
+        result = hashing._hash_string(long_str)
         expected = hashlib.new("sha256", long_str.encode("ascii")).hexdigest()
         assert result == expected
 
@@ -242,84 +252,84 @@ class TestComputeFileHash:
 
     def test_deterministic(self, hashing, temp_file_small):
         """Same file should always produce the same hash."""
-        h1 = hashing.compute_file_hash(temp_file_small)
-        h2 = hashing.compute_file_hash(temp_file_small)
+        h1 = hashing._hash_file(temp_file_small)
+        h2 = hashing._hash_file(temp_file_small)
         assert h1 == h2
 
     def test_different_content_different_hash(self, hashing, temp_file_small, temp_file_large):
         """Different files should produce different hashes."""
-        h1 = hashing.compute_file_hash(temp_file_small)
-        h2 = hashing.compute_file_hash(temp_file_large)
+        h1 = hashing._hash_file(temp_file_small)
+        h2 = hashing._hash_file(temp_file_large)
         assert h1 != h2
 
     def test_balanced_method(self, hashing, temp_file_large):
         """Default 'balanced' method should return 64-char hex digest."""
-        result = hashing.compute_file_hash(temp_file_large, method="balanced")
+        result = hashing._hash_file(temp_file_large, method="balanced")
         assert len(result) == 64
         assert set(result) <= set("0123456789abcdef")
 
     def test_full_method(self, hashing, temp_file_large):
         """'full' method should return 64-char hex digest."""
-        result = hashing.compute_file_hash(temp_file_large, method="full")
+        result = hashing._hash_file(temp_file_large, method="full")
         assert len(result) == 64
         assert set(result) <= set("0123456789abcdef")
 
     def test_full_vs_balanced_differ_for_large_files(self, hashing, temp_file_large):
         """'full' and 'balanced' should differ for large files."""
-        h_full = hashing.compute_file_hash(temp_file_large, method="full")
-        h_balanced = hashing.compute_file_hash(temp_file_large, method="balanced")
+        h_full = hashing._hash_file(temp_file_large, method="full")
+        h_balanced = hashing._hash_file(temp_file_large, method="balanced")
         # Since the file is much larger than bufsize, these should differ
         assert h_full != h_balanced
 
     def test_small_file_balanced(self, hashing, temp_file_small):
         """Balanced method should handle files smaller than bufsize."""
-        result = hashing.compute_file_hash(temp_file_small, method="balanced")
+        result = hashing._hash_file(temp_file_small, method="balanced")
         assert len(result) == 64
         assert set(result) <= set("0123456789abcdef")
 
     def test_small_file_full(self, hashing, temp_file_small):
         """Full method should handle files smaller than bufsize."""
-        result = hashing.compute_file_hash(temp_file_small, method="full")
+        result = hashing._hash_file(temp_file_small, method="full")
         assert len(result) == 64
         assert set(result) <= set("0123456789abcdef")
 
     def test_full_vs_balanced_same_for_small_files(self, hashing, temp_file_small):
         """'full' and 'balanced' should be the same for files <= bufsize."""
-        h_full = hashing.compute_file_hash(temp_file_small, method="full")
-        h_balanced = hashing.compute_file_hash(temp_file_small, method="balanced")
+        h_full = hashing._hash_file(temp_file_small, method="full")
+        h_balanced = hashing._hash_file(temp_file_small, method="balanced")
         assert h_full == h_balanced
 
     def test_empty_file(self, hashing, temp_file_empty):
         """Empty file should produce a valid hash."""
-        result = hashing.compute_file_hash(temp_file_empty)
+        result = hashing._hash_file(temp_file_empty)
         assert len(result) == 64
         assert set(result) <= set("0123456789abcdef")
 
     def test_binary_file(self, hashing, temp_file_binary):
         """Binary file should produce a valid hash."""
-        result = hashing.compute_file_hash(temp_file_binary)
+        result = hashing._hash_file(temp_file_binary)
         assert len(result) == 64
         assert set(result) <= set("0123456789abcdef")
 
     def test_exact_bufsize_file(self, hashing, temp_file_exact_bufsize):
         """File exactly bufsize bytes should produce a valid hash."""
-        result = hashing.compute_file_hash(temp_file_exact_bufsize)
+        result = hashing._hash_file(temp_file_exact_bufsize)
         assert len(result) == 64
         assert set(result) <= set("0123456789abcdef")
 
     def test_pathlib_path(self, hashing, temp_file_small):
         """Should accept a pathlib.Path object."""
-        result = hashing.compute_file_hash(pathlib.Path(temp_file_small))
+        result = hashing._hash_file(pathlib.Path(temp_file_small))
         assert len(result) == 64
 
     def test_custom_bufsize(self, hashing, temp_file_large):
         """Custom bufsize should not raise."""
-        result = hashing.compute_file_hash(temp_file_large, bufsize=8192, method="full")
+        result = hashing._hash_file(temp_file_large, bufsize=8192, method="full")
         assert len(result) == 64
 
     def test_custom_bufsize_balanced(self, hashing, temp_file_large):
         """Custom bufsize with balanced method should not raise."""
-        result = hashing.compute_file_hash(temp_file_large, bufsize=8192, method="balanced")
+        result = hashing._hash_file(temp_file_large, bufsize=8192, method="balanced")
         assert len(result) == 64
 
 
@@ -332,35 +342,36 @@ class TestComputeHashIntegration:
     """Tests for compute_hash end-to-end behavior."""
 
     def test_file_hash_includes_filename(self, hashing, temp_file_small):
-        """compute_hash(fpath=...) should include the filename in the hash."""
+        """compute_hash(...) should include the filename in the hash."""
         import pathlib as _p
 
         # Directly compute what the hash should be:
         # hash(filename_hash + file_content_hash)
         hg_direct = Hashing()
         path = _p.Path(temp_file_small)
-        filename_hash = hg_direct.compute_string_hash(path.name)
-        file_content_hash = hg_direct.compute_file_hash(path)
-        expected_full = hg_direct.compute_string_hash(filename_hash + file_content_hash)
+        filename_hash = hg_direct._hash_string(path.name)
+        file_content_hash = hg_direct._hash_file(path, method="balanced")
+        expected_full = hg_direct._hash_string(filename_hash + file_content_hash)
         expected_short = expected_full[: hashing.hash_length]
 
-        result = hashing.compute_hash(fpath=str(temp_file_small))
+        result = hashing.compute_hash(str(temp_file_small), method="balanced")
         assert result == expected_short
 
-    def test_string_hash_equals_compute_string_hash(self, hashing):
-        """compute_hash(st=...) should equal compute_string_hash(...)."""
-        result_computed = hashing.compute_hash(st="test value")
-        result_direct = hashing.compute_string_hash("test value")
-        assert result_computed == result_direct[: hashing.hash_length]
+    def test_path_only_differs_from_file_hash(self, hashing, temp_file_small):
+        """path_only method should differ from balanced method (no file content)."""
+        h_path_only = hashing.compute_hash(str(temp_file_small), method="path_only")
+        h_balanced = hashing.compute_hash(str(temp_file_small), method="balanced")
+        # path_only doesn't read file content, so hashes should differ
+        assert h_path_only != h_balanced
 
-    def test_file_hash_differs_string_hash(self, hashing, temp_file_small):
-        """Hashing a file and its content as a string should differ."""
-        # File content
-        content = temp_file_small.read_text()
-        h_file = hashing.compute_hash(fpath=str(temp_file_small))
-        h_string = hashing.compute_hash(st=content)
-        # The file hash includes the filename, so they should differ
-        assert h_file != h_string
+    def test_path_only_equals_path_hash(self, hashing, temp_file_small):
+        """path_only method should equal hashing the resolved path string."""
+        import pathlib as _p
+
+        path = _p.Path(temp_file_small).resolve()
+        result_path_only = hashing.compute_hash(str(temp_file_small), method="path_only")
+        expected = hashing._hash_string(str(path))[: hashing.hash_length]
+        assert result_path_only == expected
 
 
 # ---------------------------------------------------------------------------
@@ -377,23 +388,23 @@ class TestDeterminismAndCorrectness:
         for i in range(10):
             fpath = tmp_path / f"file_{i}.txt"
             fpath.write_text(f"unique content {i}")
-            h = hashing.compute_hash(fpath=str(fpath))
+            h = hashing.compute_hash(str(fpath))
             hashes.add(h)
         assert len(hashes) == 10
 
     def test_repeated_calls_same_result(self, hashing, temp_file_large):
         """Repeated calls on the same file should return the same result."""
-        results = [hashing.compute_hash(fpath=str(temp_file_large)) for _ in range(100)]
+        results = [hashing.compute_hash(str(temp_file_large)) for _ in range(100)]
         assert len(set(results)) == 1
 
-    def test_hash_is_hex(self, hashing):
+    def test_hash_is_hex(self, hashing, temp_file_small):
         """Hash output should be valid hex string."""
-        result = hashing.compute_hash(st="hex check")
+        result = hashing.compute_hash(str(temp_file_small))
         assert set(result) <= set("0123456789abcdef")
 
-    def test_hash_length_is_correct(self, hashing):
+    def test_hash_length_is_correct(self, hashing, temp_file_small):
         """Truncated hash should match hash_length."""
-        result = hashing.compute_hash(st="length check")
+        result = hashing.compute_hash(str(temp_file_small))
         assert len(result) == HASH_LENGTH
 
     def test_hash_length_property(self, hashing):
@@ -409,43 +420,16 @@ class TestDeterminismAndCorrectness:
 class TestEdgeCases:
     """Tests for edge cases and unusual inputs."""
 
-    def test_none_fpath_st(self, hashing):
-        """Both None should return None."""
-        assert hashing.compute_hash(fpath=None, st=None) is None
-
-    def test_empty_string(self, hashing):
-        """Empty string should produce a valid hash."""
-        result = hashing.compute_hash(st="")
+    def test_path_only_nonexistent_path(self, hashing):
+        """Non-existent path should still return a hash (path_only doesn't check existence)."""
+        result = hashing.compute_hash("/nonexistent/path/file.txt", method="path_only")
         assert result is not None
         assert len(result) == HASH_LENGTH
 
-    def test_whitespace_string(self, hashing):
-        """String with only whitespace should produce a valid hash."""
-        result = hashing.compute_hash(st="   \t\n  ")
-        assert result is not None
-        assert len(result) == HASH_LENGTH
-
-    def test_special_characters(self, hashing):
-        """Special characters should be handled."""
-        special = "!@#$%^&*()_+-=[]{}|;':\",./<>?"
-        result = hashing.compute_hash(st=special)
-        assert result is not None
-        assert len(result) == HASH_LENGTH
-
-    def test_numeric_string(self, hashing):
-        """Numeric string should produce a valid hash."""
-        result = hashing.compute_hash(st="1234567890")
-        assert result is not None
-        assert len(result) == HASH_LENGTH
-
-    def test_newline_string(self, hashing):
-        """String with newlines should produce a valid hash."""
-        result = hashing.compute_hash(st="line1\nline2\nline3")
-        assert result is not None
-        assert len(result) == HASH_LENGTH
-
-    def test_very_long_string(self, hashing):
-        """Very long string should not raise."""
-        result = hashing.compute_hash(st="L" * 1_000_000)
+    def test_path_only_special_chars(self, hashing, tmp_path):
+        """Path with special characters should work with path_only."""
+        special_path = tmp_path / "file_!@#.txt"
+        special_path.write_text("content")
+        result = hashing.compute_hash(str(special_path), method="path_only")
         assert result is not None
         assert len(result) == HASH_LENGTH

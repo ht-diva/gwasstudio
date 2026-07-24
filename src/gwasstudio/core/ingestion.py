@@ -92,7 +92,7 @@ def process_metadata_dict(metadata: dict[Hashable, Any]) -> dict[Hashable, Any]:
 
     project_key = lower_and_replace(metadata.get("project"))
     study_key = lower_and_replace(metadata.get("study"))
-    data_id = hg.compute_hash(fpath=metadata.get("file_path"))
+    data_id = hg.compute_hash(metadata.get("file_path"))
 
     # Update the dictionary with new values
     metadata.update({"project": project_key, "study": study_key, "data_id": data_id, "population": population})

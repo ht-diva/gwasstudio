@@ -488,9 +488,7 @@ class TestIngestionIntegration:
         mock_mongo_cls.return_value = mock_mongo
 
         mock_hg = MagicMock()
-        mock_hg.compute_hash.side_effect = lambda **kw: (
-            f"hash_{kw.get('fpath', 'none').split('/')[-1]}" if kw.get("fpath") else "h"
-        )
+        mock_hg.compute_hash.side_effect = lambda filepath, **kw: f"hash_{str(filepath).split('/')[-1]}"
         mock_hashing_cls.return_value = mock_hg
 
         templates = [
