@@ -3,7 +3,80 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [3.0.0] - 2026-07-24
+
+### 🚀 Features
+
+- Add population validation with normalization
+- Add DataCategoryEnum and validation
+- Add enum-based validation for genome build field
+- Add total_variants field to metadata
+- Notes_maker fields to metadata
+- *(cli)* Add compose_tiledb_uri and refactor export/ingest commands
+- *(core)* Implement Vault-based authorization service
+- *(cli)* Implement authorization checks in export command
+- Support warehouse_uri in metadata for flexible storage
+- *(core)* Introduce `WAREHOUSE_URI` to metadata for robust export
+
+### 🐛 Bug Fixes
+
+- Switch to Arrow 23.0.1 due to CVE-2026-25087
+- When data_id is present, it takes precedence and is used exclusively for the query
+- Query metadata exact-match and nested structure handling. Some refactoring.
+- Establish a public surface for the core package
+- `query_fields` nested `project`/`study` is lowercased now
+- Remove any leading, and trailing whitespaces
+- Resolve the KeyError: 'link_id' in the Lead-SNP query
+- Update gitignore
+- Update the README
+
+### 💼 Other
+
+- Revert "fix: remove any leading, and trailing whitespaces"
+
+This reverts commit 8b6ba9fc7c5a1b356ae27b41d5b90caeb2e36323.
+
+### 🚜 Refactor
+
+- [**breaking**] Beginning of transition to a "Library-First" model.
+- Reorganize utility functions and cleanup storage/metadata modules
+- Update CLI export to query metadata through the new core. Remove old stuff
+- Move integration tests
+- Migrate Dask, TileDB config and Vault to core dataclasses
+- Clean up legacy code
+- Upgrade Hashing class with full/balanced/path_only methods
+
+### 📚 Documentation
+
+- Align the documentation with the current version of the codebase
+
+### 🎨 Styling
+
+- Change the option names
+- Enforce PEP585 and other conventions
+
+### 🧪 Testing
+
+- Improve mongodb start-up and error messages printing
+- Add core unit tests for ingestion, query and hashing
+- Remove python 3.11 from the test github action
+- Remove findpython
+- The error logs suggest plugin interference is contributing to the transaction failure
+- Try miniforge
+- Move mongo dependencies to test
+
+### ⚙️ Miscellaneous Tasks
+
+- Remove unused lock files
+- Update python matrix
+- Update setup-miniconda action
+- Fix pypi publisher
+
 ## [2.19.1] - 2026-06-03
+
+### 💼 Other
+
+- Bump version
 
 ### ⚡ Performance
 
