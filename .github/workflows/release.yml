@@ -18,13 +18,15 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: conda-incubator/setup-miniconda@v3
+      - name: Conda setup
+        uses: conda-incubator/setup-miniconda@v4
         with:
           activate-environment: gwasstudio
           environment-file: base_environment_docker.yml
           auto-update-conda: true
           auto-activate-base: false
           python-version: ${{ matrix.python-version }}
+          miniforge-version: latest
 
       - name: Build package
         shell: bash -el {0}
