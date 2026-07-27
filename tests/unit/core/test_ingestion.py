@@ -203,6 +203,46 @@ class TestProcessMetadataDict:
         result = process_metadata_dict(tpl)
         assert result["population"] == ["EUR", "AFA", "EAS"]
 
+    def test_population_comma_separated(self, monkeypatch):
+        """Test that comma-separated population values are split and normalized."""
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+
+        tpl = _template(population="AFA,AFR")
+        result = process_metadata_dict(tpl)
+        assert result["population"] == ["AFA", "AFR"]
+
+    def test_population_comma_separated_with_spaces(self, monkeypatch):
+        """Test that comma-separated population values with spaces work."""
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+
+        tpl = _template(population="AFA, AFR, EAS")
+        result = process_metadata_dict(tpl)
+        assert result["population"] == ["AFA", "AFR", "EAS"]
+
+    def test_population_comma_separated_with_empty_entries(self, monkeypatch):
+        """Test that empty entries in comma-separated values are filtered."""
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+
+        tpl = _template(population="EUR,,AFR")
+        result = process_metadata_dict(tpl)
+        assert result["population"] == ["EUR", "AFR"]
+
+    def test_population_comma_separated_with_descriptions(self, monkeypatch):
+        """Test that comma-separated values with descriptions are normalized."""
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+
+        tpl = _template(population="EUR,African American or Afro-Caribbean")
+        result = process_metadata_dict(tpl)
+        assert result["population"] == ["EUR", "AFA"]
+
     def test_special_characters_in_project(self, monkeypatch):
         """Test project with special characters passes through correctly (lowercased)."""
         from gwasstudio.core.ingestion import process_metadata_dict
