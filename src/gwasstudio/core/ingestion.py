@@ -52,7 +52,8 @@ def process_metadata_dict(metadata: dict[Hashable, Any]) -> dict[Hashable, Any]:
     if population is not None:
         # Handle both string and list inputs
         if isinstance(population, str):
-            population_list = [population]
+            # Split comma-separated values and strip whitespace
+            population_list = [p.strip() for p in population.split(",") if p.strip()]
         elif isinstance(population, list):
             population_list = population
         else:
