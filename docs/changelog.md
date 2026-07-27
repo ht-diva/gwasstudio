@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [3.1.0] - 2026-07-27
+
+### 🚀 Features
+
+- *(core)* Introduce OLINK_ID, ICD10 and SOFTWARE_DESCRIPTION attributes to the MetadataEnum class
+
+### 🐛 Bug Fixes
+
+- Modify src/gwasstudio/core/ingestion.py to handle comma-separated population values
+
+### 🧪 Testing
+
+- Add 4 new unit tests to tests/unit/core/test_ingestion.py to ensure that the comma-separated population values like AFA,AFR  is properly tested
+
 ## [3.0.0] - 2026-07-24
 
 ### 🚀 Features
@@ -35,6 +49,7 @@ All notable changes to this project will be documented in this file.
 - Revert "fix: remove any leading, and trailing whitespaces"
 
 This reverts commit 8b6ba9fc7c5a1b356ae27b41d5b90caeb2e36323.
+- Bump version
 
 ### 🚜 Refactor
 
