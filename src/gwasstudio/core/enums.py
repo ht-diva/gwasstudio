@@ -256,6 +256,7 @@ class MetadataEnum(BaseEnum):
     PROTEIN_IDS = ("trait_protein_ids", DataType.STRING_PA)
     SOMALOGIC_ID = ("trait_seqid", DataType.STRING_PA)
     OLINK_ID = ("trait_olink_id", DataType.STRING_PA)
+    UBERON_IDS = ("trait_uberon_ids", DataType.STRING_PA)
     ICD10 = ("trait_icd10", DataType.STRING_PA)
     TISSUE = ("trait_tissue", DataType.CATEGORY)
     UNIT = ("trait_unit", DataType.STRING_PA)
