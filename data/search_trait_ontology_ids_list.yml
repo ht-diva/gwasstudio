@@ -1,0 +1,15 @@
+# Search file for testing trait_ontology_ids with list of values
+
+query_fields:
+  project: opengwas
+  category: GWAS
+  trait_ontology_ids:
+    - EFO:0000123
+    - EFO:0007800
+    - EFO:0000887
+
+output_fields:
+  - project
+  - study
+  - trait_desc
+  - trait_ontology_ids

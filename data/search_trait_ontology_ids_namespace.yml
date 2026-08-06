@@ -1,0 +1,13 @@
+# Search file for testing trait_ontology_ids query by namespace
+
+query_fields:
+  project: opengwas
+  category: GWAS
+  trait_ontology_ids:
+    namespace: EFO
+
+output_fields:
+  - project
+  - study
+  - trait_desc
+  - trait_ontology_ids

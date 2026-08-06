@@ -1,0 +1,13 @@
+# Search file for testing trait_ontology_ids query by ID part
+
+query_fields:
+  project: opengwas
+  category: GWAS
+  trait_ontology_ids:
+    id: "0000123"
+
+output_fields:
+  - project
+  - study
+  - trait_desc
+  - trait_ontology_ids

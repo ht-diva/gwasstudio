@@ -274,6 +274,99 @@ class TestProcessMetadataDict:
         result = process_metadata_dict(tpl)
         assert result["project"] == "___"
 
+    def test_trait_ontology_ids_list_input(self, monkeypatch):
+        """Test that list of ontology IDs are parsed and structured correctly."""
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+
+        tpl = _template(trait_ontology_ids=["EFO:0000123", "UBERON:0003923"])
+        result = process_metadata_dict(tpl)
+        assert result["trait_ontology_ids"] == [
+            {"namespace": "EFO", "id": "0000123", "full": "EFO:0000123"},
+            {"namespace": "UBERON", "id": "0003923", "full": "UBERON:0003923"},
+        ]
+
+    def test_trait_ontology_ids_comma_separated_string(self, monkeypatch):
+        """Test that comma-separated ontology IDs are split and parsed correctly."""
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+
+        tpl = _template(trait_ontology_ids="EFO:0000123,UBERON:0003923")
+        result = process_metadata_dict(tpl)
+        assert result["trait_ontology_ids"] == [
+            {"namespace": "EFO", "id": "0000123", "full": "EFO:0000123"},
+            {"namespace": "UBERON", "id": "0003923", "full": "UBERON:0003923"},
+        ]
+
+    def test_trait_ontology_ids_comma_separated_with_spaces(self, monkeypatch):
+        """Test that comma-separated ontology IDs with spaces work."""
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+
+        tpl = _template(trait_ontology_ids="EFO:0000123, UBERON:0003923, GO:0008150")
+        result = process_metadata_dict(tpl)
+        assert result["trait_ontology_ids"] == [
+            {"namespace": "EFO", "id": "0000123", "full": "EFO:0000123"},
+            {"namespace": "UBERON", "id": "0003923", "full": "UBERON:0003923"},
+            {"namespace": "GO", "id": "0008150", "full": "GO:0008150"},
+        ]
+
+    def test_trait_ontology_ids_none(self, monkeypatch):
+        """Test that missing trait_ontology_ids results in empty list."""
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+
+        tpl = _template()
+        result = process_metadata_dict(tpl)
+        assert result["trait_ontology_ids"] == []
+
+    def test_trait_ontology_ids_invalid_format(self, monkeypatch):
+        """Test that invalid ontology ID format raises ValueError."""
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+
+        tpl = _template(trait_ontology_ids=["EFO0000123"])
+        with pytest.raises(ValueError, match="Invalid ontology ID"):
+            process_metadata_dict(tpl)
+
+    def test_trait_ontology_ids_empty_list(self, monkeypatch):
+        """Test that empty list results in empty list."""
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+
+        tpl = _template(trait_ontology_ids=[])
+        result = process_metadata_dict(tpl)
+        assert result["trait_ontology_ids"] == []
+
+    def test_trait_ontology_ids_with_empty_strings(self, monkeypatch):
+        """Test that empty strings in comma-separated values are filtered."""
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+
+        tpl = _template(trait_ontology_ids="EFO:0000123,,UBERON:0003923")
+        result = process_metadata_dict(tpl)
+        assert result["trait_ontology_ids"] == [
+            {"namespace": "EFO", "id": "0000123", "full": "EFO:0000123"},
+            {"namespace": "UBERON", "id": "0003923", "full": "UBERON:0003923"},
+        ]
+
+    def test_trait_ontology_ids_invalid_namespace(self, monkeypatch):
+        """Test that invalid ontology namespace raises ValueError."""
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+
+        tpl = _template(trait_ontology_ids=["INVALID:0000123"])
+        with pytest.raises(ValueError, match="Invalid ontology namespace"):
+            process_metadata_dict(tpl)
+
 
 # -- DocumentGenerator -------------------------------------------------------
 

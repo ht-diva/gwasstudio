@@ -15,7 +15,7 @@ from gwasstudio.core import (
     Hashing,
     IngestionError,
 )
-from gwasstudio.core.enums import AncestryEnum, BuildEnum, DataCategoryEnum
+from gwasstudio.core.enums import AncestryEnum, BuildEnum, DataCategoryEnum, OntologyID
 from gwasstudio.core.storage import MongoDBStorage  # ,TileDBStorage
 from gwasstudio.core.str_utils import lower_and_replace
 
@@ -88,6 +88,31 @@ def process_metadata_dict(metadata: dict[Hashable, Any]) -> dict[Hashable, Any]:
         except ValueError as e:
             raise ValueError(f"Invalid build value '{build}'. {str(e)}")
 
+    # Validate and normalize trait_ontology_ids
+    trait_ontology_ids = metadata.get("trait_ontology_ids")
+    if trait_ontology_ids is not None:
+        # Handle both string and list inputs
+        if isinstance(trait_ontology_ids, str):
+            # Split comma-separated values and strip whitespace
+            ontology_list = [o.strip() for o in trait_ontology_ids.split(",") if o.strip()]
+        elif isinstance(trait_ontology_ids, list):
+            ontology_list = trait_ontology_ids
+        else:
+            ontology_list = [str(trait_ontology_ids)]
+
+        # Parse and validate each ontology ID, convert to structured format
+        structured_ontology_ids = []
+        for ont_id in ontology_list:
+            if ont_id:  # Skip empty strings
+                try:
+                    oid = OntologyID.from_string(ont_id)
+                    structured_ontology_ids.append(oid.to_dict())
+                except ValueError as e:
+                    raise ValueError(f"Invalid ontology ID '{ont_id}'. Expected format: 'NAMESPACE:ID'. {str(e)}")
+        trait_ontology_ids = structured_ontology_ids
+    else:
+        trait_ontology_ids = []
+
     # Perform transformations
     hg = Hashing()
 
@@ -96,7 +121,15 @@ def process_metadata_dict(metadata: dict[Hashable, Any]) -> dict[Hashable, Any]:
     data_id = hg.compute_hash(metadata.get("file_path"))
 
     # Update the dictionary with new values
-    metadata.update({"project": project_key, "study": study_key, "data_id": data_id, "population": population})
+    metadata.update(
+        {
+            "project": project_key,
+            "study": study_key,
+            "data_id": data_id,
+            "population": population,
+            "trait_ontology_ids": trait_ontology_ids,
+        }
+    )
 
     # Clean up unwanted keys
     metadata.pop("file_path")

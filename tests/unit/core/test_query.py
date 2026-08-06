@@ -1129,3 +1129,144 @@ class TestDataCategoryValidation:
         template = {"project": "test"}
         _validate_data_category(template)
         assert "category" not in template
+
+
+class TestTraitOntologyIdsValidation:
+    """Tests for trait_ontology_ids field validation in queries."""
+
+    def test_single_ontology_id_string(self):
+        """Test that single ontology ID string is converted to $elemMatch."""
+        from gwasstudio.core.query import _validate_and_normalize_trait_ontology_ids
+
+        template = {"trait_ontology_ids": "EFO:0000123"}
+        _validate_and_normalize_trait_ontology_ids(template)
+        assert template["trait_ontology_ids"] == {"$elemMatch": {"full": "EFO:0000123"}}
+
+    def test_list_of_ontology_id_strings(self):
+        """Test that list of ontology ID strings is converted to $elemMatch with $in."""
+        from gwasstudio.core.query import _validate_and_normalize_trait_ontology_ids
+
+        template = {"trait_ontology_ids": ["EFO:0000123", "UBERON:0003923"]}
+        _validate_and_normalize_trait_ontology_ids(template)
+        assert template["trait_ontology_ids"] == {"$elemMatch": {"full": {"$in": ["EFO:0000123", "UBERON:0003923"]}}}
+
+    def test_nested_dict_namespace_query(self):
+        """Test that nested dict with namespace is converted to $elemMatch."""
+        from gwasstudio.core.query import _validate_and_normalize_trait_ontology_ids
+
+        template = {"trait_ontology_ids": {"namespace": "EFO"}}
+        _validate_and_normalize_trait_ontology_ids(template)
+        assert template["trait_ontology_ids"] == {"$elemMatch": {"namespace": "EFO"}}
+
+    def test_nested_dict_id_query(self):
+        """Test that nested dict with id is converted to $elemMatch."""
+        from gwasstudio.core.query import _validate_and_normalize_trait_ontology_ids
+
+        template = {"trait_ontology_ids": {"id": "0000123"}}
+        _validate_and_normalize_trait_ontology_ids(template)
+        assert template["trait_ontology_ids"] == {"$elemMatch": {"id": "0000123"}}
+
+    def test_nested_dict_full_query(self):
+        """Test that nested dict with full is converted to $elemMatch."""
+        from gwasstudio.core.query import _validate_and_normalize_trait_ontology_ids
+
+        template = {"trait_ontology_ids": {"full": "EFO:0000123"}}
+        _validate_and_normalize_trait_ontology_ids(template)
+        assert template["trait_ontology_ids"] == {"$elemMatch": {"full": "EFO:0000123"}}
+
+    def test_list_of_nested_dicts_single(self):
+        """Test that list with single nested dict is handled correctly."""
+        from gwasstudio.core.query import _validate_and_normalize_trait_ontology_ids
+
+        template = {"trait_ontology_ids": [{"namespace": "EFO"}]}
+        _validate_and_normalize_trait_ontology_ids(template)
+        assert template["trait_ontology_ids"] == {"$elemMatch": {"namespace": "EFO"}}
+
+    def test_list_of_nested_dicts_multiple(self):
+        """Test that list with multiple nested dicts uses $or."""
+        from gwasstudio.core.query import _validate_and_normalize_trait_ontology_ids
+
+        template = {"trait_ontology_ids": [{"namespace": "EFO"}, {"namespace": "UBERON"}]}
+        _validate_and_normalize_trait_ontology_ids(template)
+        assert template["trait_ontology_ids"] == {
+            "$or": [
+                {"$elemMatch": {"namespace": "EFO"}},
+                {"$elemMatch": {"namespace": "UBERON"}},
+            ]
+        }
+
+    def test_invalid_ontology_id_format(self):
+        """Test that invalid ontology ID format raises error."""
+        from gwasstudio.core.query import InvalidQueryFieldError, _validate_and_normalize_trait_ontology_ids
+
+        template = {"trait_ontology_ids": "INVALID_FORMAT"}
+        with pytest.raises(InvalidQueryFieldError) as exc_info:
+            _validate_and_normalize_trait_ontology_ids(template)
+        assert "Invalid trait_ontology_ids value" in str(exc_info.value)
+
+    def test_invalid_ontology_namespace(self):
+        """Test that invalid ontology namespace raises error."""
+        from gwasstudio.core.query import InvalidQueryFieldError, _validate_and_normalize_trait_ontology_ids
+
+        template = {"trait_ontology_ids": "INVALID:0000123"}
+        with pytest.raises(InvalidQueryFieldError) as exc_info:
+            _validate_and_normalize_trait_ontology_ids(template)
+        assert "Invalid ontology namespace" in str(exc_info.value)
+
+    def test_invalid_nested_subfield(self):
+        """Test that invalid nested subfield raises error."""
+        from gwasstudio.core.query import InvalidQueryFieldError, _validate_and_normalize_trait_ontology_ids
+
+        template = {"trait_ontology_ids": {"invalid_field": "value"}}
+        with pytest.raises(InvalidQueryFieldError) as exc_info:
+            _validate_and_normalize_trait_ontology_ids(template)
+        assert "Invalid trait_ontology_ids subfield" in str(exc_info.value)
+
+    def test_none_value_pass_through(self):
+        """Test that None value passes through unchanged."""
+        from gwasstudio.core.query import _validate_and_normalize_trait_ontology_ids
+
+        template = {"trait_ontology_ids": None}
+        _validate_and_normalize_trait_ontology_ids(template)
+        assert template["trait_ontology_ids"] is None
+
+    def test_missing_field_no_error(self):
+        """Test that missing trait_ontology_ids field doesn't cause error."""
+        from gwasstudio.core.query import _validate_and_normalize_trait_ontology_ids
+
+        template = {"project": "test"}
+        _validate_and_normalize_trait_ontology_ids(template)
+        assert "trait_ontology_ids" not in template
+
+    def test_empty_list_pass_through(self):
+        """Test that empty list passes through unchanged."""
+        from gwasstudio.core.query import _validate_and_normalize_trait_ontology_ids
+
+        template = {"trait_ontology_ids": []}
+        _validate_and_normalize_trait_ontology_ids(template)
+        assert template["trait_ontology_ids"] == []
+
+    def test_empty_template_no_error(self):
+        """Test that empty template doesn't cause error."""
+        from gwasstudio.core.query import _validate_and_normalize_trait_ontology_ids
+
+        template = {}
+        _validate_and_normalize_trait_ontology_ids(template)
+        assert template == {}
+
+    def test_dict_with_in_operator(self):
+        """Test that dict with $in operator is handled correctly."""
+        from gwasstudio.core.query import _validate_and_normalize_trait_ontology_ids
+
+        # This simulates what _flatten_nested_template produces from a YAML list
+        template = {"trait_ontology_ids": {"$in": ["EFO:0000123", "UBERON:0003923"]}}
+        _validate_and_normalize_trait_ontology_ids(template)
+        assert template["trait_ontology_ids"] == {"$elemMatch": {"full": {"$in": ["EFO:0000123", "UBERON:0003923"]}}}
+
+    def test_dict_with_in_single_value(self):
+        """Test that dict with single $in value is handled correctly."""
+        from gwasstudio.core.query import _validate_and_normalize_trait_ontology_ids
+
+        template = {"trait_ontology_ids": {"$in": "EFO:0000123"}}
+        _validate_and_normalize_trait_ontology_ids(template)
+        assert template["trait_ontology_ids"] == {"$elemMatch": {"full": "EFO:0000123"}}

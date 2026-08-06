@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
@@ -16,6 +17,71 @@ class DataType(Enum):
     UINT16_PA = "UInt16[pyarrow]"
     CATEGORY = "category"
     FLOAT_PA = "Float64[pyarrow]"
+
+
+class OntologyNamespace(str, Enum):
+    """Ontology namespace identifiers for structured trait ontology IDs."""
+
+    EFO = "EFO"
+    UBERON = "UBERON"
+    ICD10 = "ICD10"
+    GO = "GO"
+    HP = "HP"
+    MP = "MP"
+
+
+@dataclass(frozen=True)
+class OntologyID:
+    """Structured ontology identifier with namespace, numeric ID, and full string.
+
+    Represents an ontology ID (e.g., EFO:0000123) in a structured format that enables
+    efficient querying on the numeric ID part in MongoDB.
+
+    Attributes:
+        namespace: The ontology namespace (e.g., "EFO", "UBERON")
+        id: The numeric/string identifier part (e.g., "0000123")
+        full: The complete ontology ID string (e.g., "EFO:0000123")
+    """
+
+    namespace: str
+    id: str
+    full: str
+
+    @classmethod
+    def from_string(cls, ontology_str: str) -> "OntologyID":
+        """Parse a full ontology ID string into an OntologyID instance.
+
+        Args:
+            ontology_str: Full ontology ID (e.g., "EFO:0000123")
+
+        Returns:
+            OntologyID instance with namespace, id, and full fields
+
+        Raises:
+            ValueError: If the string doesn't contain a colon separator or
+                       if the namespace is not a valid OntologyNamespace
+        """
+        if ":" not in ontology_str:
+            raise ValueError(f"Invalid ontology ID format '{ontology_str}'. Expected 'NAMESPACE:ID'")
+        namespace, id_part = ontology_str.split(":", 1)
+
+        # Validate namespace against OntologyNamespace enum
+        if namespace not in {member.value for member in OntologyNamespace}:
+            valid_namespaces = ", ".join(member.value for member in OntologyNamespace)
+            raise ValueError(
+                f"Invalid ontology namespace '{namespace}' in '{ontology_str}'. "
+                f"Valid namespaces are: {valid_namespaces}"
+            )
+
+        return cls(namespace=namespace, id=id_part, full=ontology_str)
+
+    def to_dict(self) -> dict[str, str]:
+        """Convert to dictionary format for MongoDB storage.
+
+        Returns:
+            Dictionary with keys: namespace, id, full
+        """
+        return {"namespace": self.namespace, "id": self.id, "full": self.full}
 
 
 # Mapping from full descriptions to ancestry codes for normalization
@@ -256,8 +322,7 @@ class MetadataEnum(BaseEnum):
     PROTEIN_IDS = ("trait_protein_ids", DataType.STRING_PA)
     SOMALOGIC_ID = ("trait_seqid", DataType.STRING_PA)
     OLINK_ID = ("trait_olink_id", DataType.STRING_PA)
-    UBERON_IDS = ("trait_uberon_ids", DataType.STRING_PA)
-    ICD10 = ("trait_icd10", DataType.STRING_PA)
+    ONTOLOGY_IDS = ("trait_ontology_ids", DataType.STRING_PA)
     TISSUE = ("trait_tissue", DataType.CATEGORY)
     UNIT = ("trait_unit", DataType.STRING_PA)
     POPULATION = ("population", DataType.STRING_PA)

@@ -135,6 +135,14 @@ test_ingest_with_recalc: test-dependencies
 	fi; \
 	bash tests/integration/test_ingest_with_recalc.sh
 
+test_trait_ontology_ids: test-dependencies
+	@echo "Running trait_ontology_ids integration tests..."
+	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+        echo "Activating conda environment: ${ENV_NAME}"; \
+		$(CONDA_ACTIVATE) ${ENV_NAME}; \
+	fi; \
+	bash tests/integration/test_trait_ontology_ids.sh
+
 test-integration-pytest: test-dependencies
 	@echo "Running integration tests via pytest..."
 	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
@@ -143,7 +151,7 @@ test-integration-pytest: test-dependencies
 	fi; \
 	pytest tests/integration/ -v --tb=short
 
-test: unit_test test_ingest_metadata
+test: unit_test test_ingest_metadata test_trait_ontology_ids
 	@echo "End-to-End tests"
 
 test-integration: test-integration-setup test-integration-exec #test-integration-stop## Run integration tests

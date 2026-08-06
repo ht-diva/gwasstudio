@@ -16,7 +16,7 @@ from typing import Any
 
 from gwasstudio import logger
 from gwasstudio.core.config import GWASStudioConfig
-from gwasstudio.core.enums import AncestryEnum, BuildEnum, DataCategoryEnum, MetadataEnum
+from gwasstudio.core.enums import AncestryEnum, BuildEnum, DataCategoryEnum, MetadataEnum, OntologyID
 from gwasstudio.core.exceptions import InvalidQueryError, QueryError
 from gwasstudio.core.storage import MongoDBStorage  # ,TileDBStorage
 from gwasstudio.core.str_utils import lower_and_replace
@@ -162,6 +162,144 @@ def _validate_build(template: dict[str, Any]) -> None:
                             invalid_fields=["build"],
                             valid_fields=[f"Valid values: {', '.join(BuildEnum.get_values())}"],
                         )
+
+
+def _validate_and_normalize_trait_ontology_ids(template: dict[str, Any]) -> None:
+    """
+    Validate and normalize trait_ontology_ids values in the query template.
+
+    Supports:
+    - Single ontology ID string: "EFO:0000123"
+    - List of ontology ID strings: ["EFO:0000123", "UBERON:0003923"]
+    - Nested field queries: {"namespace": "EFO"}, {"id": "0000123"}, {"full": "EFO:0000123"}
+    - List of nested queries for $elemMatch: [{"full": "EFO:0000123"}, {"namespace": "UBERON"}]
+
+    Converts to MongoDB-compatible format with $elemMatch for array of objects.
+
+    Args:
+        template: Dictionary with query parameters.
+
+    Raises:
+        InvalidQueryFieldError: If trait_ontology_ids value is invalid.
+    """
+    if not template:
+        return
+
+    trait_ontology_ids_value = template.get("trait_ontology_ids")
+    if trait_ontology_ids_value is None:
+        return
+
+    # Handle different input types
+    if isinstance(trait_ontology_ids_value, str):
+        # Single ontology ID string
+        try:
+            oid = OntologyID.from_string(trait_ontology_ids_value)
+            # Convert to MongoDB $elemMatch query on the full field
+            template["trait_ontology_ids"] = {"$elemMatch": {"full": oid.full}}
+        except ValueError as e:
+            raise InvalidQueryFieldError(
+                f"Invalid trait_ontology_ids value '{trait_ontology_ids_value}': {str(e)}",
+                invalid_fields=["trait_ontology_ids"],
+            )
+
+    elif isinstance(trait_ontology_ids_value, dict):
+        # Check if this is already a MongoDB operator (e.g., {"$in": [...]})
+        # This can happen when _flatten_nested_template processes a list
+        if "$in" in trait_ontology_ids_value:
+            # List was converted to {"$in": [...] } by _flatten_nested_template
+            # Validate each item in the $in list
+            in_list = trait_ontology_ids_value["$in"]
+            if isinstance(in_list, list):
+                normalized_list = []
+                for item in in_list:
+                    if isinstance(item, str):
+                        try:
+                            oid = OntologyID.from_string(item)
+                            normalized_list.append(oid.full)
+                        except ValueError as e:
+                            raise InvalidQueryFieldError(
+                                f"Invalid trait_ontology_ids value '{item}': {str(e)}",
+                                invalid_fields=["trait_ontology_ids"],
+                            )
+                    else:
+                        normalized_list.append(item)
+                template["trait_ontology_ids"] = {"$elemMatch": {"full": {"$in": normalized_list}}}
+            else:
+                # Single value in $in, convert to $elemMatch
+                try:
+                    oid = OntologyID.from_string(in_list)
+                    template["trait_ontology_ids"] = {"$elemMatch": {"full": oid.full}}
+                except ValueError as e:
+                    raise InvalidQueryFieldError(
+                        f"Invalid trait_ontology_ids value '{in_list}': {str(e)}",
+                        invalid_fields=["trait_ontology_ids"],
+                    )
+        else:
+            # Nested field query like {"namespace": "EFO"} or {"id": "0000123"}
+            # Validate the keys
+            valid_keys = {"namespace", "id", "full"}
+            for key in trait_ontology_ids_value.keys():
+                if key not in valid_keys:
+                    raise InvalidQueryFieldError(
+                        f"Invalid trait_ontology_ids subfield '{key}'. Valid subfields are: namespace, id, full",
+                        invalid_fields=["trait_ontology_ids"],
+                    )
+            # Convert to $elemMatch query
+            template["trait_ontology_ids"] = {"$elemMatch": trait_ontology_ids_value}
+
+    elif isinstance(trait_ontology_ids_value, list):
+        # List of ontology IDs or nested queries
+        if trait_ontology_ids_value and all(isinstance(item, str) for item in trait_ontology_ids_value):
+            # List of ontology ID strings
+            normalized_list = []
+            for item in trait_ontology_ids_value:
+                try:
+                    oid = OntologyID.from_string(item)
+                    normalized_list.append(oid.full)
+                except ValueError as e:
+                    raise InvalidQueryFieldError(
+                        f"Invalid trait_ontology_ids value '{item}': {str(e)}",
+                        invalid_fields=["trait_ontology_ids"],
+                    )
+            # Query for any of these full ontology IDs
+            template["trait_ontology_ids"] = {"$elemMatch": {"full": {"$in": normalized_list}}}
+        elif trait_ontology_ids_value and all(isinstance(item, dict) for item in trait_ontology_ids_value):
+            # List of nested field queries - use $elemMatch with $and or individual fields
+            # For multiple dicts, we need to combine them with $or
+            or_conditions = []
+            for item in trait_ontology_ids_value:
+                # Each dict represents conditions on the ontology ID objects
+                condition = {}
+                for key, val in item.items():
+                    if key in ("namespace", "id", "full"):
+                        condition[key] = val
+                    else:
+                        raise InvalidQueryFieldError(
+                            f"Invalid trait_ontology_ids subfield '{key}'. Valid subfields are: namespace, id, full",
+                            invalid_fields=["trait_ontology_ids"],
+                        )
+                if condition:
+                    or_conditions.append({"$elemMatch": condition})
+
+            if or_conditions:
+                if len(or_conditions) == 1:
+                    template["trait_ontology_ids"] = or_conditions[0]
+                else:
+                    template["trait_ontology_ids"] = {"$or": or_conditions}
+        # If it's a list with mixed types or empty, leave as-is for MongoDB to handle
+
+    elif isinstance(trait_ontology_ids_value, dict):
+        # Nested field query like {"namespace": "EFO"} or {"id": "0000123"}
+        # Validate the keys
+        valid_keys = {"namespace", "id", "full"}
+        for key in trait_ontology_ids_value.keys():
+            if key not in valid_keys:
+                raise InvalidQueryFieldError(
+                    f"Invalid trait_ontology_ids subfield '{key}'. Valid subfields are: namespace, id, full",
+                    invalid_fields=["trait_ontology_ids"],
+                )
+        # Convert to $elemMatch query
+        template["trait_ontology_ids"] = {"$elemMatch": trait_ontology_ids_value}
 
 
 def _generate_nested_mapping(schema_or_data: dict[str, Any]) -> dict[str, str]:
@@ -410,6 +548,10 @@ def query_metadata(
     # Validate build values
     if template:
         _validate_build(template)
+
+    # Validate trait_ontology_ids values
+    if template:
+        _validate_and_normalize_trait_ontology_ids(template)
 
     # Validate template fields
     if template:
