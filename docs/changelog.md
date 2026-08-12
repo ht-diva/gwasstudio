@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [3.2.0] - 2026-08-12
+
+### 🚀 Features
+
+- *(core)* Add `UBERON_IDS` to the metadata
+- *(core)* Introduce structured trait ontology IDs support
+
+### 🐛 Bug Fixes
+
+- *(cli)* Follows loguru's recommended practices for error logging
+
 ## [3.1.0] - 2026-07-27
 
 ### 🚀 Features
@@ -12,6 +23,10 @@ All notable changes to this project will be documented in this file.
 ### 🐛 Bug Fixes
 
 - Modify src/gwasstudio/core/ingestion.py to handle comma-separated population values
+
+### 💼 Other
+
+- Bump version
 
 ### 🧪 Testing
 
