@@ -60,8 +60,10 @@ def mongo_conn_info(config: "GWASStudioConfig") -> tuple[str | None, str | None]
             if uri := mongo_config.get("uri"):
                 _, _, db_name = parse_uri(uri)
                 return uri, db_name.replace("/", "")
-        except (ImportError, Exception) as e:
-            logger.warning("Failed to get MongoDB URI from Vault: %s", e)
+        except ImportError as e:
+            logger.opt(exception=True).warning("Vault import failed")
+        except Exception as e:
+            logger.opt(exception=True).warning("Failed to get MongoDB URI from Vault")
 
     return None, None
 
