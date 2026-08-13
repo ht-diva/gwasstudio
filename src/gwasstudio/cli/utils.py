@@ -54,6 +54,8 @@ def mongo_conn_info(config: "GWASStudioConfig") -> tuple[str | None, str | None]
     vault = getattr(config, "vault", None)
     if vault and all(getattr(vault, attr) for attr in ("path", "token", "url")):
         try:
+            from hvac.exceptions import Forbidden, VaultError
+
             from gwasstudio.utils.vault import get_config_from_vault
 
             mongo_config = get_config_from_vault("mongo", vault)
@@ -61,9 +63,20 @@ def mongo_conn_info(config: "GWASStudioConfig") -> tuple[str | None, str | None]
                 _, _, db_name = parse_uri(uri)
                 return uri, db_name.replace("/", "")
         except ImportError as e:
-            logger.opt(exception=True).warning("Vault import failed")
+            logger.opt(exception=True).error("Failed to import Vault client library - please ensure hvac is installed")
+            raise
+        except Forbidden as e:
+            logger.opt(exception=True).error(
+                "Vault access forbidden - check your Vault token and permissions. "
+                "Verify the token has access to path '{}'".format(getattr(vault, "path", "unknown"))
+            )
+            raise
+        except VaultError as e:
+            logger.opt(exception=True).error("Vault operation failed - check Vault server status and configuration")
+            raise
         except Exception as e:
-            logger.opt(exception=True).warning("Failed to get MongoDB URI from Vault")
+            logger.opt(exception=True).error("Unexpected error while retrieving MongoDB URI from Vault")
+            raise
 
     return None, None
 
