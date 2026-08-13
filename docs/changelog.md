@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [3.2.1] - 2026-08-13
+
+### 💼 Other
+
+- *(cli)* More descriptive messages for better diagnostics
+
 ## [3.2.0] - 2026-08-12
 
 ### 🚀 Features
@@ -13,6 +19,10 @@ All notable changes to this project will be documented in this file.
 ### 🐛 Bug Fixes
 
 - *(cli)* Follows loguru's recommended practices for error logging
+
+### 💼 Other
+
+- Bump version
 
 ## [3.1.0] - 2026-07-27
 
