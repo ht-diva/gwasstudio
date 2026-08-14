@@ -3,11 +3,18 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [3.2.2] - 2026-08-14
+
+### 🚜 Refactor
+
+- *(vault)* Enhance the vault module to handle connection issues
+
 ## [3.2.1] - 2026-08-13
 
 ### 💼 Other
 
 - *(cli)* More descriptive messages for better diagnostics
+- Bump version
 
 ## [3.2.0] - 2026-08-12
 
