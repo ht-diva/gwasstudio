@@ -11,8 +11,8 @@ class TestTileDBSchemaCreator(unittest.TestCase):
     def setUp(self):
         self.uri = tempfile.mkdtemp()
         self.cfg = {"vfs.s3.region": "us-west-2"}
-        self.ingest_pval = True
-        self.creator = TileDBSchemaCreator(self.uri, self.cfg, self.ingest_pval)
+        self.additional_attributes = ["MLOG10P"]
+        self.creator = TileDBSchemaCreator(self.uri, self.cfg, self.additional_attributes)
 
     def tearDown(self):
         shutil.rmtree(self.uri)
@@ -20,7 +20,7 @@ class TestTileDBSchemaCreator(unittest.TestCase):
     def test_initialization(self):
         self.assertEqual(self.creator.uri, self.uri)
         self.assertEqual(self.creator.cfg, self.cfg)
-        self.assertEqual(self.creator.ingest_pval, self.ingest_pval)
+        self.assertEqual(self.creator.additional_attributes, self.additional_attributes)
 
     def test_create_schema(self):
         self.creator.create_schema()

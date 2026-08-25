@@ -3,7 +3,6 @@ from typing import Any
 
 import tiledb
 
-from gwasstudio.cli.utils import parse_uri
 from gwasstudio.core.enums import BaseEnum, DataType
 
 
@@ -14,6 +13,7 @@ class AttributeEnum(BaseEnum):
     EA = ("EA", DataType.STRING)
     NEA = ("NEA", DataType.STRING)
     MLOG10P = ("MLOG10P", DataType.FLOAT32_NP)
+    N = ("N", DataType.UINT32_NP)
 
 
 class DimensionEnum(BaseEnum):
@@ -31,7 +31,7 @@ class TileDBSchemaCreator:
         self,
         uri: str,
         cfg: dict[str, Any],
-        ingest_pval: bool,
+        additional_attributes: list[str],
         attribute_enum: BaseEnum = AttributeEnum,
         dimension_enum: BaseEnum = DimensionEnum,
     ):
@@ -41,11 +41,11 @@ class TileDBSchemaCreator:
         Args:
             uri (str): The path where the TileDB array will be stored.
             cfg (Dict[str, Any]): A configuration dictionary for connecting to S3.
-            ingest_pval (bool): Flag to indicate whether to include the MLOG10P attribute.
+            additional_attributes (list): string list of attributes to add
         """
         self.uri = uri
         self.cfg = cfg
-        self.ingest_pval = ingest_pval
+        self.additional_attributes = additional_attributes
         self.attribute_enum = attribute_enum
         self.dimension_enum = dimension_enum
 
@@ -90,8 +90,11 @@ class TileDBSchemaCreator:
             self.attribute_enum.EA,
             self.attribute_enum.NEA,
         ]
-        if self.ingest_pval:
-            attributes_list.append(self.attribute_enum.MLOG10P)
+        if self.additional_attributes:
+            if "MLOG10P" in self.additional_attributes:
+                attributes_list.append(self.attribute_enum.MLOG10P)
+            if "N" in self.additional_attributes:
+                attributes_list.append(self.attribute_enum.N)
 
         attributes = [
             tiledb.Attr(
@@ -121,6 +124,8 @@ class TileDBSchemaCreator:
         try:
             ctx = tiledb.Ctx(self.cfg)
             # Ensure parent directory exists for local filesystem URIs
+            from gwasstudio.cli.utils import parse_uri
+
             scheme, _, path = parse_uri(self.uri)
             if not scheme or scheme == "file":
                 array_path = Path(path)

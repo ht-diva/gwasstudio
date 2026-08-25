@@ -1,0 +1,14 @@
+query_fields:
+  category: eQTL
+
+
+output_fields:
+  - build
+  - population
+  - notes_consortium
+  - notes_sex
+  - total_samples
+  - total_cases
+  - total_controls
+  - total_variants
+  - trait_desc

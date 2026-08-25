@@ -1,0 +1,3 @@
+project	study	category	file_path	access_level	warehouse_uri	notes_consortium	notes_sex	notes_source_id	build	population	total_variants	total_samples	total_cases	total_controls	trait_desc	trait_ontology_ids
+opengwas-e	eqtl-a	eQTL	data/dataset/eqtl-a-ENSG00000228923.gwaslab.tsv.sampled.gz	public	s3://gwasstudio		Combined	eqtl-a-ENSG00000228923	GRCh37	EUR	10	4169			ENSG00000228923	EFO:0000547
+opengwas-e	eqtl-a	eQTL	data/dataset/eqtl-a-ENSG00000255833.gwaslab.tsv.sampled.gz	public	s3://gwasstudio		Combined	eqtl-a-ENSG00000255833	GRCh37	EUR	10	31684			ENSG00000255833	EFO:0000547

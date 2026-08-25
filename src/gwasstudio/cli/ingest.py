@@ -65,15 +65,20 @@ Ingest data in a TileDB-unified dataset.
         default="both",
         help="Choose between metadata ingestion, data ingestion, or both.",
     ),
+    # cloup.option(
+    #     "--pvalue",
+    #     is_flag=True,
+    #     default=True,
+    #     help="Indicate whether to ingest the p-value from the summary statistics instead of calculating it (Default: True).",
+    # ),
     cloup.option(
-        "--pvalue",
-        is_flag=True,
-        default=True,
-        help="Indicate whether to ingest the p-value from the summary statistics instead of calculating it (Default: True).",
+        "--add-cols",
+        default=None,
+        help="string delimited by comma with the columns to add",
     ),
 )
 @click.pass_context
-def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
+def ingest(ctx, file_path, delimiter, uri, ingestion_type, add_cols):
     """
     Ingest data into a TileDB-unified dataset.
 
@@ -87,7 +92,7 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
         delimiter (str): Character or regex pattern to treat as the delimiter.
         uri (str): Warehouse path for storing the tiledb dataset.
         ingestion_type (str): Choose between metadata ingestion, data ingestion, or both.
-        pvalue (bool): Indicate whether to ingest the p-value from the summary statistics.
+        add_cols (str): string delimited by comma with the columns to add.
 
     Raises:
         IngestionError: If ingestion fails due to configuration or storage errors.
@@ -154,15 +159,16 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
                     warehouse_uri = group[MetadataEnum.WAREHOUSE_URI.get_value()].dropna().unique()[0]
                     input_file_list = group[MetadataEnum.FILE_PATH.get_value()].tolist()
                     group_name, tiledb_uri = compose_tiledb_uri(warehouse_uri, name, logger)
+                    additional_columns = add_cols.split(",") if add_cols else []
                     logger.debug(f"tiledb_uri: {tiledb_uri}")
 
                     scheme, _, _ = parse_uri(warehouse_uri)
 
                     try:
                         if scheme == "s3":
-                            ingest_to_s3(input_file_list, tiledb_uri, pvalue, config)
+                            ingest_to_s3(input_file_list, tiledb_uri, additional_columns, config)
                         else:
-                            ingest_to_fs(input_file_list, tiledb_uri, pvalue, config)
+                            ingest_to_fs(input_file_list, tiledb_uri, additional_columns, config)
                     except Exception as e:
                         raise StorageError(f"Failed to ingest data for group {group_name}: {str(e)}") from e
 
@@ -176,7 +182,7 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, pvalue):
         raise IngestionError(f"Unexpected error during ingestion: {str(e)}")
 
 
-def ingest_to_s3(input_file_list, uri, pvalue, config: GWASStudioConfig):
+def ingest_to_s3(input_file_list, uri, add_cols, config: GWASStudioConfig):
     """
     Ingest data into an S3-based TileDB dataset.
 
@@ -186,7 +192,7 @@ def ingest_to_s3(input_file_list, uri, pvalue, config: GWASStudioConfig):
     Args:
         input_file_list (list): List of file paths to be ingested.
         uri (str): Destination path where to store the tiledb dataset in S3.
-        pvalue (bool): Indicate whether to ingest the p-value from the summary statistics.
+        add_cols (list): string list with the columns to add.
         config (GWASStudioConfig): GWASStudio configuration object.
 
     Raises:
@@ -197,7 +203,7 @@ def ingest_to_s3(input_file_list, uri, pvalue, config: GWASStudioConfig):
 
         if not does_uri_path_exist(uri, cfg):
             logger.info("Creating TileDB schema")
-            TileDBSchemaCreator(uri, cfg, pvalue).create_schema()
+            TileDBSchemaCreator(uri, cfg, additional_attributes=add_cols).create_schema()
 
         if get_dask_deployment(config) in dask_deployment_types:
             batch_size = get_dask_batch_size(config, capacity_mode=True)
@@ -214,7 +220,7 @@ def ingest_to_s3(input_file_list, uri, pvalue, config: GWASStudioConfig):
 
                 # Create a list of delayed tasks
                 tasks = [
-                    delayed(process_and_ingest)(file_path, uri, cfg, pvalue)
+                    delayed(process_and_ingest)(file_path, uri, cfg, add_cols)
                     for file_path in batch_files
                     if batch_files[file_path]
                 ]
@@ -226,7 +232,7 @@ def ingest_to_s3(input_file_list, uri, pvalue, config: GWASStudioConfig):
             for file_path in input_file_list:
                 if Path(file_path).exists():
                     logger.debug(f"processing {file_path}")
-                    process_and_ingest(file_path, uri, cfg, pvalue)
+                    process_and_ingest(file_path, uri, cfg, add_cols)
                 else:
                     logger.warning(f"skipping {file_path}")
 
@@ -234,7 +240,7 @@ def ingest_to_s3(input_file_list, uri, pvalue, config: GWASStudioConfig):
         raise StorageError(f"S3 ingestion failed: {str(e)}")
 
 
-def ingest_to_fs(input_file_list, uri, pvalue, config: GWASStudioConfig):
+def ingest_to_fs(input_file_list, uri, add_cols, config: GWASStudioConfig):
     """
     Ingest data into a local file system-based TileDB dataset.
 
@@ -244,7 +250,7 @@ def ingest_to_fs(input_file_list, uri, pvalue, config: GWASStudioConfig):
     Args:
         input_file_list (list): List of file paths to be ingested.
         uri (str): Destination path where to store the tiledb dataset in the local file system.
-        pvalue (bool): Indicate whether to ingest the p-value from the summary statistics.
+        add_cols (list): string list with the columns to add.
         config (GWASStudioConfig): GWASStudio configuration object.
 
     Raises:
@@ -255,7 +261,7 @@ def ingest_to_fs(input_file_list, uri, pvalue, config: GWASStudioConfig):
         _, __, path = parse_uri(uri)
         if not Path(path).exists():
             logger.info("Creating TileDB schema")
-            TileDBSchemaCreator(uri, {}, pvalue).create_schema()
+            TileDBSchemaCreator(uri, {}, additional_attributes=add_cols).create_schema()
 
         if get_dask_deployment(config) in dask_deployment_types:
             batch_size = get_dask_batch_size(config, capacity_mode=True)
@@ -272,7 +278,7 @@ def ingest_to_fs(input_file_list, uri, pvalue, config: GWASStudioConfig):
 
                 # Create a list of delayed tasks
                 tasks = [
-                    delayed(process_and_ingest)(file_path, uri, cfg, pvalue)
+                    delayed(process_and_ingest)(file_path, uri, cfg, add_cols)
                     for file_path in batch_files
                     if batch_files[file_path]
                 ]
@@ -284,7 +290,7 @@ def ingest_to_fs(input_file_list, uri, pvalue, config: GWASStudioConfig):
             for file_path in input_file_list:
                 if Path(file_path).exists():
                     logger.debug(f"processing {file_path}")
-                    process_and_ingest(file_path, uri, {}, pvalue)
+                    process_and_ingest(file_path, uri, {}, add_cols)
                 else:
                     logger.warning(f"{file_path} not found. Skipping it")
 
