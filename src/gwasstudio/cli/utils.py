@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 import tiledb
 import yaml
+import re
 
 from gwasstudio import logger
 from gwasstudio.core import (
@@ -337,11 +338,11 @@ def write_table(
     if file_format not in ["parquet", "csv.gz", "csv"]:
         raise ValueError("Format must be either 'parquet', 'csv.gz', or 'csv'")
 
-    # Set the output filename based on the provided format and extension
-    file_extension = "." + file_format
+    # Sanitize filename by replacing whitespaces
+    file_name = re.sub(r"\s+", "_", Path(where).name.strip())
 
-    # Create the full path by joining the output directory and filename with extension
-    output_path = f"{where}{file_extension}"
+    # Create the full path by joining the output directory and sanitized filename with extension
+    output_path = Path(where).with_name(f"{file_name}.{file_format}")
 
     msg = log_msg if log_msg != "none" else f"Saving DataFrame to {output_path}"
     logger.info(msg)

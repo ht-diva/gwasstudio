@@ -56,6 +56,7 @@ def create_output_prefix_dict(df: pd.DataFrame, output_prefix: str, source_id_co
         grouped = df.groupby(key_column, as_index=False).agg(
             link_id=("link_id", lambda x: "_".join(sorted(set(map(str, x))))), source_id=(source_id_column, "first")
         )
+        grouped["link_id"] = grouped["link_id"].astype(str).str.strip().str.replace(r"[\s/]+", "_", regex=True)
         grouped[value_column] = output_prefix + "_" + grouped["link_id"] + "_" + grouped["source_id"].astype(str)
 
         # Create dictionary mapping data IDs and link IDs to prefixes

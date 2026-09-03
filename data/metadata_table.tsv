@@ -24,5 +24,5 @@ opengwas	ukb-d	GWAS	data/dataset/ukb-d-XV_PREGNANCY_BIRTH.gwaslab.tsv.sampled.gz
 opengwas	ukb-d	GWAS	data/dataset/ukb-d-Z01.gwaslab.tsv.sampled.gz	public	s3://gwasstudio		Combined	ukb-d-Z01	GRCh38	EUR	10	361194	1370	359824	Diagnoses - main ICD10: Z01 Other special examinations and investigations of persons without complaint or reported diagnosis	ICD10:Z01
 opengwas-e	eqtl-a	eQTL	data/dataset/eqtl-a-ENSG00000228923.gwaslab.tsv.sampled.gz	public	s3://gwasstudio		Combined	eqtl-a-ENSG00000228923	GRCh37	EUR	10	4169			ENSG00000228923	EFO:0000547
 opengwas-e	eqtl-a	eQTL	data/dataset/eqtl-a-ENSG00000255833.gwaslab.tsv.sampled.gz	public	s3://gwasstudio		Combined	eqtl-a-ENSG00000255833	GRCh37	EUR	10	31684			ENSG00000255833	EFO:0000547
-opengwas-p	prot-a	pQTL	data/dataset/prot-a-2375.gwaslab.tsv.sampled.gz	public	s3://gwasstudio		Combined	prot-a-2375	GRCh37	EUR	10	3301			Prolactin	GO:0005179
+opengwas-p	prot-a	pQTL	data/dataset/prot-a-2375.gwaslab.tsv.sampled.gz	public	s3://gwasstudio		Combined	prot-a-2375	GRCh37	EUR	10	3301			Total Prolactin	GO:0005179
 opengwas-p	prot-a	pQTL	data/dataset/prot-a-2325.gwaslab.tsv.sampled.gz	public	s3://gwasstudio		Combined	prot-a-2325	GRCh37	EUR	10	3301			Beta-endorphin	GO:0005184
