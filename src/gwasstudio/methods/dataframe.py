@@ -5,21 +5,21 @@ from scipy import stats
 
 def _get_log_p_value_from_z(z_score: np.ndarray) -> np.ndarray:
     """
-    Calculate the negative base-10 logarithm of the p-value from an array of z-scores.
+    Calculate two-sided negative base-10 log p-values from z-scores.
 
-    The p-value is computed using the cumulative distribution function (CDF) of the
-    standard normal distribution. The result is then transformed to the negative
-    base-10 logarithm scale.
+    The log p-values are calculated using the standard normal log survival
+    function. Calculating directly in log space avoids loss of precision and
+    underflow for large absolute z-scores and extremely small p-values.
 
     Args:
         z_score (np.ndarray): An array of z-score values.
 
     Returns:
-        np.ndarray: An array of negative base-10 logarithm of the p-values corresponding to each z-score.
+        np.ndarray: Array of two-sided negative base-10 log p-values.
     """
-    # Use the cumulative distribution function (CDF) for the normal distribution
-    p_values = 2 * (1 - stats.norm.cdf(np.abs(z_score)))
-    return -np.log10(p_values)
+    # Calculate two-sided -log10(p) values from z-scores
+    log_p_values = np.log(2.0) + stats.norm.logsf(np.abs(z_score))
+    return np.maximum(-log_p_values / np.log(10.0), 0.0) # avoid negative rounding artifacts
 
 
 def _build_snpid(df: pd.DataFrame) -> pd.Series:
@@ -60,6 +60,25 @@ def _check_required_columns(required_columns: set[str], df: pd.DataFrame) -> Non
         raise KeyError(f"Missing required columns in DataFrame: {', '.join(sorted(missing_columns))}")
 
 
+def add_mlog10p(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Add 'MLOG10P' calculated from BETA and SE.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame containing the columns 'BETA' and 'SE'.
+
+    Returns:
+        pd.DataFrame: The DataFrame with the 'MLOG10P' column added.
+    """
+
+    if "MLOG10P" not in df.columns:
+        # Direct NumPy arithmetic
+        z = df["BETA"].values / df["SE"].values
+        df.loc[:, "MLOG10P"] = _get_log_p_value_from_z(z).astype(np.float32)
+
+    return df
+
+
 def process_dataframe(df: pd.DataFrame, drop_tid: bool = True) -> pd.DataFrame:
     """
     Process the DataFrame by calculating MLOG10P and building SNPID.
@@ -69,13 +88,10 @@ def process_dataframe(df: pd.DataFrame, drop_tid: bool = True) -> pd.DataFrame:
         drop_tid (bool, optional): Whether to drop the 'TRAITID' column from the DataFrame. Defaults to True.
 
     Returns:
-        pd.DataFrame: The processed DataFrame with the 'MLOG10P' column added, optionally the 'SNPID' column, and optionally without the 'TRAITID' column.
+        pd.DataFrame: The processed DataFrame with the 'MLOG10P' and the 'SNPID columns added, and optionally without the 'TRAITID' column.
     """
 
-    if "MLOG10P" not in df.columns:
-        # Direct NumPy arithmetic
-        z = df["BETA"].values / df["SE"].values
-        df.loc[:, "MLOG10P"] = _get_log_p_value_from_z(z).astype(np.float32)
+    df = add_mlog10p(df)
 
     if drop_tid and "TRAITID" in df.columns:
         df.drop(columns=["TRAITID"], inplace=True)

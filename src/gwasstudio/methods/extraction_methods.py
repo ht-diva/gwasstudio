@@ -6,7 +6,7 @@ import tiledb
 
 from gwasstudio import logger
 from gwasstudio.core.str_utils import is_multiallelic
-from gwasstudio.methods.dataframe import process_dataframe
+from gwasstudio.methods.dataframe import process_dataframe, add_mlog10p
 from gwasstudio.methods.manhattan_plot import _plot_manhattan
 from gwasstudio.utils.tdb_schema import AttributeEnum as an
 from gwasstudio.utils.tdb_schema import DimensionEnum as dn
@@ -72,6 +72,7 @@ def extract_full_stats(
     """
     attributes, tiledb_query = tiledb_array_query(tiledb_array, attrs=attributes)
     tiledb_query_df = tiledb_query.df[:, trait, :]
+    tiledb_query_df = add_mlog10p(tiledb_query_df)
     if pvalue_thr > 0:
         tiledb_query_df = tiledb_query_df[tiledb_query_df["MLOG10P"] > pvalue_thr]
 
@@ -124,6 +125,7 @@ def extract_regions_snps(
             # Get all unique positions for this chromosome
             unique_positions = list(set(group["START"]))
             tiledb_query_df = tiledb_query.df[chr, trait, unique_positions]
+            tiledb_query_df = add_mlog10p(tiledb_query_df)
             if pvalue_filt > 0:
                 tiledb_query_df = tiledb_query_df[tiledb_query_df["MLOG10P"] > pvalue_filt]
             if not tiledb_query_df.empty:
@@ -136,6 +138,7 @@ def extract_regions_snps(
             min_pos = max(group["START"].min(), 1)
             max_pos = group["END"].max()
             tiledb_query_df = tiledb_query.df[chr, trait, min_pos:max_pos]
+            tiledb_query_df = add_mlog10p(tiledb_query_df)
             if not tiledb_query_df.empty:
                 title_plot = f"{trait} - {chr}:{min(tiledb_query_df['POS'])}-{max(tiledb_query_df['POS'])}"
             else:
@@ -258,6 +261,7 @@ def extract_regions_leadsnps(
         min_pos = min(group["START"])
         max_pos = max(group["END"])
         tiledb_query_df = tiledb_query.df[chr, trait, min_pos:max_pos]
+        tiledb_query_df = add_mlog10p(tiledb_query_df)
         if tiledb_query_df.empty:
             for sid in group["SOURCEID_SNP"]:
                 dataframes.append({col: np.nan for col in expected_cols} | {"SOURCEID_SNP": sid})
