@@ -67,7 +67,7 @@ def extract_full_stats(
         output_prefix (str): The prefix for the output file.
         attributes (list[str], optional): A list of attributes to include in the output. Defaults to None.
         pvalue_thr: P-value threshold in -log10 format used to filter significant SNPs (default: 0, no filter).
-        filter_multiallelic (bool): Whether to filter multiallelic loci by keeping the lelic variant with the highest MAF. Default to False.
+        filter_multiallelic (bool): Whether to filter multiallelic loci by keeping the biallelic variant with the highest MAF. Default to False.
         plot_out (bool, optional): Whether to plot the results. Defaults to True.
 
     Returns:
