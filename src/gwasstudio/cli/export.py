@@ -365,6 +365,15 @@ Export summary statistics from TileDB datasets with various filtering options.
     ),
 )
 @cloup.option_group(
+    "Multiallelic filtering options",
+    cloup.option(
+        "--filter-multiallelic",
+        default=False,
+        is_flag=True,
+        help="Whether to filter multiallelic loci by keeping the biallelic variant with the highest MAF (default: False)",
+    ),
+)
+@cloup.option_group(
     "P-value filtering options",
     cloup.option(
         "--pvalue-thr",
@@ -429,6 +438,7 @@ def export(
     get_regions_leadsnps: str | None,
     cis_flanks: int,
     trans_flanks: int,
+    filter_multiallelic: bool,
     exact_alleles: bool,
     skip_meta: bool,
     skip_out: bool,
@@ -647,6 +657,7 @@ def export(
                         pvalue_limit=pvalue_limit,
                         phenovar=phenovar,
                         locus_flanks=locus_flanks,
+                        filter_multiallelic=filter_multiallelic,
                         dask_client=client,
                     )
                 case (_, str() as bed_fp, _, _):
@@ -656,6 +667,7 @@ def export(
                         regions_snps=bed_fp,
                         pvalue_filt=pvalue_filt,
                         skip_out=skip_out,
+                        filter_multiallelic=filter_multiallelic,
                         plot_out=plot_out,
                         color_thr=color_thr,
                         s_value=s_value,
@@ -669,6 +681,7 @@ def export(
                         cis_flanks=cis_flanks,
                         trans_flanks=trans_flanks,
                         exact_alleles=exact_alleles,
+                        filter_multiallelic=filter_multiallelic,
                         dask_client=client,
                     )
                 case (_, _, _, True):
@@ -683,6 +696,7 @@ def export(
                         *common_args,
                         function_name=extract_full_stats,
                         pvalue_thr=pvalue_thr,
+                        filter_multiallelic=filter_multiallelic,
                         plot_out=plot_out,
                         color_thr=color_thr,
                         s_value=s_value,

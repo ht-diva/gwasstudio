@@ -3,7 +3,8 @@ import pandas as pd
 
 from gwasstudio import logger
 from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
-from gwasstudio.methods.dataframe import process_dataframe
+from gwasstudio.methods.dataframe import process_dataframe, add_mlog10p
+from gwasstudio.methods.multiallelic_filtering import keep_best_multiallelic_variant
 
 
 def _locus_breaker(
@@ -132,10 +133,14 @@ def _process_locusbreaker(
     pvalue_limit=None,
     phenovar=None,
     locus_flanks=None,
+    filter_multiallelic=False,
 ):
     """Process data using the locus breaker algorithm."""
     logger.info("Running locus breaker")
     subset_SNPs_pd = tiledb_unified.query().df[:, trait, :]
+    subset_SNPs_pd = add_mlog10p(subset_SNPs_pd)
+    if filter_multiallelic:
+        subset_SNPs_pd = keep_best_multiallelic_variant(subset_SNPs_pd)
 
     subset_SNPs_pd = subset_SNPs_pd[(subset_SNPs_pd["EAF"] >= maf) & (subset_SNPs_pd["EAF"] <= (1 - maf))]
 
