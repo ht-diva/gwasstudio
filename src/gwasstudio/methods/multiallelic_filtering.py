@@ -7,12 +7,12 @@ VALID_BASES = {"A", "C", "G", "T"}
 
 def keep_best_multiallelic_variant(df: pd.DataFrame) -> pd.DataFrame:
     """
-    At multiallelic loci:
+    At multiallelic positions:
 
-    1. Remove variants that are not biallelic.
-    2. Retain the variant with the highest Minor Allele Frequency (MAF).
+    1. Remove non-SNV variants (i.e. indels).
+    2. For pseudo-biallelic (multiallelic variants split on multiple rows), retain the variant with the highest Minor Allele Frequency (MAF).
 
-    Ordinary loci are preserved.
+    Ordinary (non-multiallelic) variants are preserved.
 
     Args:
         df (pd.DataFrame): A DataFrame containing the columns 'CHR', 'POS', 'EA', and 'NEA'.

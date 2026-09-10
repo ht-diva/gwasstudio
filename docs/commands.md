@@ -51,7 +51,7 @@ gwasstudio export [OPTIONS]
 
 **Multiallelic filtering options:**
 
-- `--filter-multiallelic`: Whether to filter multiallelic loci by keeping the biallelic variant with the highest MAF (default: False)
+- `--filter-multiallelic`: Whether to filter multiallelic loci by keeping the biallelic SNV with the highest MAF (default: False)
 
 **P-value filtering options:**
 
