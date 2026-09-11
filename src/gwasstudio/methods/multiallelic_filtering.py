@@ -18,7 +18,7 @@ def keep_best_multiallelic_variant(df: pd.DataFrame) -> pd.DataFrame:
         df (pd.DataFrame): A DataFrame containing the columns 'CHR', 'POS', 'EA', and 'NEA'.
 
     Returns:
-        pd.DataFrame: A DataFrame containing ordinary loci and best multiallelic variants 
+        pd.DataFrame: A DataFrame containing ordinary loci and best multiallelic variants
         (i.e. biallelic variants with the highest MAF).
     """
 
@@ -26,16 +26,20 @@ def keep_best_multiallelic_variant(df: pd.DataFrame) -> pd.DataFrame:
         df["SNPID"] = _build_snpid(df)
 
     # A valid biallelic SNP has two different, single-nucleotide alleles
-    valid_biallelic_snv = (df["EA"].isin(VALID_BASES) & df["NEA"].isin(VALID_BASES) & df["EA"].ne(df["NEA"]))
+    valid_biallelic_snv = df["EA"].isin(VALID_BASES) & df["NEA"].isin(VALID_BASES) & df["EA"].ne(df["NEA"])
 
     # Find multiallelic loci
     is_multiallelic_locus = df.groupby(["CHR", "POS"])["SNPID"].transform("nunique").gt(1)
 
-    # Minor Allele Frequency (MAF) 
+    # Minor Allele Frequency (MAF)
     df["_MAF"] = df["EAF"].where(df["EAF"].le(0.5), 1 - df["EAF"])
 
     # Keep biallelic variants with the highest MAF
-    best_multiallelic = df.loc[is_multiallelic_locus & valid_biallelic_snv & df["_MAF"].notna()].groupby(["CHR", "POS"])["_MAF"].idxmax()
+    best_multiallelic = (
+        df.loc[is_multiallelic_locus & valid_biallelic_snv & df["_MAF"].notna()]
+        .groupby(["CHR", "POS"])["_MAF"]
+        .idxmax()
+    )
 
     # Keep ordinary loci and best multiallelic variants
     keep = ~is_multiallelic_locus

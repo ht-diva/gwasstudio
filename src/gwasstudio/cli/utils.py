@@ -8,6 +8,7 @@ These functions are designed to be used with the new core configuration system.
 
 import gzip
 import pathlib
+import re
 import urllib.parse
 from pathlib import Path
 from typing import Any
@@ -16,7 +17,6 @@ import numpy as np
 import pandas as pd
 import tiledb
 import yaml
-import re
 
 from gwasstudio import logger
 from gwasstudio.core import (

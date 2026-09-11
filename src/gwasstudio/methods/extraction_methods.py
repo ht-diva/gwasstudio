@@ -6,9 +6,9 @@ import tiledb
 
 from gwasstudio import logger
 from gwasstudio.core.str_utils import is_multiallelic
-from gwasstudio.methods.dataframe import process_dataframe, add_mlog10p
-from gwasstudio.methods.multiallelic_filtering import keep_best_multiallelic_variant
+from gwasstudio.methods.dataframe import add_mlog10p, process_dataframe
 from gwasstudio.methods.manhattan_plot import _plot_manhattan
+from gwasstudio.methods.multiallelic_filtering import keep_best_multiallelic_variant
 from gwasstudio.utils.tdb_schema import AttributeEnum as an
 from gwasstudio.utils.tdb_schema import DimensionEnum as dn
 
@@ -297,9 +297,9 @@ def extract_regions_leadsnps(
                 multiallelic_mask = lead["SNPID"].map(is_multiallelic)
                 biallelic_leads = lead.loc[~multiallelic_mask]
                 if not biallelic_leads.empty:
-                    lead = biallelic_leads.iloc[0] # keep first biallelic
+                    lead = biallelic_leads.iloc[0]  # keep first biallelic
                 else:
-                    lead = lead.iloc[0] # keep first multiallelic
+                    lead = lead.iloc[0]  # keep first multiallelic
             else:
                 lead = lead.iloc[0]
 

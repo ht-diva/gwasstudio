@@ -19,7 +19,7 @@ def _get_log_p_value_from_z(z_score: np.ndarray) -> np.ndarray:
     """
     # Calculate two-sided -log10(p) values from z-scores
     log_p_values = np.log(2.0) + stats.norm.logsf(np.abs(z_score))
-    return np.maximum(-log_p_values / np.log(10.0), 0.0) # avoid negative rounding artifacts
+    return np.maximum(-log_p_values / np.log(10.0), 0.0)  # avoid negative rounding artifacts
 
 
 def _build_snpid(df: pd.DataFrame) -> pd.Series:

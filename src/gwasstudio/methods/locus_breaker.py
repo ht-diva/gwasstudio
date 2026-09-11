@@ -3,7 +3,7 @@ import pandas as pd
 
 from gwasstudio import logger
 from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
-from gwasstudio.methods.dataframe import process_dataframe, add_mlog10p
+from gwasstudio.methods.dataframe import add_mlog10p, process_dataframe
 from gwasstudio.methods.multiallelic_filtering import keep_best_multiallelic_variant
 
 
