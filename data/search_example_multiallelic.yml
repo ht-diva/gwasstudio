@@ -1,8 +1,8 @@
-project: opengwas
-study: prot-a
+project: opengwas-synt-p
+category: pQTL
 
 trait:
-  - desc: Total Prolactin
+  - desc: Synthetic pQTL for Prolactin
 
 output:
   - build
