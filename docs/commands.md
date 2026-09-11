@@ -49,6 +49,10 @@ gwasstudio export [OPTIONS]
 - `--trans-flanks INTEGER`: Flanking region (in bp) around POS for the search of TRANS lead-SNP
 - `--exact-alleles`: Whether exact lead match includes also EA and NEA, or only CHR and POS (default: False)
 
+**Multiallelic filtering options:**
+
+- `--filter-multiallelic`: Whether to filter multiallelic loci by keeping the biallelic SNV with the highest MAF (default: False)
+
 **P-value filtering options:**
 
 - `--pvalue-thr FLOAT`: Minimum -log10(p-value) threshold to filter significant SNPs

@@ -7,6 +7,7 @@ import tiledb
 from gwasstudio import logger
 from gwasstudio.core.str_utils import is_multiallelic
 from gwasstudio.methods.dataframe import process_dataframe, add_mlog10p
+from gwasstudio.methods.multiallelic_filtering import keep_best_multiallelic_variant
 from gwasstudio.methods.manhattan_plot import _plot_manhattan
 from gwasstudio.utils.tdb_schema import AttributeEnum as an
 from gwasstudio.utils.tdb_schema import DimensionEnum as dn
@@ -50,6 +51,7 @@ def extract_full_stats(
     tiledb_array: tiledb.Array,
     trait: str,
     output_prefix: str,
+    filter_multiallelic: bool,
     plot_out: bool,
     color_thr: str,
     s_value: int,
@@ -64,7 +66,8 @@ def extract_full_stats(
         trait (str): The trait to filter by.
         output_prefix (str): The prefix for the output file.
         attributes (list[str], optional): A list of attributes to include in the output. Defaults to None.
-        pvalue_thr: P-value threshold in -log10 format used to filter significant SNPs (default: 0, no filter)
+        pvalue_thr: P-value threshold in -log10 format used to filter significant SNPs (default: 0, no filter).
+        filter_multiallelic (bool): Whether to filter multiallelic loci by keeping the biallelic variant with the highest MAF. Default to False.
         plot_out (bool, optional): Whether to plot the results. Defaults to True.
 
     Returns:
@@ -73,6 +76,8 @@ def extract_full_stats(
     attributes, tiledb_query = tiledb_array_query(tiledb_array, attrs=attributes)
     tiledb_query_df = tiledb_query.df[:, trait, :]
     tiledb_query_df = add_mlog10p(tiledb_query_df)
+    if filter_multiallelic:
+        tiledb_query_df = keep_best_multiallelic_variant(tiledb_query_df)
     if pvalue_thr > 0:
         tiledb_query_df = tiledb_query_df[tiledb_query_df["MLOG10P"] > pvalue_thr]
 
@@ -90,6 +95,7 @@ def extract_regions_snps(
     trait: str,
     output_prefix: str,
     skip_out: bool,
+    filter_multiallelic: bool,
     plot_out: bool,
     color_thr: str,
     s_value: int,
@@ -108,6 +114,7 @@ def extract_regions_snps(
         pvalue_filt: Minimum -log10(p-value) threshold to keep significant filtered SNPs (default: 0, no filter)
         attributes (list[str], optional): A list of attributes to include in the output. Defaults to None.
         skip_out (bool, optional): Whether to write regions output. Defaults to False.
+        filter_multiallelic (bool): Whether to filter multiallelic loci by keeping the biallelic variant with the highest MAF. Default to False.
         plot_out (bool, optional): Whether to plot the results. Defaults to True.
 
     Returns:
@@ -126,6 +133,8 @@ def extract_regions_snps(
             unique_positions = list(set(group["START"]))
             tiledb_query_df = tiledb_query.df[chr, trait, unique_positions]
             tiledb_query_df = add_mlog10p(tiledb_query_df)
+            if filter_multiallelic:
+                tiledb_query_df = keep_best_multiallelic_variant(tiledb_query_df)
             if pvalue_filt > 0:
                 tiledb_query_df = tiledb_query_df[tiledb_query_df["MLOG10P"] > pvalue_filt]
             if not tiledb_query_df.empty:
@@ -139,6 +148,8 @@ def extract_regions_snps(
             max_pos = group["END"].max()
             tiledb_query_df = tiledb_query.df[chr, trait, min_pos:max_pos]
             tiledb_query_df = add_mlog10p(tiledb_query_df)
+            if filter_multiallelic:
+                tiledb_query_df = keep_best_multiallelic_variant(tiledb_query_df)
             if not tiledb_query_df.empty:
                 title_plot = f"{trait} - {chr}:{min(tiledb_query_df['POS'])}-{max(tiledb_query_df['POS'])}"
             else:
@@ -198,6 +209,7 @@ def extract_regions_leadsnps(
     cis_flanks: int = 500000,
     trans_flanks: int = 1000000,
     exact_alleles: bool = False,
+    filter_multiallelic: bool = False,
     attributes: tuple[str] = None,
 ) -> pd.DataFrame:
     """
@@ -211,6 +223,7 @@ def extract_regions_leadsnps(
         cis_flanks (int): Flanking region (in bp) around POS for the search of CIS lead-SNP (default: 500000).
         trans_flanks (int): Flanking region (in bp) around POS for the search of TRANS lead-SNP (default: 1000000).
         exact_alleles (bool): Whether exact lead match includes also EA and NEA, or only CHR and POS (default: False).
+        filter_multiallelic (bool): Whether to filter multiallelic loci by keeping the biallelic variant with the highest MAF (default: False).
         attributes (list[str], optional): A list of attributes to include in the output. Defaults to None.
 
     Returns:
@@ -262,6 +275,8 @@ def extract_regions_leadsnps(
         max_pos = max(group["END"])
         tiledb_query_df = tiledb_query.df[chr, trait, min_pos:max_pos]
         tiledb_query_df = add_mlog10p(tiledb_query_df)
+        if filter_multiallelic:
+            tiledb_query_df = keep_best_multiallelic_variant(tiledb_query_df)
         if tiledb_query_df.empty:
             for sid in group["SOURCEID_SNP"]:
                 dataframes.append({col: np.nan for col in expected_cols} | {"SOURCEID_SNP": sid})
@@ -279,12 +294,12 @@ def extract_regions_leadsnps(
             lead = region[region["MLOG10P"] == region["MLOG10P"].max()]
             lead = process_dataframe(lead)
             if len(lead) > 1:  # if multiple lead SNPs
-                lead["is_multi"] = lead["SNPID"].apply(is_multiallelic)
-                mono = lead[~lead["is_multi"]]
-                if len(mono) > 0:
-                    lead = mono.iloc[0]  # keep first bi-allelic
+                multiallelic_mask = lead["SNPID"].map(is_multiallelic)
+                biallelic_leads = lead.loc[~multiallelic_mask]
+                if not biallelic_leads.empty:
+                    lead = biallelic_leads.iloc[0] # keep first biallelic
                 else:
-                    lead = lead.iloc[0]  # keep first multi-allelic
+                    lead = lead.iloc[0] # keep first multiallelic
             else:
                 lead = lead.iloc[0]
 

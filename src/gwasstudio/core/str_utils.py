@@ -18,15 +18,15 @@ def lower_and_replace(text: str) -> str:
 
 def is_multiallelic(snpid: str) -> bool:
     """
-    Check if a SNP is multi-allelic.
+    Check if a SNP is multiallelic.
 
-    A SNPID is multi-allelic if either EA or NEA has length > 1.
+    A SNPID is multiallelic if either EA or NEA has length > 1.
 
     Args:
         snpid (str): A SNPID with format CHR:POS:EA:NEA.
 
     Returns:
-        bool: True if the SNPID is multi-allelic, False otherwise.
+        bool: True if the SNPID is multiallelic, False otherwise.
 
     Raises:
         ValueError: If SNPID has an unexpected format.
