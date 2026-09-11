@@ -3,7 +3,33 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [3.3.0] - 2026-09-11
+
+### 🚀 Features
+
+- *(ingest)* Add support for additional columns ingestion
+- *(methods)* Add multi-allelic filtering
+
+### 🐛 Bug Fixes
+
+- *(poetry)* Cap bokeh below version 3.10
+- *(tests)* Correct data_ids in test query file
+- *(cli)* Normalize whitespace in output names
+- *(methods)* Add MLOG10P before extraction methods use it
+
+### 📚 Documentation
+
+- Update multiallelic filtering documentation
+
+### 🧪 Testing
+
+- Add (unit)test for multiallelic filtering
+
 ## [3.2.2] - 2026-08-14
+
+### 💼 Other
+
+- Bump version
 
 ### 🚜 Refactor
 
@@ -897,7 +923,7 @@ This reverts commit 4e6546b860962a845fd8d3f3459d43ed79b47572.
 ### 💼 Other
 
 - Reformat metadata util functions
-- Implement functions to retrieve configuration data from HashCorp vault
+- Implement functions to retrieve configuration data from HashiCorp vault
 - Bump version
 
 ### 🚜 Refactor
