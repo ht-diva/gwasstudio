@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [3.3.1] - 2026-09-15
+
+### 🐛 Bug Fixes
+
+- Improve error messages to include file path in ingestion failures
+
+### 🧪 Testing
+
+- Add multiallelic filtering test using modified data
+
 ## [3.3.0] - 2026-09-11
 
 ### 🚀 Features
@@ -17,9 +27,17 @@ All notable changes to this project will be documented in this file.
 - *(cli)* Normalize whitespace in output names
 - *(methods)* Add MLOG10P before extraction methods use it
 
+### 💼 Other
+
+- Bump version
+
 ### 📚 Documentation
 
 - Update multiallelic filtering documentation
+
+### 🎨 Styling
+
+- Linting
 
 ### 🧪 Testing
 
