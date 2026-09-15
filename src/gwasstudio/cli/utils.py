@@ -27,6 +27,7 @@ from gwasstudio.core import (
     MetadataEnum,
     MongoConfig,
     S3Config,
+    StorageError,
     TileDBConfig,
     VaultConfig,
 )
@@ -179,74 +180,6 @@ def load_metadata(file_path: Path, delimiter: str = "\t") -> pd.DataFrame:
         raise ValueError("Error parsing the file")
 
 
-# def ingest_metadata(df: pd.DataFrame, mongo_uri: str = None) -> None:
-#     """Ingest data into the MongoDB collection."""
-#
-#     def _document_generator(df):
-#         for row in df.itertuples(index=False):
-#             yield process_metadata_dict(row)
-#
-#     logger.info("Starting metadata ingestion")
-#     rows = len(df.axes[0])
-#     processed_rows = 0
-#     logger.info(f"{rows} documents to ingest")
-#
-#     # Helper that creates and saves a single document
-#     def _save_document(doc):
-#         obj = EnhancedDataProfile(uri=mongo_uri, **doc)
-#         obj.save()
-#         return 1  # count of one processed row
-#
-#     for document in _document_generator(df):
-#         processed_rows += _save_document(document)
-#
-#         # Print the row counter every 100 rows
-#         if processed_rows % 100 == 0:
-#             logger.info(f"{processed_rows} documents processed")
-
-
-# def ingest_metadata_bulk(df: pd.DataFrame, mongo_uri: str = None, batch_size: int = 1000) -> None:
-#     """Ingest data into the MongoDB collection in bulk using generator pattern."""
-#
-#     def _document_generator(df):
-#         for row in df.itertuples(index=False):
-#             yield process_metadata_dict(row)
-#
-#     logger.info("Starting bulk metadata ingestion")
-#     rows = len(df.axes[0])
-#     logger.info(f"{rows} documents to ingest")
-#
-#     # Process in batches to avoid memory issues
-#     processed = 0
-#
-#     batch = []
-#     for i, document in enumerate(_document_generator(df), 1):
-#         batch.append(document)
-#
-#         print(batch)
-#
-#         if i % batch_size == 0:
-#             result = EnhancedDataProfile.bulk_create(batch, mongo_uri, batch_size=batch_size)
-#             if "invalid_documents" in result:
-#                 for invalid in result["invalid_documents"]:
-#                     logger.error(f"Invalid document: {invalid}")
-#             processed += result["total"]
-#             logger.info(f"Processed batch: {processed}/{rows} documents")
-#             batch = []
-#
-#     # Process remaining documents
-#     if batch:
-#         result = EnhancedDataProfile.bulk_create(batch, mongo_uri, batch_size=batch_size)
-#         if "invalid_documents" in result:
-#             for invalid in result["invalid_documents"]:
-#                 logger.error(f"Invalid document: {invalid}")
-#
-#         processed += result["total"]
-#         logger.info(f"Processed final batch: {processed}/{rows} documents")
-#
-#     logger.info(f"Bulk ingestion complete: {processed} documents processed")
-
-
 def _get_valid_metadata_columns() -> list[str]:
     """
     Get the list of valid metadata fields from MetadataEnum.
@@ -387,73 +320,6 @@ def write_if_not_empty(
     )
 
 
-# def process_and_ingest(file_path: str, uri: str, cfg: dict, ingest_pval: bool) -> None:
-#     """
-#     Process a single file and ingest it in a TileDB
-#
-#     Args:
-#         file_path (str): The path where the file to ingest is stored
-#         uri (str): The path where the TileDB is stored.
-#         cfg (dict): A configuration dictionary to use for connecting to S3.
-#     """
-#
-#     def read_sumstat_file(file_path, ingest_pval=False):
-#         file_path = pathlib.Path(file_path)
-#         required_cols = ["CHR", "POS", "EA", "NEA", "EAF", "SE", "BETA"]
-#         types = {
-#             "CHR": np.uint8,
-#             "POS": np.uint32,
-#             "EA": str,
-#             "NEA": str,
-#             "EAF": np.float32,
-#             "SE": np.float32,
-#             "BETA": np.float32,
-#         }
-#         if ingest_pval:
-#             required_cols.append("MLOG10P")
-#             types["MLOG10P"] = np.float32
-#
-#         suffix = file_path.suffix.lower()
-#
-#         if suffix == ".parquet":
-#             parquet_file = pd.read_parquet(file_path, columns=required_cols)
-#             missing_cols = [col for col in required_cols if col not in parquet_file.columns]
-#             if missing_cols:
-#                 raise ValueError(f"Missing required columns in parquet file: {missing_cols}")
-#             df = parquet_file
-#         elif suffix == ".gz":
-#             with gzip.open(file_path, "rt") as f:
-#                 header = f.readline().strip().split("\t")
-#                 missing_cols = [col for col in required_cols if col not in header]
-#                 if missing_cols:
-#                     raise ValueError(f"Missing required columns in tsv.gz file: {missing_cols}")
-#             df = pd.read_csv(file_path, compression="gzip", sep="\t", usecols=required_cols)
-#         else:
-#             raise ValueError("Unsupported file format. Only .parquet and .tsv.gz are supported.")
-#
-#         # Apply type conversion after reading
-#         for col, dtype in types.items():
-#             if col in df.columns:
-#                 df[col] = df[col].astype(dtype)
-#
-#         return df
-#
-#     df = read_sumstat_file(file_path, ingest_pval)
-#
-#     # Add trait_id based on the checksum_dict
-#     hg = Hashing()
-#     df["TRAITID"] = hg.compute_hash(file_path)
-#     # Store the processed data in TileDB
-#     ctx = tiledb.Ctx(tiledb.Config(cfg))
-#     tiledb.from_pandas(
-#         uri=uri,
-#         dataframe=df,
-#         index_dims=["CHR", "TRAITID", "POS"],
-#         mode="append",
-#         ctx=ctx,
-#     )
-
-
 def process_and_ingest(file_path: str, uri: str, cfg: dict, additional_columns: list[str] = None) -> None:
     """
     Process a single file and ingest it into a TileDB array.
@@ -468,6 +334,7 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict, additional_columns: 
     def read_sumstat_file(file_path: str, additional_columns: list[str]) -> pd.DataFrame:
         """Read and validate summary statistics file."""
         file_path = pathlib.Path(file_path)
+        logger.debug(f"Processing file: {file_path}")
         required_cols = {"CHR", "POS", "EA", "NEA", "EAF", "SE", "BETA"}
         dtype_spec = {
             "CHR": np.uint8,
@@ -493,22 +360,26 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict, additional_columns: 
 
         try:
             if suffix == ".parquet":
-                return _read_parquet(file_path, required_cols, dtype_spec)
+                return _read_parquet(file_path, required_cols, dtype_spec, file_path)
             elif suffix == ".gz":
-                return _read_tsv_gz(file_path, required_cols, dtype_spec)
+                return _read_tsv_gz(file_path, required_cols, dtype_spec, file_path)
             raise ValueError("Unsupported file format. Only .parquet and .tsv.gz are supported.")
         except Exception as e:
             raise ValueError(f"Error reading file {file_path}: {str(e)}") from e
 
-    def _read_parquet(file_path: pathlib.Path, required_cols: set, dtype_spec: dict) -> pd.DataFrame:
+    def _read_parquet(
+        file_path: pathlib.Path, required_cols: set, dtype_spec: dict, origin_path: pathlib.Path
+    ) -> pd.DataFrame:
         """Read parquet file with validation."""
         df = pd.read_parquet(file_path, columns=list(required_cols))
         missing_cols = required_cols - set(df.columns)
         if missing_cols:
             raise ValueError(f"Missing required columns in parquet file: {missing_cols}")
-        return _apply_dtypes(df, dtype_spec)
+        return _apply_dtypes(df, dtype_spec, origin_path)
 
-    def _read_tsv_gz(file_path: pathlib.Path, required_cols: set, dtype_spec: dict) -> pd.DataFrame:
+    def _read_tsv_gz(
+        file_path: pathlib.Path, required_cols: set, dtype_spec: dict, origin_path: pathlib.Path
+    ) -> pd.DataFrame:
         """Read gzipped TSV file with validation."""
         with gzip.open(file_path, "rt") as f:
             header = set(f.readline().strip().split("\t"))
@@ -516,23 +387,40 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict, additional_columns: 
             if missing_cols:
                 raise ValueError(f"Missing required columns in tsv.gz file: {missing_cols}")
         return _apply_dtypes(
-            pd.read_csv(file_path, compression="gzip", sep="\t", usecols=list(required_cols)), dtype_spec
+            pd.read_csv(file_path, compression="gzip", sep="\t", usecols=list(required_cols)), dtype_spec, origin_path
         )
 
-    def _apply_dtypes(df: pd.DataFrame, dtype_spec: dict) -> pd.DataFrame:
+    def _apply_dtypes(df: pd.DataFrame, dtype_spec: dict, file_path: pathlib.Path) -> pd.DataFrame:
         """Apply dtype conversions to dataframe."""
-        return df.astype({col: dtype for col, dtype in dtype_spec.items() if col in df.columns})
+        cols_to_convert = {col: dtype for col, dtype in dtype_spec.items() if col in df.columns}
+        if not cols_to_convert:
+            return df
+        try:
+            return df.astype(cols_to_convert)
+        except (ValueError, TypeError) as e:
+            # Provide detailed error context
+            for col, dtype in cols_to_convert.items():
+                unique_values = df[col].dropna().unique()[:5]  # Sample first 5 unique values
+                if df[col].dtype != dtype:
+                    raise ValueError(
+                        f"Failed to convert column '{col}' to {dtype} in file {file_path}. "
+                        f"Found values: {list(unique_values)}. Error: {e}"
+                    ) from e
+            raise ValueError(f"Failed to apply dtypes in file {file_path}: {e}") from e
 
     # Main processing
     df = read_sumstat_file(file_path, additional_columns or [])
     df["TRAITID"] = Hashing().compute_hash(file_path)
 
     # Store in TileDB
-    ctx = tiledb.Ctx(tiledb.Config(cfg))
-    tiledb.from_pandas(
-        uri=uri,
-        dataframe=df,
-        index_dims=["CHR", "TRAITID", "POS"],
-        mode="append",
-        ctx=ctx,
-    )
+    try:
+        ctx = tiledb.Ctx(tiledb.Config(cfg))
+        tiledb.from_pandas(
+            uri=uri,
+            dataframe=df,
+            index_dims=["CHR", "TRAITID", "POS"],
+            mode="append",
+            ctx=ctx,
+        )
+    except Exception as e:
+        raise StorageError(f"Failed to write file {file_path} to TileDB at {uri}: {str(e)}") from e
