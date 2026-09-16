@@ -3,11 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [3.3.2] - 2026-09-16
+
+### 🐛 Bug Fixes
+
+- *(docker)* Make container self-contained by including conda environment
+
 ## [3.3.1] - 2026-09-15
 
 ### 🐛 Bug Fixes
 
 - Improve error messages to include file path in ingestion failures
+
+### 💼 Other
+
+- Bump version
 
 ### 🧪 Testing
 
