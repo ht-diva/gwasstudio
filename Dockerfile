@@ -6,7 +6,7 @@
 # -----------------
 FROM condaforge/mambaforge:24.9.2-0 AS base_environment
 
-COPY base_environment_docker.yml /docker/environment.yml
+COPY base_environment.yml /docker/environment.yml
 
 RUN . /opt/conda/etc/profile.d/conda.sh && \
     mamba create --name lock && \
@@ -27,7 +27,8 @@ RUN . /opt/conda/etc/profile.d/conda.sh && \
         --copy \
         --prefix /opt/env \
         /docker/conda-lock.yml && \
-    conda clean -afy
+    conda clean -afy && \
+    rm -rf /opt/conda/pkgs/*
 
 # -----------------
 # Builder container
@@ -70,9 +71,16 @@ ENV PYTHONFAULTHANDLER=1 \
   LC_ALL="C" \
   HOME=/home/userapp
 
+# Copy the full conda environment from builder
+COPY --from=builder /opt/env /opt/env
+
+# Set PATH to include conda env
+ENV PATH="/opt/env/bin:${PATH}"
+
 COPY --from=builder /opt/dist /opt/dist
 
-RUN pip install --no-cache-dir /opt/dist/*.whl
+RUN pip install --no-cache-dir /opt/dist/*.whl && \
+    rm -rf /opt/dist
 
 # Define the appuser if not defined
 RUN groupadd -r appgroup && \
