@@ -22,9 +22,8 @@ jobs:
         uses: conda-incubator/setup-miniconda@v4
         with:
           activate-environment: gwasstudio
-          environment-file: base_environment_docker.yml
+          environment-file: base_environment.yml
           auto-update-conda: true
-          auto-activate-base: false
           python-version: ${{ matrix.python-version }}
           miniforge-version: latest
 
