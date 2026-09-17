@@ -1,4 +1,4 @@
-# hadolint global ignore=SC1091
+# hadolint global ignore=SC1091,DL3008
 # Minimal Dockerfile - single stage, pip only, no Conda/venv duplication
 
 FROM python:3.12-slim
