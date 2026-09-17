@@ -1,91 +1,27 @@
 # hadolint global ignore=SC1091
-# Dockerfile
+# Minimal Dockerfile - single stage, pip only, no Conda/venv duplication
 
-# -----------------
-# Base environment
-# -----------------
-FROM condaforge/mambaforge:24.9.2-0 AS base_environment
-
-COPY base_environment.yml /docker/environment.yml
-
-RUN . /opt/conda/etc/profile.d/conda.sh && \
-    mamba create --name lock && \
-    conda activate lock && \
-    mamba env list && \
-    mamba install --yes pip conda-lock>=2.5.2 setuptools wheel && \
-    conda lock \
-        --file /docker/environment.yml \
-        --kind lock \
-        --platform linux-64 \
-        --platform linux-aarch64 \
-        --lockfile /docker/conda-lock.yml
-
-RUN . /opt/conda/etc/profile.d/conda.sh && \
-    conda activate lock && \
-    conda-lock install \
-        --mamba \
-        --copy \
-        --prefix /opt/env \
-        /docker/conda-lock.yml && \
-    conda clean -afy && \
-    rm -rf /opt/conda/pkgs/*
-
-# -----------------
-# Builder container
-# -----------------
-FROM python:3.12-slim AS builder
-# copy over the generated environment
-COPY --from=base_environment /opt/env /opt/env
-
-# Set environment variables
-ENV PYTHONFAULTHANDLER=1 \
-  PYTHONUNBUFFERED=1 \
-  PYTHONHASHSEED=random \
-  PIP_NO_CACHE_DIR=off \
-  PIP_DISABLE_PIP_VERSION_CHECK=on \
-  PIP_DEFAULT_TIMEOUT=100 \
-  PATH="/opt/env/bin:${PATH}" \
-  LC_ALL="C"
-
-# Copy to cache them in docker layer
-COPY src/ /opt/src/
-COPY README.md /opt
-COPY pyproject.toml /opt
-
-WORKDIR /opt
-
-RUN poetry build
-
-# -----------------
-# Primary container
-# -----------------
 FROM python:3.12-slim
 
-# Set environment variables
-ENV PYTHONFAULTHANDLER=1 \
-  PYTHONUNBUFFERED=1 \
-  PYTHONHASHSEED=random \
-  PIP_NO_CACHE_DIR=off \
-  PIP_DISABLE_PIP_VERSION_CHECK=on \
-  PIP_DEFAULT_TIMEOUT=100 \
-  LC_ALL="C" \
-  HOME=/home/userapp
+# Install system dependencies for native extensions (NumPy, SciPy, PyArrow, etc.)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        python3-dev \
+        libgomp1 \
+        && rm -rf /var/lib/apt/lists/*
 
-# Copy the full conda environment from builder
-COPY --from=builder /opt/env /opt/env
+WORKDIR /app
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
 
-# Set PATH to include conda env
-ENV PATH="/opt/env/bin:${PATH}"
+# Install all dependencies directly into the base Python
+RUN pip install --no-cache-dir -e .
 
-COPY --from=builder /opt/dist /opt/dist
-
-RUN pip install --no-cache-dir /opt/dist/*.whl && \
-    rm -rf /opt/dist
-
-# Define the appuser if not defined
+# Create system users (from original Dockerfile)
 RUN groupadd -r appgroup && \
-    useradd -r -g appgroup -d $HOME -m appuser && \
+    useradd -r -g appgroup -d /home/appuser -m appuser && \
     groupadd -g 450 slurm && \
     useradd -u 450 -g 450 -d /cm/local/apps/slurm -m -s /bin/bash slurm
 
-USER appuser:appgroup
+USER appuser
