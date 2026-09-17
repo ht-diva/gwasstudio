@@ -3,11 +3,22 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [3.3.3] - 2026-09-17
+
+### 🐛 Bug Fixes
+
+- Github workflows
+- *(docker)* Dockerfile single stage
+
 ## [3.3.2] - 2026-09-16
 
 ### 🐛 Bug Fixes
 
 - *(docker)* Make container self-contained by including conda environment
+
+### 💼 Other
+
+- Bump version
 
 ## [3.3.1] - 2026-09-15
 
