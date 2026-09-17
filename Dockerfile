@@ -6,7 +6,7 @@
 # -----------------
 FROM condaforge/mambaforge:24.9.2-0 AS base_environment
 
-COPY base_environment.yml /docker/environment.yml
+COPY base_environment_docker.yml /docker/environment.yml
 
 RUN . /opt/conda/etc/profile.d/conda.sh && \
     mamba create --name lock && \
@@ -27,8 +27,7 @@ RUN . /opt/conda/etc/profile.d/conda.sh && \
         --copy \
         --prefix /opt/env \
         /docker/conda-lock.yml && \
-    conda clean -afy && \
-    rm -rf /opt/conda/pkgs/*
+    conda clean -afy
 
 # -----------------
 # Builder container
@@ -54,9 +53,7 @@ COPY pyproject.toml /opt
 
 WORKDIR /opt
 
-RUN poetry build && \
-    pip install --no-cache-dir /opt/dist/*.whl && \
-    rm -rf /opt/dist
+RUN poetry build
 
 # -----------------
 # Primary container
@@ -70,11 +67,12 @@ ENV PYTHONFAULTHANDLER=1 \
   PIP_NO_CACHE_DIR=off \
   PIP_DISABLE_PIP_VERSION_CHECK=on \
   PIP_DEFAULT_TIMEOUT=100 \
-  PATH="/opt/env/bin:${PATH}" \
   LC_ALL="C" \
   HOME=/home/userapp
 
-COPY --from=builder /opt/env /opt/env
+COPY --from=builder /opt/dist /opt/dist
+
+RUN pip install --no-cache-dir /opt/dist/*.whl
 
 # Define the appuser if not defined
 RUN groupadd -r appgroup && \
