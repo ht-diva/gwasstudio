@@ -56,6 +56,9 @@ WORKDIR /opt
 
 RUN poetry build
 
+RUN pip install --no-cache-dir /opt/dist/*.whl && \
+    rm -rf /opt/dist
+
 # -----------------
 # Primary container
 # -----------------
@@ -68,16 +71,10 @@ ENV PYTHONFAULTHANDLER=1 \
   PIP_NO_CACHE_DIR=off \
   PIP_DISABLE_PIP_VERSION_CHECK=on \
   PIP_DEFAULT_TIMEOUT=100 \
-  PATH="/opt/env/bin:${PATH}" \
   LC_ALL="C" \
   HOME=/home/userapp
 
 COPY --from=builder /opt/env /opt/env
-
-COPY --from=builder /opt/dist /opt/dist
-
-RUN pip install --no-cache-dir /opt/dist/*.whl && \
-    rm -rf /opt/dist
 
 # Define the appuser if not defined
 RUN groupadd -r appgroup && \
