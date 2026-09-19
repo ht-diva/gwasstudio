@@ -33,7 +33,7 @@ from gwasstudio.core import (
 )
 from gwasstudio.core import ingest_metadata as core_ingest_metadata
 from gwasstudio.core.config import get_dask_batch_size, get_dask_deployment, get_tiledb_config
-from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
+from gwasstudio.dask_client import ClusterStateManager, dask_deployment_types, manage_daskcluster
 from gwasstudio.utils.tdb_schema import TileDBSchemaCreator
 
 help_doc = """
@@ -77,8 +77,22 @@ Ingest data in a TileDB-unified dataset.
         help="string delimited by comma with the columns to add",
     ),
 )
+@cloup.option_group(
+    "Cluster options",
+    cloup.option(
+        "--use-existing-cluster",
+        is_flag=True,
+        default=False,
+        help="Use an existing cluster instead of creating a new one. Requires a running cluster (started via 'gwasstudio cluster start').",
+    ),
+    cloup.option(
+        "--cluster-name",
+        default="default",
+        help="Name of the cluster to use when --use-existing-cluster is enabled.",
+    ),
+)
 @click.pass_context
-def ingest(ctx, file_path, delimiter, uri, ingestion_type, add_cols):
+def ingest(ctx, file_path, delimiter, uri, ingestion_type, add_cols, use_existing_cluster, cluster_name):
     """
     Ingest data into a TileDB-unified dataset.
 
@@ -93,6 +107,8 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, add_cols):
         uri (str): Warehouse path for storing the tiledb dataset.
         ingestion_type (str): Choose between metadata ingestion, data ingestion, or both.
         add_cols (str): string delimited by comma with the columns to add.
+        use_existing_cluster (bool): Whether to use an existing cluster.
+        cluster_name (str): Name of the cluster to use.
 
     Raises:
         IngestionError: If ingestion fails due to configuration or storage errors.
@@ -153,24 +169,70 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, add_cols):
         # Process data ingestion
         if ingestion_type in ["data", "both"]:
             # scheme, netloc, path = parse_uri(uri)
-            with manage_daskcluster(config):
-                grouped = df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
-                for name, group in grouped:
-                    warehouse_uri = group[MetadataEnum.WAREHOUSE_URI.get_value()].dropna().unique()[0]
-                    input_file_list = group[MetadataEnum.FILE_PATH.get_value()].tolist()
-                    group_name, tiledb_uri = compose_tiledb_uri(warehouse_uri, name, logger)
-                    additional_columns = add_cols.split(",") if add_cols else []
-                    logger.debug(f"tiledb_uri: {tiledb_uri}")
+            # Check if we should use an existing cluster
+            existing_cluster = None
+            if use_existing_cluster:
+                existing_cluster = ClusterStateManager.get_cluster(cluster_name)
+                if existing_cluster is None:
+                    raise IngestionError(
+                        f"Cluster '{cluster_name}' not found or not running. "
+                        "Start a cluster with 'gwasstudio cluster start' first."
+                    )
+                logger.info(f"Using existing cluster '{cluster_name}'")
 
-                    scheme, _, _ = parse_uri(warehouse_uri)
+            if existing_cluster:
+                # Use existing cluster - create context manager manually
+                from contextlib import contextmanager
 
+                @contextmanager
+                def cluster_context():
                     try:
-                        if scheme == "s3":
-                            ingest_to_s3(input_file_list, tiledb_uri, additional_columns, config)
-                        else:
-                            ingest_to_fs(input_file_list, tiledb_uri, additional_columns, config)
-                    except Exception as e:
-                        raise StorageError(f"Failed to ingest data for group {group_name}: {str(e)}") from e
+                        yield existing_cluster.client
+                    finally:
+                        pass  # Don't shutdown - let user manage lifecycle
+
+                with cluster_context() as client:
+                    grouped = df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
+                    for name, group in grouped:
+                        warehouse_uri = group[MetadataEnum.WAREHOUSE_URI.get_value()].dropna().unique()[0]
+                        input_file_list = group[MetadataEnum.FILE_PATH.get_value()].tolist()
+                        group_name, tiledb_uri = compose_tiledb_uri(warehouse_uri, name, logger)
+                        additional_columns = add_cols.split(",") if add_cols else []
+                        logger.debug(f"tiledb_uri: {tiledb_uri}")
+
+                        scheme, _, _ = parse_uri(warehouse_uri)
+
+                        try:
+                            if scheme == "s3":
+                                ingest_to_s3(
+                                    input_file_list, tiledb_uri, additional_columns, config, dask_client=client
+                                )
+                            else:
+                                ingest_to_fs(
+                                    input_file_list, tiledb_uri, additional_columns, config, dask_client=client
+                                )
+                        except Exception as e:
+                            raise StorageError(f"Failed to ingest data for group {group_name}: {str(e)}") from e
+            else:
+                # Create new cluster as before
+                with manage_daskcluster(config):
+                    grouped = df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
+                    for name, group in grouped:
+                        warehouse_uri = group[MetadataEnum.WAREHOUSE_URI.get_value()].dropna().unique()[0]
+                        input_file_list = group[MetadataEnum.FILE_PATH.get_value()].tolist()
+                        group_name, tiledb_uri = compose_tiledb_uri(warehouse_uri, name, logger)
+                        additional_columns = add_cols.split(",") if add_cols else []
+                        logger.debug(f"tiledb_uri: {tiledb_uri}")
+
+                        scheme, _, _ = parse_uri(warehouse_uri)
+
+                        try:
+                            if scheme == "s3":
+                                ingest_to_s3(input_file_list, tiledb_uri, additional_columns, config)
+                            else:
+                                ingest_to_fs(input_file_list, tiledb_uri, additional_columns, config)
+                        except Exception as e:
+                            raise StorageError(f"Failed to ingest data for group {group_name}: {str(e)}") from e
 
         logger.info("Ingestion done")
 
@@ -182,7 +244,7 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, add_cols):
         raise IngestionError(f"Unexpected error during ingestion: {str(e)}")
 
 
-def ingest_to_s3(input_file_list, uri, add_cols, config: GWASStudioConfig):
+def ingest_to_s3(input_file_list, uri, add_cols, config: GWASStudioConfig, dask_client=None):
     """
     Ingest data into an S3-based TileDB dataset.
 
@@ -194,6 +256,7 @@ def ingest_to_s3(input_file_list, uri, add_cols, config: GWASStudioConfig):
         uri (str): Destination path where to store the tiledb dataset in S3.
         add_cols (list): string list with the columns to add.
         config (GWASStudioConfig): GWASStudio configuration object.
+        dask_client: Optional Dask client to use. If None, uses default compute().
 
     Raises:
         StorageError: If S3 ingestion fails.
@@ -226,7 +289,10 @@ def ingest_to_s3(input_file_list, uri, add_cols, config: GWASStudioConfig):
                 ]
 
                 # Submit tasks and wait for completion
-                compute(*tasks)
+                if dask_client:
+                    compute(*tasks, scheduler=dask_client)
+                else:
+                    compute(*tasks)
                 logger.info(f"Batch {batch_no} completed.", flush=True)
         else:
             for file_path in input_file_list:
@@ -240,7 +306,7 @@ def ingest_to_s3(input_file_list, uri, add_cols, config: GWASStudioConfig):
         raise StorageError(f"S3 ingestion failed: {str(e)}")
 
 
-def ingest_to_fs(input_file_list, uri, add_cols, config: GWASStudioConfig):
+def ingest_to_fs(input_file_list, uri, add_cols, config: GWASStudioConfig, dask_client=None):
     """
     Ingest data into a local file system-based TileDB dataset.
 
@@ -252,6 +318,7 @@ def ingest_to_fs(input_file_list, uri, add_cols, config: GWASStudioConfig):
         uri (str): Destination path where to store the tiledb dataset in the local file system.
         add_cols (list): string list with the columns to add.
         config (GWASStudioConfig): GWASStudio configuration object.
+        dask_client: Optional Dask client to use. If None, uses default compute().
 
     Raises:
         StorageError: If filesystem ingestion fails.
@@ -284,7 +351,10 @@ def ingest_to_fs(input_file_list, uri, add_cols, config: GWASStudioConfig):
                 ]
 
                 # Submit tasks and wait for completion
-                compute(*tasks)
+                if dask_client:
+                    compute(*tasks, scheduler=dask_client)
+                else:
+                    compute(*tasks)
                 logger.info(f"Batch {batch_no} completed.", flush=True)
         else:
             for file_path in input_file_list:

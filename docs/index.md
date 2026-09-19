@@ -4,6 +4,7 @@ GWASStudio is a powerful CLI tool designed for efficient storage, retrieval, and
 
 ## Commands
 
+* [`cluster`](commands.md#cluster) - Manage Dask cluster lifecycle (start/stop/status/list/cleanup).
 * [`export`](commands.md#export) - Export summary statistics from the DB with various filtering options.
 * [`info`](commands.md#info) - Show GWASStudio details
 * [`ingest`](commands.md#ingest) - Ingest datasets into the DB.

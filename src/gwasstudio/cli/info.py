@@ -2,6 +2,7 @@ import click
 import cloup
 
 from gwasstudio import __appname__, __version__, config_dir, data_dir, log_dir
+from gwasstudio.dask_client import cluster_state_dir
 
 help_doc = """
 Show GWASStudio details
@@ -12,7 +13,12 @@ Show GWASStudio details
 def info():
     click.echo("{}, version {}\n".format(__appname__.capitalize(), __version__))
 
-    paths = {"config dir": config_dir, "data dir": data_dir, "log dir": log_dir}
+    paths = {
+        "config dir": config_dir,
+        "data dir": data_dir,
+        "log dir": log_dir,
+        "cluster state dir": cluster_state_dir,
+    }
     click.echo("Paths: ")
     for k, v in paths.items():
         click.echo("  {}: {}".format(k, v))

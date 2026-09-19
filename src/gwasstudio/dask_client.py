@@ -1,15 +1,23 @@
 import datetime
+import json
+import os
 import subprocess
 from contextlib import contextmanager
+from pathlib import Path
 
 from dask.distributed import Client, LocalCluster
 from dask_gateway import Gateway
 from dask_jobqueue import SLURMCluster as Cluster
+from platformdirs import user_config_dir
 
 from gwasstudio import logger
 from gwasstudio.core.config import GWASStudioConfig
 
 dask_deployment_types = ["local", "gateway", "slurm"]
+
+# Cluster state directory using platformdirs
+cluster_state_dir = Path(user_config_dir("gwasstudio", appauthor=False)) / "clusters"
+cluster_state_dir.mkdir(parents=True, exist_ok=True)
 
 
 def _config_to_dict(config: GWASStudioConfig) -> dict:
@@ -223,3 +231,207 @@ class DaskCluster:
         if hasattr(self, "gateway") and self.gateway:
             logger.info("Closing Dask Gateway session.")
             self.gateway.close()  # Close the Dask Gateway
+
+
+class ClusterStateManager:
+    """
+    Manage persistent Dask cluster state across gwasstudio sessions.
+
+    Uses Dask's built-in connection file format for client persistence
+    and a JSON metadata file for tracking cluster configuration.
+    """
+
+    @staticmethod
+    def _get_connection_file_path(name: str = "default") -> Path:
+        """Get path to Dask connection file for a named cluster."""
+        return cluster_state_dir / f"{name}.json"
+
+    @staticmethod
+    def _get_metadata_file_path(name: str = "default") -> Path:
+        """Get path to metadata file for a named cluster."""
+        return cluster_state_dir / f"{name}.metadata.json"
+
+    @staticmethod
+    def start_cluster(name: str = "default", config: GWASStudioConfig = None, **kwargs) -> DaskCluster:
+        """
+        Start a persistent Dask cluster and save its state.
+
+        Args:
+            name: Cluster profile name (default: "default")
+            config: GWASStudioConfig with Dask settings
+            **kwargs: Override config.dask settings
+
+        Returns:
+            DaskCluster: The started cluster instance
+        """
+        # Build configuration
+        if config is None:
+            config = GWASStudioConfig()
+
+        dask_kwargs = _config_to_dict(config)
+        dask_kwargs.update(kwargs)
+
+        # Start the cluster
+        cluster = DaskCluster(**dask_kwargs)
+
+        # Save connection file (scheduler file)
+        connection_file = ClusterStateManager._get_connection_file_path(name)
+        cluster.client.write_scheduler_file(str(connection_file))
+
+        # Save metadata
+        metadata = {
+            "name": name,
+            "deployment": dask_kwargs.get("deployment"),
+            "workers": dask_kwargs.get("workers"),
+            "cores_per_worker": dask_kwargs.get("cores_per_worker"),
+            "memory_per_worker": dask_kwargs.get("memory_per_worker"),
+            "dashboard_link": cluster.dashboard_link,
+            "connection_file": str(connection_file),
+            "created_at": datetime.datetime.now().isoformat(),
+        }
+        metadata_file = ClusterStateManager._get_metadata_file_path(name)
+        with open(metadata_file, "w") as f:
+            json.dump(metadata, f, indent=2)
+
+        logger.info(f"Cluster '{name}' started and state saved to {cluster_state_dir}")
+        return cluster
+
+    @staticmethod
+    def get_cluster(name: str = "default") -> DaskCluster | None:
+        """
+        Get an existing cluster by name.
+
+        Args:
+            name: Cluster profile name
+
+        Returns:
+            DaskCluster if running, None otherwise
+        """
+        connection_file = ClusterStateManager._get_connection_file_path(name)
+        metadata_file = ClusterStateManager._get_metadata_file_path(name)
+
+        if not connection_file.exists() or not metadata_file.exists():
+            logger.debug(f"No saved cluster state found for '{name}'")
+            return None
+
+        # Load metadata
+        with open(metadata_file, "r") as f:
+            metadata = json.load(f)
+
+        # Try to connect using the saved scheduler file
+        try:
+            client = Client(scheduler_file=str(connection_file))
+            dashboard_link = metadata.get("dashboard_link")
+
+            # Create a DaskCluster wrapper around the existing client
+            cluster = DaskCluster.__new__(DaskCluster)
+            cluster.client = client
+            cluster.dashboard = dashboard_link
+            cluster.type_cluster = None  # Not available from connection file
+
+            logger.debug(f"Connected to existing cluster '{name}'")
+            return cluster
+
+        except Exception as e:
+            logger.warning(f"Failed to connect to cluster '{name}': {e}. Cluster may have been shut down.")
+            # Clean up stale state
+            ClusterStateManager.stop_cluster(name, cleanup=True)
+            return None
+
+    @staticmethod
+    def stop_cluster(name: str = "default", cleanup: bool = False):
+        """
+        Stop a running cluster and remove its state.
+
+        Args:
+            name: Cluster profile name
+            cleanup: If True, remove state files even if stop fails
+        """
+        connection_file = ClusterStateManager._get_connection_file_path(name)
+        metadata_file = ClusterStateManager._get_metadata_file_path(name)
+
+        if not connection_file.exists() and not metadata_file.exists():
+            logger.debug(f"No cluster state found for '{name}'")
+            return
+
+        # Try to get and shutdown the cluster
+        cluster = ClusterStateManager.get_cluster(name)
+        if cluster:
+            try:
+                cluster.shutdown()
+                logger.info(f"Cluster '{name}' stopped successfully")
+            except Exception as e:
+                logger.warning(f"Error stopping cluster '{name}': {e}")
+
+        # Remove state files
+        if cleanup or cluster:
+            for f in [connection_file, metadata_file]:
+                if f.exists():
+                    f.unlink()
+                    logger.debug(f"Removed {f}")
+
+    @staticmethod
+    def list_clusters() -> list[dict]:
+        """
+        List all saved cluster profiles.
+
+        Returns:
+            List of metadata dicts for each saved cluster
+        """
+        clusters = []
+        for pattern in cluster_state_dir.glob("*.metadata.json"):
+            try:
+                with open(pattern, "r") as f:
+                    metadata = json.load(f)
+                    # Check if connection file still exists
+                    connection_file = cluster_state_dir / f"{metadata['name']}.json"
+                    metadata["connected"] = connection_file.exists()
+                    # Try to check if actually running
+                    try:
+                        client = Client(scheduler_file=str(connection_file), timeout=1)
+                        metadata["running"] = True
+                        client.close()
+                    except Exception:
+                        metadata["running"] = False
+                    clusters.append(metadata)
+            except Exception as e:
+                logger.warning(f"Error reading cluster metadata from {pattern}: {e}")
+        return clusters
+
+    @staticmethod
+    def get_cluster_info(name: str = "default") -> dict | None:
+        """
+        Get detailed information about a specific cluster.
+
+        Args:
+            name: Cluster profile name
+
+        Returns:
+            Dict with cluster info, or None if not found
+        """
+        cluster = ClusterStateManager.get_cluster(name)
+        if cluster is None:
+            return None
+
+        metadata_file = ClusterStateManager._get_metadata_file_path(name)
+        if not metadata_file.exists():
+            return None
+
+        with open(metadata_file, "r") as f:
+            metadata = json.load(f)
+
+        # Add runtime info from client
+        try:
+            scheduler_info = cluster.client.scheduler_info()
+            metadata["workers"] = list(scheduler_info["workers"].keys())
+            metadata["worker_count"] = len(scheduler_info["workers"])
+        except Exception:
+            metadata["workers"] = []
+            metadata["worker_count"] = 0
+
+        return metadata
+
+    @staticmethod
+    def is_cluster_running(name: str = "default") -> bool:
+        """Check if a cluster is currently running."""
+        return ClusterStateManager.get_cluster(name) is not None

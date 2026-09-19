@@ -37,10 +37,11 @@ ${HOME}/.vault-token
 
 ## **Main commands**
 
-GWASStudio has four main commands for users:
+GWASStudio has five main command categories for users:
 
 - [list](#1-list): list available/accessible data
 - [meta-query](#2-meta-query): query metadata of interest
+- [cluster](#5-cluster): manage Dask cluster lifecycle
 - [ingest](#3-ingest): ingestion of summary-statistics files(s)
 - [export](#4-export): export data of interest
 
@@ -79,6 +80,78 @@ gwasstudio meta-query --search-file query_ex01.yml --output-prefix output_query_
 The output is a [metadata](metadata.md) table named `output_query_ex01_meta.csv` with records filtered by the query file `query_ex01.yml`.
 
 For a detailed explanation of all command options, see also [meta-query command](commands.md#meta-query).
+
+---
+
+### **5. `cluster`**
+
+The `cluster` command manages Dask cluster lifecycle independently from gwasstudio operations. This is particularly useful for SLURM and Gateway deployments where cluster startup can be expensive (job submission, queue waiting, worker provisioning).
+
+#### When to use `cluster` commands
+
+**Use decoupled cluster management when:**
+
+- Running multiple consecutive `ingest` or `export` operations
+- Using **SLURM** deployment (avoids repeated job submissions and queue waits)
+- Using **Gateway** deployment (avoids repeated worker provisioning)
+- Developing/debugging (keep cluster alive across test runs)
+- You want explicit control over cluster resources
+
+**Use the default behavior (automatic cluster management) when:**
+
+- Running single, short operations
+- Using **local** deployment for quick tasks (cluster commands do not work with local deployment)
+- You prefer simplicity over manual control
+
+> **Important:** The `cluster start` command **does not work with local deployment**. Local clusters run in the same process as the CLI, so they terminate when the command exits. Use `cluster start` only with SLURM or Gateway deployments. For local deployment, the automatic cluster management (without `--use-existing-cluster`) is the correct approach.
+
+#### Cluster management examples
+
+**Start a cluster manually, run multiple operations:**
+
+```bash
+# Start a SLURM cluster (only needed once)
+gwasstudio cluster --name mycluster start --deployment slurm --workers 8 --walltime 24:00:00
+
+# Run multiple operations reusing the same cluster
+gwasstudio ingest --use-existing-cluster --cluster-name mycluster --file-path metadata1.tsv
+gwasstudio ingest --use-existing-cluster --cluster-name mycluster --file-path metadata2.tsv
+gwasstudio export --use-existing-cluster --cluster-name mycluster --search-file query.yml
+
+# Stop the cluster when done
+gwasstudio cluster --name mycluster stop
+```
+
+**Check cluster status:**
+
+```bash
+# List all clusters
+gwasstudio cluster list
+
+# Check status of a specific cluster
+gwasstudio cluster --name mycluster status
+```
+
+**Clean up stale clusters:**
+
+```bash
+# Remove stale state files
+gwasstudio cluster cleanup --all
+```
+
+**Multiple named clusters:**
+
+```bash
+# Create different cluster profiles for different workloads (SLURM only)
+gwasstudio cluster --name big-cluster start --deployment slurm --workers 16
+gwasstudio cluster --name medium-cluster start --deployment slurm --workers 8
+
+# Use specific cluster for each operation
+gwasstudio ingest --use-existing-cluster --cluster-name big-cluster --file-path large_data.tsv
+gwasstudio query --use-existing-cluster --cluster-name medium-cluster --trait my_trait
+```
+
+For a detailed explanation of all command options, see also [cluster command](commands.md#cluster).
 
 ---
 
@@ -168,6 +241,8 @@ To enter a compute node, run the following command:
 ```
 salloc --partition=cpu-interactive --nodes=1 --ntasks-per-node=2 --mem-per-cpu=2048M --time=12:00:00
 ```
+
+**Tip:** For SLURM deployments, consider using the [`cluster` command](#5-cluster) to start a persistent cluster once, then reuse it across multiple export operations to avoid repeated job submissions.
 
 ---
 
