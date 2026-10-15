@@ -3,12 +3,23 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [3.3.4] - 2026-10-15
+
+### 🐛 Bug Fixes
+
+- *(docker)* Make hadolint happy
+- *(docker)* Multistage
+
 ## [3.3.3] - 2026-09-17
 
 ### 🐛 Bug Fixes
 
 - Github workflows
 - *(docker)* Dockerfile single stage
+
+### 💼 Other
+
+- Bump version
 
 ## [3.3.2] - 2026-09-16
 
