@@ -41,6 +41,7 @@ gwasstudio export [OPTIONS]
 - `--skip-out`: Do not write regions output (default: False)
 - `--skip-meta`: Do not add metadata columns (default: False)
 - `--nest`: Estimate effective population size (Work in progress, not fully implemented yet)
+- `--region-buffer INTEGER`: Extend each BED region by this many bp in both directions (default: 0, no extension). SNP rows are unaffected.
 
 **Trait-specific lead-SNP search options:**
 
@@ -67,6 +68,10 @@ gwasstudio export [OPTIONS]
 
 - `--case-sensitive`: Perform case-sensitive matching on query values (default: False)
 - `--exact-match`: Perform exact match on query values (default: False)
+
+**Result checking:**
+
+- `--fail-on-empty`: Exit with status `3` when the query returns no rows (default: False). Useful in pipelines to detect wrong trait IDs, builds, or out-of-store regions.
 
 ---
 

@@ -135,6 +135,11 @@ test_ingest_with_recalc: test-dependencies
 	fi; \
 	bash tests/integration/test_ingest_with_recalc.sh
 
+test_export_flags: test-dependencies
+	@echo "Running --fail-on-empty / --region-buffer integration tests..."
+	@echo "Date: $$(date)"
+	bash tests/integration/test_export_flags.sh
+
 test_trait_ontology_ids: test-dependencies
 	@echo "Running trait_ontology_ids integration tests..."
 	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \

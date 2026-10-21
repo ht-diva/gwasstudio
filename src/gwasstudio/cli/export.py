@@ -91,8 +91,9 @@ def _process_function_tasks(
     trait_snps: str | None = None,
     dask_client: Client = None,
     output_prefix=None,
+    region_buffer: int = 0,
     **kwargs,
-) -> None:
+) -> int:
     """
     Schedule and execute delayed export tasks.
 
@@ -145,13 +146,19 @@ def _process_function_tasks(
     kwargs["attributes"] = attr.split(",") if attr else None
 
     if regions_snps:
-        kwargs["regions_snps"] = delayed(read_to_bed)(regions_snps)
+        kwargs["regions_snps"] = delayed(read_to_bed)(regions_snps, region_buffer)
     if trait_snps:
         all_trait_snps = delayed(read_trait_snps)(trait_snps)
 
     trait_id_list = group["data_id"].unique().tolist() if not isinstance(group, pd.Series) else group.unique().tolist()
     # Build the delayed tasks – each task receives the URI, not the object.
     tasks = []
+    count_indices: list[int] = []
+
+    def _add_rowcount_task(df_input) -> None:
+        tasks.append(delayed(len)(df_input))
+        count_indices.append(len(tasks) - 1)
+
     if function_name.__name__ == "_process_locusbreaker":
         # Locusbreaker returns a tuple (segments, intervals).
         for trait in trait_id_list:
@@ -182,6 +189,7 @@ def _process_function_tasks(
                 index=False,
             )
             tasks.extend([seg_task, int_task])
+            _add_rowcount_task(seg)
     elif function_name.__name__ == "_meta_analysis":
         df_metaanalysis = delayed(_run_extraction)(
             tiledb_uri,
@@ -194,6 +202,7 @@ def _process_function_tasks(
             df_metaanalysis, f"{output_prefix}_meta_analysis", logger, file_format=output_format, index=False
         )
         tasks.append(result)
+        _add_rowcount_task(df_metaanalysis)
     elif function_name.__name__ == "extract_regions_snps":
         for trait in trait_id_list:
             extracted_tuple = delayed(_run_extraction)(
@@ -221,6 +230,7 @@ def _process_function_tasks(
                 index=False,
             )
             tasks.extend([result, result_pvalue_filt])
+            _add_rowcount_task(extracted_df)
     else:
         for trait in trait_id_list:
             if trait_snps and "link_id" in group.columns:
@@ -241,11 +251,15 @@ def _process_function_tasks(
                 transformed_df, output_prefix_dict.get(trait), logger, file_format=output_format, index=False
             )
             tasks.append(result)
+            _add_rowcount_task(transformed_df)
 
     # Handle single-batch case if batch_size <= 0 or len(tasks) <= batch_size
+    # Row-count tasks are the ones tagged in count_indices.
+    total_rows = 0
     if batch_size <= 0 or len(tasks) <= batch_size:
         logger.info(f"Running all tasks in a single batch ({len(tasks)} items)")
-        compute(*tasks, scheduler=dask_client)
+        results = compute(*tasks, scheduler=dask_client)
+        total_rows = sum(results[i] for i in count_indices)
         logger.info("Single batch completed.", flush=True)
     else:
         total_batches = math.ceil(len(tasks) / batch_size)
@@ -253,8 +267,11 @@ def _process_function_tasks(
             batch_no = i // batch_size + 1
             batch = tasks[i : i + batch_size]
             logger.info(f"Running batch {batch_no}/{total_batches} ({min(batch_size, len(tasks) - i)} items)")
-            compute(*batch, scheduler=dask_client)
+            results = compute(*batch, scheduler=dask_client)
+            total_rows += sum(results[j - i] for j in count_indices if i <= j < i + batch_size)
             logger.info(f"Batch {batch_no} completed.", flush=True)
+
+    return total_rows
 
 
 HELP_DOC = """
@@ -338,6 +355,21 @@ Export summary statistics from TileDB datasets with various filtering options.
         default=False,
         is_flag=True,
         help="Estimate effective population size (Work in progress, not fully implemented yet)",
+    ),
+    cloup.option(
+        "--region-buffer",
+        default=0,
+        type=int,
+        help="Extend each BED region by this many bp in both directions (0 = no extension). SNP rows are unaffected.",
+    ),
+)
+@cloup.option_group(
+    "Result checking options",
+    cloup.option(
+        "--fail-on-empty",
+        default=False,
+        is_flag=True,
+        help="Exit with status 3 when the query returns no rows (default: False)",
     ),
 )
 @cloup.option_group(
@@ -447,6 +479,8 @@ def export(
     s_value: int,
     case_sensitive: bool,
     exact_match: bool,
+    region_buffer: int,
+    fail_on_empty: bool,
 ) -> None:
     """Export summary statistics based on selected options."""
 
@@ -595,6 +629,7 @@ def export(
         raise SystemExit(1)
 
     cfg = get_tiledb_config(config)
+    total_rows = 0
 
     with manage_daskcluster(config) as client:
         batch_size = get_dask_batch_size(config)
@@ -648,7 +683,7 @@ def export(
             # Dispatch the appropriate extraction routine
             match (locusbreaker, get_regions_snps, get_regions_leadsnps, meta_analysis):
                 case (True, _, _, _):
-                    _process_function_tasks(
+                    total_rows += _process_function_tasks(
                         *common_args,
                         function_name=_process_locusbreaker,
                         maf=maf,
@@ -661,10 +696,11 @@ def export(
                         dask_client=client,
                     )
                 case (_, str() as bed_fp, _, _):
-                    _process_function_tasks(
+                    total_rows += _process_function_tasks(
                         *common_args,
                         function_name=extract_regions_snps,
                         regions_snps=bed_fp,
+                        region_buffer=region_buffer,
                         pvalue_filt=pvalue_filt,
                         skip_out=skip_out,
                         filter_multiallelic=filter_multiallelic,
@@ -674,7 +710,7 @@ def export(
                         dask_client=client,
                     )
                 case (_, _, str() as traitsnp_fp, _):
-                    _process_function_tasks(
+                    total_rows += _process_function_tasks(
                         *common_args,
                         function_name=extract_regions_leadsnps,
                         trait_snps=traitsnp_fp,
@@ -685,14 +721,14 @@ def export(
                         dask_client=client,
                     )
                 case (_, _, _, True):
-                    _process_function_tasks(
+                    total_rows += _process_function_tasks(
                         *common_args,
                         function_name=_meta_analysis,
                         output_prefix=output_prefix,
                         dask_client=client,
                     )
                 case _:
-                    _process_function_tasks(
+                    total_rows += _process_function_tasks(
                         *common_args,
                         function_name=extract_full_stats,
                         pvalue_thr=pvalue_thr,
@@ -702,3 +738,17 @@ def export(
                         s_value=s_value,
                         dask_client=client,
                     )
+
+    # Result checking: make "zero rows" a detectable outcome for downstream automation.
+    if total_rows == 0:
+        if fail_on_empty:
+            logger.error(
+                "NO_DATA: query returned 0 rows. Check the trait identifier, project/study, "
+                "genome build, and region(s) in the search file and region input."
+            )
+            raise SystemExit(3)
+        logger.warning(
+            "Query returned 0 rows and no data files were written. Use --fail-on-empty to treat this as an error."
+        )
+    else:
+        logger.info(f"Export complete: {total_rows} row(s) written for {len(meta_df)} dataset(s).")
