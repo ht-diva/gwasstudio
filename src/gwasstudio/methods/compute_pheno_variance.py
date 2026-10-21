@@ -1,9 +1,16 @@
-import polars as pl
+import pandas as pd
 
 
-def compute_pheno_variance(df):
-    df_pl = pl.from_pandas(df)
-    median_pl = df_pl.select(((pl.col("SE") ** 2) * pl.col("N") * 2 * pl.col("AF") * (1 - pl.col("AF"))).median())
-    median_value = median_pl.item()
-    median_str = str(median_value)
-    return median_str
+def compute_pheno_variance(df: pd.DataFrame) -> str:
+    """
+    Compute the median per-variant phenotypic variance estimate.
+
+    Args:
+        df: DataFrame with SE, N and AF columns.
+
+    Returns:
+        The median of SE^2 * N * 2 * AF * (1 - AF) as a string.
+    """
+    variance = (df["SE"] ** 2) * df["N"] * 2 * df["AF"] * (1 - df["AF"])
+    median_value = variance.median()
+    return str(median_value)
