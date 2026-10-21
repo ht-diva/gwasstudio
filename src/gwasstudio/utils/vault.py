@@ -4,8 +4,7 @@ HashiCorp Vault integration for GWASStudio.
 Uses VaultConfig dataclass from core.config for type-safe configuration.
 """
 
-from hvac import Client
-from hvac.exceptions import InvalidPath
+from __future__ import annotations
 
 from gwasstudio import logger
 from gwasstudio.core.config import VaultConfig
@@ -24,6 +23,8 @@ def create_vault_client(vault_config: VaultConfig) -> Client | None:
     if not all([vault_config.path, vault_config.token, vault_config.url]):
         logger.warning("Vault configuration incomplete: missing path, token, or url")
         return None
+
+    from hvac import Client  # lazy import: avoids ~1.3s startup cost for jobs without Vault
 
     client = Client(url=vault_config.url)
 
@@ -62,6 +63,8 @@ def get_secret_from_vault(vault_client: Client, vault_config: VaultConfig) -> di
     Returns:
         dict: secret dictionary from Vault, or empty dict on error.
     """
+    from hvac.exceptions import InvalidPath  # lazy import: avoids ~1.3s startup cost for jobs without Vault
+
     try:
         read_response = vault_client.secrets.kv.read_secret_version(
             path=vault_config.path,

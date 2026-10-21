@@ -3,7 +3,6 @@ import subprocess
 from contextlib import contextmanager
 
 from dask.distributed import Client, LocalCluster
-from dask_gateway import Gateway
 from dask_jobqueue import SLURMCluster as Cluster
 
 from gwasstudio import logger
@@ -78,6 +77,8 @@ class DaskCluster:
         _local_directory = kwargs.get("local_directory")
 
         if deployment == "gateway":
+            from dask_gateway import Gateway  # lazy import: only needed for gateway deployment
+
             if _address:
                 try:
                     if isinstance(_mem, str) and _mem.lower().endswith("gib"):

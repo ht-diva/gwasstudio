@@ -22,9 +22,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from hvac import Client
-from hvac.exceptions import Forbidden, InvalidPath, Unauthorized
-
 from gwasstudio.core.config import AuthConfig, GWASStudioConfig, VaultConfig
 from gwasstudio.core.exceptions import AuthenticationError, PermissionError
 from gwasstudio.core.storage.mongodb import MongoDBStorage
@@ -80,6 +77,8 @@ class VaultUserContext:
         Raises:
             AuthenticationError: If token is invalid or cannot be validated
         """
+        from hvac.exceptions import Forbidden, Unauthorized  # lazy import: avoids ~1.3s startup cost
+
         if not vault_config.token:
             return cls(is_authenticated=False)
 
