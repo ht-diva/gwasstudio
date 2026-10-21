@@ -73,6 +73,10 @@ gwasstudio export [OPTIONS]
 
 - `--fail-on-empty`: Exit with status `3` when the query returns no rows (default: False). Useful in pipelines to detect wrong trait IDs, builds, or out-of-store regions.
 
+**Execution:**
+
+- `--workers INTEGER` (global option, e.g. `gwasstudio --workers 0 export …`): Number of Dask workers. `0` runs the export in-process without starting a Dask cluster (fast path — saves a few seconds of cluster startup on small queries). Default (2): in-process automatically for a single dataset on a `local` deployment, otherwise a local Dask cluster with that many workers. Set `GWASSTUDIO_FORCE_CLUSTER=1` in the environment to disable the fast path (benchmarking / debugging).
+
 ---
 
 ### `info`

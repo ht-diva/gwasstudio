@@ -1,4 +1,6 @@
+import contextlib
 import math
+import os
 from collections.abc import Callable
 from pathlib import Path
 
@@ -105,9 +107,9 @@ def _process_function_tasks(
     function_name : Callable
         One of the extraction functions (``extract_full_stats``, …).
     """
-    # Check Dask client
-    if dask_client is None:
-        raise ValueError("Missing Dask client")
+    # A Dask client is optional: when absent, run the task graph in-process
+    # with the synchronous scheduler (no cluster, no IPC) — the fast path.
+    scheduler = dask_client if dask_client is not None else "synchronous"
 
     # Wrapper that opens the array locally and forwards the call.
     def _run_extraction(
@@ -258,7 +260,7 @@ def _process_function_tasks(
     total_rows = 0
     if batch_size <= 0 or len(tasks) <= batch_size:
         logger.info(f"Running all tasks in a single batch ({len(tasks)} items)")
-        results = compute(*tasks, scheduler=dask_client)
+        results = compute(*tasks, scheduler=scheduler)
         total_rows = sum(results[i] for i in count_indices)
         logger.info("Single batch completed.", flush=True)
     else:
@@ -267,7 +269,7 @@ def _process_function_tasks(
             batch_no = i // batch_size + 1
             batch = tasks[i : i + batch_size]
             logger.info(f"Running batch {batch_no}/{total_batches} ({min(batch_size, len(tasks) - i)} items)")
-            results = compute(*batch, scheduler=dask_client)
+            results = compute(*batch, scheduler=scheduler)
             total_rows += sum(results[j - i] for j in count_indices if i <= j < i + batch_size)
             logger.info(f"Batch {batch_no} completed.", flush=True)
 
@@ -631,7 +633,24 @@ def export(
     cfg = get_tiledb_config(config)
     total_rows = 0
 
-    with manage_daskcluster(config) as client:
+    # Fast path (A2.1): skip the Dask cluster for small local jobs.
+    # - global --workers 0            → always in-process
+    # - local deployment + 1 group    → in-process (auto)
+    # - otherwise                     → Dask cluster with config.dask.workers workers
+    n_groups = meta_df[MetadataEnum.get_tiledb_grouping_fields()].drop_duplicates().shape[0]
+    n_workers = config.dask.workers or 0
+    # GWASSTUDIO_FORCE_CLUSTER=1 is an explicit escape hatch (benchmarks, debugging).
+    force_cluster = os.environ.get("GWASSTUDIO_FORCE_CLUSTER") == "1"
+    in_process = not force_cluster and (n_workers == 0 or (get_dask_deployment(config) == "local" and n_groups <= 1))
+
+    if in_process:
+        logger.info("Fast path: running export in-process (no Dask cluster).")
+        cluster_ctx = contextlib.nullcontext()
+    else:
+        logger.info(f"Starting Dask cluster with {n_workers} worker(s) for {n_groups} dataset group(s).")
+        cluster_ctx = manage_daskcluster(config)
+
+    with cluster_ctx as client:
         batch_size = get_dask_batch_size(config)
         grouped = meta_df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
         for name, group in grouped:

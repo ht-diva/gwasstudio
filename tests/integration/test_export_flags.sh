@@ -189,6 +189,49 @@ else
   fi
 fi
 
+# ═══════════════════════════════════════════════════════════════════════════
+# TEST 4 — --workers 0 (in-process fast path) produces the same data
+#          as the Dask-cluster run in TEST 2.
+# ═══════════════════════════════════════════════════════════════════════════
+echo ""
+echo "=== TEST 4: --workers 0 (in-process) → same rows as cluster run ==="
+
+gwasstudio --stdout --mongo-uri "${MDB_URI}" --workers 0 export \
+  --search-file       data/search_example_01.yml \
+  --get-regions-snps  "${VALID_REGION}" \
+  --output-prefix     "${TEST_DIR}/out_inproc" \
+  --uri               "${TILEDB_DIR}" \
+  --output-format     csv \
+  --fail-on-empty \
+  > "${TEST_DIR}/test4.log" 2>&1
+RC=$?
+
+if [ ${RC} -eq 0 ]; then
+  pass "exit code is 0"
+else
+  cat "${TEST_DIR}/test4.log"
+  fail "expected exit code 0, got ${RC}"
+fi
+
+if grep -q 'Fast path: running export in-process' "${TEST_DIR}/test4.log"; then
+  pass "in-process fast path was taken"
+else
+  fail "fast-path log message not found in test4.log"
+fi
+
+INPROC_FILES=$(ls "${TEST_DIR}"/out_inproc_*.csv 2>/dev/null | grep -v '_meta' || true)
+CLUSTER_FILES=$(ls "${TEST_DIR}"/out_valid_*.csv  2>/dev/null | grep -v '_meta' || true)
+INPROC_LINES=$(cat ${INPROC_FILES} 2>/dev/null | wc -l | tr -d ' ')
+CLUSTER_LINES=$(cat ${CLUSTER_FILES} 2>/dev/null | wc -l | tr -d ' ')
+echo "  cluster rows  : ${CLUSTER_LINES}"
+echo "  in-process rows: ${INPROC_LINES}"
+
+if [ -n "${INPROC_FILES}" ] && [ "${INPROC_LINES}" -eq "${CLUSTER_LINES}" ]; then
+  pass "in-process run wrote the same ${INPROC_LINES} rows as the cluster run"
+else
+  fail "row count mismatch: cluster=${CLUSTER_LINES}  in-process=${INPROC_LINES}"
+fi
+
 # ── Cleanup ──────────────────────────────────────────────────────────────────
 echo ""
 echo "=== Stopping MongoDB ==="
