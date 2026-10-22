@@ -79,6 +79,43 @@ def create_output_prefix_dict(df: pd.DataFrame, output_prefix: str, source_id_co
     return output_prefix_dict
 
 
+def _resolve_tiledb_uris(
+    uri: str | None,
+    meta_df: pd.DataFrame,
+) -> list[tuple]:
+    """Resolve the TileDB URI for each project-study group.
+
+    If ``uri`` is provided it is used for every group (backward compatible).
+    Otherwise the URI is read from the ``WAREHOUSE_URI`` metadata column; each
+    group must have exactly one non-null value.
+
+    Returns a list of ``(group_key, group_df, group_name, tiledb_uri)``.
+    Raises :class:`InvalidInputError` if a group has no (or >1) resolvable URI.
+    """
+    wh_col = MetadataEnum.WAREHOUSE_URI.get_value()
+    resolved: list[tuple] = []
+    for name, group in meta_df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False):
+        if uri is not None:
+            warehouse = uri
+        else:
+            uris = group[wh_col].dropna().unique() if wh_col in group.columns else []
+            if len(uris) == 0:
+                raise InvalidInputError(
+                    "No --uri provided and no "
+                    f"{wh_col} found in metadata. Re-ingest with --uri, or pass --uri to export."
+                )
+            if len(uris) > 1:
+                raise InvalidInputError(
+                    f"Group {name} has multiple {wh_col} values: {list(uris)}. "
+                    "All datasets in a project-study group must share one URI."
+                )
+            warehouse = uris[0]
+        group_name, tiledb_uri = compose_tiledb_uri(warehouse, name, logger)
+        logger.debug(f"Resolved TileDB URI for group {group_name}: {tiledb_uri}")
+        resolved.append((name, group, group_name, tiledb_uri))
+    return resolved
+
+
 def _process_function_tasks(
     tiledb_uri: str,
     tiledb_cfg: dict[str, str],
@@ -452,7 +489,7 @@ Export summary statistics from TileDB datasets with various filtering options.
 @click.pass_context
 def export(
     ctx: click.Context,
-    uri: str,
+    uri: str | None,
     search_file: str,
     attr: str,
     output_prefix: str,
@@ -567,17 +604,6 @@ def export(
         else:
             meta_df = pd.DataFrame()
 
-    # Validate that if uri is None, all groups have tiledb_uri in metadata
-    if uri is None:
-        if meta_df.empty:
-            # No results, but we'll handle this later
-            pass
-        elif MetadataEnum.WAREHOUSE_URI.get_value() not in meta_df.columns:
-            raise InvalidInputError(
-                f"URI not provided via --uri and {MetadataEnum.WAREHOUSE_URI.get_value()} not found in metadata. "
-                "Re-ingest data with --uri or provide --uri for export."
-            )
-
     # Add link_id column if trait or notes fields are present in yaml_content
     # This is needed for get_regions_leadsnps functionality
     # Note: trait and notes fields are now stored as dicts (not JSON strings) due to JSONField
@@ -633,6 +659,10 @@ def export(
     cfg = get_tiledb_config(config)
     total_rows = 0
 
+    # Resolve the TileDB URI for each group now — fail fast before starting any
+    # Dask cluster. Returns (group_key, group_df, group_name, tiledb_uri) per group.
+    resolved_groups = _resolve_tiledb_uris(uri, meta_df)
+
     # Fast path (A2.1): skip the Dask cluster for small local jobs.
     # - global --workers 0            → always in-process
     # - local deployment + 1 group    → in-process (auto)
@@ -652,34 +682,7 @@ def export(
 
     with cluster_ctx as client:
         batch_size = get_dask_batch_size(config)
-        grouped = meta_df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
-        for name, group in grouped:
-            # Determine URI and group_name for this group: from CLI or metadata
-            if uri is None:
-                # Get URI from metadata
-                if MetadataEnum.WAREHOUSE_URI.get_value() not in group.columns:
-                    raise InvalidInputError(
-                        f"No {MetadataEnum.WAREHOUSE_URI.get_value()} found in metadata for group {name}. "
-                        "Provide --uri or ensure metadata contains {MetadataEnum.WAREHOUSE_URI} field."
-                    )
-                unique_uris = group[MetadataEnum.WAREHOUSE_URI.get_value()].dropna().unique()
-                if len(unique_uris) == 0:
-                    raise InvalidInputError(
-                        f"No {MetadataEnum.WAREHOUSE_URI.get_value()} found in metadata for group {name}"
-                    )
-                if len(unique_uris) > 1:
-                    raise InvalidInputError(
-                        f"Multiple URIs found for group {name}: {list(unique_uris)}. "
-                        "All datasets in a project-study group must have the same URI."
-                    )
-                warehouse_uri = unique_uris[0]
-                group_name, tiledb_uri = compose_tiledb_uri(warehouse_uri, name, logger)
-                logger.debug(f"Using TileDB URI from metadata for group {group_name}: {tiledb_uri}")
-            else:
-                # Use CLI-provided URI (backward compatible)
-                group_name, tiledb_uri = compose_tiledb_uri(uri, name, logger)
-                logger.debug(f"tiledb_uri: {tiledb_uri}")
-
+        for name, group, group_name, tiledb_uri in resolved_groups:
             # Build a per‑group output‑prefix dict
             _output_prefix_dict = {
                 key: f"{output_prefix}_{group_name}_{value[len(output_prefix) + 1 :]}"
