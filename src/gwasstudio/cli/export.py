@@ -165,7 +165,7 @@ def _process_function_tasks(
     def _run_transformation(
         gwas_df: pd.DataFrame, meta_df: pd.DataFrame, trait_id: str, link_ids: list | None = None
     ) -> pd.DataFrame:
-        #  Optional metadata broadcast – only used when ``skip_meta`` is False.
+        #  Optional metadata broadcast – only used when ``meta == "full"``.
         if isinstance(group, pd.Series):
             return gwas_df
 
@@ -384,10 +384,20 @@ Export summary statistics from TileDB datasets with various filtering options.
         help="Do not write regions output (default: False)",
     ),
     cloup.option(
+        "--meta",
+        default="full",
+        type=click.Choice(["full", "sidefile", "none"]),
+        help=(
+            "Metadata handling: 'full' = meta columns in data + _meta.csv side-file (default); "
+            "'sidefile' = clean data rows + _meta.csv side-file; 'none' = clean data rows, no side-file."
+        ),
+    ),
+    cloup.option(
         "--skip-meta",
         default=False,
         is_flag=True,
-        help="Do not add metadata columns (default: False)",
+        hidden=True,
+        help="[deprecated: use --meta none] Suppress meta columns and the _meta.csv side-file.",
     ),
     cloup.option(
         "--nest",
@@ -511,6 +521,7 @@ def export(
     trans_flanks: int,
     filter_multiallelic: bool,
     exact_alleles: bool,
+    meta: str,
     skip_meta: bool,
     skip_out: bool,
     plot_out: bool,
@@ -522,6 +533,11 @@ def export(
     fail_on_empty: bool,
 ) -> None:
     """Export summary statistics based on selected options."""
+
+    # Backward compatibility: --skip-meta is a deprecated alias for --meta none.
+    if skip_meta:
+        logger.warning("--skip-meta is deprecated; use --meta none. Treating as --meta none.")
+        meta = "none"
 
     # Validate search file exists
     if not Path(search_file).exists():
@@ -640,12 +656,15 @@ def export(
 
                 meta_df["link_id"] = meta_df[mongodb_field_name].apply(extract_link_id)
 
-    # Write metadata query result
-    path = Path(output_prefix)
-    output_path = path.with_suffix("").with_name(path.stem + "_meta")
-    kwargs = {"index": False}
-    log_msg = f"{len(accessible_results)} results found. Writing to {output_path}.csv"
-    write_table(meta_df, str(output_path), logger, file_format="csv", log_msg=log_msg, **kwargs)
+    # Write metadata side-file (unless --meta none)
+    if meta in ("full", "sidefile"):
+        path = Path(output_prefix)
+        output_path = path.with_suffix("").with_name(path.stem + "_meta")
+        kwargs = {"index": False}
+        log_msg = f"{len(accessible_results)} results found. Writing to {output_path}.csv"
+        write_table(meta_df, str(output_path), logger, file_format="csv", log_msg=log_msg, **kwargs)
+    else:
+        logger.info("--meta none: skipping _meta.csv side-file.")
 
     # Create an output prefix dictionary to generate output filenames
     source_id_column = MetadataEnum.get_source_id_field()
@@ -689,7 +708,7 @@ def export(
                 for key, value in output_prefix_dict.items()
             }
 
-            _meta_df = group if not skip_meta else group["data_id"]
+            _meta_df = group if meta == "full" else group["data_id"]
 
             # Common argument list
             common_args = [

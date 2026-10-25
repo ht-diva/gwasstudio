@@ -39,7 +39,8 @@ gwasstudio export [OPTIONS]
 - `--get-regions-snps TEXT`: BED (CHR\tSTART\tEND) or SNP list (CHR,POS) file paths, or string equivalents: (CHR,START,END;CHR,START,END) for regions; (CHR,POS;CHR,POS) for SNPs
 - `--pvalue-filt FLOAT`: Minimum -log10(p-value) threshold to keep significant filtered SNPs
 - `--skip-out`: Do not write regions output (default: False)
-- `--skip-meta`: Do not add metadata columns (default: False)
+- `--meta [full|sidefile|none]`: Metadata handling (default: `full`). `full` = meta columns in the data rows **and** a `_meta.csv` side-file; `sidefile` = clean data rows **and** a `_meta.csv` side-file; `none` = clean data rows, no side-file.
+- `--skip-meta`: **deprecated**, equivalent to `--meta none`.
 - `--nest`: Estimate effective population size (Work in progress, not fully implemented yet)
 - `--region-buffer INTEGER`: Extend each BED region by this many bp in both directions (default: 0, no extension). SNP rows are unaffected.
 
