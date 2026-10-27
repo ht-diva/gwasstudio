@@ -3,12 +3,33 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [3.4.0] - 2026-10-27
+
+### 🚀 Features
+
+- *(export)* Add --fail-on-empty and --region-buffer options
+- *(export)* Add --meta {full,sidefile,none} to control meta columns and side-file
+
+### 🚜 Refactor
+
+- Replace polars with pandas in compute_pheno_variance
+- Modify export.py URI resolution to use _resolve_tiledb_uris()
+
+### ⚡ Performance
+
+- Lazy-import hvac and dask_gateway to cut ~2.2s per CLI job
+- Add in-process fast path (--workers 0) to skip Dask cluster on small exports
+
 ## [3.3.4] - 2026-10-15
 
 ### 🐛 Bug Fixes
 
 - *(docker)* Make hadolint happy
 - *(docker)* Multistage
+
+### 💼 Other
+
+- Bump version
 
 ## [3.3.3] - 2026-09-17
 

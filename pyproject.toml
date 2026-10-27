@@ -1,6 +1,6 @@
 [project]
 name = "gwasstudio"
-version = "3.3.4"
+version = "3.4.0"
 description = ""
 authors = [
     { name = "Gianmauro Cuccuru", email = "gianmauro.cuccuru@fht.org" },
