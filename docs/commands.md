@@ -39,8 +39,10 @@ gwasstudio export [OPTIONS]
 - `--get-regions-snps TEXT`: BED (CHR\tSTART\tEND) or SNP list (CHR,POS) file paths, or string equivalents: (CHR,START,END;CHR,START,END) for regions; (CHR,POS;CHR,POS) for SNPs
 - `--pvalue-filt FLOAT`: Minimum -log10(p-value) threshold to keep significant filtered SNPs
 - `--skip-out`: Do not write regions output (default: False)
-- `--skip-meta`: Do not add metadata columns (default: False)
+- `--meta [full|sidefile|none]`: Metadata handling (default: `full`). `full` = meta columns in the data rows **and** a `_meta.csv` side-file; `sidefile` = clean data rows **and** a `_meta.csv` side-file; `none` = clean data rows, no side-file.
+- `--skip-meta`: **deprecated**, equivalent to `--meta none`.
 - `--nest`: Estimate effective population size (Work in progress, not fully implemented yet)
+- `--region-buffer INTEGER`: Extend each BED region by this many bp in both directions (default: 0, no extension). SNP rows are unaffected.
 
 **Trait-specific lead-SNP search options:**
 
@@ -67,6 +69,14 @@ gwasstudio export [OPTIONS]
 
 - `--case-sensitive`: Perform case-sensitive matching on query values (default: False)
 - `--exact-match`: Perform exact match on query values (default: False)
+
+**Result checking:**
+
+- `--fail-on-empty`: Exit with status `3` when the query returns no rows (default: False). Useful in pipelines to detect wrong trait IDs, builds, or out-of-store regions.
+
+**Execution:**
+
+- `--workers INTEGER` (global option, e.g. `gwasstudio --workers 0 export …`): Number of Dask workers. `0` runs the export in-process without starting a Dask cluster (fast path — saves a few seconds of cluster startup on small queries). Default (2): in-process automatically for a single dataset on a `local` deployment, otherwise a local Dask cluster with that many workers. Set `GWASSTUDIO_FORCE_CLUSTER=1` in the environment to disable the fast path (benchmarking / debugging).
 
 ---
 

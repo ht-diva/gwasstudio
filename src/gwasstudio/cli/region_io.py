@@ -53,12 +53,41 @@ def _validate_string(fp: str) -> int:
     return expected_ncols
 
 
+# Helper: extend region rows by a flanking buffer in both directions.
+# SNP rows (END == START + 1) are left unchanged. The original boundaries are
+# preserved in the START_ORIG/END_ORIG columns so that downstream semantics
+# (e.g. per-region p-value flags) still refer to the requested region, while
+# the wider START/END bounds define the retrieval window.
+def _apply_region_buffer(df: pd.DataFrame, buffer: int) -> pd.DataFrame:
+    if buffer <= 0:
+        return df
+
+    df = df.copy()
+    df["START_ORIG"] = df["START"]
+    df["END_ORIG"] = df["END"]
+
+    is_region = df["END"] > df["START"] + 1
+    if not is_region.any():
+        return df
+
+    df.loc[is_region, "START"] = (df.loc[is_region, "START"] - buffer).clip(lower=1)
+    df.loc[is_region, "END"] = df.loc[is_region, "END"] + buffer
+
+    return df
+
+
 # Helper: read BED region file or SNP list as:
 # 1) a file path
 # 2) an inline string
-def read_to_bed(fp: str) -> pd.DataFrame | None:
+def read_to_bed(fp: str, region_buffer: int = 0) -> pd.DataFrame | None:
     if not fp:
         return None
+
+    df = _read_regions_or_snps(fp)
+    return _apply_region_buffer(df, region_buffer)
+
+
+def _read_regions_or_snps(fp: str) -> pd.DataFrame:
 
     # File path input
     if _is_path(fp):

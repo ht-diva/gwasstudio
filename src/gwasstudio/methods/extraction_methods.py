@@ -156,20 +156,30 @@ def extract_regions_snps(
                 logger.warning(f"No regions found for chromosome {chr}.")
                 continue
 
+            # Region membership and p-value flags refer to the *requested* region:
+            # when a region buffer was applied, use the original boundaries.
+            start_col = "START_ORIG" if "START_ORIG" in group.columns else "START"
+            end_col = "END_ORIG" if "END_ORIG" in group.columns else "END"
+
             # Keep variants that fall within at least one region interval
             pos_mask = pd.Series(False, index=tiledb_query_df.index)
             for _, row in group.iterrows():
                 if pvalue_filt > 0:
                     # Keep all variants within the region if at least one passes the p-value filter
-                    in_region = (tiledb_query_df["POS"] >= row["START"]) & (tiledb_query_df["POS"] <= row["END"])
+                    in_region = (tiledb_query_df["POS"] >= row[start_col]) & (tiledb_query_df["POS"] <= row[end_col])
                     pvalue_flag = (tiledb_query_df.loc[in_region, "MLOG10P"] > pvalue_filt).any()
                     if pvalue_flag:
                         pos_mask |= in_region
                     pvalue_flags.append(
-                        {"CHR": chr, "START": row["START"], "END": row["END"], "PVALUE_FILT_FLAG": bool(pvalue_flag)}
+                        {
+                            "CHR": chr,
+                            "START": row[start_col],
+                            "END": row[end_col],
+                            "PVALUE_FILT_FLAG": bool(pvalue_flag),
+                        }
                     )
                 else:
-                    pos_mask |= (tiledb_query_df["POS"] >= row["START"]) & (tiledb_query_df["POS"] <= row["END"])
+                    pos_mask |= (tiledb_query_df["POS"] >= row[start_col]) & (tiledb_query_df["POS"] <= row[end_col])
             tiledb_query_df = tiledb_query_df[pos_mask]
 
         if plot_out:

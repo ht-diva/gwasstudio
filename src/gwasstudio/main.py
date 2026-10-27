@@ -74,7 +74,11 @@ def configure_logging(stdout, verbosity, _logger):
     cloup.option("--memory-per-worker", default="4GiB", help="Memory per worker (e.g. 36GiB)"),
     cloup.option("--python", default=None, help="Python executable used to launch Dask workers."),
     cloup.option("--walltime", default="12:00:00", help="Walltime for each worker (only for remote cluster config)"),
-    cloup.option("--workers", default=2, help="Number of Dask workers to start"),
+    cloup.option(
+        "--workers",
+        default=2,
+        help="Number of Dask workers to start (0 = run in-process without a Dask cluster)",
+    ),
     cloup.option("--batch-size", default=0, help="Number of tasks per batch (0 for no batching)"),
 )
 @cloup.option_group(

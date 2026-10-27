@@ -1,4 +1,6 @@
+import contextlib
 import math
+import os
 from collections.abc import Callable
 from pathlib import Path
 
@@ -77,6 +79,43 @@ def create_output_prefix_dict(df: pd.DataFrame, output_prefix: str, source_id_co
     return output_prefix_dict
 
 
+def _resolve_tiledb_uris(
+    uri: str | None,
+    meta_df: pd.DataFrame,
+) -> list[tuple]:
+    """Resolve the TileDB URI for each project-study group.
+
+    If ``uri`` is provided it is used for every group (backward compatible).
+    Otherwise the URI is read from the ``WAREHOUSE_URI`` metadata column; each
+    group must have exactly one non-null value.
+
+    Returns a list of ``(group_key, group_df, group_name, tiledb_uri)``.
+    Raises :class:`InvalidInputError` if a group has no (or >1) resolvable URI.
+    """
+    wh_col = MetadataEnum.WAREHOUSE_URI.get_value()
+    resolved: list[tuple] = []
+    for name, group in meta_df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False):
+        if uri is not None:
+            warehouse = uri
+        else:
+            uris = group[wh_col].dropna().unique() if wh_col in group.columns else []
+            if len(uris) == 0:
+                raise InvalidInputError(
+                    "No --uri provided and no "
+                    f"{wh_col} found in metadata. Re-ingest with --uri, or pass --uri to export."
+                )
+            if len(uris) > 1:
+                raise InvalidInputError(
+                    f"Group {name} has multiple {wh_col} values: {list(uris)}. "
+                    "All datasets in a project-study group must share one URI."
+                )
+            warehouse = uris[0]
+        group_name, tiledb_uri = compose_tiledb_uri(warehouse, name, logger)
+        logger.debug(f"Resolved TileDB URI for group {group_name}: {tiledb_uri}")
+        resolved.append((name, group, group_name, tiledb_uri))
+    return resolved
+
+
 def _process_function_tasks(
     tiledb_uri: str,
     tiledb_cfg: dict[str, str],
@@ -91,8 +130,9 @@ def _process_function_tasks(
     trait_snps: str | None = None,
     dask_client: Client = None,
     output_prefix=None,
+    region_buffer: int = 0,
     **kwargs,
-) -> None:
+) -> int:
     """
     Schedule and execute delayed export tasks.
 
@@ -104,9 +144,9 @@ def _process_function_tasks(
     function_name : Callable
         One of the extraction functions (``extract_full_stats``, …).
     """
-    # Check Dask client
-    if dask_client is None:
-        raise ValueError("Missing Dask client")
+    # A Dask client is optional: when absent, run the task graph in-process
+    # with the synchronous scheduler (no cluster, no IPC) — the fast path.
+    scheduler = dask_client if dask_client is not None else "synchronous"
 
     # Wrapper that opens the array locally and forwards the call.
     def _run_extraction(
@@ -125,7 +165,7 @@ def _process_function_tasks(
     def _run_transformation(
         gwas_df: pd.DataFrame, meta_df: pd.DataFrame, trait_id: str, link_ids: list | None = None
     ) -> pd.DataFrame:
-        #  Optional metadata broadcast – only used when ``skip_meta`` is False.
+        #  Optional metadata broadcast – only used when ``meta == "full"``.
         if isinstance(group, pd.Series):
             return gwas_df
 
@@ -145,13 +185,19 @@ def _process_function_tasks(
     kwargs["attributes"] = attr.split(",") if attr else None
 
     if regions_snps:
-        kwargs["regions_snps"] = delayed(read_to_bed)(regions_snps)
+        kwargs["regions_snps"] = delayed(read_to_bed)(regions_snps, region_buffer)
     if trait_snps:
         all_trait_snps = delayed(read_trait_snps)(trait_snps)
 
     trait_id_list = group["data_id"].unique().tolist() if not isinstance(group, pd.Series) else group.unique().tolist()
     # Build the delayed tasks – each task receives the URI, not the object.
     tasks = []
+    count_indices: list[int] = []
+
+    def _add_rowcount_task(df_input) -> None:
+        tasks.append(delayed(len)(df_input))
+        count_indices.append(len(tasks) - 1)
+
     if function_name.__name__ == "_process_locusbreaker":
         # Locusbreaker returns a tuple (segments, intervals).
         for trait in trait_id_list:
@@ -182,6 +228,7 @@ def _process_function_tasks(
                 index=False,
             )
             tasks.extend([seg_task, int_task])
+            _add_rowcount_task(seg)
     elif function_name.__name__ == "_meta_analysis":
         df_metaanalysis = delayed(_run_extraction)(
             tiledb_uri,
@@ -194,6 +241,7 @@ def _process_function_tasks(
             df_metaanalysis, f"{output_prefix}_meta_analysis", logger, file_format=output_format, index=False
         )
         tasks.append(result)
+        _add_rowcount_task(df_metaanalysis)
     elif function_name.__name__ == "extract_regions_snps":
         for trait in trait_id_list:
             extracted_tuple = delayed(_run_extraction)(
@@ -221,6 +269,7 @@ def _process_function_tasks(
                 index=False,
             )
             tasks.extend([result, result_pvalue_filt])
+            _add_rowcount_task(extracted_df)
     else:
         for trait in trait_id_list:
             if trait_snps and "link_id" in group.columns:
@@ -241,11 +290,15 @@ def _process_function_tasks(
                 transformed_df, output_prefix_dict.get(trait), logger, file_format=output_format, index=False
             )
             tasks.append(result)
+            _add_rowcount_task(transformed_df)
 
     # Handle single-batch case if batch_size <= 0 or len(tasks) <= batch_size
+    # Row-count tasks are the ones tagged in count_indices.
+    total_rows = 0
     if batch_size <= 0 or len(tasks) <= batch_size:
         logger.info(f"Running all tasks in a single batch ({len(tasks)} items)")
-        compute(*tasks, scheduler=dask_client)
+        results = compute(*tasks, scheduler=scheduler)
+        total_rows = sum(results[i] for i in count_indices)
         logger.info("Single batch completed.", flush=True)
     else:
         total_batches = math.ceil(len(tasks) / batch_size)
@@ -253,8 +306,11 @@ def _process_function_tasks(
             batch_no = i // batch_size + 1
             batch = tasks[i : i + batch_size]
             logger.info(f"Running batch {batch_no}/{total_batches} ({min(batch_size, len(tasks) - i)} items)")
-            compute(*batch, scheduler=dask_client)
+            results = compute(*batch, scheduler=scheduler)
+            total_rows += sum(results[j - i] for j in count_indices if i <= j < i + batch_size)
             logger.info(f"Batch {batch_no} completed.", flush=True)
+
+    return total_rows
 
 
 HELP_DOC = """
@@ -328,16 +384,41 @@ Export summary statistics from TileDB datasets with various filtering options.
         help="Do not write regions output (default: False)",
     ),
     cloup.option(
+        "--meta",
+        default="full",
+        type=click.Choice(["full", "sidefile", "none"]),
+        help=(
+            "Metadata handling: 'full' = meta columns in data + _meta.csv side-file (default); "
+            "'sidefile' = clean data rows + _meta.csv side-file; 'none' = clean data rows, no side-file."
+        ),
+    ),
+    cloup.option(
         "--skip-meta",
         default=False,
         is_flag=True,
-        help="Do not add metadata columns (default: False)",
+        hidden=True,
+        help="[deprecated: use --meta none] Suppress meta columns and the _meta.csv side-file.",
     ),
     cloup.option(
         "--nest",
         default=False,
         is_flag=True,
         help="Estimate effective population size (Work in progress, not fully implemented yet)",
+    ),
+    cloup.option(
+        "--region-buffer",
+        default=0,
+        type=int,
+        help="Extend each BED region by this many bp in both directions (0 = no extension). SNP rows are unaffected.",
+    ),
+)
+@cloup.option_group(
+    "Result checking options",
+    cloup.option(
+        "--fail-on-empty",
+        default=False,
+        is_flag=True,
+        help="Exit with status 3 when the query returns no rows (default: False)",
     ),
 )
 @cloup.option_group(
@@ -418,7 +499,7 @@ Export summary statistics from TileDB datasets with various filtering options.
 @click.pass_context
 def export(
     ctx: click.Context,
-    uri: str,
+    uri: str | None,
     search_file: str,
     attr: str,
     output_prefix: str,
@@ -440,6 +521,7 @@ def export(
     trans_flanks: int,
     filter_multiallelic: bool,
     exact_alleles: bool,
+    meta: str,
     skip_meta: bool,
     skip_out: bool,
     plot_out: bool,
@@ -447,8 +529,15 @@ def export(
     s_value: int,
     case_sensitive: bool,
     exact_match: bool,
+    region_buffer: int,
+    fail_on_empty: bool,
 ) -> None:
     """Export summary statistics based on selected options."""
+
+    # Backward compatibility: --skip-meta is a deprecated alias for --meta none.
+    if skip_meta:
+        logger.warning("--skip-meta is deprecated; use --meta none. Treating as --meta none.")
+        meta = "none"
 
     # Validate search file exists
     if not Path(search_file).exists():
@@ -531,17 +620,6 @@ def export(
         else:
             meta_df = pd.DataFrame()
 
-    # Validate that if uri is None, all groups have tiledb_uri in metadata
-    if uri is None:
-        if meta_df.empty:
-            # No results, but we'll handle this later
-            pass
-        elif MetadataEnum.WAREHOUSE_URI.get_value() not in meta_df.columns:
-            raise InvalidInputError(
-                f"URI not provided via --uri and {MetadataEnum.WAREHOUSE_URI.get_value()} not found in metadata. "
-                "Re-ingest data with --uri or provide --uri for export."
-            )
-
     # Add link_id column if trait or notes fields are present in yaml_content
     # This is needed for get_regions_leadsnps functionality
     # Note: trait and notes fields are now stored as dicts (not JSON strings) due to JSONField
@@ -578,12 +656,15 @@ def export(
 
                 meta_df["link_id"] = meta_df[mongodb_field_name].apply(extract_link_id)
 
-    # Write metadata query result
-    path = Path(output_prefix)
-    output_path = path.with_suffix("").with_name(path.stem + "_meta")
-    kwargs = {"index": False}
-    log_msg = f"{len(accessible_results)} results found. Writing to {output_path}.csv"
-    write_table(meta_df, str(output_path), logger, file_format="csv", log_msg=log_msg, **kwargs)
+    # Write metadata side-file (unless --meta none)
+    if meta in ("full", "sidefile"):
+        path = Path(output_prefix)
+        output_path = path.with_suffix("").with_name(path.stem + "_meta")
+        kwargs = {"index": False}
+        log_msg = f"{len(accessible_results)} results found. Writing to {output_path}.csv"
+        write_table(meta_df, str(output_path), logger, file_format="csv", log_msg=log_msg, **kwargs)
+    else:
+        logger.info("--meta none: skipping _meta.csv side-file.")
 
     # Create an output prefix dictionary to generate output filenames
     source_id_column = MetadataEnum.get_source_id_field()
@@ -595,44 +676,39 @@ def export(
         raise SystemExit(1)
 
     cfg = get_tiledb_config(config)
+    total_rows = 0
 
-    with manage_daskcluster(config) as client:
+    # Resolve the TileDB URI for each group now — fail fast before starting any
+    # Dask cluster. Returns (group_key, group_df, group_name, tiledb_uri) per group.
+    resolved_groups = _resolve_tiledb_uris(uri, meta_df)
+
+    # Fast path (A2.1): skip the Dask cluster for small local jobs.
+    # - global --workers 0            → always in-process
+    # - local deployment + 1 group    → in-process (auto)
+    # - otherwise                     → Dask cluster with config.dask.workers workers
+    n_groups = meta_df[MetadataEnum.get_tiledb_grouping_fields()].drop_duplicates().shape[0]
+    n_workers = config.dask.workers or 0
+    # GWASSTUDIO_FORCE_CLUSTER=1 is an explicit escape hatch (benchmarks, debugging).
+    force_cluster = os.environ.get("GWASSTUDIO_FORCE_CLUSTER") == "1"
+    in_process = not force_cluster and (n_workers == 0 or (get_dask_deployment(config) == "local" and n_groups <= 1))
+
+    if in_process:
+        logger.info("Fast path: running export in-process (no Dask cluster).")
+        cluster_ctx = contextlib.nullcontext()
+    else:
+        logger.info(f"Starting Dask cluster with {n_workers} worker(s) for {n_groups} dataset group(s).")
+        cluster_ctx = manage_daskcluster(config)
+
+    with cluster_ctx as client:
         batch_size = get_dask_batch_size(config)
-        grouped = meta_df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
-        for name, group in grouped:
-            # Determine URI and group_name for this group: from CLI or metadata
-            if uri is None:
-                # Get URI from metadata
-                if MetadataEnum.WAREHOUSE_URI.get_value() not in group.columns:
-                    raise InvalidInputError(
-                        f"No {MetadataEnum.WAREHOUSE_URI.get_value()} found in metadata for group {name}. "
-                        "Provide --uri or ensure metadata contains {MetadataEnum.WAREHOUSE_URI} field."
-                    )
-                unique_uris = group[MetadataEnum.WAREHOUSE_URI.get_value()].dropna().unique()
-                if len(unique_uris) == 0:
-                    raise InvalidInputError(
-                        f"No {MetadataEnum.WAREHOUSE_URI.get_value()} found in metadata for group {name}"
-                    )
-                if len(unique_uris) > 1:
-                    raise InvalidInputError(
-                        f"Multiple URIs found for group {name}: {list(unique_uris)}. "
-                        "All datasets in a project-study group must have the same URI."
-                    )
-                warehouse_uri = unique_uris[0]
-                group_name, tiledb_uri = compose_tiledb_uri(warehouse_uri, name, logger)
-                logger.debug(f"Using TileDB URI from metadata for group {group_name}: {tiledb_uri}")
-            else:
-                # Use CLI-provided URI (backward compatible)
-                group_name, tiledb_uri = compose_tiledb_uri(uri, name, logger)
-                logger.debug(f"tiledb_uri: {tiledb_uri}")
-
+        for name, group, group_name, tiledb_uri in resolved_groups:
             # Build a per‑group output‑prefix dict
             _output_prefix_dict = {
                 key: f"{output_prefix}_{group_name}_{value[len(output_prefix) + 1 :]}"
                 for key, value in output_prefix_dict.items()
             }
 
-            _meta_df = group if not skip_meta else group["data_id"]
+            _meta_df = group if meta == "full" else group["data_id"]
 
             # Common argument list
             common_args = [
@@ -648,7 +724,7 @@ def export(
             # Dispatch the appropriate extraction routine
             match (locusbreaker, get_regions_snps, get_regions_leadsnps, meta_analysis):
                 case (True, _, _, _):
-                    _process_function_tasks(
+                    total_rows += _process_function_tasks(
                         *common_args,
                         function_name=_process_locusbreaker,
                         maf=maf,
@@ -661,10 +737,11 @@ def export(
                         dask_client=client,
                     )
                 case (_, str() as bed_fp, _, _):
-                    _process_function_tasks(
+                    total_rows += _process_function_tasks(
                         *common_args,
                         function_name=extract_regions_snps,
                         regions_snps=bed_fp,
+                        region_buffer=region_buffer,
                         pvalue_filt=pvalue_filt,
                         skip_out=skip_out,
                         filter_multiallelic=filter_multiallelic,
@@ -674,7 +751,7 @@ def export(
                         dask_client=client,
                     )
                 case (_, _, str() as traitsnp_fp, _):
-                    _process_function_tasks(
+                    total_rows += _process_function_tasks(
                         *common_args,
                         function_name=extract_regions_leadsnps,
                         trait_snps=traitsnp_fp,
@@ -685,14 +762,14 @@ def export(
                         dask_client=client,
                     )
                 case (_, _, _, True):
-                    _process_function_tasks(
+                    total_rows += _process_function_tasks(
                         *common_args,
                         function_name=_meta_analysis,
                         output_prefix=output_prefix,
                         dask_client=client,
                     )
                 case _:
-                    _process_function_tasks(
+                    total_rows += _process_function_tasks(
                         *common_args,
                         function_name=extract_full_stats,
                         pvalue_thr=pvalue_thr,
@@ -702,3 +779,17 @@ def export(
                         s_value=s_value,
                         dask_client=client,
                     )
+
+    # Result checking: make "zero rows" a detectable outcome for downstream automation.
+    if total_rows == 0:
+        if fail_on_empty:
+            logger.error(
+                "NO_DATA: query returned 0 rows. Check the trait identifier, project/study, "
+                "genome build, and region(s) in the search file and region input."
+            )
+            raise SystemExit(3)
+        logger.warning(
+            "Query returned 0 rows and no data files were written. Use --fail-on-empty to treat this as an error."
+        )
+    else:
+        logger.info(f"Export complete: {total_rows} row(s) written for {len(meta_df)} dataset(s).")

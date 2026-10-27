@@ -71,8 +71,11 @@ run_command "Exporting data with multiallelic filtering..." "gwasstudio --stdout
 # Export data
 run_command "Exporting data..." "gwasstudio --stdout --verbosity loud --mongo-uri ${MDB_URI} export --search-file data/search_example_06.yml --output-prefix ${TEST_DIR}/example_export_attrs --uri ${TILEDB_DIR} --attr BETA,SE,EAF,MLOG10P,EA,NEA 2>&1"
 
-# Export data with skip-meta
-run_command "Exporting data..." "gwasstudio --stdout --verbosity loud --mongo-uri ${MDB_URI} export --search-file data/search_example_06.yml --output-prefix ${TEST_DIR}/example_export_skip_meta --plot-out --skip-meta 2>&1"
+# Export data with --meta none (no meta columns, no _meta.csv side-file)
+run_command "Exporting data..." "gwasstudio --stdout --verbosity loud --mongo-uri ${MDB_URI} export --search-file data/search_example_06.yml --output-prefix ${TEST_DIR}/example_export_meta_none --plot-out --meta none 2>&1"
+
+# Export data with --meta sidefile (clean rows + _meta.csv side-file)
+run_command "Exporting data..." "gwasstudio --stdout --verbosity loud --mongo-uri ${MDB_URI} export --search-file data/search_example_06.yml --output-prefix ${TEST_DIR}/example_export_meta_sidefile --meta sidefile 2>&1"
 
 # Export data with a different file format and batch size
 run_command "Exporting data..." "gwasstudio --verbosity loud --stdout --batch-size 4 --mongo-uri ${MDB_URI} export --search-file data/search_example_01.yml --output-prefix ${TEST_DIR}/example_export --output-format parquet 2>&1"
