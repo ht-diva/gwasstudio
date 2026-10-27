@@ -886,8 +886,10 @@
 <li><code>--get-regions-snps TEXT</code>: BED (CHR\tSTART\tEND) or SNP list (CHR,POS) file paths, or string equivalents: (CHR,START,END;CHR,START,END) for regions; (CHR,POS;CHR,POS) for SNPs</li>
 <li><code>--pvalue-filt FLOAT</code>: Minimum -log10(p-value) threshold to keep significant filtered SNPs</li>
 <li><code>--skip-out</code>: Do not write regions output (default: False)</li>
-<li><code>--skip-meta</code>: Do not add metadata columns (default: False)</li>
+<li><code>--meta [full|sidefile|none]</code>: Metadata handling (default: <code>full</code>). <code>full</code> = meta columns in the data rows <strong>and</strong> a <code>_meta.csv</code> side-file; <code>sidefile</code> = clean data rows <strong>and</strong> a <code>_meta.csv</code> side-file; <code>none</code> = clean data rows, no side-file.</li>
+<li><code>--skip-meta</code>: <strong>deprecated</strong>, equivalent to <code>--meta none</code>.</li>
 <li><code>--nest</code>: Estimate effective population size (Work in progress, not fully implemented yet)</li>
+<li><code>--region-buffer INTEGER</code>: Extend each BED region by this many bp in both directions (default: 0, no extension). SNP rows are unaffected.</li>
 </ul>
 <p><strong>Trait-specific lead-SNP search options:</strong></p>
 <ul>
@@ -914,6 +916,14 @@
 <ul>
 <li><code>--case-sensitive</code>: Perform case-sensitive matching on query values (default: False)</li>
 <li><code>--exact-match</code>: Perform exact match on query values (default: False)</li>
+</ul>
+<p><strong>Result checking:</strong></p>
+<ul>
+<li><code>--fail-on-empty</code>: Exit with status <code>3</code> when the query returns no rows (default: False). Useful in pipelines to detect wrong trait IDs, builds, or out-of-store regions.</li>
+</ul>
+<p><strong>Execution:</strong></p>
+<ul>
+<li><code>--workers INTEGER</code> (global option, e.g. <code>gwasstudio --workers 0 export …</code>): Number of Dask workers. <code>0</code> runs the export in-process without starting a Dask cluster (fast path — saves a few seconds of cluster startup on small queries). Default (2): in-process automatically for a single dataset on a <code>local</code> deployment, otherwise a local Dask cluster with that many workers. Set <code>GWASSTUDIO_FORCE_CLUSTER=1</code> in the environment to disable the fast path (benchmarking / debugging).</li>
 </ul>
 <hr />
 <h3 id="info"><code>info</code></h3>
@@ -976,7 +986,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-09-10
+    2026-10-25
   </span>
 
     
