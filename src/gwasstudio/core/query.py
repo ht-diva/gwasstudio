@@ -475,10 +475,13 @@ def _parse_yaml_template(yaml_content: dict[str, Any]) -> tuple[dict, list[str] 
     if not yaml_content:
         return {}, None
 
-    # Get output fields from either "output" or "output_fields" key
-    output_fields = MetadataEnum.required_output_fields() + yaml_content.pop(
-        "output", yaml_content.pop("output_fields", [])
-    )
+    # Get output fields from either "output" or "output_fields" key, merged with
+    # the required set. De-duplicate (preserving order) so a field that is both
+    # required and explicitly requested appears only once — a duplicate column
+    # name would otherwise turn ``df[col]`` into a DataFrame and break the output
+    # prefixing and CSV writing downstream.
+    requested = yaml_content.pop("output", yaml_content.pop("output_fields", [])) or []
+    output_fields = list(dict.fromkeys(MetadataEnum.required_output_fields() + list(requested)))
 
     # Process project/study fields in both main and query_fields sections
     _process_project_study_fields(yaml_content)

@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from gwasstudio.core.enums import MetadataEnum
 from gwasstudio.core.query import (
     InvalidQueryFieldError,
     _apply_query_options,
@@ -554,6 +555,22 @@ class TestParseYamlTemplate:
             }
         )
         assert "a" in outputs
+
+    def test_output_fields_deduplicated(self):
+        """A field that is both required and explicitly requested appears once."""
+        source_id = MetadataEnum.get_source_id_field()
+        _, outputs = _parse_yaml_template({"project": "test", "output": ["build", source_id, "population"]})
+        assert outputs.count(source_id) == 1
+        assert "build" in outputs
+        # Required fields all present exactly once
+        assert len(outputs) == len(set(outputs))
+
+    def test_output_fields_dedup_preserves_required_order(self):
+        """Dedup keeps required fields first, then requested, no duplicates."""
+        source_id = MetadataEnum.get_source_id_field()
+        _, outputs = _parse_yaml_template({"project": "test", "output": [source_id]})
+        required = MetadataEnum.required_output_fields()
+        assert outputs == list(dict.fromkeys(required + [source_id]))
 
     def test_query_fields_overrides_root(self):
         """Test that query_fields takes precedence over root keys for query."""
