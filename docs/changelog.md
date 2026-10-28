@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [3.5.1] - 2026-10-28
+
+### 🐛 Bug Fixes
+
+- *(query)* Solve duplicated-column bug in the create_output_prefix_dict
+- *(config)* Load S3/TileDB config from Vault and stop masking AWS_* env vars
+
 ## [3.5.0] - 2026-10-28
 
 ### 🚀 Features
@@ -12,6 +19,10 @@ All notable changes to this project will be documented in this file.
 ### 🐛 Bug Fixes
 
 - *(authorization)* Close the gap that a comma-separated string in these fields can no longer silently break authorization
+
+### 💼 Other
+
+- Bump version
 
 ## [3.4.0] - 2026-10-27
 
