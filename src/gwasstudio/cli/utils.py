@@ -83,6 +83,61 @@ def mongo_conn_info(config: "GWASStudioConfig") -> tuple[str | None, str | None]
     return None, None
 
 
+def _resolve_s3_config(ctx) -> dict:
+    """Resolve the effective TileDB/S3 (``vfs.s3.*``) configuration.
+
+    The ``tiledb`` section of the Vault secret is a complete, coherent S3
+    config (endpoint, credentials, region, scheme, …) and should be used as the
+    default — exactly like the MongoDB URI is pulled from Vault by
+    :func:`mongo_conn_info`. Explicit ``--aws-*`` CLI flags (i.e. any value the
+    user changed from its default) override the corresponding Vault key.
+
+    Precedence:
+      1. Explicit CLI ``--aws-*`` value (differs from the CLI default) — wins.
+      2. The ``tiledb`` section of the Vault secret (when Vault is configured).
+      3. The CLI default.
+
+    Returns a plain dict keyed by ``vfs.s3.*`` (suitable for TileDB's VFS config).
+    Unset values are omitted so TileDB / boto3 fall back to standard ``AWS_*``
+    environment variables instead of being handed the literal string ``"None"``.
+    """
+    cli_s3 = dict(ctx.obj.get("tiledb", {}))
+
+    # CLI defaults as declared in ``main.py``; a value equal to its default is
+    # treated as "not provided by the user".
+    defaults = {
+        "vfs.s3.aws_access_key_id": None,
+        "vfs.s3.aws_secret_access_key": None,
+        "vfs.s3.endpoint_override": None,
+        "vfs.s3.use_virtual_addressing": "false",
+        "vfs.s3.scheme": "https",
+        "vfs.s3.region": "",
+        "vfs.s3.verify_ssl": "false",
+    }
+    explicit = {k: v for k, v in cli_s3.items() if v != defaults.get(k)}
+
+    resolved = cli_s3
+
+    # If the user did not explicitly supply the core S3 identity, pull the full
+    # ``tiledb`` section from Vault (mirrors how the MongoDB URI is resolved).
+    if not (explicit.get("vfs.s3.aws_access_key_id") and explicit.get("vfs.s3.endpoint_override")):
+        vault = ctx.obj.get("vault", {})
+        if all([vault.get("path"), vault.get("token"), vault.get("url")]):
+            try:
+                from gwasstudio.utils.vault import get_config_from_vault
+
+                vault_s3 = get_config_from_vault("tiledb", VaultConfig(**vault)) or {}
+            except Exception as e:  # noqa: BLE001 - never let optional Vault S3 config break the run
+                logger.warning(f"Failed to load 'tiledb' config from Vault: {e}")
+                vault_s3 = {}
+            if vault_s3:
+                # Vault is the base; any explicitly-set CLI flag overrides that key.
+                resolved = {**vault_s3, **explicit}
+
+    # Omit unset values so downstream libraries fall back to AWS_* env vars.
+    return {k: v for k, v in resolved.items() if v is not None}
+
+
 def create_config_from_context(ctx) -> GWASStudioConfig:
     """
     Create a GWASStudioConfig object from the Click context.
@@ -99,7 +154,7 @@ def create_config_from_context(ctx) -> GWASStudioConfig:
     # Extract configuration from context
     mongo_config = ctx.obj.get("mongo", {})
     dask_config = ctx.obj.get("dask", {})
-    s3_config = ctx.obj.get("tiledb", {})
+    s3_config = _resolve_s3_config(ctx)
     vault_config = ctx.obj.get("vault", {})
 
     # Create GWASStudioConfig with extracted values

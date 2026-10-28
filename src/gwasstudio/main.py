@@ -87,8 +87,8 @@ def configure_logging(stdout, verbosity, _logger):
 )
 @cloup.option_group(
     "S3 options",
-    cloup.option("--aws-access-key-id", default="None", help="S3 access key id"),
-    cloup.option("--aws-secret-access-key", default="None", help="S3 access key"),
+    cloup.option("--aws-access-key-id", default=None, help="S3 access key id"),
+    cloup.option("--aws-secret-access-key", default=None, help="S3 access key"),
     cloup.option(
         "--aws-endpoint-override",
         default=None,
