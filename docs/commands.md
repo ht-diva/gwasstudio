@@ -72,7 +72,7 @@ gwasstudio export [OPTIONS]
 
 **Result checking:**
 
-- `--fail-on-empty`: Exit with status `3` when the query returns no rows (default: False). Useful in pipelines to detect wrong trait IDs, builds, or out-of-store regions.
+- `--fail-on-empty`: Exit with status `3` when the export yields no data (default: False). Covers three cases: (a) zero data rows, (b) the query matched no datasets (`NO_DATA: no-results`), and (c) all matched datasets were denied by authorization (`NO_DATA: authorization`). Useful in pipelines to detect wrong trait IDs, builds, out-of-store regions, and unauthorized/private studies instead of silently writing nothing.
 
 **Execution:**
 

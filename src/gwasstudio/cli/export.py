@@ -584,9 +584,22 @@ def export(
 
     if not accessible_results:
         if skipped_results:
-            logger.info(f"No accessible datasets found. Skipped {len(skipped_results)} datasets due to authorization.")
+            reason = (
+                f"No accessible datasets found: {len(skipped_results)} dataset(s) matched the query but "
+                "were denied by authorization. Check the dataset's access_level and its "
+                "allowed_policies / allowed_users / allowed_token_accessors, or present a token "
+                "carrying a matching policy."
+            )
+            if fail_on_empty:
+                logger.error(f"NO_DATA: authorization - {reason}")
+                raise SystemExit(3)
+            logger.info(reason)
         else:
-            logger.info("No results found.")
+            reason = "No results found: the query matched no datasets."
+            if fail_on_empty:
+                logger.error(f"NO_DATA: no-results - {reason}")
+                raise SystemExit(3)
+            logger.info(reason)
         return
 
     # Log if any datasets were skipped

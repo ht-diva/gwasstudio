@@ -232,6 +232,72 @@ else
   fail "row count mismatch: cluster=${CLUSTER_LINES}  in-process=${INPROC_LINES}"
 fi
 
+# ═══════════════════════════════════════════════════════════════════════════
+# TEST 5 — authorization-denied export honors --fail-on-empty.
+#          opengwas/ieu-b is ingested with access_level=restricted and no
+#          allowed_policies. With no Vault token the user is unauthenticated,
+#          so check_access() denies it and the dataset lands in skipped_results.
+#          Without --fail-on-empty the export silently no-ops (exit 0);
+#          with it, the export must fail loudly (exit 3, "NO_DATA: authorization").
+# ═══════════════════════════════════════════════════════════════════════════
+echo ""
+echo "=== TEST 5: authorization-denied → honors --fail-on-empty ==="
+
+SEARCH_RESTRICTED="${TEST_DIR}/search_restricted.yml"
+cat > "${SEARCH_RESTRICTED}" <<'YML'
+project: opengwas
+study: ieu-b
+
+output:
+  - build
+  - population
+  - trait_desc
+YML
+
+# 5a — no --fail-on-empty: silent no-op (exit 0), no data files
+gwasstudio --stdout --mongo-uri "${MDB_URI}" export \
+  --search-file    "${SEARCH_RESTRICTED}" \
+  --output-prefix  "${TEST_DIR}/out_auth_silent" \
+  --uri            "${TILEDB_DIR}" \
+  --output-format  csv \
+  > "${TEST_DIR}/test5a.log" 2>&1
+RC=$?
+if [ ${RC} -eq 0 ]; then
+  pass "denied export (no flag) exits 0"
+else
+  cat "${TEST_DIR}/test5a.log"; fail "expected exit 0, got ${RC}"
+fi
+SILENT_FILES=$(ls "${TEST_DIR}"/out_auth_silent_*.csv 2>/dev/null | grep -v '_meta' || true)
+if [ -n "${SILENT_FILES}" ]; then
+  fail "denied export unexpectedly wrote data: ${SILENT_FILES}"
+fi
+pass "denied export (no flag) wrote no data"
+
+# 5b — with --fail-on-empty: loud failure (exit 3) + authorization message
+gwasstudio --stdout --verbosity loud --mongo-uri "${MDB_URI}" export \
+  --search-file    "${SEARCH_RESTRICTED}" \
+  --output-prefix  "${TEST_DIR}/out_auth_fail" \
+  --uri            "${TILEDB_DIR}" \
+  --output-format  csv \
+  --fail-on-empty \
+  > "${TEST_DIR}/test5b.log" 2>&1
+RC=$?
+if [ ${RC} -eq 3 ]; then
+  pass "denied export (--fail-on-empty) exits 3"
+else
+  cat "${TEST_DIR}/test5b.log"; fail "expected exit 3, got ${RC}"
+fi
+if grep -q "NO_DATA: authorization" "${TEST_DIR}/test5b.log"; then
+  pass "log contains 'NO_DATA: authorization'"
+else
+  cat "${TEST_DIR}/test5b.log"; fail "authorization failure message not found in test5b.log"
+fi
+FAIL_FILES=$(ls "${TEST_DIR}"/out_auth_fail_*.csv 2>/dev/null | grep -v '_meta' || true)
+if [ -n "${FAIL_FILES}" ]; then
+  fail "denied export unexpectedly wrote data: ${FAIL_FILES}"
+fi
+pass "denied export (--fail-on-empty) wrote no data"
+
 # ── Cleanup ──────────────────────────────────────────────────────────────────
 echo ""
 echo "=== Stopping MongoDB ==="
