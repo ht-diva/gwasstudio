@@ -25,6 +25,37 @@ def _document_generator(documents):
         yield process_metadata_dict(doc)
 
 
+def _normalize_allow_list(value: Any) -> list[str]:
+    """Normalize an authorization allow-list value to a clean list of strings.
+
+    ``allowed_policies``, ``allowed_users`` and ``allowed_token_accessors``
+    must be stored as lists for :mod:`gwasstudio.core.authorization` to match
+    them correctly (it does ``set(...)`` / ``in`` membership on the value).
+    A comma-separated string would break that — e.g. ``set("a,b")`` is a set of
+    *characters*, and ``"x" in "a,b"`` is an unsafe substring check.
+
+    Accepts a comma-separated string, a list/tuple/set, a bare scalar, or None.
+    Returns a list of trimmed, de-duplicated (order-preserving) strings; an
+    empty input yields an empty list.
+    """
+    if value is None:
+        return []
+    if isinstance(value, str):
+        items = [v.strip() for v in value.split(",")]
+    elif isinstance(value, (list, tuple, set)):
+        items = [str(v).strip() for v in value]
+    else:
+        items = [str(value)]
+
+    seen: set[str] = set()
+    result: list[str] = []
+    for item in items:
+        if item and item not in seen:
+            seen.add(item)
+            result.append(item)
+    return result
+
+
 def ingest_metadata(
     template: list[dict[Hashable, Any]],
     config: GWASStudioConfig | None = None,
@@ -130,6 +161,13 @@ def process_metadata_dict(metadata: dict[Hashable, Any]) -> dict[Hashable, Any]:
             "trait_ontology_ids": trait_ontology_ids,
         }
     )
+
+    # Normalize authorization allow-lists (allowed_policies / allowed_users /
+    # allowed_token_accessors) so a comma-separated string can't silently break
+    # policy/username/accessor matching in gwasstudio.core.authorization.
+    for field in ("allowed_policies", "allowed_users", "allowed_token_accessors"):
+        if metadata.get(field) is not None:
+            metadata[field] = _normalize_allow_list(metadata[field])
 
     # Clean up unwanted keys
     metadata.pop("file_path")

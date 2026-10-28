@@ -368,6 +368,97 @@ class TestProcessMetadataDict:
             process_metadata_dict(tpl)
 
 
+# -- AllowListNormalization --------------------------------------------------
+
+
+class TestNormalizeAllowList:
+    """Tests for the _normalize_allow_list helper (pure function, no mocks)."""
+
+    def test_single_string(self):
+        from gwasstudio.core.ingestion import _normalize_allow_list
+
+        assert _normalize_allow_list("computationalbiobank-reader") == ["computationalbiobank-reader"]
+
+    def test_comma_separated(self):
+        from gwasstudio.core.ingestion import _normalize_allow_list
+
+        assert _normalize_allow_list("a, b , c") == ["a", "b", "c"]
+
+    def test_dedup_preserves_order(self):
+        from gwasstudio.core.ingestion import _normalize_allow_list
+
+        assert _normalize_allow_list("a,,b, a") == ["a", "b"]
+
+    def test_list_input_trimmed(self):
+        from gwasstudio.core.ingestion import _normalize_allow_list
+
+        assert _normalize_allow_list(["x", " y "]) == ["x", "y"]
+
+    def test_tuple_and_set_input(self):
+        from gwasstudio.core.ingestion import _normalize_allow_list
+
+        assert _normalize_allow_list(("p1", "p2")) == ["p1", "p2"]
+        assert sorted(_normalize_allow_list({"s1", "s2", "s1"})) == ["s1", "s2"]
+
+    def test_scalar_coerced_to_list(self):
+        from gwasstudio.core.ingestion import _normalize_allow_list
+
+        assert _normalize_allow_list(42) == ["42"]
+
+    def test_empty_and_none_yield_empty_list(self):
+        from gwasstudio.core.ingestion import _normalize_allow_list
+
+        assert _normalize_allow_list(None) == []
+        assert _normalize_allow_list("") == []
+        assert _normalize_allow_list("   ") == []
+
+
+class TestAllowedAllowLists:
+    """process_metadata_dict normalizes the authorization allow-list fields."""
+
+    def test_comma_string_fields_become_lists(self, monkeypatch):
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+        tpl = _template(
+            allowed_policies="computationalbiobank-reader, omics-admin",
+            allowed_users="alice, bob , alice",
+            allowed_token_accessors="acc1, acc2",
+        )
+        result = process_metadata_dict(tpl)
+        assert result["allowed_policies"] == ["computationalbiobank-reader", "omics-admin"]
+        assert result["allowed_users"] == ["alice", "bob"]
+        assert result["allowed_token_accessors"] == ["acc1", "acc2"]
+        for f in ("allowed_policies", "allowed_users", "allowed_token_accessors"):
+            assert isinstance(result[f], list)
+
+    def test_list_fields_preserved_and_trimmed(self, monkeypatch):
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+        tpl = _template(allowed_policies=[" p1 ", "p2"], allowed_users=["a", "b"])
+        result = process_metadata_dict(tpl)
+        assert result["allowed_policies"] == ["p1", "p2"]
+        assert result["allowed_users"] == ["a", "b"]
+
+    def test_absent_fields_stay_absent(self, monkeypatch):
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+        result = process_metadata_dict(_template())
+        for f in ("allowed_policies", "allowed_users", "allowed_token_accessors"):
+            assert f not in result
+
+    def test_none_field_stays_absent(self, monkeypatch):
+        """A field explicitly set to None is left untouched (not coerced to [])."""
+        from gwasstudio.core.ingestion import process_metadata_dict
+
+        _add_hashing_mock(monkeypatch)
+        tpl = _template(allowed_policies=None)
+        result = process_metadata_dict(tpl)
+        assert result.get("allowed_policies") is None
+
+
 # -- DocumentGenerator -------------------------------------------------------
 
 
