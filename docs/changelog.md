@@ -3,12 +3,26 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [3.5.0] - 2026-10-28
+
+### 🚀 Features
+
+- *(auth)* Honor --fail-on-empty on denied exports; document authorization
+
+### 🐛 Bug Fixes
+
+- *(authorization)* Close the gap that a comma-separated string in these fields can no longer silently break authorization
+
 ## [3.4.0] - 2026-10-27
 
 ### 🚀 Features
 
 - *(export)* Add --fail-on-empty and --region-buffer options
 - *(export)* Add --meta {full,sidefile,none} to control meta columns and side-file
+
+### 💼 Other
+
+- Bump version
 
 ### 🚜 Refactor
 
