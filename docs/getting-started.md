@@ -87,21 +87,22 @@ For a detailed explanation of all command options, see also [meta-query command]
 The query file used to retrieve (meta)data follows a structured format with two sections:
 
 - Filtering criteria: [metadata fields](metadata.md) used to query the database, specified as `metadata field: filtering value` pairs
-- Output specification (`output:` or `output_fields:`): a list of valid [metadata fields](metadata.md) to include in the output
+- Output specification (`output_fields:`): a list of valid [metadata fields](metadata.md) to include in the output
 
 The query file must be in **YAML** format (`.yml` or `.yaml` extension).
 
 ##### Query file example
 
 ```yaml
-project: opengwas
-study: ukb-d
+query_fields:
+  project: opengwas
+  study: ukb-d
 
-trait:
-  - desc: Z42
-  - desc: pregnancy
+  trait:
+    - desc: Z42
+    - desc: pregnancy
 
-output:
+output_fields:
   - build
   - population
   - notes_sex
