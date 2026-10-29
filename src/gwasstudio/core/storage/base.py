@@ -5,11 +5,11 @@ GWASStudio Storage Base Module
 This module defines the abstract base class for storage backends.
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from collections.abc import Generator
 from typing import Any
-
-import pandas as pd
 
 from gwasstudio.core.exceptions import GWASStudioError
 

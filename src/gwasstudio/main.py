@@ -1,10 +1,98 @@
+import importlib
 import sys
 
 import click
 import cloup
 
 from gwasstudio import __appname__, __version__, context_settings, log_file, logger
-from gwasstudio.cli import export, info, ingest, list_projects, query_metadata
+
+# Lazy subcommand registry: name → (module, attribute, short help).
+# Modules are imported only when a command is actually invoked, so lightweight
+# commands (``list``, ``meta-query``, ``info``) don't pay the import cost of
+# the Dask/TileDB/Pandas stack used by ``export`` and ``ingest``.
+_LAZY_COMMANDS = {
+    "export": (
+        "gwasstudio.cli.export",
+        "export",
+        "Export summary statistics from TileDB datasets with various filtering options.",
+    ),
+    "info": ("gwasstudio.cli.info", "info", "Show GWASStudio details"),
+    "ingest": ("gwasstudio.cli.ingest", "ingest", "Ingest data in a TileDB-unified dataset."),
+    "list": (
+        "gwasstudio.cli.list",
+        "list_projects",
+        "List every category → project → study hierarchy stored in the MongoDB.",
+    ),
+    "meta-query": (
+        "gwasstudio.cli.metadata.query",
+        "query_metadata",
+        "Query metadata records from MongoDB using GWASStudio core.",
+    ),
+}
+
+
+class _LazyCommandGroup(cloup.Group):
+    """``cloup.Group`` whose subcommands are imported on first use.
+
+    Placeholders (created by :func:`_placeholder`) carry the command name and
+    help text for ``--help`` output; the real command object is imported the
+    first time the command is resolved via :meth:`get_command`.
+    """
+
+    def get_command(self, ctx, cmd_name):
+        cmd = super().get_command(ctx, cmd_name)
+        if cmd is None:
+            return None
+        load = getattr(cmd, "_lazy_loader", None)
+        if load is None:
+            return cmd
+        real = load()
+        # Swap the placeholder(s) for the real command so later lookups (and
+        # ``group.commands``) see the fully-built command.
+        for name, registered in list(self.commands.items()):
+            if registered is cmd:
+                self.commands[name] = real
+        return real
+
+
+def _lazy_group(*args, **kwargs):
+    """Drop-in replacement for ``cloup.group`` that builds a :class:`_LazyCommandGroup`.
+
+    Mirrors :func:`click.command`'s decorator semantics: the option/argument
+    decorators applied below the group decorator stow their parameters on
+    ``f.__click_params__`` and they must be handed to the command class.
+    """
+
+    def decorator(f):
+        params = kwargs.pop("params", None) or []
+        decorator_params = getattr(f, "__click_params__", None)
+        if decorator_params is not None:
+            del f.__click_params__
+            params.extend(reversed(decorator_params))
+        if kwargs.get("help") is None:
+            kwargs["help"] = f.__doc__
+        cmd = _LazyCommandGroup(*args, callback=f, params=params, **kwargs)
+        cmd.__doc__ = f.__doc__
+        return cmd
+
+    return decorator
+
+
+def _placeholder(name: str, help_text: str, loader) -> click.Command:
+    """A stand-in command that shows the right name and help until the real one is imported."""
+    cmd = click.Command(name, help=help_text)
+    cmd._lazy_loader = loader
+    return cmd
+
+
+def _register_lazy_commands(group):
+    """Register all subcommands of ``group`` as lazy placeholders."""
+    for name, (module, attr, help_text) in _LAZY_COMMANDS.items():
+
+        def _load(module=module, attr=attr):
+            return getattr(importlib.import_module(module), attr)
+
+        group.add_command(_placeholder(name, help_text, _load))
 
 
 def configure_logging(stdout, verbosity, _logger):
@@ -41,7 +129,7 @@ def configure_logging(stdout, verbosity, _logger):
     _logger.add(target, **kwargs)
 
 
-@cloup.group(
+@_lazy_group(
     name="main",
     help="GWASStudio",
     no_args_is_help=True,
@@ -181,13 +269,12 @@ def cli_init(
     }
 
 
-def main():
-    cli_init.add_command(info)
-    cli_init.add_command(export)
-    cli_init.add_command(ingest)
-    cli_init.add_command(query_metadata)
-    cli_init.add_command(list_projects)
+# Register the subcommands up-front as lightweight placeholders; the real
+# command objects are imported only when a command is actually invoked.
+_register_lazy_commands(cli_init)
 
+
+def main():
     cli_init(obj={})
 
 
