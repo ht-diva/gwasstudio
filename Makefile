@@ -9,7 +9,7 @@ CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activ
 
 # Target to install MongoDB dependencies for testing
 test-dependencies:
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
@@ -27,14 +27,14 @@ build_conda_lock_files:
 	conda-lock -k explicit -f base_environment.yml --conda mamba -p 'linux-64' -p 'osx-arm64'
 
 build: clean dependencies
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
 	poetry build
 
 bump-version:
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
@@ -65,49 +65,49 @@ create-env:
  	fi
 
 dependencies:
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
 	poetry install --without dev --no-root
 
 dependencies_dev:
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
 	poetry install --only dev --no-root
 
 dependencies_extras:
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
 	poetry install --without dev --no-root --extras plot
 
 deploy:
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
 	poetry install
 
 editable_install: build
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
 	pip install --editable .
 
 install: build
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
 	pip install dist/*.whl
 
 pre-commit: dependencies_dev
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
@@ -119,7 +119,7 @@ tag:
 
 unit_test:
 	@echo "Unit Testing"
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
@@ -127,7 +127,7 @@ unit_test:
 
 test_ingest_metadata: test-dependencies
 	@echo "Running ingest + query integration tests..."
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
@@ -135,7 +135,7 @@ test_ingest_metadata: test-dependencies
 
 test_full_export: test-dependencies
 	@echo "Running full pipeline integration tests..."
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
@@ -143,7 +143,7 @@ test_full_export: test-dependencies
 
 test_ingest_with_recalc: test-dependencies
 	@echo "Running ingest with -log10p recalculation tests..."
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
@@ -152,7 +152,7 @@ test_ingest_with_recalc: test-dependencies
 test_export_flags: test-dependencies
 	@echo "Running --fail-on-empty / --region-buffer integration tests..."
 	@echo "Date: $$(date)"
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
@@ -160,7 +160,7 @@ test_export_flags: test-dependencies
 
 test_trait_ontology_ids: test-dependencies
 	@echo "Running trait_ontology_ids integration tests..."
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
@@ -168,7 +168,7 @@ test_trait_ontology_ids: test-dependencies
 
 test-integration-pytest: test-dependencies
 	@echo "Running integration tests via pytest..."
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
@@ -185,7 +185,7 @@ test-integration-setup: ## Start Docker services for integration tests
 
 test-integration-exec: ## Run integration tests (excluding provision)
 	@echo "Integration test 03"
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
@@ -202,7 +202,7 @@ test-integration-stop:
 
 
 uninstall:
-	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
         echo "Activating conda environment: ${ENV_NAME}"; \
 		$(CONDA_ACTIVATE) ${ENV_NAME}; \
 	fi; \
