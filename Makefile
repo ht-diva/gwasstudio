@@ -33,6 +33,10 @@ build: clean dependencies
 	poetry build
 
 bump-version:
+	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+        echo "Activating conda environment: ${ENV_NAME}"; \
+		$(CONDA_ACTIVATE) ${ENV_NAME}; \
+	fi; \
 	git-cliff --bumped-version | sed 's/^v//' > version.txt
 	python bump-version.py
 	git-cliff --bump > docs/changelog.md
@@ -138,6 +142,10 @@ test_ingest_with_recalc: test-dependencies
 test_export_flags: test-dependencies
 	@echo "Running --fail-on-empty / --region-buffer integration tests..."
 	@echo "Date: $$(date)"
+	@if [ -z "${CONDA_DEFAULT_ENV}" ] || [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+        echo "Activating conda environment: ${ENV_NAME}"; \
+		$(CONDA_ACTIVATE) ${ENV_NAME}; \
+	fi; \
 	bash tests/integration/test_export_flags.sh
 
 test_trait_ontology_ids: test-dependencies
