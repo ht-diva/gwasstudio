@@ -1,7 +1,8 @@
 APPNAME=$(shell grep -m 1 name pyproject.toml|cut -f2 -d'"')
-TARGETS=build clean create-env dependencies deploy editable_install install test uninstall test-dependencies
+TARGETS=build clean create-env create-env-versioned dependencies deploy editable_install install test uninstall test-dependencies
 VERSION=$(shell grep -m 1 version pyproject.toml|cut -f2 -d'"')
 ENV_NAME=${APPNAME}
+ENV_PATH=/exchange/healthds/software/envs/${APPNAME}_${VERSION}
 CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
 
 .PHONY: ${TARGETS}
@@ -45,6 +46,15 @@ clean:
 	find . -name '*.pyc' -delete
 	find . -type d -name '__pycache__' -exec rm -rf {} +
 	rm -rf dist build site
+
+# Target to create the versioned conda environment in the shared software directory
+create-env-versioned:
+	@if [ -d "${ENV_PATH}" ]; then \
+ 		echo "Environment already exists at ${ENV_PATH}"; \
+ 	else \
+ 		mkdir -p /exchange/healthds/software/envs; \
+ 		conda env create --prefix ${ENV_PATH} --file base_environment.yml; \
+ 	fi
 
 # Target to create the conda environment if it doesn't exist
 create-env:
