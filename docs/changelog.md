@@ -3,12 +3,30 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [3.5.2] - 2026-10-30
+
+### 📚 Documentation
+
+- Minor update
+
+### ⚡ Performance
+
+- *(cli)* Lazy-load subcommands so list/info/meta-query skip the Dask/TileDB stack
+
+### ⚙️ Miscellaneous Tasks
+
+- Fix conda env init
+
 ## [3.5.1] - 2026-10-28
 
 ### 🐛 Bug Fixes
 
 - *(query)* Solve duplicated-column bug in the create_output_prefix_dict
 - *(config)* Load S3/TileDB config from Vault and stop masking AWS_* env vars
+
+### 💼 Other
+
+- Bump version
 
 ## [3.5.0] - 2026-10-28
 
