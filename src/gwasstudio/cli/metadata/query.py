@@ -61,7 +61,8 @@ import pandas as pd
 from gwasstudio import logger
 
 # Import updated utilities
-from gwasstudio.cli.utils import create_config_from_context, load_yaml_file, write_table
+from gwasstudio.cli.context import create_config_from_context, load_yaml_file
+from gwasstudio.cli.table_io import write_table
 from gwasstudio.core import (
     ConfigurationError,
     GWASStudioError,

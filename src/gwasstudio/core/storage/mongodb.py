@@ -6,11 +6,12 @@ This module provides the MongoDB storage backend for GWASStudio.
 MongoDB is used for storing metadata and, optionally, genomic data.
 """
 
+from __future__ import annotations
+
 import uuid
 from collections.abc import Generator
 from typing import Any
 
-import pandas as pd
 import pymongo
 from gridfs import GridFS
 
@@ -130,6 +131,8 @@ class MongoDBStorage(StorageBackend):
         Raises:
             MongoDBError: If the query fails.
         """
+        import pandas as pd  # deferred: keep module import light for metadata-only paths
+
         metadata = self.get_metadata(project_id)
         if not metadata:
             raise MongoDBError(f"Project {project_id} not found in MongoDB storage")
