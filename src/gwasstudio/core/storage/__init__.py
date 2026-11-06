@@ -3,35 +3,21 @@ GWASStudio Core Storage Module
 ===============================
 
 This module provides storage backends for GWASStudio.
-It includes implementations for TileDB, MongoDB, S3, and Apache Iceberg.
 """
 
 from gwasstudio.core.storage.base import StorageBackend, StorageError
+from gwasstudio.core.storage.metadata_store import MetadataStore, get_metadata_store
 
 # # Import all storage backends
-# from gwasstudio.core.storage.tiledb import TileDBStorage, TileDBError
 from gwasstudio.core.storage.mongodb import MongoDBError, MongoDBStorage
-
-# from gwasstudio.core.storage.s3 import S3Storage, S3Error
-#
-# # Import Iceberg backend if available
-# try:
-#     from gwasstudio.core.storage.iceberg import IcebergStorage, IcebergError, IcebergConfig
-#     ICEBERG_AVAILABLE = True
-# except ImportError:
-#     IcebergStorage = None
-#     IcebergError = None
-#     IcebergConfig = None
-#     ICEBERG_AVAILABLE = False
 
 __all__ = [
     # Base classes
     "StorageBackend",
     "StorageError",
-    #
-    # # TileDB
-    # "TileDBStorage",
-    # "TileDBError",
+    # Metadata store
+    "MetadataStore",
+    "get_metadata_store",
     #
     # # MongoDB
     "MongoDBStorage",
@@ -40,12 +26,6 @@ __all__ = [
     # # S3
     # "S3Storage",
     # "S3Error",
-    #
-    # # Iceberg (if available)
-    # "IcebergStorage",
-    # "IcebergError",
-    # "IcebergConfig",
-    # "ICEBERG_AVAILABLE",
 ]
 
 
@@ -65,14 +45,9 @@ def get_storage_backend(backend_name: str, config, **kwargs):
         ValueError: If the backend name is not recognized or not available.
     """
     backends = {
-        # "tiledb": TileDBStorage,
         "mongo": MongoDBStorage,
         # "s3": S3Storage,
     }
-
-    # Add Iceberg if available
-    # if ICEBERG_AVAILABLE:
-    #     backends["iceberg"] = IcebergStorage
 
     if backend_name not in backends:
         available = list(backends.keys())

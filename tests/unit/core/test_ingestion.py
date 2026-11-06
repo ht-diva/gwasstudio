@@ -548,7 +548,7 @@ class TestDocumentGenerator:
 class TestIngestMetadata:
     """Tests for ingest_metadata function."""
 
-    @patch("gwasstudio.core.ingestion.MongoDBStorage")
+    @patch("gwasstudio.core.ingestion.get_metadata_store")
     @patch("gwasstudio.core.ingestion.Hashing")
     def test_basic_ingestion(self, mock_hashing_cls, mock_mongo_cls):
         """Test basic metadata ingestion flow."""
@@ -572,7 +572,7 @@ class TestIngestMetadata:
         assert docs[0]["project"] == "my_project"
         assert docs[0]["data_id"] == "abc123"
 
-    @patch("gwasstudio.core.ingestion.MongoDBStorage")
+    @patch("gwasstudio.core.ingestion.get_metadata_store")
     @patch("gwasstudio.core.ingestion.GWASStudioConfig")
     @patch("gwasstudio.core.ingestion.Hashing")
     def test_with_config(self, mock_hashing_cls, mock_config_cls, mock_mongo_cls):
@@ -595,7 +595,7 @@ class TestIngestMetadata:
         # MongoDBStorage should be called with the provided config
         mock_mongo_cls.assert_called_once_with(custom_config)
 
-    @patch("gwasstudio.core.ingestion.MongoDBStorage")
+    @patch("gwasstudio.core.ingestion.get_metadata_store")
     @patch("gwasstudio.core.ingestion.GWASStudioConfig")
     @patch("gwasstudio.core.ingestion.Hashing")
     def test_without_config_creates_default(self, mock_hashing_cls, mock_config_cls, mock_mongo_cls):
@@ -617,7 +617,7 @@ class TestIngestMetadata:
 
         mock_config_cls.assert_called_once()
 
-    @patch("gwasstudio.core.ingestion.MongoDBStorage")
+    @patch("gwasstudio.core.ingestion.get_metadata_store")
     @patch("gwasstudio.core.ingestion.Hashing")
     def test_multiple_documents_ingested(self, mock_hashing_cls, mock_mongo_cls):
         """Test that multiple documents are collected and sent."""
@@ -645,7 +645,7 @@ class TestIngestMetadata:
         assert docs[1]["project"] == "project2"
         assert docs[2]["project"] == "project3"
 
-    @patch("gwasstudio.core.ingestion.MongoDBStorage")
+    @patch("gwasstudio.core.ingestion.get_metadata_store")
     @patch("gwasstudio.core.ingestion.Hashing")
     def test_document_structure_after_ingestion(self, mock_hashing_cls, mock_mongo_cls):
         """Test that ingested documents have correct structure."""
@@ -674,7 +674,7 @@ class TestIngestMetadata:
         assert doc["population"] == ["EUR"]
         assert doc["data_id"] == "d00d"
 
-    @patch("gwasstudio.core.ingestion.MongoDBStorage")
+    @patch("gwasstudio.core.ingestion.get_metadata_store")
     @patch("gwasstudio.core.ingestion.Hashing")
     def test_ingestion_error_on_mongo_failure(self, mock_hashing_cls, mock_mongo_cls):
         """Test that ingestion errors are raised when MongoDBStorage fails."""
@@ -702,7 +702,7 @@ class TestIngestMetadata:
 class TestIngestionIntegration:
     """Integration tests for the ingestion module."""
 
-    @patch("gwasstudio.core.ingestion.MongoDBStorage")
+    @patch("gwasstudio.core.ingestion.get_metadata_store")
     @patch("gwasstudio.core.ingestion.Hashing")
     def test_full_ingestion_pipeline(self, mock_hashing_cls, mock_mongo_cls):
         """Test the full ingestion pipeline from input to MongoDB call."""
@@ -754,7 +754,7 @@ class TestIngestionIntegration:
         assert docs[1]["sample_size"] == 200000
         assert "file_path" not in docs[1]
 
-    @patch("gwasstudio.core.ingestion.MongoDBStorage")
+    @patch("gwasstudio.core.ingestion.get_metadata_store")
     @patch("gwasstudio.core.ingestion.Hashing")
     def test_empty_template_list(self, mock_hashing_cls, mock_mongo_cls):
         """Test ingestion with empty template list."""
@@ -769,7 +769,7 @@ class TestIngestionIntegration:
         docs = mock_mongo.bulk_store_metadata.call_args[0][0]
         assert len(docs) == 0
 
-    @patch("gwasstudio.core.ingestion.MongoDBStorage")
+    @patch("gwasstudio.core.ingestion.get_metadata_store")
     @patch("gwasstudio.core.ingestion.Hashing")
     def test_long_file_path(self, mock_hashing_cls, mock_mongo_cls):
         """Test with very long file path."""
@@ -794,7 +794,7 @@ class TestIngestionIntegration:
 class TestEdgeCases:
     """Tests for edge cases and error scenarios."""
 
-    @patch("gwasstudio.core.ingestion.MongoDBStorage")
+    @patch("gwasstudio.core.ingestion.get_metadata_store")
     @patch("gwasstudio.core.ingestion.Hashing")
     def test_special_characters_in_project(self, mock_hashing_cls, mock_mongo_cls):
         """Test project with special characters."""
@@ -814,7 +814,7 @@ class TestEdgeCases:
         # lower_and_replace converts to lowercase
         assert docs[0]["project"] == "project@#$%special"
 
-    @patch("gwasstudio.core.ingestion.MongoDBStorage")
+    @patch("gwasstudio.core.ingestion.get_metadata_store")
     @patch("gwasstudio.core.ingestion.Hashing")
     def test_unicode_characters(self, mock_hashing_cls, mock_mongo_cls):
         """Test project with Unicode characters."""
@@ -833,7 +833,7 @@ class TestEdgeCases:
         docs = mock_mongo.bulk_store_metadata.call_args[0][0]
         assert docs[0]["project"] == "研究项目"
 
-    @patch("gwasstudio.core.ingestion.MongoDBStorage")
+    @patch("gwasstudio.core.ingestion.get_metadata_store")
     @patch("gwasstudio.core.ingestion.Hashing")
     def test_long_file_path(self, mock_hashing_cls, mock_mongo_cls):
         """Test with very long file path."""
@@ -851,7 +851,7 @@ class TestEdgeCases:
         ingest_metadata([tpl])
         assert mock_mongo.bulk_store_metadata.called
 
-    @patch("gwasstudio.core.ingestion.MongoDBStorage")
+    @patch("gwasstudio.core.ingestion.get_metadata_store")
     @patch("gwasstudio.core.ingestion.Hashing")
     def test_missing_optional_fields(self, mock_hashing_cls, mock_mongo_cls):
         """Test template with missing optional fields raises as expected."""

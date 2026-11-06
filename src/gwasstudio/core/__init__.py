@@ -50,6 +50,7 @@ from gwasstudio.core.query import InvalidQueryFieldError, QueryError, list_proje
 
 # ── backward-compatible aliases ────────────────────────────────────────
 from gwasstudio.core.storage.base import StorageError
+from gwasstudio.core.storage.metadata_store import MetadataStore, get_metadata_store
 
 __all__ = [
     # Configuration
@@ -78,6 +79,9 @@ __all__ = [
     "PermissionError",
     # Helpers
     "Hashing",
+    # Metadata store
+    "MetadataStore",
+    "get_metadata_store",
     # Core APIs
     "ingest_metadata",
     "list_projects",

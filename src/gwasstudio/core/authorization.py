@@ -24,7 +24,7 @@ from typing import Any
 
 from gwasstudio.core.config import AuthConfig, GWASStudioConfig, VaultConfig
 from gwasstudio.core.exceptions import AuthenticationError, PermissionError
-from gwasstudio.core.storage.mongodb import MongoDBStorage
+from gwasstudio.core.storage.metadata_store import MetadataStore, get_metadata_store
 from gwasstudio.utils.vault import create_vault_client
 
 
@@ -184,17 +184,22 @@ class AuthorizationService:
         ...     pass
     """
 
-    def __init__(self, config: GWASStudioConfig):
+    def __init__(self, config: GWASStudioConfig, metadata_store: MetadataStore | None = None):
         """
         Initialize the authorization service.
 
         Args:
             config: GWASStudio configuration
+            metadata_store: Optional metadata store used to look up dataset
+                permissions. Created via
+                :func:`gwasstudio.core.storage.metadata_store.get_metadata_store` when omitted.
         """
         self.config = config
         self._vault_client: Client | None = None
         self._user_context: VaultUserContext | None = None
-        self._mongo = MongoDBStorage(config)
+        if metadata_store is None:
+            metadata_store = get_metadata_store(config)
+        self._mongo = metadata_store
 
     def get_user_context(self) -> VaultUserContext:
         """

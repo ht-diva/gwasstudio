@@ -20,7 +20,7 @@ from gwasstudio.cli.utils import (
     write_if_not_empty,
     write_table,
 )
-from gwasstudio.core import ConfigurationError, InvalidInputError
+from gwasstudio.core import ConfigurationError, InvalidInputError, get_metadata_store
 from gwasstudio.core.authorization import AuthorizationService
 from gwasstudio.core.config import get_dask_batch_size, get_dask_deployment, get_tiledb_config
 from gwasstudio.core.enums import MetadataEnum
@@ -554,15 +554,17 @@ def export(
 
     # Query metadata using core function with YAML template
     # The core function will handle parsing, validation, and query options
+    metadata_store = get_metadata_store(config)
     query_results, output_fields = core_query_metadata(
         yaml_template=yaml_content,
         config=config,
         case_sensitive=case_sensitive,
         exact_match=exact_match,
+        metadata_store=metadata_store,
     )
 
     # Filter results to only accessible datasets based on authorization
-    auth_service = AuthorizationService(config)
+    auth_service = AuthorizationService(config, metadata_store=metadata_store)
     accessible_results = []
     skipped_results = []
 

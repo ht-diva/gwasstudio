@@ -30,6 +30,7 @@ from gwasstudio.core import (
     InvalidInputError,
     MetadataEnum,
     StorageError,
+    get_metadata_store,
 )
 from gwasstudio.core import ingest_metadata as core_ingest_metadata
 from gwasstudio.core.config import get_dask_batch_size, get_dask_deployment, get_tiledb_config
@@ -144,8 +145,9 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, add_cols):
 
         # Process metadata ingestion
         if ingestion_type in ["metadata", "both"]:
+            metadata_store = get_metadata_store(config)
             try:
-                core_ingest_metadata(df.to_dict(orient="records"), config=config)
+                core_ingest_metadata(df.to_dict(orient="records"), config=config, metadata_store=metadata_store)
                 logger.info("Metadata ingestion completed successfully")
             except Exception as e:
                 raise IngestionError(f"Failed to ingest metadata: {str(e)}")
