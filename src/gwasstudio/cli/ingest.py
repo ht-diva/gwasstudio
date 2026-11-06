@@ -14,12 +14,9 @@ from dask import compute, delayed
 
 from gwasstudio import logger
 from gwasstudio.cli.path_utils import compose_tiledb_uri
-from gwasstudio.cli.s3 import does_uri_path_exist
 from gwasstudio.cli.utils import (
     create_config_from_context,
     load_metadata,
-    parse_uri,
-    process_and_ingest,
     validate_metadata_columns,
 )
 from gwasstudio.core import (
@@ -33,9 +30,9 @@ from gwasstudio.core import (
     get_metadata_store,
 )
 from gwasstudio.core import ingest_metadata as core_ingest_metadata
-from gwasstudio.core.config import get_dask_batch_size, get_dask_deployment, get_tiledb_config
+from gwasstudio.core.config import get_dask_batch_size, get_dask_deployment
+from gwasstudio.core.storage.tiledb import TileDBStorageBackend
 from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
-from gwasstudio.utils.tdb_schema import TileDBSchemaCreator
 
 help_doc = """
 Ingest data in a TileDB-unified dataset.
@@ -154,7 +151,6 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, add_cols):
 
         # Process data ingestion
         if ingestion_type in ["data", "both"]:
-            # scheme, netloc, path = parse_uri(uri)
             with manage_daskcluster(config):
                 grouped = df.groupby(MetadataEnum.get_tiledb_grouping_fields(), observed=False)
                 for name, group in grouped:
@@ -164,13 +160,8 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, add_cols):
                     additional_columns = add_cols.split(",") if add_cols else []
                     logger.debug(f"tiledb_uri: {tiledb_uri}")
 
-                    scheme, _, _ = parse_uri(warehouse_uri)
-
                     try:
-                        if scheme == "s3":
-                            ingest_to_s3(input_file_list, tiledb_uri, additional_columns, config)
-                        else:
-                            ingest_to_fs(input_file_list, tiledb_uri, additional_columns, config)
+                        _ingest_files(input_file_list, tiledb_uri, additional_columns, config)
                     except Exception as e:
                         raise StorageError(f"Failed to ingest data for group {group_name}: {str(e)}") from e
 
@@ -184,117 +175,47 @@ def ingest(ctx, file_path, delimiter, uri, ingestion_type, add_cols):
         raise IngestionError(f"Unexpected error during ingestion: {str(e)}")
 
 
-def ingest_to_s3(input_file_list, uri, add_cols, config: GWASStudioConfig):
+def _ingest_files(input_file_list: list[str], uri: str, add_cols: list[str], config: GWASStudioConfig) -> None:
     """
-    Ingest data into an S3-based TileDB dataset.
+    Ingest a list of files into the TileDB array at ``uri`` via the storage backend.
 
-    This function processes a list of input files and ingests them into a TileDB dataset
-    stored in an S3 bucket. It supports batch processing using Dask.
+    Handles both S3 and local filesystem URIs — the backend internally selects
+    the correct config and existence check for each scheme.
 
     Args:
-        input_file_list (list): List of file paths to be ingested.
-        uri (str): Destination path where to store the tiledb dataset in S3.
-        add_cols (list): string list with the columns to add.
-        config (GWASStudioConfig): GWASStudio configuration object.
+        input_file_list: List of file paths to ingest.
+        uri: Destination TileDB array URI (s3:// or local path).
+        add_cols: Extra attribute columns for schema creation.
+        config: GWASStudio configuration object.
 
     Raises:
-        StorageError: If S3 ingestion fails.
+        StorageError: If ingestion fails.
     """
-    try:
-        cfg = get_tiledb_config(config)
+    backend = TileDBStorageBackend(config)
 
-        if not does_uri_path_exist(uri, cfg):
-            logger.info("Creating TileDB schema")
-            TileDBSchemaCreator(uri, cfg, additional_attributes=add_cols).create_schema()
+    if get_dask_deployment(config) in dask_deployment_types:
+        batch_size = get_dask_batch_size(config, capacity_mode=True)
+        for i in range(0, len(input_file_list), batch_size):
+            batch_files = {file_path: Path(file_path).exists() for file_path in input_file_list[i : i + batch_size]}
+            total_batches = math.ceil(len(input_file_list) / batch_size)
+            batch_no = i // batch_size + 1
+            logger.info(f"Running batch {batch_no}/{total_batches} ({batch_size} items)")
 
-        if get_dask_deployment(config) in dask_deployment_types:
-            batch_size = get_dask_batch_size(config, capacity_mode=True)
-            for i in range(0, len(input_file_list), batch_size):
-                batch_files = {file_path: Path(file_path).exists() for file_path in input_file_list[i : i + batch_size]}
-                total_batches = math.ceil(len(input_file_list) / batch_size)
-                batch_no = i // batch_size + 1
-                logger.info(f"Running batch {batch_no}/{total_batches} ({batch_size} items)")
+            skipped_files = [file_path for file_path, exists in batch_files.items() if not exists]
+            if skipped_files:
+                logger.warning(f"Skipping files: {skipped_files}")
 
-                # Log skipped files
-                skipped_files = [file_path for file_path, exists in batch_files.items() if not exists]
-                if skipped_files:
-                    logger.warning(f"Skipping files: {skipped_files}")
-
-                # Create a list of delayed tasks
-                tasks = [
-                    delayed(process_and_ingest)(file_path, uri, cfg, add_cols)
-                    for file_path in batch_files
-                    if batch_files[file_path]
-                ]
-
-                # Submit tasks and wait for completion
-                compute(*tasks)
-                logger.info(f"Batch {batch_no} completed.", flush=True)
-        else:
-            for file_path in input_file_list:
-                if Path(file_path).exists():
-                    logger.debug(f"processing {file_path}")
-                    process_and_ingest(file_path, uri, cfg, add_cols)
-                else:
-                    logger.warning(f"skipping {file_path}")
-
-    except Exception as e:
-        raise StorageError(f"S3 ingestion failed: {str(e)}")
-
-
-def ingest_to_fs(input_file_list, uri, add_cols, config: GWASStudioConfig):
-    """
-    Ingest data into a local file system-based TileDB dataset.
-
-    This function processes a list of input files and ingests them into a TileDB dataset
-    stored in the local file system. It supports batch processing using Dask.
-
-    Args:
-        input_file_list (list): List of file paths to be ingested.
-        uri (str): Destination path where to store the tiledb dataset in the local file system.
-        add_cols (list): string list with the columns to add.
-        config (GWASStudioConfig): GWASStudio configuration object.
-
-    Raises:
-        StorageError: If filesystem ingestion fails.
-    """
-    try:
-        cfg = get_tiledb_config(config, prefix="sm")
-        _, __, path = parse_uri(uri)
-        if not Path(path).exists():
-            logger.info("Creating TileDB schema")
-            TileDBSchemaCreator(uri, {}, additional_attributes=add_cols).create_schema()
-
-        if get_dask_deployment(config) in dask_deployment_types:
-            batch_size = get_dask_batch_size(config, capacity_mode=True)
-            for i in range(0, len(input_file_list), batch_size):
-                batch_files = {file_path: Path(file_path).exists() for file_path in input_file_list[i : i + batch_size]}
-                total_batches = math.ceil(len(input_file_list) / batch_size)
-                batch_no = i // batch_size + 1
-                logger.info(f"Running batch {batch_no}/{total_batches} ({batch_size} items)")
-
-                # Log skipped files
-                skipped_files = [file_path for file_path, exists in batch_files.items() if not exists]
-                if skipped_files:
-                    logger.warning(f"Skipping files: {skipped_files}")
-
-                # Create a list of delayed tasks
-                tasks = [
-                    delayed(process_and_ingest)(file_path, uri, cfg, add_cols)
-                    for file_path in batch_files
-                    if batch_files[file_path]
-                ]
-
-                # Submit tasks and wait for completion
-                compute(*tasks)
-                logger.info(f"Batch {batch_no} completed.", flush=True)
-        else:
-            for file_path in input_file_list:
-                if Path(file_path).exists():
-                    logger.debug(f"processing {file_path}")
-                    process_and_ingest(file_path, uri, {}, add_cols)
-                else:
-                    logger.warning(f"{file_path} not found. Skipping it")
-
-    except Exception as e:
-        raise StorageError(f"Filesystem ingestion failed: {str(e)}")
+            tasks = [
+                delayed(backend.ingest_data)(file_path=file_path, uri=uri, additional_columns=add_cols)
+                for file_path in batch_files
+                if batch_files[file_path]
+            ]
+            compute(*tasks)
+            logger.info(f"Batch {batch_no} completed.", flush=True)
+    else:
+        for file_path in input_file_list:
+            if Path(file_path).exists():
+                logger.debug(f"processing {file_path}")
+                backend.ingest_data(file_path=file_path, uri=uri, additional_columns=add_cols)
+            else:
+                logger.warning(f"{file_path} not found. Skipping it")

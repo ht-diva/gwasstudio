@@ -7,7 +7,6 @@ from pathlib import Path
 import click
 import cloup
 import pandas as pd
-import tiledb
 from dask import compute, delayed
 from dask.distributed import Client
 
@@ -26,6 +25,7 @@ from gwasstudio.core.config import get_dask_batch_size, get_dask_deployment, get
 from gwasstudio.core.enums import MetadataEnum
 from gwasstudio.core.exceptions import PermissionError
 from gwasstudio.core.query import query_metadata as core_query_metadata
+from gwasstudio.core.storage.tiledb import TileDBStorageBackend
 from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
 from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions_leadsnps, extract_regions_snps
 from gwasstudio.methods.locus_breaker import _process_locusbreaker
@@ -125,6 +125,7 @@ def _process_function_tasks(
     output_prefix_dict: dict[str, str],
     output_format: str,
     *,
+    backend: TileDBStorageBackend,
     function_name: Callable,
     regions_snps: str | None = None,
     trait_snps: str | None = None,
@@ -148,7 +149,7 @@ def _process_function_tasks(
     # with the synchronous scheduler (no cluster, no IPC) — the fast path.
     scheduler = dask_client if dask_client is not None else "synchronous"
 
-    # Wrapper that opens the array locally and forwards the call.
+    # Wrapper that opens the array locally and forwards the call via the backend.
     def _run_extraction(
         uri: str,
         cfg: dict[str, str],
@@ -156,11 +157,8 @@ def _process_function_tasks(
         out_prefix: str | None,
         **inner_kwargs,
     ) -> pd.DataFrame:
-        """Open the TileDB array on the worker and invoke ``function_name``."""
-        # Open a *read‑only* handle on the worker.
-        with tiledb.open(uri, mode="r", config=cfg) as arr:
-            # ``function_name`` expects the opened array as its first argument.
-            return function_name(arr, traits, out_prefix, **inner_kwargs)
+        """Open the TileDB array on the worker and invoke the extraction function via the backend."""
+        return backend.extract(uri, cfg, traits, out_prefix, function_name, **inner_kwargs)
 
     def _run_transformation(
         gwas_df: pd.DataFrame, meta_df: pd.DataFrame, trait_id: str, link_ids: list | None = None
@@ -691,6 +689,7 @@ def export(
         raise SystemExit(1)
 
     cfg = get_tiledb_config(config)
+    backend = TileDBStorageBackend(config)
     total_rows = 0
 
     # Resolve the TileDB URI for each group now — fail fast before starting any
@@ -741,6 +740,7 @@ def export(
                 case (True, _, _, _):
                     total_rows += _process_function_tasks(
                         *common_args,
+                        backend=backend,
                         function_name=_process_locusbreaker,
                         maf=maf,
                         hole_size=hole_size,
@@ -754,6 +754,7 @@ def export(
                 case (_, str() as bed_fp, _, _):
                     total_rows += _process_function_tasks(
                         *common_args,
+                        backend=backend,
                         function_name=extract_regions_snps,
                         regions_snps=bed_fp,
                         region_buffer=region_buffer,
@@ -768,6 +769,7 @@ def export(
                 case (_, _, str() as traitsnp_fp, _):
                     total_rows += _process_function_tasks(
                         *common_args,
+                        backend=backend,
                         function_name=extract_regions_leadsnps,
                         trait_snps=traitsnp_fp,
                         cis_flanks=cis_flanks,
@@ -779,6 +781,7 @@ def export(
                 case (_, _, _, True):
                     total_rows += _process_function_tasks(
                         *common_args,
+                        backend=backend,
                         function_name=_meta_analysis,
                         output_prefix=output_prefix,
                         dask_client=client,
@@ -786,6 +789,7 @@ def export(
                 case _:
                     total_rows += _process_function_tasks(
                         *common_args,
+                        backend=backend,
                         function_name=extract_full_stats,
                         pvalue_thr=pvalue_thr,
                         filter_multiallelic=filter_multiallelic,

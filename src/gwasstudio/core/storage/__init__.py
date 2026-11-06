@@ -23,6 +23,10 @@ __all__ = [
     "MongoDBStorage",
     "MongoDBError",
     #
+    # # TileDB (imported lazily by get_storage_backend to keep the package light)
+    "TileDBStorageBackend",
+    "TileDBError",
+    #
     # # S3
     # "S3Storage",
     # "S3Error",
@@ -34,9 +38,10 @@ def get_storage_backend(backend_name: str, config, **kwargs):
     Factory function to get a storage backend instance.
 
     Args:
-        backend_name: Name of the backend ("tiledb", "mongo", "s3", "iceberg").
+        backend_name: Name of the backend ("tiledb", "mongo", "s3").
         config: GWASStudioConfig instance.
-        **kwargs: Additional arguments for the backend.
+        **kwargs: Additional arguments for the backend
+            (e.g. ``warehouse_uri``/``project``/``study`` for "tiledb").
 
     Returns:
         StorageBackend: Instance of the requested storage backend.
@@ -44,13 +49,17 @@ def get_storage_backend(backend_name: str, config, **kwargs):
     Raises:
         ValueError: If the backend name is not recognized or not available.
     """
-    backends = {
-        "mongo": MongoDBStorage,
-        # "s3": S3Storage,
-    }
+    name = (backend_name or "").strip().lower()
 
-    if backend_name not in backends:
-        available = list(backends.keys())
-        raise ValueError(f"Unknown storage backend: {backend_name}. Available backends: {available}")
+    if name in ("mongo", "mongodb"):
+        return MongoDBStorage(config, **kwargs)
 
-    return backends[backend_name](config, **kwargs)
+    if name == "tiledb":
+        # Deferred import: importing gwasstudio.core (and the light CLI commands)
+        # must not pull in TileDB or the CLI layer — see tests/unit/cli/test_lazy_cli.py.
+        from gwasstudio.core.storage.tiledb import TileDBStorageBackend
+
+        return TileDBStorageBackend(config, **kwargs)
+
+    available = ["mongo", "mongodb", "tiledb"]
+    raise ValueError(f"Unknown storage backend: {backend_name}. Available backends: {available}")
