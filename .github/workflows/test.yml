@@ -16,9 +16,6 @@ jobs:
         with:
           submodules: true
 
-      - name: Clear conda cache
-        run: conda clean --all -y
-
       - name: Conda setup
         uses: conda-incubator/setup-miniconda@v4
         with:
@@ -28,7 +25,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           miniforge-version: latest
 
-      - name:  Install project
+      - name: Clear conda cache
+        shell: bash -el {0}
+        run: conda clean --all -y
+
+      - name: Install project
         shell: bash -el {0}
         run: |
           make dependencies_dev
