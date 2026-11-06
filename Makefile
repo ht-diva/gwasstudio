@@ -141,14 +141,6 @@ test_full_export: test-dependencies
 	fi; \
 	bash tests/integration/test_full_export.sh
 
-test_ingest_with_recalc: test-dependencies
-	@echo "Running ingest with -log10p recalculation tests..."
-	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
-        echo "Activating conda environment: ${ENV_NAME}"; \
-		$(CONDA_ACTIVATE) ${ENV_NAME}; \
-	fi; \
-	bash tests/integration/test_ingest_with_recalc.sh
-
 test_export_flags: test-dependencies
 	@echo "Running --fail-on-empty / --region-buffer integration tests..."
 	@echo "Date: $$(date)"
