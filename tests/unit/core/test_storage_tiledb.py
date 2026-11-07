@@ -19,7 +19,6 @@ from gwasstudio.core.exceptions import GWASStudioError
 from gwasstudio.core.hashing import Hashing
 from gwasstudio.core.storage import get_storage_backend
 from gwasstudio.core.storage.base import StorageBackend, StorageError
-from gwasstudio.core.storage.mongodb import MongoDBStorage
 from gwasstudio.core.storage.tiledb import TileDBError, TileDBStorageBackend, _build_regions_df
 
 
@@ -62,19 +61,24 @@ class TestTileDBError:
 
 class TestFactory:
     def test_returns_tiledb_backend(self, config, warehouse):
-        backend = get_storage_backend("tiledb", config, warehouse_uri=warehouse)
+        backend = get_storage_backend(config, warehouse_uri=warehouse)
         assert isinstance(backend, TileDBStorageBackend)
         assert isinstance(backend, StorageBackend)
 
     def test_name_is_case_insensitive(self, config, warehouse):
-        assert isinstance(get_storage_backend("TileDB", config, warehouse_uri=warehouse), TileDBStorageBackend)
+        config.storage_backend = "TileDB"
+        assert isinstance(get_storage_backend(config, warehouse_uri=warehouse), TileDBStorageBackend)
 
-    def test_mongo_registration_unchanged(self, config):
-        assert isinstance(get_storage_backend("mongo", config), MongoDBStorage)
+    def test_mongo_not_a_data_storage_backend(self, config):
+        """MongoDB is a metadata store, not a data storage backend."""
+        config.storage_backend = "mongo"
+        with pytest.raises(StorageError, match="get_metadata_store"):
+            get_storage_backend(config)
 
     def test_unknown_backend_raises(self, config):
-        with pytest.raises(ValueError, match="Unknown storage backend"):
-            get_storage_backend("iceberg", config)
+        config.storage_backend = "iceberg"
+        with pytest.raises(StorageError, match="Unknown storage backend"):
+            get_storage_backend(config)
 
 
 class TestUriResolution:

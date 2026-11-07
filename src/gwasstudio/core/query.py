@@ -18,7 +18,8 @@ from gwasstudio import logger
 from gwasstudio.core.config import GWASStudioConfig
 from gwasstudio.core.enums import AncestryEnum, BuildEnum, DataCategoryEnum, MetadataEnum, OntologyID
 from gwasstudio.core.exceptions import InvalidQueryError, QueryError
-from gwasstudio.core.storage.metadata_store import MetadataStore, get_metadata_store
+from gwasstudio.core.storage import get_metadata_store
+from gwasstudio.core.storage.metadata_store import MetadataStore
 from gwasstudio.core.str_utils import lower_and_replace
 
 

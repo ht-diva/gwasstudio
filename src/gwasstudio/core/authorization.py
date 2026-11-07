@@ -24,7 +24,8 @@ from typing import Any
 
 from gwasstudio.core.config import AuthConfig, GWASStudioConfig, VaultConfig
 from gwasstudio.core.exceptions import AuthenticationError, PermissionError
-from gwasstudio.core.storage.metadata_store import MetadataStore, get_metadata_store
+from gwasstudio.core.storage import get_metadata_store
+from gwasstudio.core.storage.metadata_store import MetadataStore
 from gwasstudio.utils.vault import create_vault_client
 
 

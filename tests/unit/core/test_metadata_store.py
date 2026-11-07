@@ -10,7 +10,8 @@ import pytest
 
 from gwasstudio.core.config import GWASStudioConfig
 from gwasstudio.core.exceptions import StorageError
-from gwasstudio.core.storage.metadata_store import MetadataStore, get_metadata_store
+from gwasstudio.core.storage import get_metadata_store
+from gwasstudio.core.storage.metadata_store import MetadataStore
 from gwasstudio.core.storage.mongodb import MongoDBStorage
 
 

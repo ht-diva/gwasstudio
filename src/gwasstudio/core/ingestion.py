@@ -16,7 +16,8 @@ from gwasstudio.core import (
     IngestionError,
 )
 from gwasstudio.core.enums import AncestryEnum, BuildEnum, DataCategoryEnum, OntologyID
-from gwasstudio.core.storage.metadata_store import MetadataStore, get_metadata_store
+from gwasstudio.core.storage import get_metadata_store
+from gwasstudio.core.storage.metadata_store import MetadataStore
 from gwasstudio.core.str_utils import lower_and_replace
 
 

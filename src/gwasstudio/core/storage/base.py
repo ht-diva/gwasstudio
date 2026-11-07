@@ -13,13 +13,7 @@ from typing import Any
 
 import pandas as pd
 
-from gwasstudio.core.exceptions import GWASStudioError
-
-
-class StorageError(GWASStudioError):
-    """Exception raised for storage-related errors."""
-
-    pass
+from gwasstudio.core.exceptions import GWASStudioError, StorageError
 
 
 class StorageBackend(ABC):

@@ -31,7 +31,7 @@ from gwasstudio.core import (
 )
 from gwasstudio.core import ingest_metadata as core_ingest_metadata
 from gwasstudio.core.config import get_dask_batch_size, get_dask_deployment
-from gwasstudio.core.storage.tiledb import TileDBStorageBackend
+from gwasstudio.core.storage import get_storage_backend
 from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
 
 help_doc = """
@@ -191,7 +191,7 @@ def _ingest_files(input_file_list: list[str], uri: str, add_cols: list[str], con
     Raises:
         StorageError: If ingestion fails.
     """
-    backend = TileDBStorageBackend(config)
+    backend = get_storage_backend(config)
 
     if get_dask_deployment(config) in dask_deployment_types:
         batch_size = get_dask_batch_size(config, capacity_mode=True)

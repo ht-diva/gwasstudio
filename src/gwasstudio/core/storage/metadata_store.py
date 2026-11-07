@@ -7,17 +7,14 @@ A thin, swappable interface for reading and writing dataset metadata.
 The :class:`MetadataStore` interface exposes only the operations the
 application actually needs: bulk-ingesting metadata documents, querying them,
 and listing projects. Backends (MongoDB today, others tomorrow) implement the
-interface, and :func:`get_metadata_store` is the factory used at application
-setup to hand a concrete instance to the ingestion, query and authorization
-services.
+interface. The factory :func:`get_metadata_store` lives in
+:mod:`gwasstudio.core.storage` (the composition root).
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import Any
-
-from gwasstudio.core.config import GWASStudioConfig
 
 
 class MetadataStore(ABC):
@@ -66,37 +63,3 @@ class MetadataStore(ABC):
 
     def close(self) -> None:
         """Release any underlying resources (default no-op)."""
-
-
-def get_metadata_store(config: GWASStudioConfig | None = None) -> MetadataStore:
-    """Factory used at application setup to obtain a :class:`MetadataStore`.
-
-    This is the single place where the concrete backend is chosen. The backend
-    name is read from ``config.metadata_backend`` (default ``"mongo"``). New
-    backends should be registered in :data:`_METADATA_BACKENDS` so that
-    ingestion, query and authorization services stay backend-agnostic.
-
-    Args:
-        config: GWASStudio configuration. A default is created when omitted.
-
-    Returns:
-        MetadataStore: A concrete metadata-store instance.
-
-    Raises:
-        gwasstudio.core.exceptions.StorageError: If the backend name is unknown
-            or the backend cannot be created.
-    """
-    # Deferred imports: avoid a circular import between the interface module
-    # and the MongoDB backend (which imports this interface at module load).
-    from gwasstudio.core.exceptions import StorageError
-    from gwasstudio.core.storage.mongodb import MongoDBStorage
-
-    if config is None:
-        config = GWASStudioConfig()
-
-    backends: dict[str, type] = {"mongo": MongoDBStorage, "mongodb": MongoDBStorage}
-    backend_name = (config.metadata_backend or "mongo").strip().lower()
-    if backend_name not in backends:
-        available = sorted(backends)
-        raise StorageError(f"Unknown metadata store backend: {backend_name!r}. Available backends: {available}")
-    return backends[backend_name](config)

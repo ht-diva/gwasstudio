@@ -25,7 +25,7 @@ from gwasstudio.core.config import get_dask_batch_size, get_dask_deployment, get
 from gwasstudio.core.enums import MetadataEnum
 from gwasstudio.core.exceptions import PermissionError
 from gwasstudio.core.query import query_metadata as core_query_metadata
-from gwasstudio.core.storage.tiledb import TileDBStorageBackend
+from gwasstudio.core.storage import StorageBackend, get_storage_backend
 from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
 from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions_leadsnps, extract_regions_snps
 from gwasstudio.methods.locus_breaker import _process_locusbreaker
@@ -125,7 +125,7 @@ def _process_function_tasks(
     output_prefix_dict: dict[str, str],
     output_format: str,
     *,
-    backend: TileDBStorageBackend,
+    backend: StorageBackend,
     function_name: Callable,
     regions_snps: str | None = None,
     trait_snps: str | None = None,
@@ -689,7 +689,7 @@ def export(
         raise SystemExit(1)
 
     cfg = get_tiledb_config(config)
-    backend = TileDBStorageBackend(config)
+    backend = get_storage_backend(config)
     total_rows = 0
 
     # Resolve the TileDB URI for each group now — fail fast before starting any
