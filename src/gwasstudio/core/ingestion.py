@@ -16,7 +16,8 @@ from gwasstudio.core import (
     IngestionError,
 )
 from gwasstudio.core.enums import AncestryEnum, BuildEnum, DataCategoryEnum, OntologyID
-from gwasstudio.core.storage import MongoDBStorage  # ,TileDBStorage
+from gwasstudio.core.storage import get_metadata_store
+from gwasstudio.core.storage.metadata_store import MetadataStore
 from gwasstudio.core.str_utils import lower_and_replace
 
 
@@ -59,17 +60,30 @@ def _normalize_allow_list(value: Any) -> list[str]:
 def ingest_metadata(
     template: list[dict[Hashable, Any]],
     config: GWASStudioConfig | None = None,
+    metadata_store: MetadataStore | None = None,
 ) -> None:
+    """Ingest a batch of metadata documents into the configured metadata store.
+
+    Args:
+        template: List of raw metadata dictionaries to process and store.
+        config: GWASStudio configuration. A default is created when omitted.
+        metadata_store: Optional metadata store to write to. Created via
+            :func:`gwasstudio.core.storage.metadata_store.get_metadata_store` when omitted.
+
+    Raises:
+        gwasstudio.core.exceptions.IngestionError: If the bulk write fails.
+    """
     if config is None:
         config = GWASStudioConfig()
+    if metadata_store is None:
+        metadata_store = get_metadata_store(config)
 
     batch = []
     for i, document in enumerate(_document_generator(template), 1):
         batch.append(document)
 
     try:
-        mongo_storage = MongoDBStorage(config)
-        mongo_storage.bulk_store_metadata(batch)
+        metadata_store.bulk_store_metadata(batch)
     except Exception as e:
         raise IngestionError(f"Failed to query metadata: {str(e)}")
 

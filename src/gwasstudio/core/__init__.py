@@ -47,9 +47,11 @@ from gwasstudio.core.hashing import Hashing
 # ── stable core APIs ───────────────────────────────────────────────────
 from gwasstudio.core.ingestion import ingest_metadata
 from gwasstudio.core.query import InvalidQueryFieldError, QueryError, list_projects
+from gwasstudio.core.storage import get_metadata_store
 
 # ── backward-compatible aliases ────────────────────────────────────────
 from gwasstudio.core.storage.base import StorageError
+from gwasstudio.core.storage.metadata_store import MetadataStore
 
 __all__ = [
     # Configuration
@@ -78,6 +80,9 @@ __all__ = [
     "PermissionError",
     # Helpers
     "Hashing",
+    # Metadata store
+    "MetadataStore",
+    "get_metadata_store",
     # Core APIs
     "ingest_metadata",
     "list_projects",

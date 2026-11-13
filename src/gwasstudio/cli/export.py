@@ -3,11 +3,11 @@ import math
 import os
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import click
 import cloup
 import pandas as pd
-import tiledb
 from dask import compute, delayed
 from dask.distributed import Client
 
@@ -20,14 +20,20 @@ from gwasstudio.cli.utils import (
     write_if_not_empty,
     write_table,
 )
-from gwasstudio.core import ConfigurationError, InvalidInputError
+from gwasstudio.core import ConfigurationError, InvalidInputError, get_metadata_store
 from gwasstudio.core.authorization import AuthorizationService
 from gwasstudio.core.config import get_dask_batch_size, get_dask_deployment, get_tiledb_config
 from gwasstudio.core.enums import MetadataEnum
 from gwasstudio.core.exceptions import PermissionError
 from gwasstudio.core.query import query_metadata as core_query_metadata
+from gwasstudio.core.storage import StorageBackend, get_storage_backend
 from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
-from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions_leadsnps, extract_regions_snps
+from gwasstudio.methods.extraction_methods import (
+    _add_n_fallback,
+    extract_full_stats,
+    extract_regions_leadsnps,
+    extract_regions_snps,
+)
 from gwasstudio.methods.locus_breaker import _process_locusbreaker
 from gwasstudio.methods.meta_analysis import _meta_analysis
 
@@ -125,6 +131,7 @@ def _process_function_tasks(
     output_prefix_dict: dict[str, str],
     output_format: str,
     *,
+    backend: StorageBackend,
     function_name: Callable,
     regions_snps: str | None = None,
     trait_snps: str | None = None,
@@ -148,19 +155,26 @@ def _process_function_tasks(
     # with the synchronous scheduler (no cluster, no IPC) — the fast path.
     scheduler = dask_client if dask_client is not None else "synchronous"
 
-    # Wrapper that opens the array locally and forwards the call.
+    # Wrapper that opens the array locally and forwards the call via the backend.
     def _run_extraction(
         uri: str,
         cfg: dict[str, str],
         traits: str | list[str],
         out_prefix: str | None,
+        trait_to_total_samples: dict[str, Any] | None = None,
         **inner_kwargs,
     ) -> pd.DataFrame:
-        """Open the TileDB array on the worker and invoke ``function_name``."""
-        # Open a *read‑only* handle on the worker.
-        with tiledb.open(uri, mode="r", config=cfg) as arr:
-            # ``function_name`` expects the opened array as its first argument.
-            return function_name(arr, traits, out_prefix, **inner_kwargs)
+        """Open the TileDB array on the worker and invoke the extraction function via the backend."""
+        # Get total_samples for the trait(s) being extracted
+        total_samples = None
+        if trait_to_total_samples and traits:
+            # For single trait
+            if isinstance(traits, str):
+                total_samples = trait_to_total_samples.get(traits)
+            # For multiple traits (meta-analysis)
+            elif isinstance(traits, list) and len(traits) == 1:
+                total_samples = trait_to_total_samples.get(traits[0])
+        return backend.extract(uri, cfg, traits, out_prefix, function_name, total_samples=total_samples, **inner_kwargs)
 
     def _run_transformation(
         gwas_df: pd.DataFrame, meta_df: pd.DataFrame, trait_id: str, link_ids: list | None = None
@@ -169,8 +183,16 @@ def _process_function_tasks(
         if isinstance(group, pd.Series):
             return gwas_df
 
+        # Add N from total_samples metadata if N column is missing
         id_col = "data_id"
-        meta_row = meta_df.loc[meta_df[id_col] == trait_id].iloc[0]
+        meta_row = meta_df.loc[meta_df[id_col] == trait_id]
+        total_samples = None
+        if not meta_row.empty and "total_samples" in meta_row.columns:
+            total_samples = meta_row.iloc[0]["total_samples"]
+
+        gwas_df = _add_n_fallback(gwas_df, total_samples)
+
+        meta_row = meta_row.iloc[0] if not meta_row.empty else meta_row
         # meta_dict = meta_row.squeeze().to_dict()
         meta_dict = {
             f"meta_{k}": v for k, v in meta_row.drop(["data_id", "output_prefix"], errors="ignore").to_dict().items()
@@ -190,6 +212,16 @@ def _process_function_tasks(
         all_trait_snps = delayed(read_trait_snps)(trait_snps)
 
     trait_id_list = group["data_id"].unique().tolist() if not isinstance(group, pd.Series) else group.unique().tolist()
+
+    # Build a mapping of trait_id to total_samples for N fallback
+    trait_to_total_samples = {}
+    if "total_samples" in group.columns:
+        for _, row in group.iterrows():
+            trait_id = row["data_id"]
+            total_samples = row["total_samples"]
+            if pd.notna(total_samples):
+                trait_to_total_samples[trait_id] = total_samples
+
     # Build the delayed tasks – each task receives the URI, not the object.
     tasks = []
     count_indices: list[int] = []
@@ -206,6 +238,7 @@ def _process_function_tasks(
                 tiledb_cfg,
                 trait,
                 None,
+                trait_to_total_samples,
                 **kwargs,
             )
             # Extract the two DataFrames lazily.
@@ -235,6 +268,7 @@ def _process_function_tasks(
             tiledb_cfg,
             trait_id_list,
             None,
+            trait_to_total_samples,
             **kwargs,
         )
         result = delayed(write_table)(
@@ -249,6 +283,7 @@ def _process_function_tasks(
                 tiledb_cfg,
                 trait,
                 output_prefix_dict.get(trait),
+                trait_to_total_samples,
                 **kwargs,
             )
             extracted_df = delayed(lambda t: t[0])(extracted_tuple)
@@ -283,6 +318,7 @@ def _process_function_tasks(
                 tiledb_cfg,
                 trait,
                 output_prefix_dict.get(trait),
+                trait_to_total_samples,
                 **kwargs,
             )
             transformed_df = delayed(_run_transformation)(extracted_df, group, trait, link_ids if trait_snps else None)
@@ -324,7 +360,10 @@ Export summary statistics from TileDB datasets with various filtering options.
     cloup.option("--uri", default=None, help="URI of the TileDB dataset (optional if stored in metadata)"),
     cloup.option("--output-prefix", default="out", help="Prefix for naming output files"),
     cloup.option(
-        "--output-format", type=click.Choice(["parquet", "csv.gz", "csv"]), default="csv.gz", help="Output file format"
+        "--output-format",
+        type=click.Choice(["parquet", "csv.gz", "csv", "tsv"]),
+        default="csv.gz",
+        help="Output file format",
     ),
     cloup.option("--search-file", required=True, default=None, help="Input file for querying metadata"),
     cloup.option(
@@ -554,15 +593,17 @@ def export(
 
     # Query metadata using core function with YAML template
     # The core function will handle parsing, validation, and query options
+    metadata_store = get_metadata_store(config)
     query_results, output_fields = core_query_metadata(
         yaml_template=yaml_content,
         config=config,
         case_sensitive=case_sensitive,
         exact_match=exact_match,
+        metadata_store=metadata_store,
     )
 
     # Filter results to only accessible datasets based on authorization
-    auth_service = AuthorizationService(config)
+    auth_service = AuthorizationService(config, metadata_store=metadata_store)
     accessible_results = []
     skipped_results = []
 
@@ -689,6 +730,7 @@ def export(
         raise SystemExit(1)
 
     cfg = get_tiledb_config(config)
+    backend = get_storage_backend(config)
     total_rows = 0
 
     # Resolve the TileDB URI for each group now — fail fast before starting any
@@ -739,6 +781,7 @@ def export(
                 case (True, _, _, _):
                     total_rows += _process_function_tasks(
                         *common_args,
+                        backend=backend,
                         function_name=_process_locusbreaker,
                         maf=maf,
                         hole_size=hole_size,
@@ -752,6 +795,7 @@ def export(
                 case (_, str() as bed_fp, _, _):
                     total_rows += _process_function_tasks(
                         *common_args,
+                        backend=backend,
                         function_name=extract_regions_snps,
                         regions_snps=bed_fp,
                         region_buffer=region_buffer,
@@ -766,6 +810,7 @@ def export(
                 case (_, _, str() as traitsnp_fp, _):
                     total_rows += _process_function_tasks(
                         *common_args,
+                        backend=backend,
                         function_name=extract_regions_leadsnps,
                         trait_snps=traitsnp_fp,
                         cis_flanks=cis_flanks,
@@ -777,6 +822,7 @@ def export(
                 case (_, _, _, True):
                     total_rows += _process_function_tasks(
                         *common_args,
+                        backend=backend,
                         function_name=_meta_analysis,
                         output_prefix=output_prefix,
                         dask_client=client,
@@ -784,6 +830,7 @@ def export(
                 case _:
                     total_rows += _process_function_tasks(
                         *common_args,
+                        backend=backend,
                         function_name=extract_full_stats,
                         pvalue_thr=pvalue_thr,
                         filter_multiallelic=filter_multiallelic,

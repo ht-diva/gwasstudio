@@ -212,7 +212,7 @@ class TestAuthorizationService:
 
     def test_check_access_public_dataset_allowed(self, mock_gwas_config, mock_mongo_storage):
         """Test that PUBLIC datasets are accessible with valid token."""
-        with patch("gwasstudio.core.authorization.MongoDBStorage", return_value=mock_mongo_storage):
+        with patch("gwasstudio.core.authorization.get_metadata_store", return_value=mock_mongo_storage):
             auth = AuthorizationService(mock_gwas_config)
             auth._user_context = VaultUserContext(
                 token_accessor="test",
@@ -227,7 +227,7 @@ class TestAuthorizationService:
             vault=VaultConfig(token=None),
             auth=AuthConfig(allow_anonymous_public=False),
         )
-        with patch("gwasstudio.core.authorization.MongoDBStorage", return_value=mock_mongo_storage):
+        with patch("gwasstudio.core.authorization.get_metadata_store", return_value=mock_mongo_storage):
             auth = AuthorizationService(config)
             auth._user_context = VaultUserContext.anonymous()
 
@@ -239,7 +239,7 @@ class TestAuthorizationService:
             vault=VaultConfig(token=None),
             auth=AuthConfig(allow_anonymous_public=True),
         )
-        with patch("gwasstudio.core.authorization.MongoDBStorage", return_value=mock_mongo_storage):
+        with patch("gwasstudio.core.authorization.get_metadata_store", return_value=mock_mongo_storage):
             auth = AuthorizationService(config)
             auth._user_context = VaultUserContext.anonymous()
 
@@ -247,7 +247,7 @@ class TestAuthorizationService:
 
     def test_check_access_protected_dataset_authenticated(self, mock_gwas_config, mock_mongo_storage):
         """Test that PROTECTED datasets are accessible to authenticated users."""
-        with patch("gwasstudio.core.authorization.MongoDBStorage", return_value=mock_mongo_storage):
+        with patch("gwasstudio.core.authorization.get_metadata_store", return_value=mock_mongo_storage):
             auth = AuthorizationService(mock_gwas_config)
             auth._user_context = VaultUserContext(
                 token_accessor="test",
@@ -262,7 +262,7 @@ class TestAuthorizationService:
             vault=VaultConfig(token=None),
             auth=AuthConfig(enabled=True),
         )
-        with patch("gwasstudio.core.authorization.MongoDBStorage", return_value=mock_mongo_storage):
+        with patch("gwasstudio.core.authorization.get_metadata_store", return_value=mock_mongo_storage):
             auth = AuthorizationService(config)
             auth._user_context = VaultUserContext.anonymous()
 
@@ -270,7 +270,7 @@ class TestAuthorizationService:
 
     def test_check_access_restricted_by_username(self, mock_gwas_config, mock_mongo_storage):
         """Test RESTRICTED access by username."""
-        with patch("gwasstudio.core.authorization.MongoDBStorage", return_value=mock_mongo_storage):
+        with patch("gwasstudio.core.authorization.get_metadata_store", return_value=mock_mongo_storage):
             auth = AuthorizationService(mock_gwas_config)
             auth._user_context = VaultUserContext(
                 token_accessor="dkE5rNWmE6rCyg41gTB0WJT2",
@@ -284,7 +284,7 @@ class TestAuthorizationService:
 
     def test_check_access_restricted_by_accessor(self, mock_gwas_config, mock_mongo_storage):
         """Test RESTRICTED access by token accessor."""
-        with patch("gwasstudio.core.authorization.MongoDBStorage", return_value=mock_mongo_storage):
+        with patch("gwasstudio.core.authorization.get_metadata_store", return_value=mock_mongo_storage):
             auth = AuthorizationService(mock_gwas_config)
             auth._user_context = VaultUserContext(
                 token_accessor="dkE5rNWmE6rCyg41gTB0WJT2",
@@ -295,7 +295,7 @@ class TestAuthorizationService:
 
     def test_check_access_restricted_by_policy(self, mock_gwas_config, mock_mongo_storage):
         """Test RESTRICTED access by policy."""
-        with patch("gwasstudio.core.authorization.MongoDBStorage", return_value=mock_mongo_storage):
+        with patch("gwasstudio.core.authorization.get_metadata_store", return_value=mock_mongo_storage):
             auth = AuthorizationService(mock_gwas_config)
             auth._user_context = VaultUserContext(
                 token_accessor="some-other-accessor",
@@ -308,7 +308,7 @@ class TestAuthorizationService:
 
     def test_check_access_restricted_denied(self, mock_gwas_config, mock_mongo_storage):
         """Test RESTRICTED access denied when no permissions match."""
-        with patch("gwasstudio.core.authorization.MongoDBStorage", return_value=mock_mongo_storage):
+        with patch("gwasstudio.core.authorization.get_metadata_store", return_value=mock_mongo_storage):
             auth = AuthorizationService(mock_gwas_config)
             auth._user_context = VaultUserContext(
                 token_accessor="other-accessor",
@@ -321,7 +321,7 @@ class TestAuthorizationService:
 
     def test_check_access_dataset_not_found(self, mock_gwas_config, mock_mongo_storage):
         """Test that PermissionError is raised for nonexistent dataset."""
-        with patch("gwasstudio.core.authorization.MongoDBStorage", return_value=mock_mongo_storage):
+        with patch("gwasstudio.core.authorization.get_metadata_store", return_value=mock_mongo_storage):
             auth = AuthorizationService(mock_gwas_config)
             auth._user_context = VaultUserContext(
                 is_authenticated=True,
@@ -334,7 +334,7 @@ class TestAuthorizationService:
 
     def test_check_access_no_identifier(self, mock_gwas_config):
         """Test that PermissionError is raised when no identifier is provided."""
-        with patch("gwasstudio.core.authorization.MongoDBStorage"):
+        with patch("gwasstudio.core.authorization.get_metadata_store"):
             auth = AuthorizationService(mock_gwas_config)
             auth._user_context = VaultUserContext(is_authenticated=True)
 
@@ -349,7 +349,7 @@ class TestAuthorizationService:
             vault=VaultConfig(token="test"),
             auth=AuthConfig(enabled=False),
         )
-        with patch("gwasstudio.core.authorization.MongoDBStorage", return_value=mock_mongo_storage):
+        with patch("gwasstudio.core.authorization.get_metadata_store", return_value=mock_mongo_storage):
             auth = AuthorizationService(config)
             auth._user_context = VaultUserContext(is_authenticated=False)
 
@@ -359,7 +359,7 @@ class TestAuthorizationService:
 
     def test_get_dataset_access_level(self, mock_gwas_config, mock_mongo_storage):
         """Test retrieving access level for a dataset."""
-        with patch("gwasstudio.core.authorization.MongoDBStorage", return_value=mock_mongo_storage):
+        with patch("gwasstudio.core.authorization.get_metadata_store", return_value=mock_mongo_storage):
             auth = AuthorizationService(mock_gwas_config)
 
             assert auth.get_dataset_access_level("public_dataset") == "public"
@@ -368,7 +368,7 @@ class TestAuthorizationService:
 
     def test_get_dataset_access_level_not_found(self, mock_gwas_config, mock_mongo_storage):
         """Test PermissionError for nonexistent dataset access level."""
-        with patch("gwasstudio.core.authorization.MongoDBStorage", return_value=mock_mongo_storage):
+        with patch("gwasstudio.core.authorization.get_metadata_store", return_value=mock_mongo_storage):
             auth = AuthorizationService(mock_gwas_config)
 
             with pytest.raises(PermissionError):
@@ -444,7 +444,7 @@ class TestIntegration:
         )
 
         with patch("gwasstudio.core.authorization.create_vault_client", return_value=mock_vault_client):
-            with patch("gwasstudio.core.authorization.MongoDBStorage", return_value=mock_mongo):
+            with patch("gwasstudio.core.authorization.get_metadata_store", return_value=mock_mongo):
                 auth = AuthorizationService(config)
 
                 # This should work because token has computationalbiobank-reader policy

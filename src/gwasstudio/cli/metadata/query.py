@@ -69,6 +69,7 @@ from gwasstudio.core import (
     InvalidInputError,
     InvalidQueryFieldError,
     QueryError,
+    get_metadata_store,
 )
 
 # Import ONLY from core module
@@ -161,6 +162,7 @@ def query_metadata(
             config=config,
             case_sensitive=case_sensitive,
             exact_match=exact_match,
+            metadata_store=get_metadata_store(config),
         )
 
         if not results:

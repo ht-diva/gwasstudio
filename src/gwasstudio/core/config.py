@@ -96,8 +96,6 @@ class MongoConfig:
     uri: str | None = None  # MongoDB connection URI
     db_name: str = "gwasstudio"
     collection: str = "metadata"
-    log_path: Path | None = None  # Path for MongoDB logs
-    data_path: Path | None = None  # Path for MongoDB data (embedded)
 
 
 @dataclass
@@ -170,6 +168,7 @@ class GWASStudioConfig:
         s3: Configuration for S3 storage.
         vault: Configuration for HashiCorp Vault.
         tiledb: Configuration for TileDB storage.
+        metadata_backend: Backend name used by :func:`gwasstudio.core.storage.metadata_store.get_metadata_store`.
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR).
         log_file: Path to the log file.
         data_dir: Path to the data directory.
@@ -182,6 +181,12 @@ class GWASStudioConfig:
     vault: VaultConfig = field(default_factory=VaultConfig)
     tiledb: TileDBConfig = field(default_factory=TileDBConfig)
     auth: AuthConfig = field(default_factory=AuthConfig)
+
+    # Metadata store backend (see gwasstudio.core.storage.metadata_store.get_metadata_store)
+    metadata_backend: str = "mongo"
+
+    # Data storage backend (see gwasstudio.core.storage.get_storage_backend)
+    storage_backend: str = "tiledb"
 
     # Logging and paths
     log_level: str = "INFO"
@@ -198,6 +203,8 @@ class GWASStudioConfig:
             "vault": self.vault.__dict__,
             "tiledb": self.tiledb.__dict__,
             "auth": self.auth.__dict__,
+            "metadata_backend": self.metadata_backend,
+            "storage_backend": self.storage_backend,
             "log_level": self.log_level,
             "log_file": str(self.log_file) if self.log_file else None,
             "data_dir": str(self.data_dir) if self.data_dir else None,
@@ -214,6 +221,8 @@ class GWASStudioConfig:
             vault=VaultConfig(**config_dict.get("vault", {})),
             tiledb=TileDBConfig(**config_dict.get("tiledb", {})),
             auth=AuthConfig(**config_dict.get("auth", {})),
+            metadata_backend=config_dict.get("metadata_backend", "mongo"),
+            storage_backend=config_dict.get("storage_backend", "tiledb"),
             log_level=config_dict.get("log_level", "INFO"),
             log_file=Path(config_dict["log_file"]) if config_dict.get("log_file") else None,
             data_dir=Path(config_dict["data_dir"]) if config_dict.get("data_dir") else None,

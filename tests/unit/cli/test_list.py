@@ -42,11 +42,14 @@ class TestListProjectsCommand:
         assert callable(list_projects)
 
     @patch("gwasstudio.cli.list.core_list_projects")
+    @patch("gwasstudio.cli.list.get_metadata_store")
     @patch("gwasstudio.cli.list.create_config_from_context")
-    def test_list_projects_empty_results(self, mock_create_config, mock_core_list, runner):
+    def test_list_projects_empty_results(self, mock_create_config, mock_store_factory, mock_core_list, runner):
         """Test list_projects with no projects found."""
         mock_config = GWASStudioConfig()
         mock_create_config.return_value = mock_config
+        mock_metadata_store = object()
+        mock_store_factory.return_value = mock_metadata_store
         mock_core_list.return_value = []
 
         result = runner.invoke(list_projects, obj={})
@@ -54,7 +57,8 @@ class TestListProjectsCommand:
         assert result.exit_code == 0
         assert "No projects found." in result.output
         mock_create_config.assert_called_once()
-        mock_core_list.assert_called_once_with(config=mock_config)
+        mock_store_factory.assert_called_once_with(mock_config)
+        mock_core_list.assert_called_once_with(config=mock_config, metadata_store=mock_metadata_store)
 
     @patch("gwasstudio.cli.list.core_list_projects")
     @patch("gwasstudio.cli.list.create_config_from_context")
@@ -236,7 +240,7 @@ class TestListProjectsCommand:
 class TestListProjectsCore:
     """Tests for the core list_projects function."""
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     def test_list_projects_core_success(self, mock_storage_class, mock_config):
         """Test core list_projects with successful query."""
         from gwasstudio.core.query import list_projects as core_list_projects
@@ -255,7 +259,7 @@ class TestListProjectsCore:
         assert result[1]["category"] == "cat2"
         mock_storage.list_projects.assert_called_once()
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     def test_list_projects_core_empty(self, mock_storage_class, mock_config):
         """Test core list_projects with empty results."""
         from gwasstudio.core.query import list_projects as core_list_projects
@@ -268,7 +272,7 @@ class TestListProjectsCore:
 
         assert result == []
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     def test_list_projects_core_exception(self, mock_storage_class, mock_config):
         """Test core list_projects with exception."""
         from gwasstudio.core.query import QueryError as CoreQueryError
@@ -283,7 +287,7 @@ class TestListProjectsCore:
 
         assert "Failed to list projects" in str(exc_info.value)
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     def test_list_projects_core_default_config(self, mock_storage_class):
         """Test core list_projects with None config (uses default)."""
         from gwasstudio.core.query import list_projects as core_list_projects

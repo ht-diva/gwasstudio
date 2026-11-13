@@ -646,7 +646,7 @@ class TestParseYamlTemplate:
 class TestQueryMetadata:
     """Tests for query_metadata function."""
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     @patch("gwasstudio.core.query.GWASStudioConfig")
     def test_basic_query(self, mock_config_cls, mock_mongo_cls):
         """Test basic query returns results."""
@@ -664,7 +664,7 @@ class TestQueryMetadata:
         assert len(results) == 1
         assert outputs is None
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     @patch("gwasstudio.core.query.GWASStudioConfig")
     def test_with_config(self, mock_config_cls, mock_mongo_cls):
         """Test query with provided config."""
@@ -678,7 +678,7 @@ class TestQueryMetadata:
         query_metadata({"project": "test"}, config=custom_cfg)
         mock_mongo_cls.assert_called_once_with(custom_cfg)
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     @patch("gwasstudio.core.query.GWASStudioConfig")
     def test_with_yaml_template(self, mock_config_cls, mock_mongo_cls):
         """Test query with yaml_template."""
@@ -693,7 +693,7 @@ class TestQueryMetadata:
         assert outputs is not None
         assert "build" in outputs
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     @patch("gwasstudio.core.query.GWASStudioConfig")
     def test_query_with_data_id_applies_options(self, mock_config_cls, mock_mongo_cls):
         """Test query with data_id - options are still applied by _apply_query_options."""
@@ -711,7 +711,7 @@ class TestQueryMetadata:
         assert query_arg["data_id"]["$regex"] == "abc123"
         assert query_arg["data_id"]["$options"] == "i"
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     @patch("gwasstudio.core.query.GWASStudioConfig")
     def test_query_with_case_sensitive(self, mock_config_cls, mock_mongo_cls):
         """Test query with case_sensitive option - applied as $regex in query dict."""
@@ -728,7 +728,7 @@ class TestQueryMetadata:
         assert query_arg["project"]["$regex"] == "test"
         assert "$options" not in query_arg["project"]
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     @patch("gwasstudio.core.query.GWASStudioConfig")
     def test_query_with_exact_match(self, mock_config_cls, mock_mongo_cls):
         """Test query with exact_match option - applied as anchored $regex in query dict."""
@@ -745,7 +745,7 @@ class TestQueryMetadata:
         assert query_arg["project"]["$regex"] == "^test$"
         assert query_arg["project"]["$options"] == "i"
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     @patch("gwasstudio.core.query.GWASStudioConfig")
     def test_query_raises_on_storage_error(self, mock_config_cls, mock_mongo_cls):
         """Test query raises QueryError on storage failure."""
@@ -762,7 +762,7 @@ class TestQueryMetadata:
             query_metadata({"project": "test"})
         assert "DB error" in str(exc_info.value)
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     @patch("gwasstudio.core.query.GWASStudioConfig")
     def test_query_invalid_field_raises(self, mock_config_cls, mock_mongo_cls):
         """Test query raises InvalidQueryFieldError for invalid fields."""
@@ -776,7 +776,7 @@ class TestQueryMetadata:
         with pytest.raises(InvalidQueryFieldError):
             query_metadata({"invalid_field": "value"})
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     @patch("gwasstudio.core.query.GWASStudioConfig")
     def test_query_empty_template(self, mock_config_cls, mock_mongo_cls):
         """Test query with None template."""
@@ -791,7 +791,7 @@ class TestQueryMetadata:
         assert results == []
         assert outputs is None
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     @patch("gwasstudio.core.query.GWASStudioConfig")
     def test_query_with_kwargs_passthrough(self, mock_config_cls, mock_mongo_cls):
         """Test that additional kwargs are passed to MongoDBStorage."""
@@ -807,7 +807,7 @@ class TestQueryMetadata:
         assert call_kwargs[1].get("limit") == 100
         assert call_kwargs[1].get("skip") == 50
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     @patch("gwasstudio.core.query.GWASStudioConfig")
     def test_query_case_insensitive_no_exact_applies_regex(self, mock_config_cls, mock_mongo_cls):
         """Test case_insensitive + non-exact applies case-insensitive regex."""
@@ -825,7 +825,7 @@ class TestQueryMetadata:
         assert query_arg["project"]["$regex"] == "test"
         assert query_arg["project"]["$options"] == "i"
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     @patch("gwasstudio.core.query.GWASStudioConfig")
     def test_query_data_id_precedence(self, mock_config_cls, mock_mongo_cls):
         """Test data_id takes precedence as the only query key."""
@@ -854,7 +854,7 @@ class TestQueryMetadata:
 class TestListProjects:
     """Tests for list_projects function."""
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     @patch("gwasstudio.core.query.GWASStudioConfig")
     def test_returns_list(self, mock_config_cls, mock_mongo_cls):
         """Test that list_projects returns a list."""
@@ -870,7 +870,7 @@ class TestListProjects:
         assert isinstance(result, list)
         assert len(result) == 2
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     @patch("gwasstudio.core.query.GWASStudioConfig")
     def test_with_custom_config(self, mock_config_cls, mock_mongo_cls):
         """Test list_projects with custom config."""
@@ -885,7 +885,7 @@ class TestListProjects:
         list_projects(config=custom_cfg)
         mock_mongo_cls.assert_called_once_with(custom_cfg)
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     @patch("gwasstudio.core.query.GWASStudioConfig")
     def test_raises_on_error(self, mock_config_cls, mock_mongo_cls):
         """Test list_projects raises QueryError on failure."""
@@ -901,7 +901,7 @@ class TestListProjects:
         with pytest.raises(QueryError):
             list_projects()
 
-    @patch("gwasstudio.core.query.MongoDBStorage")
+    @patch("gwasstudio.core.query.get_metadata_store")
     @patch("gwasstudio.core.query.GWASStudioConfig")
     def test_empty_result(self, mock_config_cls, mock_mongo_cls):
         """Test list_projects with no projects."""

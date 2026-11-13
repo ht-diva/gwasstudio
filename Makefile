@@ -141,14 +141,6 @@ test_full_export: test-dependencies
 	fi; \
 	bash tests/integration/test_full_export.sh
 
-test_ingest_with_recalc: test-dependencies
-	@echo "Running ingest with -log10p recalculation tests..."
-	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
-        echo "Activating conda environment: ${ENV_NAME}"; \
-		$(CONDA_ACTIVATE) ${ENV_NAME}; \
-	fi; \
-	bash tests/integration/test_ingest_with_recalc.sh
-
 test_export_flags: test-dependencies
 	@echo "Running --fail-on-empty / --region-buffer integration tests..."
 	@echo "Date: $$(date)"
@@ -166,6 +158,14 @@ test_trait_ontology_ids: test-dependencies
 	fi; \
 	bash tests/integration/test_trait_ontology_ids.sh
 
+test_n_fallback: test-dependencies
+	@echo "Running trait_ontology_ids integration tests..."
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+        echo "Activating conda environment: ${ENV_NAME}"; \
+		$(CONDA_ACTIVATE) ${ENV_NAME}; \
+	fi; \
+	bash tests/integration/test_n_fallback.sh
+
 test-integration-pytest: test-dependencies
 	@echo "Running integration tests via pytest..."
 	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
@@ -174,7 +174,7 @@ test-integration-pytest: test-dependencies
 	fi; \
 	pytest tests/integration/ -v --tb=short
 
-test: unit_test test_ingest_metadata test_trait_ontology_ids
+test: unit_test test_ingest_metadata test_trait_ontology_ids test_n_fallback
 	@echo "End-to-End tests"
 
 test-integration: test-integration-setup test-integration-exec #test-integration-stop## Run integration tests
