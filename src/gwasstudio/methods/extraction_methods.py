@@ -34,6 +34,25 @@ def tiledb_array_query(
     """
     # Validate attributes
     valid_attrs = an.get_names()
+    valid_dims = TILEDB_DIMS
+
+    for attr in attrs:
+        if attr not in valid_attrs:
+            # Check if it's a dimension
+            if attr in valid_dims:
+                raise ValueError(
+                    f"'{attr}' is a dimension, not an attribute. "
+                    f"Dimensions ({', '.join(valid_dims)}) are automatically included in the output. "
+                    f"Available attributes: {', '.join(valid_attrs)}. "
+                    f"Use --attr to specify attributes only."
+                )
+            else:
+                raise ValueError(
+                    f"'{attr}' is not a valid attribute or dimension. "
+                    f"Available attributes: {', '.join(valid_attrs)}. "
+                    f"Available dimensions (always included): {', '.join(valid_dims)}."
+                )
+
     for attr in attrs:
         if attr not in valid_attrs:
             raise ValueError(f"Attribute {attr} not found")

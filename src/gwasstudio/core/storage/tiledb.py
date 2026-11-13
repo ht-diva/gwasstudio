@@ -51,11 +51,10 @@ from gwasstudio import logger
 from gwasstudio.core.config import GWASStudioConfig, get_tiledb_config
 from gwasstudio.core.hashing import Hashing
 from gwasstudio.core.storage.base import StorageBackend, StorageError
+from gwasstudio.utils.tdb_schema import DimensionEnum as dn
 
-# Sparse-array index dimensions — identical to
-# ``gwasstudio.cli.utils.process_and_ingest`` and
-# ``gwasstudio.methods.extraction_methods.TILEDB_DIMS``.
-INDEX_DIMS: tuple[str, ...] = ("CHR", "TRAITID", "POS")
+# Sparse-array index dimensions
+INDEX_DIMS: tuple[str, ...] = dn.get_names()
 
 # CLI default for ``export --attr`` (required option, this is its default).
 DEFAULT_ATTRIBUTES: tuple[str, ...] = ("BETA", "SE", "EAF", "MLOG10P", "EA", "NEA")
