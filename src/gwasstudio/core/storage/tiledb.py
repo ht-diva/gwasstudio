@@ -60,6 +60,13 @@ INDEX_DIMS: tuple[str, ...] = dn.get_names()
 DEFAULT_ATTRIBUTES: tuple[str, ...] = ("BETA", "SE", "EAF", "MLOG10P", "EA", "NEA")
 
 
+def _get_add_n_fallback():
+    """Lazy import to avoid circular dependencies."""
+    from gwasstudio.methods.extraction_methods import _add_n_fallback
+
+    return _add_n_fallback
+
+
 class TileDBError(StorageError):
     """Exception raised for TileDB-specific errors (in the base StorageError hierarchy)."""
 
@@ -231,6 +238,7 @@ class TileDBStorageBackend(StorageBackend):
         trait: str | list[str],
         output_prefix: str | None,
         function: Any,
+        total_samples: int | float | None = None,
         **kwargs: Any,
     ) -> Any:
         """
@@ -248,6 +256,8 @@ class TileDBStorageBackend(StorageBackend):
             function: The extraction callable — any of ``extract_full_stats``,
                 ``extract_regions_snps``, ``extract_regions_leadsnps``,
                 ``_process_locusbreaker``, ``_meta_analysis``.
+            total_samples: Total sample count from metadata. If provided and the
+                result is a DataFrame missing an N column, N will be added.
             **kwargs: Forwarded to the extraction function.
 
         Returns:
@@ -258,7 +268,14 @@ class TileDBStorageBackend(StorageBackend):
         """
         try:
             with tiledb.open(uri, mode="r", config=cfg) as arr:
-                return function(arr, trait, output_prefix, **kwargs)
+                result = function(arr, trait, output_prefix, **kwargs)
+
+            # Apply N fallback for DataFrames
+            if isinstance(result, pd.DataFrame) and total_samples is not None:
+                add_n_fallback = _get_add_n_fallback()
+                result = add_n_fallback(result, total_samples)
+
+            return result
         except Exception as e:
             raise TileDBError(f"Extraction failed for trait {trait!r} at {uri}: {str(e)}") from e
 
@@ -340,6 +357,7 @@ class TileDBStorageBackend(StorageBackend):
         snp_list: list[Any] | None = None,
         pval_threshold: float | None = None,
         limit: int | None = None,
+        total_samples: int | float | None = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -359,6 +377,8 @@ class TileDBStorageBackend(StorageBackend):
             pval_threshold: Keep only variants with ``MLOG10P`` > threshold (0 = off).
             limit: Maximum number of rows to return (applied after the query; the
                 CLI pipeline has no equivalent, this is an additive convenience).
+            total_samples: Total sample count from metadata. If provided and N is not
+                in the array, it will be added as a column named "N".
             **kwargs:
                 - ``uri`` (str): explicit full array URI (overrides the constructor's).
                 - ``attributes`` (list[str]): attributes to fetch (default: the
@@ -414,6 +434,11 @@ class TileDBStorageBackend(StorageBackend):
                     pvalue_thr=pthr,
                     attributes=attributes,
                 )
+
+        # Apply N fallback if total_samples is provided and N is missing
+        if total_samples is not None:
+            add_n_fallback = _get_add_n_fallback()
+            df = add_n_fallback(df, total_samples)
 
         if limit is not None and not df.empty:
             df = df.head(int(limit))

@@ -158,6 +158,14 @@ test_trait_ontology_ids: test-dependencies
 	fi; \
 	bash tests/integration/test_trait_ontology_ids.sh
 
+test_n_fallback: test-dependencies
+	@echo "Running trait_ontology_ids integration tests..."
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+        echo "Activating conda environment: ${ENV_NAME}"; \
+		$(CONDA_ACTIVATE) ${ENV_NAME}; \
+	fi; \
+	bash tests/integration/test_n_fallback.sh
+
 test-integration-pytest: test-dependencies
 	@echo "Running integration tests via pytest..."
 	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
@@ -166,7 +174,7 @@ test-integration-pytest: test-dependencies
 	fi; \
 	pytest tests/integration/ -v --tb=short
 
-test: unit_test test_ingest_metadata test_trait_ontology_ids
+test: unit_test test_ingest_metadata test_trait_ontology_ids test_n_fallback
 	@echo "End-to-End tests"
 
 test-integration: test-integration-setup test-integration-exec #test-integration-stop## Run integration tests

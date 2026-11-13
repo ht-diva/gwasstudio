@@ -3,6 +3,7 @@ import math
 import os
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import click
 import cloup
@@ -27,7 +28,12 @@ from gwasstudio.core.exceptions import PermissionError
 from gwasstudio.core.query import query_metadata as core_query_metadata
 from gwasstudio.core.storage import StorageBackend, get_storage_backend
 from gwasstudio.dask_client import dask_deployment_types, manage_daskcluster
-from gwasstudio.methods.extraction_methods import extract_full_stats, extract_regions_leadsnps, extract_regions_snps
+from gwasstudio.methods.extraction_methods import (
+    _add_n_fallback,
+    extract_full_stats,
+    extract_regions_leadsnps,
+    extract_regions_snps,
+)
 from gwasstudio.methods.locus_breaker import _process_locusbreaker
 from gwasstudio.methods.meta_analysis import _meta_analysis
 
@@ -155,10 +161,20 @@ def _process_function_tasks(
         cfg: dict[str, str],
         traits: str | list[str],
         out_prefix: str | None,
+        trait_to_total_samples: dict[str, Any] | None = None,
         **inner_kwargs,
     ) -> pd.DataFrame:
         """Open the TileDB array on the worker and invoke the extraction function via the backend."""
-        return backend.extract(uri, cfg, traits, out_prefix, function_name, **inner_kwargs)
+        # Get total_samples for the trait(s) being extracted
+        total_samples = None
+        if trait_to_total_samples and traits:
+            # For single trait
+            if isinstance(traits, str):
+                total_samples = trait_to_total_samples.get(traits)
+            # For multiple traits (meta-analysis)
+            elif isinstance(traits, list) and len(traits) == 1:
+                total_samples = trait_to_total_samples.get(traits[0])
+        return backend.extract(uri, cfg, traits, out_prefix, function_name, total_samples=total_samples, **inner_kwargs)
 
     def _run_transformation(
         gwas_df: pd.DataFrame, meta_df: pd.DataFrame, trait_id: str, link_ids: list | None = None
@@ -167,8 +183,16 @@ def _process_function_tasks(
         if isinstance(group, pd.Series):
             return gwas_df
 
+        # Add N from total_samples metadata if N column is missing
         id_col = "data_id"
-        meta_row = meta_df.loc[meta_df[id_col] == trait_id].iloc[0]
+        meta_row = meta_df.loc[meta_df[id_col] == trait_id]
+        total_samples = None
+        if not meta_row.empty and "total_samples" in meta_row.columns:
+            total_samples = meta_row.iloc[0]["total_samples"]
+
+        gwas_df = _add_n_fallback(gwas_df, total_samples)
+
+        meta_row = meta_row.iloc[0] if not meta_row.empty else meta_row
         # meta_dict = meta_row.squeeze().to_dict()
         meta_dict = {
             f"meta_{k}": v for k, v in meta_row.drop(["data_id", "output_prefix"], errors="ignore").to_dict().items()
@@ -188,6 +212,16 @@ def _process_function_tasks(
         all_trait_snps = delayed(read_trait_snps)(trait_snps)
 
     trait_id_list = group["data_id"].unique().tolist() if not isinstance(group, pd.Series) else group.unique().tolist()
+
+    # Build a mapping of trait_id to total_samples for N fallback
+    trait_to_total_samples = {}
+    if "total_samples" in group.columns:
+        for _, row in group.iterrows():
+            trait_id = row["data_id"]
+            total_samples = row["total_samples"]
+            if pd.notna(total_samples):
+                trait_to_total_samples[trait_id] = total_samples
+
     # Build the delayed tasks – each task receives the URI, not the object.
     tasks = []
     count_indices: list[int] = []
@@ -204,6 +238,7 @@ def _process_function_tasks(
                 tiledb_cfg,
                 trait,
                 None,
+                trait_to_total_samples,
                 **kwargs,
             )
             # Extract the two DataFrames lazily.
@@ -233,6 +268,7 @@ def _process_function_tasks(
             tiledb_cfg,
             trait_id_list,
             None,
+            trait_to_total_samples,
             **kwargs,
         )
         result = delayed(write_table)(
@@ -247,6 +283,7 @@ def _process_function_tasks(
                 tiledb_cfg,
                 trait,
                 output_prefix_dict.get(trait),
+                trait_to_total_samples,
                 **kwargs,
             )
             extracted_df = delayed(lambda t: t[0])(extracted_tuple)
@@ -281,6 +318,7 @@ def _process_function_tasks(
                 tiledb_cfg,
                 trait,
                 output_prefix_dict.get(trait),
+                trait_to_total_samples,
                 **kwargs,
             )
             transformed_df = delayed(_run_transformation)(extracted_df, group, trait, link_ids if trait_snps else None)

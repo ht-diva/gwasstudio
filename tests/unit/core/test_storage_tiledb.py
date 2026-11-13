@@ -162,6 +162,31 @@ class TestIngestQueryRoundTrip:
         df = backend.query_data("test_trait", pval_threshold=3.0)
         assert list(df["POS"].tolist()) == [100]
 
+    def test_query_data_n_fallback(self, backend):
+        """Test that N column is added from total_samples when missing from TileDB."""
+        backend.ingest_data(_sample_df(), "test_trait_no_n")
+        df = backend.query_data("test_trait_no_n", total_samples=10000)
+
+        # Verify N column exists and has correct value
+        assert "N" in df.columns
+        assert (df["N"] == 10000).all()
+
+    def test_query_data_n_fallback_with_n_attribute(self, backend):
+        """Test that N column from TileDB takes precedence over total_samples."""
+        # Create data WITH N attribute - need to include N in additional_columns
+        df_with_n = _sample_df()
+        df_with_n["N"] = np.array([5000, 5000, 5000, 5000], dtype=np.uint32)
+        backend.ingest_data(df_with_n, "test_trait_with_n", add_cols=["N"])
+
+        # Query with N in attributes (need EA, NEA for SNPID) and different total_samples
+        df = backend.query_data(
+            "test_trait_with_n", attributes=["BETA", "SE", "EAF", "EA", "NEA", "N"], total_samples=10000
+        )
+
+        # Verify N column exists with TileDB value (not fallback)
+        assert "N" in df.columns
+        assert (df["N"] == 5000).all()
+
     def test_query_stream_chunks(self, backend):
         backend.ingest_data(_sample_df(), "test_trait")
         chunks = list(backend.query_data_stream("test_trait", chunk_size=3))

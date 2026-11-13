@@ -15,6 +15,28 @@ from gwasstudio.utils.tdb_schema import DimensionEnum as dn
 TILEDB_DIMS = dn.get_names()
 
 
+def _add_n_fallback(gwas_df: pd.DataFrame, total_samples: Any = None) -> pd.DataFrame:
+    """
+    Add N column from total_samples metadata if N is missing from the DataFrame.
+
+    Args:
+        gwas_df: The GWAS DataFrame from TileDB extraction.
+        total_samples: The total_samples value from metadata (can be int, float, or None).
+
+    Returns:
+        The DataFrame with N column added if it was missing and total_samples is available.
+    """
+    if "N" not in gwas_df.columns and total_samples is not None:
+        try:
+            if pd.notna(total_samples):
+                gwas_df = gwas_df.copy()
+                gwas_df["N"] = total_samples
+        except (TypeError, ValueError):
+            # If total_samples can't be used, skip it
+            pass
+    return gwas_df
+
+
 def tiledb_array_query(
     tiledb_array: tiledb.Array, dims: tuple[str] = TILEDB_DIMS, attrs: tuple[str] = ()
 ) -> tuple[tuple[str], Any]:
@@ -53,14 +75,14 @@ def tiledb_array_query(
                     f"Available dimensions (always included): {', '.join(valid_dims)}."
                 )
 
-    for attr in attrs:
-        if attr not in valid_attrs:
-            raise ValueError(f"Attribute {attr} not found")
     try:
         query = tiledb_array.query(dims=dims, attrs=attrs)
     except tiledb.TileDBError as e:
         logger.debug(e)
-        attrs = tuple(attr for attr in attrs if attr != an.MLOG10P.name)
+        # Remove only the attributes that are missing from the array (e.g. MLOG10P or N),
+        # keeping the ones that do exist (e.g. N when it was ingested into TileDB).
+        existing_attrs = {attr.name for attr in tiledb_array.schema}
+        attrs = tuple(attr for attr in attrs if attr in existing_attrs)
         query = tiledb_array.query(dims=dims, attrs=attrs)
 
     return attrs, query
