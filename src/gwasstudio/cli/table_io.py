@@ -38,8 +38,8 @@ def write_table(
     :return: None
     """
     # Check if format is valid
-    if file_format not in ["parquet", "csv.gz", "csv"]:
-        raise ValueError("Format must be either 'parquet', 'csv.gz', or 'csv'")
+    if file_format not in ["parquet", "csv.gz", "csv", "tsv"]:
+        raise ValueError("Format must be either 'parquet', 'csv.gz', 'csv' or 'tsv'")
 
     # Sanitize filename by replacing whitespaces
     file_name = re.sub(r"\s+", "_", Path(where).name.strip())
@@ -59,6 +59,8 @@ def write_table(
     elif file_format == "csv.gz":
         compression_to_use = {"method": "gzip", "compresslevel": 1, "mtime": 1} if compression else None
         df.to_csv(output_path, compression=compression_to_use, **kwargs)
+    elif file_format == "tsv":
+        df.to_csv(output_path, sep="\t", **kwargs)
     else:
         df.to_csv(output_path, **kwargs)
 

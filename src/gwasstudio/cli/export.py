@@ -360,7 +360,10 @@ Export summary statistics from TileDB datasets with various filtering options.
     cloup.option("--uri", default=None, help="URI of the TileDB dataset (optional if stored in metadata)"),
     cloup.option("--output-prefix", default="out", help="Prefix for naming output files"),
     cloup.option(
-        "--output-format", type=click.Choice(["parquet", "csv.gz", "csv"]), default="csv.gz", help="Output file format"
+        "--output-format",
+        type=click.Choice(["parquet", "csv.gz", "csv", "tsv"]),
+        default="csv.gz",
+        help="Output file format",
     ),
     cloup.option("--search-file", required=True, default=None, help="Input file for querying metadata"),
     cloup.option(
