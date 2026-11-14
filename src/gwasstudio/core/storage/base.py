@@ -11,13 +11,9 @@ from abc import ABC, abstractmethod
 from collections.abc import Generator
 from typing import Any
 
-from gwasstudio.core.exceptions import GWASStudioError
+import pandas as pd
 
-
-class StorageError(GWASStudioError):
-    """Exception raised for storage-related errors."""
-
-    pass
+from gwasstudio.core.exceptions import GWASStudioError, StorageError
 
 
 class StorageBackend(ABC):
@@ -68,7 +64,9 @@ class StorageBackend(ABC):
             project_id: Unique identifier for the project.
             region: Genomic region to query (e.g., {"chr": "1", "start": 100000, "end": 200000}).
             snp_list: List of SNP IDs to query.
-            pval_threshold: Only return variants with p-value <= threshold.
+            pval_threshold: -log10(p) threshold; keep only variants with MLOG10P > threshold
+                (0/None disables the filter) — the same semantics as the CLI's
+                --pvalue-thr / --pvalue-filt options.
             limit: Maximum number of records to return.
             **kwargs: Additional arguments for the query.
 
@@ -97,7 +95,7 @@ class StorageBackend(ABC):
             project_id: Unique identifier for the project.
             region: Genomic region to query.
             snp_list: List of SNP IDs to query.
-            pval_threshold: Only return variants with p-value <= threshold.
+            pval_threshold: -log10(p) threshold (see :meth:`query_data`); 0/None disables it.
             chunk_size: Number of records per chunk.
             **kwargs: Additional arguments for the query.
 

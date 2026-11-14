@@ -1,22 +1,24 @@
 """
-GWASStudio MongoDB Storage Module
+GWASStudio MongoDB Metadata Store
 ===================================
 
-This module provides the MongoDB storage backend for GWASStudio.
-MongoDB is used for storing metadata and, optionally, genomic data.
+This module provides the MongoDB implementation of the
+:class:`gwasstudio.core.storage.metadata_store.MetadataStore` interface.
+
+MongoDB is used to store GWASStudio dataset metadata. Large genomic data is
+stored elsewhere (e.g. TileDB/S3), so this backend only manages the metadata
+collection.
 """
 
 from __future__ import annotations
 
-import uuid
-from collections.abc import Generator
 from typing import Any
 
 import pymongo
-from gridfs import GridFS
 
 from gwasstudio.core.config import GWASStudioConfig
-from gwasstudio.core.storage.base import StorageBackend, StorageError
+from gwasstudio.core.storage.base import StorageError
+from gwasstudio.core.storage.metadata_store import MetadataStore
 
 
 class MongoDBError(StorageError):
@@ -25,17 +27,19 @@ class MongoDBError(StorageError):
     pass
 
 
-class MongoDBStorage(StorageBackend):
+class MongoDBStorage(MetadataStore):
     """
-    MongoDB storage backend for GWASStudio.
+    MongoDB metadata store for GWASStudio.
 
-    This class implements the StorageBackend interface using MongoDB for
-    storing metadata and genomic data. It uses GridFS for large datasets.
+    This class implements the :class:`MetadataStore` interface (``bulk_store_metadata``,
+    ``query_metadata``, ``list_projects``, ``close``) against a single MongoDB
+    collection, making it a drop-in metadata store for the ingestion, query and
+    authorization services.
     """
 
     def __init__(self, config: GWASStudioConfig):
         """
-        Initialize the MongoDB storage backend.
+        Initialize the MongoDB metadata store.
 
         Args:
             config: GWASStudio configuration.
@@ -44,7 +48,6 @@ class MongoDBStorage(StorageBackend):
         self._mongo_config = config.mongo
         self._client = self._setup_mongo_client()
         self._db = self._client[self._mongo_config.db_name]
-        self._fs = GridFS(self._db)
         self._projects_collection = self._db[self._mongo_config.collection]
 
     def _setup_mongo_client(self) -> pymongo.MongoClient:
@@ -63,144 +66,6 @@ class MongoDBStorage(StorageBackend):
         except Exception as e:
             raise MongoDBError(f"Failed to set up MongoDB client: {str(e)}")
 
-    def ingest_data(
-        self,
-        df: pd.DataFrame,
-        project_name: str,
-        **kwargs,
-    ) -> str:
-        """
-        Ingest a DataFrame into MongoDB storage.
-
-        Args:
-            df: DataFrame with genomic data.
-            project_name: Name of the project/dataset.
-            **kwargs: Additional arguments (ignored).
-
-        Returns:
-            str: Unique identifier for the ingested project.
-
-        Raises:
-            MongoDBError: If ingestion fails.
-        """
-        project_id = str(uuid.uuid4())
-
-        try:
-            # Store data in GridFS (for large datasets)
-            data_json = df.to_json(orient="records")
-            file_id = self._fs.put(data_json.encode(), filename=f"{project_id}.json")
-
-            # Store metadata
-            metadata = {
-                "project_id": project_id,
-                "name": project_name,
-                "data_file_id": file_id,
-                "num_records": len(df),
-                "columns": list(df.columns),
-                **kwargs,
-            }
-            self.store_metadata(project_id, metadata)
-
-            return project_id
-        except Exception as e:
-            raise MongoDBError(f"Failed to ingest data into MongoDB: {str(e)}")
-
-    def query_data(
-        self,
-        project_id: str,
-        region: dict[str, Any] | None = None,
-        snp_list: list[str] | None = None,
-        pval_threshold: float | None = None,
-        limit: int | None = None,
-        **kwargs,
-    ) -> pd.DataFrame:
-        """
-        Query data from MongoDB storage.
-
-        Args:
-            project_id: Unique identifier for the project.
-            region: Genomic region to query (e.g., {"chr": "1", "start": 100000, "end": 200000}).
-            snp_list: List of SNP IDs to query.
-            pval_threshold: Only return variants with p-value <= threshold.
-            limit: Maximum number of records to return.
-            **kwargs: Additional arguments (ignored).
-
-        Returns:
-            pd.DataFrame: DataFrame with the query results.
-
-        Raises:
-            MongoDBError: If the query fails.
-        """
-        import pandas as pd  # deferred: keep module import light for metadata-only paths
-
-        metadata = self.get_metadata(project_id)
-        if not metadata:
-            raise MongoDBError(f"Project {project_id} not found in MongoDB storage")
-
-        try:
-            # Retrieve data from GridFS
-            data_json = self._fs.get(metadata["data_file_id"]).read().decode()
-            df = pd.read_json(data_json, orient="records")
-
-            # Apply filters
-            if region:
-                if "chr" in df.columns and region.get("chr"):
-                    chr_cond = df["chr"] == region["chr"]
-                    if region.get("start") is not None and "pos" in df.columns:
-                        chr_cond &= df["pos"] >= region["start"]
-                    if region.get("end") is not None and "pos" in df.columns:
-                        chr_cond &= df["pos"] <= region["end"]
-                    df = df[chr_cond]
-
-            if snp_list and "snp" in df.columns:
-                df = df[df["snp"].isin(snp_list)]
-
-            if pval_threshold is not None and "pval" in df.columns:
-                df = df[df["pval"] <= pval_threshold]
-
-            if limit is not None:
-                df = df.head(limit)
-
-            return df
-        except Exception as e:
-            raise MongoDBError(f"Failed to query MongoDB data: {str(e)}")
-
-    def query_data_stream(
-        self,
-        project_id: str,
-        region: dict[str, Any] | None = None,
-        snp_list: list[str] | None = None,
-        pval_threshold: float | None = None,
-        chunk_size: int = 10000,
-        **kwargs,
-    ) -> Generator[pd.DataFrame, None, None]:
-        """
-        Query data from MongoDB storage in chunks (streaming).
-
-        Args:
-            project_id: Unique identifier for the project.
-            region: Genomic region to query.
-            snp_list: List of SNP IDs to query.
-            pval_threshold: Only return variants with p-value <= threshold.
-            chunk_size: Number of records per chunk.
-            **kwargs: Additional arguments (ignored).
-
-        Yields:
-            pd.DataFrame: Chunks of DataFrames with query results.
-
-        Raises:
-            MongoDBError: If the query fails.
-        """
-        df = self.query_data(
-            project_id,
-            region=region,
-            snp_list=snp_list,
-            pval_threshold=pval_threshold,
-            **kwargs,
-        )
-        for i in range(0, len(df), chunk_size):
-            yield df.iloc[i : i + chunk_size]
-
     def project_exists(self, project_id: str) -> bool:
         """
         Check if a project exists in MongoDB storage.
@@ -215,7 +80,7 @@ class MongoDBStorage(StorageBackend):
 
     def delete_project(self, project_id: str) -> None:
         """
-        Delete a project from MongoDB storage.
+        Delete a project's metadata document.
 
         Args:
             project_id: Unique identifier for the project.
@@ -223,13 +88,10 @@ class MongoDBStorage(StorageBackend):
         Raises:
             MongoDBError: If deletion fails.
         """
-        metadata = self.get_metadata(project_id)
-        if metadata:
-            try:
-                self._fs.delete(metadata["data_file_id"])
-                self._projects_collection.delete_one({"project_id": project_id})
-            except Exception as e:
-                raise MongoDBError(f"Failed to delete project {project_id}: {str(e)}")
+        try:
+            self._projects_collection.delete_one({"project_id": project_id})
+        except Exception as e:
+            raise MongoDBError(f"Failed to delete project {project_id}: {str(e)}")
 
     def store_metadata(self, project_id: str, metadata: dict[str, Any]) -> None:
         """
@@ -258,7 +120,7 @@ class MongoDBStorage(StorageBackend):
 
         Args:
             metadata_list: List of metadata dictionaries to store.
-                         Each dict should contain a 'project_id' key.
+                         Each dict should contain a 'data_id' key.
 
         Raises:
             MongoDBError: If bulk operation fails.

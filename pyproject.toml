@@ -7,7 +7,7 @@ authors = [
     { name = "Bruno Ariano", email = "bruno.ariano@fht.org" },
 ]
 readme = "README.md"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.11.0,<3.13"
 dependencies = [
     "bokeh (>=3.7.3,<3.10.0)",
     "boto3 (>=1.37.11,<2.0.0)",

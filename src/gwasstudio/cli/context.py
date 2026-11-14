@@ -152,6 +152,7 @@ def create_config_from_context(ctx) -> GWASStudioConfig:
     dask_config = ctx.obj.get("dask", {})
     s3_config = _resolve_s3_config(ctx)
     vault_config = ctx.obj.get("vault", {})
+    metadata_backend = ctx.obj.get("metadata_backend", "mongo") or "mongo"
 
     # Create GWASStudioConfig with extracted values
     config = GWASStudioConfig(
@@ -195,6 +196,9 @@ def create_config_from_context(ctx) -> GWASStudioConfig:
             sm_config={"sm.dedup_coords": "false"},
         ),
     )
+
+    # Select the metadata store backend
+    config.metadata_backend = metadata_backend
 
     # Update mongo config with resolved connection info
     if (uri := mongo_conn_info(config)[0]) is not None:

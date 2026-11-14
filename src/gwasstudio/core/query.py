@@ -18,7 +18,8 @@ from gwasstudio import logger
 from gwasstudio.core.config import GWASStudioConfig
 from gwasstudio.core.enums import AncestryEnum, BuildEnum, DataCategoryEnum, MetadataEnum, OntologyID
 from gwasstudio.core.exceptions import InvalidQueryError, QueryError
-from gwasstudio.core.storage import MongoDBStorage  # ,TileDBStorage
+from gwasstudio.core.storage import get_metadata_store
+from gwasstudio.core.storage.metadata_store import MetadataStore
 from gwasstudio.core.str_utils import lower_and_replace
 
 
@@ -506,6 +507,7 @@ def query_metadata(
     case_sensitive: bool = False,
     exact_match: bool = False,
     yaml_template: dict[str, Any] | None = None,
+    metadata_store: MetadataStore | None = None,
     **kwargs,
 ) -> tuple[list[dict[str, Any]], list[str] | None]:
     """
@@ -519,6 +521,8 @@ def query_metadata(
         case_sensitive: If True, perform case-sensitive search.
         exact_match: If True, perform exact match (no regex).
         yaml_template: Optional YAML content to parse (alternative to template).
+        metadata_store: Optional metadata store instance. Created via
+            :func:`gwasstudio.core.storage.metadata_store.get_metadata_store` when omitted.
         **kwargs: Additional arguments for the query.
 
     Returns:
@@ -533,6 +537,8 @@ def query_metadata(
     """
     if config is None:
         config = GWASStudioConfig()
+    if metadata_store is None:
+        metadata_store = get_metadata_store(config)
 
     output_fields = None
     # If yaml_template is provided, parse it
@@ -572,128 +578,17 @@ def query_metadata(
         query.update(template)
 
     try:
-        mongo_storage = MongoDBStorage(config)
         logger.debug(f"Final MongoDB query: {query}")
-        query_results = list(mongo_storage.query_metadata(query, **kwargs))
+        query_results = list(metadata_store.query_metadata(query, **kwargs))
         logger.debug(f"Query returned {len(query_results)} results")
         return query_results, output_fields
     except Exception as e:
         raise QueryError(f"Failed to query metadata: {str(e)}")
 
 
-# def query_data(
-#         project_id: str,
-#         region: Optional[Dict[str, Any]] = None,
-#         snp_list: Optional[List[str]] = None,
-#         pval_threshold: Optional[float] = None,
-#         config: Optional[GWASStudioConfig] = None,
-#         limit: Optional[int] = None,
-#         **kwargs,
-# ) -> pd.DataFrame:
-#     """
-#     Query genomic data for a project.
-#
-#     Args:
-#         project_id: Unique identifier for the project.
-#         region: Genomic region to query (e.g., {"chr": "1", "start": 100000, "end": 200000}).
-#         snp_list: List of SNP IDs to query.
-#         pval_threshold: Only return variants with p-value <= threshold.
-#         config: GWASStudio configuration.
-#         limit: Maximum number of records to return.
-#         **kwargs: Additional arguments for the query.
-#
-#     Returns:
-#         pandas DataFrame with the query results.
-#
-#     Raises:
-#         QueryError: If the query fails.
-#         ProjectNotFoundError: If the project is not found.
-#         InvalidQueryError: If the query parameters are invalid.
-#     """
-#     _validate_project_id(project_id)
-#
-#     if config is None:
-#         config = GWASStudioConfig()
-#
-#     # Parse region
-#     region_info = _validate_region(region) if region else None
-#
-#     # Initialize storage backends
-#     tiledb_storage = TileDBStorage(config)
-#     mongo_storage = MongoDBStorage(config)
-#
-#     try:
-#         # Check if project exists
-#         if not tiledb_storage.project_exists(project_id):
-#             raise ProjectNotFoundError(f"Project {project_id} not found")
-#
-#         # Query data from TileDB
-#         df = tiledb_storage.query_data(
-#             project_id,
-#             region=region_info,
-#             snp_list=snp_list,
-#             pval_threshold=pval_threshold,
-#             limit=limit,
-#             **kwargs,
-#         )
-#
-#         return df
-#     except Exception as e:
-#         raise QueryError(f"Failed to query data for project {project_id}: {str(e)}")
-
-
-# def query_data_stream(
-#         project_id: str,
-#         region: Optional[Dict[str, Any]] = None,
-#         snp_list: Optional[List[str]] = None,
-#         pval_threshold: Optional[float] = None,
-#         config: Optional[GWASStudioConfig] = None,
-#         chunk_size: int = 10000,
-#         **kwargs,
-# ) -> Generator[pd.DataFrame, None, None]:
-#     """
-#     Query genomic data for a project in chunks (streaming).
-#
-#     Args:
-#         project_id: Unique identifier for the project.
-#         region: Genomic region to query.
-#         snp_list: List of SNP IDs to query.
-#         pval_threshold: Only return variants with p-value <= threshold.
-#         config: GWASStudio configuration.
-#         chunk_size: Number of records per chunk.
-#         **kwargs: Additional arguments for the query.
-#
-#     Yields:
-#         Chunks of pandas DataFrames with query results.
-#
-#     Raises:
-#         QueryError: If the query fails.
-#     """
-#     _validate_project_id(project_id)
-#
-#     if config is None:
-#         config = GWASStudioConfig()
-#
-#     region_info = _validate_region(region) if region else None
-#
-#     tiledb_storage = TileDBStorage(config)
-#
-#     try:
-#         for chunk in tiledb_storage.query_data_stream(
-#                 project_id,
-#                 region=region_info,
-#                 snp_list=snp_list,
-#                 pval_threshold=pval_threshold,
-#                 chunk_size=chunk_size,
-#                 **kwargs,
-#         ):
-#             yield chunk
-#     except Exception as e:
-#         raise QueryError(f"Failed to stream data for project {project_id}: {str(e)}")
-
-
 def list_projects(
     config: GWASStudioConfig | None = None,
+    metadata_store: MetadataStore | None = None,
     **kwargs,
 ) -> list[dict[str, Any]]:
     """
@@ -701,6 +596,8 @@ def list_projects(
 
     Args:
         config: GWASStudio configuration.
+        metadata_store: Optional metadata store instance. Created via
+            :func:`gwasstudio.core.storage.metadata_store.get_metadata_store` when omitted.
         **kwargs: Additional arguments for the query.
 
     Returns:
@@ -708,10 +605,11 @@ def list_projects(
     """
     if config is None:
         config = GWASStudioConfig()
+    if metadata_store is None:
+        metadata_store = get_metadata_store(config)
 
-    mongo_storage = MongoDBStorage(config)
     try:
-        return list(mongo_storage.list_projects(**kwargs))
+        return list(metadata_store.list_projects(**kwargs))
     except Exception as e:
         raise QueryError(f"Failed to list projects: {str(e)}")
 

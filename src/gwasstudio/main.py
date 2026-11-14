@@ -174,6 +174,16 @@ def configure_logging(stdout, verbosity, _logger):
     cloup.option("--mongo-uri", default=None, help="Specify a MongoDB uri if it is different from localhost"),
 )
 @cloup.option_group(
+    "Metadata options",
+    cloup.option(
+        "--metadata-backend",
+        type=click.Choice(["mongo", "mongodb"]),
+        default="mongo",
+        show_default=True,
+        help="Metadata store backend used by the ingestion, query and authorization services.",
+    ),
+)
+@cloup.option_group(
     "S3 options",
     cloup.option("--aws-access-key-id", default=None, help="S3 access key id"),
     cloup.option("--aws-secret-access-key", default=None, help="S3 access key"),
@@ -220,6 +230,7 @@ def cli_init(
     python,
     local_directory,
     mongo_uri,
+    metadata_backend,
     verbosity,
     stdout,
     vault_auth,
@@ -233,6 +244,7 @@ def cli_init(
 
     ctx.ensure_object(dict)
     ctx.obj["mongo"] = {"uri": mongo_uri}
+    ctx.obj["metadata_backend"] = metadata_backend or "mongo"
     ctx.obj["vault"] = {
         "auth": vault_auth,
         "mount_point": vault_mount_point,

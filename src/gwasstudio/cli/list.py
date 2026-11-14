@@ -9,6 +9,7 @@ import click
 import cloup
 
 from gwasstudio.cli.context import create_config_from_context
+from gwasstudio.core import get_metadata_store
 from gwasstudio.core.exceptions import ConfigurationError, GWASStudioError, QueryError
 from gwasstudio.core.query import list_projects as core_list_projects
 
@@ -24,9 +25,10 @@ def list_projects(ctx: click.Context) -> None:
     try:
         # Create configuration
         config = create_config_from_context(ctx)
+        metadata_store = get_metadata_store(config)
 
         # Get projects from core (which queries MongoDB)
-        projects = core_list_projects(config=config)
+        projects = core_list_projects(config=config, metadata_store=metadata_store)
 
         if not projects:
             click.echo("No projects found.")
