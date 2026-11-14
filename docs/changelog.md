@@ -3,7 +3,39 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [3.6.0] - 2026-11-14
+
+### 🚀 Features
+
+- *(storage)* Introduce swappable MetadataStore with pluggable backends
+- *(storage)* Implement TileDBStorageBackend and route CLI through it
+- *(export)* Implement the fallback when the N attribute is missing from TileDB but total_samples exists in metadata
+- *(table_io)* Add tsv export
+
+### 💼 Other
+
+- Fix conda cache cleanup step order
+- Improve error message, all dimension references use the same source
+
+### 🚜 Refactor
+
+- *(storage)* Unify backend factories in composition root
+
+### 🧪 Testing
+
+- Remove unused
+
+### ⚙️ Miscellaneous Tasks
+
+- Create versioned conda env
+- Handle versioned conda env
+- Increase python requirement upper bound
+
 ## [3.5.2] - 2026-10-30
+
+### 💼 Other
+
+- Bump version
 
 ### 📚 Documentation
 
