@@ -215,7 +215,12 @@ def _process_function_tasks(
 
     # Build a mapping of trait_id to total_samples for N fallback
     trait_to_total_samples = {}
-    if "total_samples" in group.columns:
+    if isinstance(group, pd.Series):
+        # Single-trait group passed as a Series (e.g. --meta none).
+        total_samples = group.get("total_samples")
+        if total_samples is not None and pd.notna(total_samples):
+            trait_to_total_samples[group["data_id"]] = total_samples
+    elif "total_samples" in group.columns:
         for _, row in group.iterrows():
             trait_id = row["data_id"]
             total_samples = row["total_samples"]
