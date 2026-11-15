@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [3.6.1] - 2026-11-15
+
+### 🐛 Bug Fixes
+
+- *(export)* Support Series group in total_samples fallback
+
 ## [3.6.0] - 2026-11-14
 
 ### 🚀 Features
@@ -16,6 +22,7 @@ All notable changes to this project will be documented in this file.
 
 - Fix conda cache cleanup step order
 - Improve error message, all dimension references use the same source
+- Bump version
 
 ### 🚜 Refactor
 
