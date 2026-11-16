@@ -166,6 +166,14 @@ test_n_fallback: test-dependencies
 	fi; \
 	bash tests/integration/test_n_fallback.sh
 
+test_meta_none_n: test-dependencies
+	@echo "Running --meta none N-fallback e2e tests..."
+	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
+        echo "Activating conda environment: ${ENV_NAME}"; \
+		$(CONDA_ACTIVATE) ${ENV_NAME}; \
+	fi; \
+	bash tests/integration/test_e2e_meta_none_n.sh
+
 test-integration-pytest: test-dependencies
 	@echo "Running integration tests via pytest..."
 	@if [ "${CONDA_PREFIX}" != "${ENV_PATH}" ] && [ "${CONDA_DEFAULT_ENV}" != "${ENV_NAME}" ]; then \
@@ -174,7 +182,7 @@ test-integration-pytest: test-dependencies
 	fi; \
 	pytest tests/integration/ -v --tb=short
 
-test: unit_test test_ingest_metadata test_trait_ontology_ids test_n_fallback
+test: unit_test test_ingest_metadata test_trait_ontology_ids test_n_fallback test_meta_none_n
 	@echo "End-to-End tests"
 
 test-integration: test-integration-setup test-integration-exec #test-integration-stop## Run integration tests

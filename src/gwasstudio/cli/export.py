@@ -130,6 +130,7 @@ def _process_function_tasks(
     batch_size: int,
     output_prefix_dict: dict[str, str],
     output_format: str,
+    trait_to_total_samples: dict[str, Any] | None = None,
     *,
     backend: StorageBackend,
     function_name: Callable,
@@ -148,6 +149,10 @@ def _process_function_tasks(
     tiledb_uri : str
         URI of the TileDB array (e.g. ``s3://my-bucket/dataset``).
         The array is opened *inside* each worker, never serialized.
+    trait_to_total_samples : dict[str, Any] | None
+        Per-trait ``total_samples`` map (``data_id -> value``) resolved from the full
+        metadata row by the caller. Used as the source for the ``N`` fallback, so the
+        ``N`` column is synthesized in every ``--meta`` mode (full/sidefile/none).
     function_name : Callable
         One of the extraction functions (``extract_full_stats``, …).
     """
@@ -179,19 +184,20 @@ def _process_function_tasks(
     def _run_transformation(
         gwas_df: pd.DataFrame, meta_df: pd.DataFrame, trait_id: str, link_ids: list | None = None
     ) -> pd.DataFrame:
-        #  Optional metadata broadcast – only used when ``meta == "full"``.
+        # Add N from total_samples metadata if the N column is missing. This runs in
+        # every --meta mode: N is synthesized from metadata and is independent of
+        # whether the other metadata columns are broadcast into the data rows.
+        total_samples = (trait_to_total_samples or {}).get(trait_id)
+        gwas_df = _add_n_fallback(gwas_df, total_samples)
+
+        # Optional metadata broadcast – only used when ``meta == "full"``. For
+        # --meta none/sidefile the group is reduced to a data_id Series, so we return
+        # clean data rows (with N) and no meta_* columns.
         if isinstance(group, pd.Series):
             return gwas_df
 
-        # Add N from total_samples metadata if N column is missing
         id_col = "data_id"
         meta_row = meta_df.loc[meta_df[id_col] == trait_id]
-        total_samples = None
-        if not meta_row.empty and "total_samples" in meta_row.columns:
-            total_samples = meta_row.iloc[0]["total_samples"]
-
-        gwas_df = _add_n_fallback(gwas_df, total_samples)
-
         meta_row = meta_row.iloc[0] if not meta_row.empty else meta_row
         # meta_dict = meta_row.squeeze().to_dict()
         meta_dict = {
@@ -213,19 +219,15 @@ def _process_function_tasks(
 
     trait_id_list = group["data_id"].unique().tolist() if not isinstance(group, pd.Series) else group.unique().tolist()
 
-    # Build a mapping of trait_id to total_samples for N fallback
-    trait_to_total_samples = {}
-    if isinstance(group, pd.Series):
-        # Single-trait group passed as a Series (e.g. --meta none).
-        total_samples = group.get("total_samples")
-        if total_samples is not None and pd.notna(total_samples):
-            trait_to_total_samples[group["data_id"]] = total_samples
-    elif "total_samples" in group.columns:
+    # N fallback source: the caller resolves total_samples from the FULL metadata row
+    # (captured before the --meta reduction), so N is synthesized in every --meta mode.
+    # Fall back to deriving it from a full DataFrame `group` if the caller omitted it.
+    if trait_to_total_samples is None:
+        trait_to_total_samples = {}
+    if not trait_to_total_samples and not isinstance(group, pd.Series) and "total_samples" in group.columns:
         for _, row in group.iterrows():
-            trait_id = row["data_id"]
-            total_samples = row["total_samples"]
-            if pd.notna(total_samples):
-                trait_to_total_samples[trait_id] = total_samples
+            if pd.notna(row["total_samples"]):
+                trait_to_total_samples[row["data_id"]] = row["total_samples"]
 
     # Build the delayed tasks – each task receives the URI, not the object.
     tasks = []
@@ -768,6 +770,16 @@ def export(
                 for key, value in output_prefix_dict.items()
             }
 
+            # Resolve each trait's total_samples from the FULL metadata row BEFORE it is
+            # reduced to a data_id Series below. The N column is synthesized from this
+            # metadata field (see _add_n_fallback) and must be available in every --meta
+            # mode, so it cannot be read from the reduced Series.
+            trait_to_total_samples: dict[str, Any] = {}
+            if "total_samples" in group.columns:
+                for _, _row in group.iterrows():
+                    if pd.notna(_row["total_samples"]):
+                        trait_to_total_samples[_row["data_id"]] = _row["total_samples"]
+
             _meta_df = group if meta == "full" else group["data_id"]
 
             # Common argument list
@@ -779,6 +791,7 @@ def export(
                 batch_size,
                 _output_prefix_dict,
                 output_format,
+                trait_to_total_samples,
             ]
 
             # Dispatch the appropriate extraction routine
