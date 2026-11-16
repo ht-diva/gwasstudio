@@ -3,11 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 [Git history](https://github.com/ht-diva/gwasstudio/commits/main/)
+## [3.6.2] - 2026-11-16
+
+### 🐛 Bug Fixes
+
+- *(export)* Synthesize N column with --meta none/sidefile
+
 ## [3.6.1] - 2026-11-15
 
 ### 🐛 Bug Fixes
 
 - *(export)* Support Series group in total_samples fallback
+
+### 💼 Other
+
+- Bump version
 
 ## [3.6.0] - 2026-11-14
 
