@@ -37,12 +37,12 @@ gwasstudio export [OPTIONS]
 **Regions or SNP ID filtering options:**
 
 - `--get-regions-snps TEXT`: BED (CHR\tSTART\tEND) or SNP list (CHR,POS) file paths, or string equivalents: (CHR,START,END;CHR,START,END) for regions; (CHR,POS;CHR,POS) for SNPs
-- `--pvalue-filt FLOAT`: Minimum -log10(p-value) threshold to keep significant filtered SNPs
+- `--pvalue-filt FLOAT`: Region-level significance gate (not a per-SNP filter). For each requested region, if at least one variant has -log10(p) above the threshold the whole region is kept, otherwise the region is dropped. Also writes a `{prefix}_pvalue_filt` side-file with one row per region (`CHR`, `START`, `END`, `PVALUE_FILT_FLAG`) when the threshold is set. With `--region-buffer`, kept regions include their flanking context, but the flag is still computed on the requested region only.
 - `--skip-out`: Do not write regions output (default: False)
 - `--meta [full|sidefile|none]`: Metadata handling (default: `full`). `full` = meta columns in the data rows **and** a `_meta.csv` side-file; `sidefile` = clean data rows **and** a `_meta.csv` side-file; `none` = clean data rows, no side-file.
 - `--skip-meta`: **deprecated**, equivalent to `--meta none`.
 - `--nest`: Estimate effective population size (Work in progress, not fully implemented yet)
-- `--region-buffer INTEGER`: Extend each BED region by this many bp in both directions (default: 0, no extension). SNP rows are unaffected.
+- `--region-buffer INTEGER`: Extend each BED region by this many bp in both directions; variants in the extended window are included in the output as flanking context (default: 0, no extension). SNP rows are unaffected. `--pvalue-filt` flags still refer to the requested region only.
 
 **Trait-specific lead-SNP search options:**
 

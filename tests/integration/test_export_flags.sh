@@ -4,9 +4,8 @@
 # Tests:
 #   1. --fail-on-empty + guaranteed-empty region  → exit code 3
 #   2. --fail-on-empty + valid region             → exit code 0 + data file written
-#   3. --region-buffer N produces the same data as no buffer
-#      (buffer widens the TileDB retrieval window only; the analysis mask
-#       still uses the original START_ORIG/END_ORIG bounds)
+#   3. --region-buffer N extends the returned window: the no-buffer rows are a
+#      subset of the buffered rows (buffer adds flanking context variants)
 #
 # Prerequisites: conda env with gwasstudio installed, mongod on PATH.
 # Usage: bash tests/integration/test_export_flags.sh
@@ -138,13 +137,14 @@ done <<< "${DATA_FILES}"
 pass "data file(s) present with content: $(echo "${DATA_FILES}" | wc -l | tr -d ' ') file(s)"
 
 # ═══════════════════════════════════════════════════════════════════════════
-# TEST 3 — --region-buffer does not alter the returned data
-#          The buffer widens the TileDB retrieval window only; the analysis
-#          mask (pos_mask) still uses START_ORIG/END_ORIG, so the output
-#          rows must be identical whether or not the buffer is applied.
+# TEST 3 — --region-buffer extends the returned window
+#          The buffer widens the region by N bp in both directions and the
+#          flanking variants are included in the output. Therefore every
+#          no-buffer row must also appear in the buffered run (superset),
+#          and the buffered run may contain additional context variants.
 # ═══════════════════════════════════════════════════════════════════════════
 echo ""
-echo "=== TEST 3: --region-buffer → output identical to no-buffer run ==="
+echo "=== TEST 3: --region-buffer → output is a superset of the no-buffer run ==="
 # Narrow window around POS 4997051
 BUFFER_REGION="12,4996900,4997200"
 
@@ -174,18 +174,30 @@ if [ -z "${NOBUF_FILES}" ] && [ -z "${BUF_FILES}" ]; then
   # Narrow window may legitimately contain zero variants for some traits;
   # as long as both runs agree that's fine.
   pass "both runs returned zero data rows (consistent)"
-elif [ -z "${NOBUF_FILES}" ] || [ -z "${BUF_FILES}" ]; then
-  fail "one run wrote data files and the other did not"
+elif [ -z "${NOBUF_FILES}" ]; then
+  # No variants in the requested window itself; the buffer may still have
+  # pulled in flanking context variants. Acceptable.
+  BUF_LINES=$(cat ${BUF_FILES} 2>/dev/null | tail -n +2 | wc -l | tr -d ' ')
+  pass "no-buffer run empty, buffered run returned ${BUF_LINES} context row(s)"
+elif [ -z "${BUF_FILES}" ]; then
+  fail "no-buffer run wrote data files but the buffered run wrote none (buffer must be a superset)"
 else
-  NOBUF_LINES=$(cat ${NOBUF_FILES} 2>/dev/null | wc -l | tr -d ' ')
-  BUF_LINES=$(cat   ${BUF_FILES}   2>/dev/null | wc -l | tr -d ' ')
-  echo "  no-buffer rows : ${NOBUF_LINES}"
-  echo "  buffer=5000 rows: ${BUF_LINES}"
+  # Compare data rows (drop each file's header) — the no-buffer rows must
+  # all be present in the buffered output.
+  NOBUF_DATA=$(cat ${NOBUF_FILES} 2>/dev/null | grep -v '^SNPID,' | grep . | sort)
+  BUF_DATA=$(cat   ${BUF_FILES}   2>/dev/null | grep -v '^SNPID,' | grep . | sort)
+  NOBUF_ROWS=$(printf '%s\n' "${NOBUF_DATA}" | grep -c . || true)
+  BUF_ROWS=$(printf '%s\n' "${BUF_DATA}" | grep -c . || true)
+  MISSING=$(comm -23 <(printf '%s\n' "${NOBUF_DATA}") <(printf '%s\n' "${BUF_DATA}") | grep -c . || true)
+  echo "  no-buffer rows  : ${NOBUF_ROWS}"
+  echo "  buffer=5000 rows: ${BUF_ROWS}"
 
-  if [ "${NOBUF_LINES}" -eq "${BUF_LINES}" ]; then
-    pass "row counts match (${NOBUF_LINES} rows)"
+  if [ "${MISSING}" -gt 0 ]; then
+    fail "no-buffer rows missing from buffered output: ${MISSING} row(s) (buffer must be a superset)"
+  elif [ "${BUF_ROWS}" -gt "${NOBUF_ROWS}" ]; then
+    pass "buffered output extends no-buffer output (+$((BUF_ROWS - NOBUF_ROWS)) context row(s))"
   else
-    fail "row counts differ: no-buffer=${NOBUF_LINES}  buffer=${BUF_LINES}"
+    pass "outputs identical (${NOBUF_ROWS} rows); no flanking variants within 5kb"
   fi
 fi
 

@@ -421,7 +421,12 @@ Export summary statistics from TileDB datasets with various filtering options.
     cloup.option(
         "--pvalue-filt",
         default=0.0,
-        help="Minimum -log10(p-value) threshold to keep significant filtered SNPs",
+        help=(
+            "Region-level significance gate (not a per-SNP filter): a region is kept only if at "
+            "least one variant in it exceeds the threshold. Also writes a _pvalue_filt side-file "
+            "with one row per region. With --region-buffer, kept regions include their flanking "
+            "context, but the flag is still computed on the requested region only."
+        ),
     ),
     cloup.option(
         "--skip-out",
@@ -455,7 +460,11 @@ Export summary statistics from TileDB datasets with various filtering options.
         "--region-buffer",
         default=0,
         type=int,
-        help="Extend each BED region by this many bp in both directions (0 = no extension). SNP rows are unaffected.",
+        help=(
+            "Extend each BED region by this many bp in both directions; variants in the extended "
+            "window are included in the output as flanking context (0 = no extension). "
+            "SNP rows are unaffected. --pvalue-filt flags still refer to the requested region only."
+        ),
     ),
 )
 @cloup.option_group(
