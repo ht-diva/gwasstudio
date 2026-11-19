@@ -16,7 +16,6 @@ import gzip
 import pathlib
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import tiledb
 
@@ -33,6 +32,7 @@ from gwasstudio.cli.table_io import (  # noqa: F401
     write_table,
 )
 from gwasstudio.core import Hashing, InvalidInputError, MetadataEnum, StorageError
+from gwasstudio.utils.tdb_schema import AttributeEnum, DimensionEnum
 
 
 def load_metadata(file_path: Path, delimiter: str = "\t") -> pd.DataFrame:
@@ -107,25 +107,27 @@ def process_and_ingest(file_path: str, uri: str, cfg: dict, additional_columns: 
         file_path = pathlib.Path(file_path)
         logger.debug(f"Processing file: {file_path}")
         required_cols = {"CHR", "POS", "EA", "NEA", "EAF", "SE", "BETA"}
+        # dtypes are resolved from the TileDB schema definition (DimensionEnum /
+        # AttributeEnum) so ingestion and schema creation can never drift out of sync
         dtype_spec = {
-            "CHR": np.uint8,
-            "POS": np.uint32,
-            "EA": str,
-            "NEA": str,
-            "EAF": np.float32,
-            "SE": np.float32,
-            "BETA": np.float32,
+            "CHR": DimensionEnum.get_dtype_by_value("CHR"),
+            "POS": DimensionEnum.get_dtype_by_value("POS"),
+            "EA": AttributeEnum.EA.get_dtype(),
+            "NEA": AttributeEnum.NEA.get_dtype(),
+            "EAF": AttributeEnum.EAF.get_dtype(),
+            "SE": AttributeEnum.SE.get_dtype(),
+            "BETA": AttributeEnum.BETA.get_dtype(),
         }
 
         # Handle additional columns
         if additional_columns:
             required_cols.update(additional_columns)
             for col in additional_columns:
-                if col == "MLOG10P":
-                    dtype_spec[col] = np.float32
-                elif col == "N":
-                    dtype_spec[col] = np.uint32
-                # Add more column type specifications as needed
+                try:
+                    dtype_spec[col] = AttributeEnum[col].get_dtype()
+                except KeyError:
+                    # Custom column not part of the TileDB schema: no forced dtype
+                    pass
 
         suffix = file_path.suffix.lower()
 

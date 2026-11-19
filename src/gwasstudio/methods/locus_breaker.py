@@ -1,10 +1,10 @@
-import numpy as np
 import pandas as pd
 
 from gwasstudio import logger
 from gwasstudio.methods.compute_pheno_variance import compute_pheno_variance
 from gwasstudio.methods.dataframe import add_mlog10p, process_dataframe
 from gwasstudio.methods.multiallelic_filtering import keep_best_multiallelic_variant
+from gwasstudio.utils.tdb_schema import AttributeEnum, DimensionEnum
 
 
 def _locus_breaker(
@@ -25,15 +25,18 @@ def _locus_breaker(
     :param locus_flanks: Flanking regions (in bp) to extend each locus in both directions (default: 100000)
     :return: DataFrame with the loci information
     """
+    # dtypes resolved from the TileDB schema enums (DimensionEnum / AttributeEnum)
+    # so they stay in sync with the array schema; TRAITID stays "object" because
+    # its schema dtype ("ascii") is a TileDB concept with no pandas equivalent
     expected_schema = {
-        "CHR": pd.Series(dtype=np.uint8),
-        "POS": pd.Series(dtype=np.uint32),
-        "EA": pd.Series(dtype="object"),
-        "NEA": pd.Series(dtype="object"),
-        "EAF": pd.Series(dtype=np.float32),
-        "MLOG10P": pd.Series(dtype=np.float32),
-        "BETA": pd.Series(dtype=np.float32),
-        "SE": pd.Series(dtype=np.float32),
+        "CHR": pd.Series(dtype=DimensionEnum.get_dtype_by_value("CHR")),
+        "POS": pd.Series(dtype=DimensionEnum.get_dtype_by_value("POS")),
+        "EA": pd.Series(dtype=AttributeEnum.EA.get_dtype()),
+        "NEA": pd.Series(dtype=AttributeEnum.NEA.get_dtype()),
+        "EAF": pd.Series(dtype=AttributeEnum.EAF.get_dtype()),
+        "MLOG10P": pd.Series(dtype=AttributeEnum.MLOG10P.get_dtype()),
+        "BETA": pd.Series(dtype=AttributeEnum.BETA.get_dtype()),
+        "SE": pd.Series(dtype=AttributeEnum.SE.get_dtype()),
         "TRAITID": pd.Series(dtype="object"),
     }
     tiledb_results_pd = tiledb_results_pd.copy()

@@ -298,6 +298,28 @@ class BaseEnum(Enum):
         return tuple(member.get_value() for member in cls)
 
     @classmethod
+    def get_dtype_by_value(cls, name: str) -> Any:
+        """
+        Return the dtype of the member whose value equals name.
+
+        Useful when the enum member name does not match its value
+        (e.g. DimensionEnum.DIM1 has value "CHR").
+
+        Args:
+            name: The member value to look up.
+
+        Returns:
+            Any: The dtype of the matching member.
+
+        Raises:
+            KeyError: If no member has the given value.
+        """
+        for member in cls:
+            if member.get_value() == name:
+                return member.get_dtype()
+        raise KeyError(f"No {cls.__name__} member with value '{name}'")
+
+    @classmethod
     def get_all_dtypes_dict(cls) -> dict:
         return {member.get_value(): member.get_dtype() for member in cls}
 

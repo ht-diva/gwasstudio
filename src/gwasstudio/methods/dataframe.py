@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
+from gwasstudio.utils.tdb_schema import AttributeEnum
+
 
 def _get_log_p_value_from_z(z_score: np.ndarray) -> np.ndarray:
     """
@@ -74,7 +76,9 @@ def add_mlog10p(df: pd.DataFrame) -> pd.DataFrame:
     if "MLOG10P" not in df.columns:
         # Direct NumPy arithmetic
         z = df["BETA"].values / df["SE"].values
-        df.loc[:, "MLOG10P"] = _get_log_p_value_from_z(z).astype(np.float32)
+        # dtype resolved from the TileDB schema definition so the cast stays
+        # in sync with the MLOG10P attribute type
+        df.loc[:, "MLOG10P"] = _get_log_p_value_from_z(z).astype(AttributeEnum.MLOG10P.get_dtype())
 
     return df
 
